@@ -1,0 +1,24 @@
+---
+title: Multi-Head Attention
+step: 5
+description: Parallelizing attention to capture different types of relationships.
+---
+
+<SplitLayout>
+  <Step>
+    <Description>
+      ## Multiple Perspectives
+
+      A single attention head might focus on syntax. Another might focus on semantics. We want multiple heads to capture different relationships simultaneously.
+
+      ### The Concept
+      We project Q, K, V into $h$ different subspaces, perform attention in parallel, concatenate the results, and project back.
+
+      ### The Math
+      $$ \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h)W^O $$
+
+      ### Challenge
+      Implement `MultiHeadAttention`. You will need linear layers for projections ($W^Q, W^K, W^V, W^O$) and logic to split/merge the head dimension.
+    </Description>
+  </Step>
+</SplitLayout>

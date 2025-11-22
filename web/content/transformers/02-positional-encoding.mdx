@@ -1,0 +1,25 @@
+---
+title: Positional Encodings
+step: 2
+description: Injecting order information into the permutation-invariant attention mechanism.
+---
+
+<SplitLayout>
+  <Step>
+    <Description>
+      ## Injecting Order
+
+      Self-attention is permutation invariant—it treats "dog bites man" identical to "man bites dog". We must inject position information.
+
+      ### The Concept
+      We add a fixed vector to each embedding that represents its position in the sequence. The Transformer uses sinusoidal functions of different frequencies.
+
+      ### The Math
+      $$ PE_{(pos, 2i)} = \sin(pos / 10000^{2i/d_{model}}) $$
+      $$ PE_{(pos, 2i+1)} = \cos(pos / 10000^{2i/d_{model}}) $$
+
+      ### Challenge
+      Implement `PositionalEncoding`. It should precompute the PE matrix for a max sequence length and add it to the input embeddings.
+    </Description>
+  </Step>
+</SplitLayout>

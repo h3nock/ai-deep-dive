@@ -1,0 +1,24 @@
+---
+title: Layer Normalization
+step: 6
+description: Stabilizing training by normalizing activations.
+---
+
+<SplitLayout>
+  <Step>
+    <Description>
+      ## Stability is Key
+
+      Deep networks are hard to train because the distribution of layer inputs changes during training (covariate shift).
+
+      ### The Concept
+      We normalize the inputs across the feature dimension (not the batch dimension like BatchNorm). We subtract the mean and divide by the standard deviation, then apply learnable scale ($\gamma$) and shift ($\beta$).
+
+      ### The Math
+      $$ \text{LayerNorm}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta $$
+
+      ### Challenge
+      Implement `LayerNorm`. Calculate mean and variance across the last dimension. Don't forget the small epsilon for numerical stability!
+    </Description>
+  </Step>
+</SplitLayout>
