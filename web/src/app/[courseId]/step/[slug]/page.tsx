@@ -7,6 +7,8 @@ import { Step } from "@/components/mdx/Step";
 import { Description } from "@/components/mdx/Description";
 import { Action } from "@/components/mdx/Action";
 import { Command } from "@/components/mdx/Command";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
 const components = {
   SplitLayout,
@@ -53,7 +55,16 @@ export default async function StepPage({ params }: { params: Promise<{ courseId:
       nextPost={nextPost}
       collection={courseId}
     >
-      <MDXRemote source={post.content} components={components} />
+      <MDXRemote 
+        source={post.content} 
+        components={components}
+        options={{
+          mdxOptions: {
+            remarkPlugins: [remarkMath],
+            rehypePlugins: [rehypeKatex],
+          }
+        }}
+      />
     </StepContainer>
   );
 }
