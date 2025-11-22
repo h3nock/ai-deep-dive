@@ -44,6 +44,8 @@ export default async function RoadmapPage({ params }: { params: Promise<{ course
       case 6: return <Layers className="w-6 h-6" />;
       case 7: return <MessageSquare className="w-6 h-6" />;
       case 8: return <BarChart3 className="w-6 h-6" />;
+      case 9: return <Layers className="w-6 h-6" />; // Reusing Layers for Block
+      case 10: return <CheckCircle2 className="w-6 h-6" />; // Final Assembly
       default: return <CheckCircle2 className="w-6 h-6" />;
     }
   };
