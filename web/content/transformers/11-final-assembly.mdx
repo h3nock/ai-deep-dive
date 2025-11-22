@@ -1,28 +1,35 @@
 ---
-title: "The Final Assembly (GPT)"
-description: "Stacking blocks to create the full Generative Pre-trained Transformer."
+title: "Final Assembly: Code Translator"
+description: "Building a Sequence-to-Sequence model to translate code."
 step: 11
-challenge: "Build the full GPT model."
+challenge: "Build the full Encoder-Decoder Transformer."
 ---
 
-# The Final Assembly
+# Final Assembly: Code Translator
 
-Time to build GPT.
+We are building a **Seq2Seq** model to translate code (e.g., `print("hello")` -> `console.log("hello")`).
 
 ## The Architecture
 
-1.  **Embeddings**: Token + Positional.
-2.  **Layers**: A stack of $N$ `DecoderBlock`s.
-3.  **Final Norm**: One last `LayerNorm`.
-4.  **Head**: A linear layer projecting $d_{model} \to V$ (Vocabulary size).
+1.  **Encoder**:
+    *   Takes source tokens (Python).
+    *   Passes them through $N$ `EncoderBlock`s.
+    *   Outputs a "Memory" matrix (understanding of the code).
 
-## Generation
-To generate text:
-1.  Input context.
-2.  Forward pass -> Get logits for the last token.
-3.  Softmax -> Probabilities.
-4.  Sample next token.
-5.  Repeat.
+2.  **Decoder**:
+    *   Takes target tokens (JavaScript so far).
+    *   Passes them through $N$ `DecoderBlock`s.
+    *   Uses **Cross-Attention** to look at the Encoder's "Memory".
+    *   Predicts the next JavaScript token.
+
+## The Flow
+```
+Source (Python) -> [Encoder] -> Memory
+                                   |
+Target (JS)     -> [Decoder] <-----|
+                                   |
+                                 Logits -> Next Token
+```
 
 ## Your Task
-Put it all together in a `GPT` class and generate your first AI-written text!
+Assemble the full `Transformer` class and write a script to translate simple code snippets!
