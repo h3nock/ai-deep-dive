@@ -1,0 +1,28 @@
+---
+title: "Causal Masking"
+description: "Preventing the model from cheating by looking at the future."
+step: 5
+challenge: "Create the look-ahead mask."
+---
+
+# Causal Masking
+
+We are building a **Decoder-only** Transformer (like GPT). Its job is to predict the *next* token.
+During training, we feed it the whole sequence at once. If we don't stop it, position 4 will simply "look" at position 5 to know the answer.
+
+## The Solution: Masking
+
+We force the attention scores to $-\infty$ for all future positions.
+
+$$
+\text{Mask} = \begin{bmatrix} 
+0 & -\infty & -\infty \\
+0 & 0 & -\infty \\
+0 & 0 & 0 
+\end{bmatrix}
+$$
+
+When we softmax this, the $-\infty$ becomes $0$. The model literally *cannot see* the future.
+
+## Your Task
+Create a function `make_causal_mask` that returns this triangular matrix.

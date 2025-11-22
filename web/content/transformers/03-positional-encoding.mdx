@@ -1,0 +1,29 @@
+---
+title: "Positional Encodings"
+description: "Injecting order into the sequence: why 'dog bites man' != 'man bites dog'."
+step: 3
+challenge: "Implement sinusoidal positional encodings."
+---
+
+# Positional Encodings
+
+Transformers process all tokens in parallel. They have no idea that token A came before token B.
+To fix this, we *add* a position vector to each embedding vector.
+
+## The Formula
+
+We use sine and cosine functions of different frequencies:
+
+$$
+PE_{(pos, 2i)} = \sin(pos / 10000^{2i/d_{model}})
+$$
+
+$$
+PE_{(pos, 2i+1)} = \cos(pos / 10000^{2i/d_{model}})
+$$
+
+## Why Add?
+Why not concatenate? Adding preserves the dimensionality ($d_{model}$) and allows the model to learn to distinguish "content" from "position".
+
+## Your Task
+Implement the `PositionalEncoding` module and add it to your embeddings.

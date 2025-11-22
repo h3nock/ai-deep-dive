@@ -1,0 +1,25 @@
+---
+title: "Embeddings"
+description: "Turn integers into learnable vectors: creating a semantic space."
+step: 2
+challenge: "Implement the Embedding layer using a lookup table."
+---
+
+# Embeddings
+
+Now we have integers (e.g., `[45, 12, 99]`). But `99` isn't "greater" than `12` in a semantic sense. We need a representation where similar words are close together.
+
+## The Lookup Table
+
+An embedding layer is just a matrix of shape $(V, d_{model})$.
+- $V$: Vocabulary size (e.g., 50,257 for GPT-2).
+- $d_{model}$: Dimension of the vector (e.g., 768 for GPT-2).
+
+When we pass in token ID `i`, we simply pull out the $i$-th row of this matrix.
+
+## Why Learnable?
+
+Initially, these vectors are random. As the model trains, it moves the vectors around so that "King" and "Queen" end up pointing in similar directions.
+
+## Your Task
+Create an `Embeddings` module using `nn.Embedding`.

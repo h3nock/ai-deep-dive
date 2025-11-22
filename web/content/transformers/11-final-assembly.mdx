@@ -1,0 +1,28 @@
+---
+title: "The Final Assembly (GPT)"
+description: "Stacking blocks to create the full Generative Pre-trained Transformer."
+step: 11
+challenge: "Build the full GPT model."
+---
+
+# The Final Assembly
+
+Time to build GPT.
+
+## The Architecture
+
+1.  **Embeddings**: Token + Positional.
+2.  **Layers**: A stack of $N$ `DecoderBlock`s.
+3.  **Final Norm**: One last `LayerNorm`.
+4.  **Head**: A linear layer projecting $d_{model} \to V$ (Vocabulary size).
+
+## Generation
+To generate text:
+1.  Input context.
+2.  Forward pass -> Get logits for the last token.
+3.  Softmax -> Probabilities.
+4.  Sample next token.
+5.  Repeat.
+
+## Your Task
+Put it all together in a `GPT` class and generate your first AI-written text!

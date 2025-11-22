@@ -1,0 +1,31 @@
+---
+title: "The Transformer Block"
+description: "Combining Attention, Norms, and MLP into a reusable unit."
+step: 10
+challenge: "Assemble the Decoder Block."
+---
+
+# The Transformer Block
+
+We have all the pieces. Now we build the LEGO brick.
+
+## The Blueprint (GPT-2 Style)
+
+```python
+class DecoderBlock(nn.Module):
+    def __init__(self, ...):
+        self.ln1 = LayerNorm(...)
+        self.attn = MultiHeadAttention(...)
+        self.ln2 = LayerNorm(...)
+        self.ffn = FeedForward(...)
+
+    def forward(self, x):
+        x = x + self.attn(self.ln1(x))
+        x = x + self.ffn(self.ln2(x))
+        return x
+```
+
+Notice the "Pre-Norm" placement (LayerNorm *before* the sub-layer). This is standard for modern Transformers as it improves training stability.
+
+## Your Task
+Implement the `DecoderBlock` class.
