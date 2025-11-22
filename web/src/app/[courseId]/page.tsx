@@ -3,8 +3,9 @@ import { getAllPosts } from "@/lib/posts";
 import { Navbar } from "@/components/Navbar";
 import { ArrowRight, Terminal, Database, Code2, Cpu, Zap, Layers, MessageSquare, BarChart3, CheckCircle2 } from "lucide-react";
 
-export default function RoadmapPage() {
-  const posts = getAllPosts();
+export default async function RoadmapPage({ params }: { params: Promise<{ courseId: string }> }) {
+  const { courseId } = await params;
+  const posts = getAllPosts(courseId);
 
   // Map step numbers to icons
   const getIcon = (step: number) => {
@@ -59,7 +60,7 @@ export default function RoadmapPage() {
               </div>
 
               {/* Content Card */}
-              <Link href={`/step/${post.slug}`} className="flex-1 block group/card">
+              <Link href={`/${courseId}/step/${post.slug}`} className="flex-1 block group/card">
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 md:p-8 hover:border-blue-500/30 dark:hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/5 dark:hover:shadow-none transition-all duration-300 relative overflow-hidden">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-bold font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider group-hover/card:bg-blue-50 dark:group-hover/card:bg-blue-900/20 group-hover/card:text-blue-600 dark:group-hover/card:text-blue-400 transition-colors">

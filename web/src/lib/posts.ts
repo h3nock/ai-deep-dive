@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import { serialize } from "next-mdx-remote/serialize";
 
 const contentDirectory = path.join(process.cwd(), "content");
 
@@ -10,37 +9,30 @@ export interface PostData {
   title: string;
   step: number;
   description: string;
-  content: any; // Serialized MDX
+  content: any; // Serialized MDX or raw string
   challenge?: string;
+  collection: string;
 }
 
-export function getAllPosts(): Omit<PostData, "content">[] {
+export function getAllPosts(collection: string): Omit<PostData, "content">[] {
+  const collectionPath = path.join(contentDirectory, collection);
+
   // Ensure directory exists
-  if (!fs.existsSync(contentDirectory)) {
+  if (!fs.existsSync(collectionPath)) {
+    console.warn(`Collection directory not found: ${collectionPath}`);
     return [];
   }
 
-  const fileNames = fs.readdirSync(contentDirectory);
-  // Whitelist of the new Speedrun steps
-  const validSlugs = new Set([
-    "01-environment",
-    "02-data-prep",
-    "03-tokenizer",
-    "04-architecture",
-    "05-pretraining",
-    "06-midtraining",
-    "07-sft",
-    "08-rl"
-  ]);
-
+  const fileNames = fs.readdirSync(collectionPath);
+  
+  // Whitelist of valid slugs per collection could be defined here or passed in.
+  // For now, we'll just read all valid .md/.mdx files in the folder.
+  
   const allPostsData = fileNames
-    .filter((fileName) => {
-      const slug = fileName.replace(/\.mdx?$/, ""); // Support .md and .mdx
-      return (fileName.endsWith(".md") || fileName.endsWith(".mdx")) && validSlugs.has(slug);
-    })
+    .filter((fileName) => fileName.endsWith(".md") || fileName.endsWith(".mdx"))
     .map((fileName) => {
       const slug = fileName.replace(/\.mdx?$/, "");
-      const fullPath = path.join(contentDirectory, fileName);
+      const fullPath = path.join(collectionPath, fileName);
       const fileContents = fs.readFileSync(fullPath, "utf8");
       const { data } = matter(fileContents);
 
@@ -50,20 +42,16 @@ export function getAllPosts(): Omit<PostData, "content">[] {
         step: data.step,
         description: data.description,
         challenge: data.challenge,
+        collection,
       };
     });
 
   // Deduplicate posts by slug, preferring MDX
-  const uniquePosts = new Map<string, PostData>();
+  const uniquePosts = new Map<string, Omit<PostData, "content">>();
   
   allPostsData.forEach(post => {
-    // If strictly preferring MDX, we might need to check the source file extension.
-    // But since we just have the data here, we can rely on the fact that we want *one* entry per slug.
-    // If we process them in order, we can just overwrite.
-    // However, the previous map didn't preserve file extension info.
-    // Let's just use the slug as key.
     if (!uniquePosts.has(post.slug)) {
-      uniquePosts.set(post.slug, post as PostData);
+      uniquePosts.set(post.slug, post);
     }
   });
 
@@ -71,12 +59,18 @@ export function getAllPosts(): Omit<PostData, "content">[] {
   return Array.from(uniquePosts.values()).sort((a, b) => (a.step > b.step ? 1 : -1));
 }
 
-export async function getPostBySlug(slug: string): Promise<PostData | null> {
+export async function getPostBySlug(collection: string, slug: string): Promise<PostData | null> {
   try {
+    const collectionPath = path.join(contentDirectory, collection);
+    
     // Check for .mdx first, then .md
-    let fullPath = path.join(contentDirectory, `${slug}.mdx`);
+    let fullPath = path.join(collectionPath, `${slug}.mdx`);
     if (!fs.existsSync(fullPath)) {
-      fullPath = path.join(contentDirectory, `${slug}.md`);
+      fullPath = path.join(collectionPath, `${slug}.md`);
+    }
+    
+    if (!fs.existsSync(fullPath)) {
+      return null;
     }
     
     const fileContents = fs.readFileSync(fullPath, "utf8");
@@ -90,6 +84,7 @@ export async function getPostBySlug(slug: string): Promise<PostData | null> {
       description: data.description,
       content: content, // Raw string
       challenge: data.challenge,
+      collection,
     };
   } catch (e) {
     console.error(e);

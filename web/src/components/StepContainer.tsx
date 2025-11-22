@@ -8,12 +8,13 @@ import { PostData } from "@/lib/posts";
 
 interface StepContainerProps {
   post: PostData;
-  prevPost: PostData | null;
-  nextPost: PostData | null;
+  prevPost: Omit<PostData, "content"> | null;
+  nextPost: Omit<PostData, "content"> | null;
   children: React.ReactNode; // The rendered MDX guide
+  collection: string;
 }
 
-export function StepContainer({ post, prevPost, nextPost, children }: StepContainerProps) {
+export function StepContainer({ post, prevPost, nextPost, children, collection }: StepContainerProps) {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans selection:bg-blue-500/20">
       <Navbar />
@@ -27,7 +28,7 @@ export function StepContainer({ post, prevPost, nextPost, children }: StepContai
             {/* Header */}
             <div className="mb-12">
               <div className="flex items-center gap-3 mb-6 text-sm text-slate-500 dark:text-slate-400">
-                <Link href="/roadmap" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
+                <Link href={`/${collection}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
                   <ChevronLeft className="w-4 h-4" />
                   Back to Roadmap
                 </Link>
@@ -58,7 +59,7 @@ export function StepContainer({ post, prevPost, nextPost, children }: StepContai
             <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
               {prevPost ? (
                 <Link 
-                  href={`/step/${prevPost.slug}`}
+                  href={`/${collection}/step/${prevPost.slug}`}
                   className="group flex flex-col p-6 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 dark:hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5 transition-all"
                 >
                   <span className="text-xs font-mono text-slate-400 mb-2 flex items-center gap-1">
@@ -72,7 +73,7 @@ export function StepContainer({ post, prevPost, nextPost, children }: StepContai
 
               {nextPost ? (
                 <Link 
-                  href={`/step/${nextPost.slug}`}
+                  href={`/${collection}/step/${nextPost.slug}`}
                   className="group flex flex-col items-end text-right p-6 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 dark:hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5 transition-all"
                 >
                   <span className="text-xs font-mono text-slate-400 mb-2 flex items-center gap-1">

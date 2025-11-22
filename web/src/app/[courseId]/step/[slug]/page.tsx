@@ -17,16 +17,26 @@ const components = {
 };
 
 export async function generateStaticParams() {
-  const posts = getAllPosts();
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
+  // TODO: Dynamically list collections or hardcode known ones
+  const collections = ["nanochat", "transformers"];
+  
+  let params: { courseId: string; slug: string }[] = [];
+  
+  for (const courseId of collections) {
+    const posts = getAllPosts(courseId);
+    params = params.concat(posts.map((post) => ({
+      courseId,
+      slug: post.slug,
+    })));
+  }
+  
+  return params;
 }
 
-export default async function StepPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const post = await getPostBySlug(slug);
-  const allPosts = getAllPosts();
+export default async function StepPage({ params }: { params: Promise<{ courseId: string; slug: string }> }) {
+  const { courseId, slug } = await params;
+  const post = await getPostBySlug(courseId, slug);
+  const allPosts = getAllPosts(courseId);
 
   if (!post) {
     notFound();
@@ -41,6 +51,7 @@ export default async function StepPage({ params }: { params: Promise<{ slug: str
       post={post} 
       prevPost={prevPost} 
       nextPost={nextPost}
+      collection={courseId}
     >
       <MDXRemote source={post.content} components={components} />
     </StepContainer>
