@@ -14,15 +14,7 @@ export function Navbar() {
         </Link>
         
         <div className="flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
-          <Link href="/roadmap" className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
-            Roadmap
-          </Link>
-          <a 
-            href="https://github.com/karpathy/nanochat" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-          >
+          <a href="https://github.com/h3nock/ai-deep-dive" target="_blank" rel="noopener noreferrer" className="hover:text-slate-900 dark:hover:text-white transition-colors">
             GitHub
           </a>
         </div>

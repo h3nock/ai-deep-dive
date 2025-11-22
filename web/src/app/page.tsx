@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { ArrowRight, Terminal, Cpu, MessageSquare, Zap, BarChart3, Layers, ChevronRight, Database, Code2 } from "lucide-react";
+import { CourseCard } from "@/components/CourseCard";
+import { Terminal, Network, Image as ImageIcon, Code2, Cpu, Zap } from "lucide-react";
 
 export default function Home() {
   return (
@@ -9,127 +10,127 @@ export default function Home() {
       
       <main>
         {/* Hero Section */}
-        <section className="relative pt-20 pb-32 md:pt-32 md:pb-48 overflow-hidden">
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="max-w-4xl mx-auto text-center">
-              
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 dark:text-white mb-8 leading-tight animate-fade-in-up delay-100">
-                Build NanoChat <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 animate-gradient-shift">
-                  From Scratch
-                </span>
-              </h1>
-              
-              <p className="text-xl text-slate-600 dark:text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-200">
-                A hands-on, interactive course where you code every component yourself. Master the internals of LLMs, from the tokenizer to reinforcement learning.
+        <section className="relative pt-24 pb-32 overflow-hidden">
+          <div className="absolute inset-0 bg-grid-pattern [mask-image:linear-gradient(to_bottom,white,transparent)] pointer-events-none -z-10"></div>
+          
+          <div className="container mx-auto px-4 text-center max-w-4xl relative z-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-blue-600 dark:text-blue-300 text-xs font-bold mb-8 tracking-widest uppercase">
+              The Engineer's AI Lab
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 text-slate-900 dark:text-white">
+              Master AI by <br className="hidden md:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                Building It.
+              </span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed mb-12">
+              No black boxes. No hand-waving. <br />
+              We build state-of-the-art AI systems from the ground up.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link 
+                href="#courses" 
+                className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5"
+              >
+                Explore Courses
+              </Link>
+              <a 
+                href="https://github.com/h3nock/ai-deep-dive" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-white font-bold text-lg transition-all"
+              >
+                View Source
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* Course Catalog */}
+        <section id="courses" className="py-24 bg-slate-50/50 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+                Deep Dive Curriculum
+              </h2>
+              <p className="text-lg text-slate-600 dark:text-slate-400">
+                Choose your track. Every course is a complete build-from-scratch experience.
               </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              <CourseCard 
+                title="Transformer Internals"
+                description="The foundation of modern AI. A rigorous deep dive into the mathematical and architectural building blocks of the Transformer. Master the theory before you build the model."
+                icon={<Network className="w-6 h-6" />}
+                href="/transformers"
+                tags={["Math", "Architecture", "Theory"]}
+                status="available"
+                color="purple"
+              />
+
+              <CourseCard 
+                title="NanoChat: Build a GPT"
+                description="Apply your knowledge. Build a production-grade GPT from scratch. We implement the tokenizer, training loop, and inference engine to create a working chatbot."
+                icon={<Terminal className="w-6 h-6" />}
+                href="/nanochat"
+                tags={["Python", "PyTorch", "Rust"]}
+                status="available"
+                color="blue"
+              />
               
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
-                <Link href="/roadmap" className="w-full sm:w-auto px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
-                  Start Coding <ArrowRight className="w-4 h-4" />
-                </Link>
-                <a href="https://github.com/karpathy/nanochat" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-full font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2">
-                  View Source
-                </a>
+              <CourseCard 
+                title="Diffusion from Scratch"
+                description="Understand how modern image generators work by building a stable diffusion model from pure noise."
+                icon={<ImageIcon className="w-6 h-6" />}
+                tags={["Generative", "Vision", "U-Net"]}
+                status="planned"
+                color="emerald"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Philosophy Section */}
+        <section className="py-24">
+          <div className="container mx-auto px-4 max-w-6xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-900 dark:text-white mb-4">
+                  <Code2 className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">First Principles</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  We strip away the magic. No <code className="text-sm font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">import openai</code>. No <code className="text-sm font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">HuggingFace.load()</code>. You write the raw PyTorch to understand exactly what happens inside the matrix multiplication.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-900 dark:text-white mb-4">
+                  <Cpu className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">End-to-End Engineering</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Real AI engineering goes beyond the notebook. We build the full lifecycle: from raw data ingestion and custom tokenizers to efficient training loops and real-time inference APIs.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-900 dark:text-white mb-4">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Interactive Learning</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Passive learning doesn't stick. Our platform forces you to engage: interactive visualizations for theory, and a browser-based IDE where you must write the code to proceed.
+                </p>
               </div>
             </div>
           </div>
         </section>
-
-        {/* The Pipeline Section */}
-        <section className="py-24 bg-white dark:bg-slate-950 relative border-t border-slate-100 dark:border-slate-900">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center mb-16">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight">The Implementation Pipeline</h2>
-              <p className="text-slate-600 dark:text-slate-400 text-lg">
-                You will write the code for each of these stages, building your understanding layer by layer.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
-              <PipelineStep 
-                number="01"
-                title="Environment"
-                slug="01-environment"
-                icon={<Terminal className="w-5 h-5" />}
-                description="Initialize your workspace. Set up uv, PyTorch, and the project structure from an empty directory."
-              />
-              <PipelineStep 
-                number="02"
-                title="Data Prep"
-                slug="02-data-prep"
-                icon={<Database className="w-5 h-5" />}
-                description="Write efficient data loaders. Download, shard, and process the FineWeb-EDU dataset yourself."
-              />
-              <PipelineStep 
-                number="03"
-                title="Tokenizer"
-                slug="03-tokenizer"
-                icon={<Code2 className="w-5 h-5" />}
-                description="Implement a BPE tokenizer in Rust. Compile it and bind it to Python for maximum performance."
-              />
-              <PipelineStep 
-                number="04"
-                title="Architecture"
-                slug="04-architecture"
-                icon={<Cpu className="w-5 h-5" />}
-                description="Code the GPT model: Causal Self-Attention, MLP, RMSNorm, and RoPE embeddings."
-              />
-              <PipelineStep 
-                number="05"
-                title="Pretraining"
-                slug="05-pretraining"
-                icon={<Zap className="w-5 h-5" />}
-                description="Write the training loop. Implement the Muon optimizer and train your model on 10B tokens."
-              />
-              <PipelineStep 
-                number="06"
-                title="Midtraining"
-                slug="06-midtraining"
-                icon={<Layers className="w-5 h-5" />}
-                description="Implement conversation handling. Adapt your model for chat and tool use (MMLU, GSM8K)."
-              />
-              <PipelineStep 
-                number="07"
-                title="SFT"
-                slug="07-sft"
-                icon={<MessageSquare className="w-5 h-5" />}
-                description="Fine-tune for instruction following. Implement the SFT data pipeline and training logic."
-              />
-              <PipelineStep 
-                number="08"
-                title="RL"
-                slug="08-rl"
-                icon={<BarChart3 className="w-5 h-5" />}
-                description="Implement GRPO. Write the reinforcement learning loop to improve reasoning capabilities."
-              />
-            </div>
-          </div>
-        </section>
-
       </main>
     </div>
   );
 }
-
-function PipelineStep({ number, title, slug, icon, description }: { number: string, title: string, slug: string, icon: React.ReactNode, description: string }) {
-  return (
-    <Link href={`/step/${slug}`} className="group block">
-      <div className="flex items-center gap-3 mb-4">
-        <span className="text-xs font-mono text-slate-400 dark:text-slate-500">{number}</span>
-        <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors"></div>
-      </div>
-      <div className="flex items-center gap-3 mb-3 text-slate-900 dark:text-white">
-        <div className="p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-          {icon}
-        </div>
-        <h3 className="text-lg font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{title}</h3>
-      </div>
-      <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
-        {description}
-      </p>
-    </Link>
-  );
-}
-
-
