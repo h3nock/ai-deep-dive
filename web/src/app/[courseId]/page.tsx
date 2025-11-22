@@ -7,6 +7,32 @@ export default async function RoadmapPage({ params }: { params: Promise<{ course
   const { courseId } = await params;
   const posts = getAllPosts(courseId);
 
+  const courseMetadata: Record<string, { title: string; description: React.ReactNode }> = {
+    nanochat: {
+      title: "Build a GPT from Scratch",
+      description: (
+        <>
+          Go beyond theory. Build a functional GPT from scratch. <br className="hidden md:block" />
+          You will implement the tokenizer, training loop, and inference engine in pure PyTorch.
+        </>
+      ),
+    },
+    transformers: {
+      title: "Deconstructing the Transformer",
+      description: (
+        <>
+          Understand the architecture by deriving it. <br className="hidden md:block" />
+          We implement every component of the Transformer—from self-attention to layer normalization—from first principles.
+        </>
+      ),
+    },
+  };
+
+  const metadata = courseMetadata[courseId] || {
+    title: "The Journey",
+    description: "Select a course to begin your deep dive.",
+  };
+
   // Map step numbers to icons
   const getIcon = (step: number) => {
     switch (step) {
@@ -31,15 +57,11 @@ export default async function RoadmapPage({ params }: { params: Promise<{ course
         <div className="absolute inset-0 bg-grid-pattern [mask-image:linear-gradient(to_bottom,white,transparent)] pointer-events-none -z-10"></div>
 
         <div className="mb-16 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-blue-600 dark:text-blue-300 text-xs font-bold mb-6 tracking-widest uppercase">
-            Deep Dive Curriculum
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-slate-900 dark:text-white">
-            The Build Journey
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 text-slate-900 dark:text-white">
+            {metadata.title}
           </h1>
-          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            From empty directory to working LLM. <br className="hidden md:block" />
-            Master the stack by coding every component yourself.
+          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
+            {metadata.description}
           </p>
         </div>
 
