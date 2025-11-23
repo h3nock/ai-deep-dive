@@ -1,0 +1,24 @@
+---
+title: "P2: Model Assembly"
+step: 11.2
+description: "Build the GPT Architecture."
+hidden: true
+---
+
+<SplitLayout>
+  <Step title="Final Assembly">
+    <Description>
+      ## The Architecture
+      
+      We are ready to build the full `GPT` class.
+      
+      1.  **Embeddings**: Token embeddings + Positional embeddings.
+      2.  **Transformer Stack**: A list of $N$ `GPTBlock`s (e.g., 12 layers for GPT-2 Small).
+      3.  **Final Norm**: One last LayerNorm.
+      4.  **Language Modeling Head**: A linear layer that projects the output back to the vocabulary size to predict the next token logits.
+      
+      ### Your Task
+      Assemble the `GPT` class. It should take indices as input and return logits.
+    </Description>
+  </Step>
+</SplitLayout>

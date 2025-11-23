@@ -1,0 +1,31 @@
+---
+title: "Embeddings & Positional Encoding"
+step: 3
+description: "Creating the semantic space and injecting order into the sequence."
+---
+
+<SplitLayout>
+  <Step>
+    <Description>
+      ## Embeddings: The Semantic Space
+      
+      We have integers (e.g., `[45, 12]`). But `45` isn't "close" to `12` mathematically. We need vectors.
+      
+      An **Embedding Layer** is a lookup table. Token `45` grabs the 45th row of the matrix. These vectors are learned during training to represent the *meaning* of the token.
+
+      ## Positional Encodings: Injecting Order
+      
+      Transformers process all tokens in parallel. They have no idea that "Man bites dog" is different from "Dog bites man".
+      
+      We fix this by **adding** a position vector to each embedding vector.
+      
+      $$
+      PE_{(pos, 2i)} = \sin(pos / 10000^{2i/d_{model}})
+      $$
+
+      ### Your Task
+      1. Create an `Embeddings` module using `nn.Embedding`.
+      2. Implement the `PositionalEncoding` module.
+    </Description>
+  </Step>
+</SplitLayout>

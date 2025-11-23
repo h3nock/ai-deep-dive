@@ -1,0 +1,28 @@
+---
+title: "Residual Connections"
+step: 7
+description: "The gradient superhighway: enabling deep network training."
+---
+
+<SplitLayout>
+  <Step>
+    <Description>
+      ## The Vanishing Gradient Problem
+      
+      Deep networks suffer from vanishing gradients. The signal gets lost as it travels back through many layers.
+      **Residual Connections** (Skip Connections) provide a direct path for the gradient to flow.
+      
+      $$
+      \text{Output} = x + \text{Layer}(x)
+      $$
+      
+      ## In the Transformer
+      We apply this around every sub-layer:
+      1.  $x = x + \text{Attention}(x)$
+      2.  $x = x + \text{FFN}(x)$
+
+      ### Your Task
+      Update your modules to include these addition operations. This is a small code change with a massive impact.
+    </Description>
+  </Step>
+</SplitLayout>

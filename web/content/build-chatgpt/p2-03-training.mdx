@@ -1,0 +1,23 @@
+---
+title: "P2: Training at Scale"
+step: 11.3
+description: "MLOps: Checkpointing, Logging, and Validation."
+hidden: true
+---
+
+<SplitLayout>
+  <Step title="Professional Training">
+    <Description>
+      ## MLOps Essentials
+      
+      Writing a `for` loop is easy. Writing a training loop that doesn't crash after 2 days and lose all your progress is hard.
+      
+      1.  **Checkpointing**: Save your model weights (`model.state_dict()`) every $N$ steps.
+      2.  **Logging**: Don't just `print()`. Use a logger or a tool like **Weights & Biases**.
+      3.  **Validation**: Periodically evaluate on a held-out set.
+      
+      ### Your Task
+      Implement a robust training loop that saves checkpoints and logs metrics.
+    </Description>
+  </Step>
+</SplitLayout>

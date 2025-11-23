@@ -12,6 +12,7 @@ export interface PostData {
   content: any; // Serialized MDX or raw string
   challenge?: string;
   collection: string;
+  hidden?: boolean;
 }
 
 export function getAllPosts(collection: string): Omit<PostData, "content">[] {
@@ -43,6 +44,7 @@ export function getAllPosts(collection: string): Omit<PostData, "content">[] {
         description: data.description,
         challenge: data.challenge,
         collection,
+        hidden: data.hidden,
       };
     });
 

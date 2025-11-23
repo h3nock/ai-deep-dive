@@ -1,0 +1,28 @@
+---
+title: "Understanding Text"
+step: 1
+description: "From Unicode to Bytes: How computers actually 'read'."
+---
+
+<SplitLayout>
+  <Step>
+    <Description>
+      ## Text is just Bytes
+      
+      Before we build a brain, we must understand the input. To a computer, "Hello" is not a greeting; it's a sequence of numbers.
+      
+      ### Unicode & UTF-8
+      Every character you see on this screen is mapped to a unique number (Code Point) by the Unicode standard.
+      - 'A' -> U+0041
+      - '😊' -> U+1F60A
+      
+      These code points are stored as **Bytes** (usually via UTF-8 encoding).
+      
+      ### The Challenge
+      Neural Networks do not process raw bytes well (too many possibilities, too long sequences). We need a way to group these bytes into meaningful chunks. This leads us to **Tokenization**.
+      
+      ### Your Task
+      We will start by inspecting raw text data in Python to see the underlying bytes.
+    </Description>
+  </Step>
+</SplitLayout>

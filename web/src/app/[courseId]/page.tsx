@@ -1,28 +1,19 @@
 import Link from "next/link";
 import { getAllPosts } from "@/lib/posts";
 import { Navbar } from "@/components/Navbar";
-import { ArrowRight, Terminal, Database, Code2, Cpu, Zap, Layers, MessageSquare, BarChart3, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Terminal, Database, Code2, Cpu, Zap, Layers, MessageSquare, BarChart3, CheckCircle2, Network } from "lucide-react";
 
 export default async function RoadmapPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params;
   const posts = getAllPosts(courseId);
 
   const courseMetadata: Record<string, { title: string; description: React.ReactNode }> = {
-    nanochat: {
-      title: "Build a GPT from Scratch",
+    "build-chatgpt": {
+      title: "Build ChatGPT from Scratch",
       description: (
         <>
-          Go beyond theory. Build a functional GPT from scratch. <br className="hidden md:block" />
-          You will implement the tokenizer, training loop, and inference engine in pure PyTorch.
-        </>
-      ),
-    },
-    transformers: {
-      title: "Deconstructing the Transformer",
-      description: (
-        <>
-          Understand the architecture by deriving it. <br className="hidden md:block" />
-          We implement every component of the Transformer—from self-attention to layer normalization—from first principles.
+          The ultimate deep dive. <br className="hidden md:block" />
+          We combine the theory of Transformers with the practice of building a production-grade GPT. From empty file to chatting with your creation.
         </>
       ),
     },
@@ -36,34 +27,39 @@ export default async function RoadmapPage({ params }: { params: Promise<{ course
   // Map step numbers to icons
   const getIcon = (step: number) => {
     switch (step) {
-      case 1: return <Terminal className="w-6 h-6" />;
-      case 2: return <Database className="w-6 h-6" />;
-      case 3: return <Code2 className="w-6 h-6" />;
-      case 4: return <Cpu className="w-6 h-6" />;
-      case 5: return <Zap className="w-6 h-6" />;
-      case 6: return <Layers className="w-6 h-6" />;
-      case 7: return <MessageSquare className="w-6 h-6" />;
-      case 8: return <BarChart3 className="w-6 h-6" />;
-      case 9: return <Layers className="w-6 h-6" />; // Reusing Layers for Block
-      case 10: return <CheckCircle2 className="w-6 h-6" />; // Final Assembly
+      case 1: return <Terminal className="w-6 h-6" />; // Understanding Text
+      case 2: return <Terminal className="w-6 h-6" />; // Tokenization
+      case 3: return <Database className="w-6 h-6" />; // Embeddings
+      case 4: return <Zap className="w-6 h-6" />; // Attention
+      case 5: return <Code2 className="w-6 h-6" />; // Implementing Attention
+      case 6: return <Layers className="w-6 h-6" />; // LayerNorm
+      case 7: return <Network className="w-6 h-6" />; // Residuals
+      case 8: return <Network className="w-6 h-6" />; // Cross-Attention
+      case 9: return <CheckCircle2 className="w-6 h-6" />; // Project 1: Translator
+      case 10: return <Layers className="w-6 h-6" />; // Decoder Shift
+      case 11: return <Cpu className="w-6 h-6" />; // Project 2: GPT
       default: return <CheckCircle2 className="w-6 h-6" />;
     }
   };
 
-  return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans selection:bg-blue-500/20">
-      <Navbar />
-      
-      <main className="relative pt-20 pb-24 container mx-auto px-4 max-w-5xl">
-        {/* Grid Background */}
-        <div className="absolute inset-0 bg-grid-pattern [mask-image:linear-gradient(to_bottom,white,transparent)] pointer-events-none -z-10"></div>
+  const visiblePosts = posts.filter(post => !post.hidden);
 
-        <div className="mb-16 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 text-slate-900 dark:text-white">
-            {metadata.title}
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mb-12">
+          <Link 
+            href="/"
+            className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Courses
+          </Link>
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4 capitalize">
+            {courseId.replace('-', ' ')}
           </h1>
-          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
-            {metadata.description}
+          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl">
+            Master the architecture behind modern LLMs through hands-on implementation.
           </p>
         </div>
 
@@ -71,7 +67,7 @@ export default async function RoadmapPage({ params }: { params: Promise<{ course
           {/* Connecting Line (Desktop) */}
           <div className="hidden md:block absolute left-[2.25rem] top-8 bottom-8 w-px bg-slate-200 dark:bg-slate-800 -z-10"></div>
 
-          {posts.map((post) => (
+          {visiblePosts.map((post) => (
             <div key={post.slug} className="group relative flex gap-6 md:gap-8">
               
               {/* Icon Marker */}
@@ -108,7 +104,7 @@ export default async function RoadmapPage({ params }: { params: Promise<{ course
             </div>
           ))}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

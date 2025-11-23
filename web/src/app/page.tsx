@@ -60,21 +60,11 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               <CourseCard 
-                title="Transformer Internals"
-                description="The foundation of modern AI. A rigorous deep dive into the mathematical and architectural building blocks of the Transformer."
-                icon={<Network className="w-6 h-6" />}
-                href="/transformers"
-                tags={["Architecture", "Transformers"]}
-                status="available"
-                color="purple"
-              />
-
-              <CourseCard 
-                title="NanoChat: Build a GPT"
-                description="Build a production-grade GPT from scratch. We implement the tokenizer, training loop, and inference engine to create a working chatbot."
+                title="Build ChatGPT from Scratch"
+                description="The ultimate deep dive. We combine the theory of Transformers with the practice of building a production-grade GPT. From empty file to chatting with your creation."
                 icon={<Terminal className="w-6 h-6" />}
-                href="/nanochat"
-                tags={["Python", "PyTorch", "GPT"]}
+                href="/build-chatgpt"
+                tags={["Transformers", "PyTorch", "GPT", "End-to-End"]}
                 status="available"
                 color="blue"
               />

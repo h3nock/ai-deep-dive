@@ -7,6 +7,7 @@ import { Step } from "@/components/mdx/Step";
 import { Description } from "@/components/mdx/Description";
 import { Action } from "@/components/mdx/Action";
 import { Command } from "@/components/mdx/Command";
+import { ProjectRoadmap } from "@/components/mdx/ProjectRoadmap";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
@@ -16,6 +17,7 @@ const components = {
   Description,
   Action,
   Command,
+  ProjectRoadmap,
 };
 
 export async function generateStaticParams() {

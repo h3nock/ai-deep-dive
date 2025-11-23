@@ -1,0 +1,29 @@
+---
+title: "Tokenization"
+step: 2
+description: "Turn raw text into a sequence of integers: the first step of understanding."
+---
+
+<SplitLayout>
+  <Step>
+    <Description>
+      ## The Problem
+      We have raw bytes. Now we need **Tokens**. A token is the atomic unit of meaning for an LLM.
+
+      ## Approaches
+      1.  **Character Level**: 'a' -> 1, 'b' -> 2.
+          *   *Pros*: Small vocabulary.
+          *   *Cons*: Sequences are too long.
+      2.  **Word Level**: "apple" -> 1.
+          *   *Pros*: Short sequences.
+          *   *Cons*: Massive vocabulary, cannot handle unknown words.
+      3.  **Subword (BPE)**: "ing" -> 1.
+          *   *Pros*: The industry standard (used by GPT-4). It learns the most common pairs of characters to merge.
+
+      ## Your Task
+      Understand the interface of a Tokenizer:
+      - `encode(text) -> List[int]`
+      - `decode(List[int]) -> text`
+    </Description>
+  </Step>
+</SplitLayout>

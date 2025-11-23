@@ -15,6 +15,29 @@ interface StepContainerProps {
 }
 
 export function StepContainer({ post, prevPost, nextPost, children, collection }: StepContainerProps) {
+  
+  // Smart Back Link Logic
+  const getBackLink = () => {
+    if (post.slug.startsWith("p1-")) {
+      return {
+        href: `/${collection}/step/09-project-translator`,
+        label: "Back to Project 1"
+      };
+    }
+    if (post.slug.startsWith("p2-")) {
+      return {
+        href: `/${collection}/step/11-project-gpt`,
+        label: "Back to Project 2"
+      };
+    }
+    return {
+      href: `/${collection}`,
+      label: "Back to Roadmap"
+    };
+  };
+
+  const backLink = getBackLink();
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans selection:bg-blue-500/20">
       <Navbar />
@@ -28,9 +51,9 @@ export function StepContainer({ post, prevPost, nextPost, children, collection }
             {/* Header */}
             <div className="mb-12">
               <div className="flex items-center gap-3 mb-6 text-sm text-slate-500 dark:text-slate-400">
-                <Link href={`/${collection}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
+                <Link href={backLink.href} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
                   <ChevronLeft className="w-4 h-4" />
-                  Back to Roadmap
+                  {backLink.label}
                 </Link>
                 <span className="text-slate-300 dark:text-slate-700">/</span>
                 <span className="uppercase tracking-wider font-mono text-xs">Step {post.step.toString().padStart(2, '0')}</span>
@@ -45,9 +68,9 @@ export function StepContainer({ post, prevPost, nextPost, children, collection }
                     {post.description}
                   </p>
                 </div>
-                <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                <Link href={backLink.href} className="hidden md:flex items-center justify-center w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors" title={backLink.label}>
                   <BookOpen className="w-6 h-6" />
-                </div>
+                </Link>
               </div>
             </div>
 

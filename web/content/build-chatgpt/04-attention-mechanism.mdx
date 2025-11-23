@@ -1,0 +1,32 @@
+---
+title: "The Attention Mechanism"
+step: 4
+description: "The core engine of the Transformer: Query, Key, and Value."
+---
+
+<SplitLayout>
+  <Step>
+    <Description>
+      ## Single-Head Attention
+      
+      This is the engine of the Transformer. It allows tokens to "talk" to each other.
+      
+      ### The Mechanism
+      Every token produces three vectors:
+      1.  **Query ($Q$)**: "What am I looking for?"
+      2.  **Key ($K$)**: "What do I contain?"
+      3.  **Value ($V$)**: "If you match me, here's my information."
+      
+      ### The Math
+      
+      $$
+      \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+      $$
+      
+      We calculate the dot product between every Query and every Key to get a similarity score.
+
+      ### Your Task
+      We will implement the `Head` class from scratch using `torch.matmul`.
+    </Description>
+  </Step>
+</SplitLayout>
