@@ -4,13 +4,23 @@ import matter from "gray-matter";
 
 const contentDirectory = path.join(process.cwd(), "content");
 
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  initialCode: string;
+  hint?: string;
+  difficulty?: "Easy" | "Medium" | "Hard";
+}
+
 export interface PostData {
   slug: string;
   title: string;
   step: number;
   description: string;
   content: any; // Serialized MDX or raw string
-  challenge?: string;
+  challenge?: string; // Legacy
+  challenges?: Challenge[]; // New list
   collection: string;
   hidden?: boolean;
 }
@@ -43,6 +53,7 @@ export function getAllPosts(collection: string): Omit<PostData, "content">[] {
         step: data.step,
         description: data.description,
         challenge: data.challenge,
+        challenges: data.challenges,
         collection,
         hidden: data.hidden,
       };
@@ -86,6 +97,7 @@ export async function getPostBySlug(collection: string, slug: string): Promise<P
       description: data.description,
       content: content, // Raw string
       challenge: data.challenge,
+      challenges: data.challenges,
       collection,
     };
   } catch (e) {
