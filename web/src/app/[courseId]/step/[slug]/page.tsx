@@ -8,7 +8,12 @@ import { Description } from "@/components/mdx/Description";
 import { Action } from "@/components/mdx/Action";
 import { Command } from "@/components/mdx/Command";
 import { ProjectRoadmap } from "@/components/mdx/ProjectRoadmap";
+import { ThinkingProcess } from "@/components/mdx/ThinkingProcess";
 import remarkMath from "remark-math";
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/mdx/Table";
+import { Callout } from "@/components/mdx/Callout";
+import { ByteStream } from "@/components/mdx/ByteStream";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 
 const components = {
@@ -18,6 +23,15 @@ const components = {
   Action,
   Command,
   ProjectRoadmap,
+  ThinkingProcess,
+  Callout,
+  ByteStream,
+  table: Table,
+  thead: TableHead,
+  tbody: TableBody,
+  tr: TableRow,
+  th: TableHeader,
+  td: TableCell,
 };
 
 export async function generateStaticParams() {
@@ -62,7 +76,7 @@ export default async function StepPage({ params }: { params: Promise<{ courseId:
         components={components}
         options={{
           mdxOptions: {
-            remarkPlugins: [remarkMath],
+            remarkPlugins: [remarkGfm, remarkMath],
             rehypePlugins: [rehypeKatex],
           }
         }}
