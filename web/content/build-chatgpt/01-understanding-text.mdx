@@ -1,28 +1,190 @@
 ---
 title: "Understanding Text"
 step: 1
-description: "From Unicode to Bytes: How computers actually 'read'."
+description: "How computers represent language (Unicode & UTF-8)."
+challenges:
+  - id: "encoder"
+    title: "Challenge 1: The Encoder"
+    difficulty: "Easy"
+    description: |
+      **Task:** Implement a function `encode_string` that converts a given string into a list of integers representing its UTF-8 byte values.
+
+      **Input:** `s = "Hello 🌍"`
+
+      **Output:** `[72, 101, 108, 108, 111, 32, 240, 159, 140, 141]`
+    initialCode: |
+      def encode_string(text: str) -> list[int]:
+          # TODO: Convert the text to utf-8 bytes and return as a list of integers
+          pass
+  - id: "byte-inspector"
+    title: "Challenge 2: The Byte Inspector"
+    difficulty: "Medium"
+    description: |
+      **Task:** Implement a function `count_characters` that calculates the number of **actual characters** in a list of UTF-8 bytes without decoding the entire string.
+
+      **Hint:** In UTF-8, you can identify the start of a new character by looking at the bits of the byte.
+
+      * If a byte starts with `0...` or `11...`, it is the start of a new character.
+      * If a byte starts with `10...`, it is a "continuation byte" (part of the previous character).
+    initialCode: |
+      def count_characters(byte_list: list[int]) -> int:
+          count = 0
+          # TODO: Iterate through bytes and count the start of new characters
+          return count
 ---
 
-<SplitLayout>
-  <Step>
+<Description>
+Large Language Models are trained on massive datasets of text. Before we can feed this text into a model, we need to understand how computers represent language and how we convert human-readable characters into the numerical format computers use.
+</Description>
+
+<Step title="1. Text Representation">
+  <Description>
+    Computers only understand binary numbers (0s and 1s). To process text, we need a consistent way to map characters to numbers. This is handled through **conventions**, agreed-upon standards that the industry follows. Currently, **Unicode** is the universal standard. Unicode acts as a large lookup table that assigns a unique number to every character in almost every language. This number is called a **Code Point**. We usually represent these code points with the notation `U+XXXX` (where XXXX is a hexadecimal number).
+  </Description>
+
+  | Character | Description | Unicode Code Point | Decimal Value |
+  | :--- | :--- | :--- | :--- |
+  | **A** | Latin Capital Letter A | `U+0041` | 65 |
+  | **a** | Latin Small Letter a | `U+0061` | 97 |
+  | **é** | Latin 'e' with acute | `U+00E9` | 233 |
+  | **ሀ** | Amharic Letter Ha | `U+1200` | 4608 |
+  | **😊** | Smiling Face | `U+1F60A` | 128,522 |
+
+  <Callout type="note" title="Important Distinction">
+    Unicode defines **what** the number is (the abstract ID), but it does not dictate **how** that number is stored in memory (the bits). That is the job of the *Encoding*.
+  </Callout>
+</Step>
+
+<Step title="2. Encoding (UTF-8)">
+  <Description>
+    If we simply stored the code points directly, it would be inefficient. The largest Unicode values (like emojis) require **4 bytes** (32 bits) to store. If we used 4 bytes for *every* character (a format called UTF-32), a simple text file of English letters (which only need 1 byte) would be four times larger than necessary.
+  </Description>
+
+  <Description>
+    Let's see what happens if we store the word **"Hello"** using UTF-32. For code points that don't require 4 bytes, the computer has to pad the remaining space with zeros.
+  </Description>
+
+  | Character | Code Point | Stored in UTF-32 (Hex) |
+  | :--- | :--- | :--- |
+  | **H** | `U+0048` | `00 00 00 48` |
+  | **e** | `U+0065` | `00 00 00 65` |
+  | **l** | `U+006C` | `00 00 00 6C` |
+  | **l** | `U+006C` | `00 00 00 6C` |
+  | **o** | `U+006F` | `00 00 00 6F` |
+
+  <Callout type="warning" title="The Problem with UTF-32">
+    **Total Size:** 20 Bytes.
+    **Wasted Space:** 15 Bytes (75% of the file is just empty zeros).
+
+    For a massive dataset like Common Crawl (which LLMs are trained on), using UTF-32 would quadruple the storage costs and download times for no added value.
+  </Callout>
+
+  <Description>
+    To solve this, we use **UTF-8**. It is a **variable-width** encoding scheme:
+
+    * **1 Byte:** Standard characters (A-Z).
+    * **2 Bytes:** European characters with accents.
+    * **3 Bytes:** Asian scripts (Chinese, Japanese), Amharic.
+    * **4 Bytes:** Emojis and complex symbols.
+  </Description>
+</Step>
+
+<Step title="Concrete Example">
+  <Description>
+    Let's see how the string **"Hi 👋"** is converted into bytes using UTF-8.
+  </Description>
+
+  <div className="flex flex-col gap-6 my-6">
+    <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+      <h4 className="font-bold text-slate-900 dark:text-white mb-4">1. Breakdown</h4>
+      <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+        <li className="flex justify-between">
+          <span>H (U+0048)</span>
+          <span className="font-mono text-slate-900 dark:text-slate-200">Decimal 72</span>
+        </li>
+        <li className="flex justify-between">
+          <span>i (U+0069)</span>
+          <span className="font-mono text-slate-900 dark:text-slate-200">Decimal 105</span>
+        </li>
+        <li className="flex justify-between">
+          <span>Space (U+0020)</span>
+          <span className="font-mono text-slate-900 dark:text-slate-200">Decimal 32</span>
+        </li>
+        <li className="flex justify-between">
+          <span>👋 (U+1F44B)</span>
+          <span className="font-mono text-slate-900 dark:text-slate-200">Decimal 128,443</span>
+        </li>
+      </ul>
+    </div>
+
+    <div>
+      <h4 className="font-bold text-slate-900 dark:text-white mb-2">2. Byte Conversion</h4>
+      <p className="text-lg leading-8 text-slate-700 dark:text-slate-300 mb-6">
+        The first three characters fit into standard ASCII limits, so they take 1 byte each. The emoji is a large number, so UTF-8 splits it into 4 distinct bytes.
+      </p>
+      <ByteStream bytes={[72, 105, 32, 240, 159, 145, 139]} label="Final Byte Stream" />
+    </div>
+  </div>
+
+  <Description>
+    This list of integers is the raw input that any text processing system actually sees.
+  </Description>
+</Step>
+
+<Step title="3. Mini-Challenges">
+  <Description>
+    We have prepared a dedicated **Challenge Workspace** for you to practice. Click the **Challenges** tab at the top of the page to open the editor.
+  </Description>
+</Step>
+
+<Step title="4. Training on Raw Bytes">
+  <Description>
+    Now that we know we can convert any text into a stream of bytes, a logical step is to simply feed these raw byte values directly into the model. In this design, the model would just read the stream of bytes one by one and try to predict the next byte in the sequence. Assuming we built the system using this design, let's answer the following questions. 
+
+    1. What would be the superpowers of the model? 
+    2. What specific problems would the model run into? 
+  </Description>
+
+  <ThinkingProcess 
+    title="Stop & Think"
+    hint={
+      <div>
+        Compare this "Byte" approach to the complete opposite extreme: <strong>The Word-Level Approach.</strong>
+        <br/><br/>
+        Imagine that instead of bytes, we assigned a unique ID to every unique word (e.g., "Apple" = 502, "Zebra" = 804, "ሰላም "= 90,210).
+        <ul className="list-disc pl-4 mt-2">
+          <li>How would the <strong>Input Size</strong> (Sequence Length) compare between Bytes vs. Words?</li>
+          <li>How would the <strong>Vocabulary Size</strong> (Memory needed for the lookup table) compare?</li>
+        </ul>
+      </div>
+    }
+  >
+
     <Description>
-      ## Text is just Bytes
-      
-      Before we build a brain, we must understand the input. To a computer, "Hello" is not a greeting; it's a sequence of numbers.
-      
-      ### Unicode & UTF-8
-      Every character you see on this screen is mapped to a unique number (Code Point) by the Unicode standard.
-      - 'A' -> U+0041
-      - '😊' -> U+1F60A
-      
-      These code points are stored as **Bytes** (usually via UTF-8 encoding).
-      
-      ### The Challenge
-      Neural Networks do not process raw bytes well (too many possibilities, too long sequences). We need a way to group these bytes into meaningful chunks. This leads us to **Tokenization**.
-      
-      ### Your Task
-      We will start by inspecting raw text data in Python to see the underlying bytes.
+      This approach is actually very logical. In fact, if you tried this, it *would* work—the model would learn. But as we scale up, we run into specific engineering trade-offs.
     </Description>
-  </Step>
-</SplitLayout>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+      <div className="p-6 rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/30">
+        <h4 className="font-bold text-green-800 dark:text-green-200 mb-3">The Superpower</h4>
+        <ul className="space-y-2 text-sm text-green-900 dark:text-green-100">
+          <li>• <strong>It can read anything:</strong> English, Chinese, Python code, or even image files.</li>
+          <li>• <strong>Tiny Memory:</strong> Only needs to learn 256 possible input values.</li>
+        </ul>
+      </div>
+
+      <div className="p-6 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800/30">
+        <h4 className="font-bold text-red-800 dark:text-red-200 mb-3">The Bottleneck</h4>
+        <ul className="space-y-2 text-sm text-red-900 dark:text-red-100">
+          <li>• <strong>Too "zoomed in":</strong> "Apple" becomes 5 separate steps.</li>
+          <li>• <strong>Memory Limit:</strong> A 4-word sentence becomes 19 numbers, filling up context window 5x faster.</li>
+        </ul>
+      </div>
+    </div>
+
+    <Description>
+      **The Solution:** We need a middle ground between **Words** and **Bytes**. We need a way to group common characters together into meaningful chunks, but without storing every word in the dictionary.
+    </Description>
+
+  </ThinkingProcess>
+</Step>
