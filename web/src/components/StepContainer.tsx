@@ -44,9 +44,8 @@ export function StepContainer({ post, prevPost, nextPost, children, collection }
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans selection:bg-blue-500/20">
-      <Navbar />
       
-      <div className="flex h-[calc(100vh-4rem)] pt-16">
+      <div className="flex h-screen">
         {/* Main Content Area - Full Width for Guide */}
         <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-950 overflow-y-auto">
           
@@ -97,7 +96,7 @@ export function StepContainer({ post, prevPost, nextPost, children, collection }
                     {backLink.label}
                   </Link>
                   <span className="text-slate-300 dark:text-slate-700">/</span>
-                  <span className="uppercase tracking-wider font-mono text-xs">Step {post.step.toString().padStart(2, '0')}</span>
+                  <span className="uppercase tracking-wider font-mono text-xs">Step {(post.step?.toString() || '0').padStart(2, '0')}</span>
                 </div>
 
                 <div className="flex items-start justify-between gap-8">

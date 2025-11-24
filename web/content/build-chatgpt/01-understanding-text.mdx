@@ -16,21 +16,42 @@ challenges:
       def encode_string(text: str) -> list[int]:
           # TODO: Convert the text to utf-8 bytes and return as a list of integers
           pass
+    arguments:
+      - name: text
+        type: string
+    defaultTestCases:
+      - id: "case1"
+        inputs:
+          text: '"Hello World"'
+        expected: '"48656c6c6f20576f726c64"'
+      - id: "case2"
+        inputs:
+          text: '"AI"'
+        expected: '"4149"'
+    executionSnippet: |
+      print(encode_string(text))
   - id: "byte-inspector"
-    title: "Challenge 2: The Byte Inspector"
-    difficulty: "Medium"
-    description: |
-      **Task:** Implement a function `count_characters` that calculates the number of **actual characters** in a list of UTF-8 bytes without decoding the entire string.
-
-      **Hint:** In UTF-8, you can identify the start of a new character by looking at the bits of the byte.
-
-      * If a byte starts with `0...` or `11...`, it is the start of a new character.
-      * If a byte starts with `10...`, it is a "continuation byte" (part of the previous character).
+    title: "The Byte Inspector"
+    description: "Write a function `inspect_bytes(byte_list)` that takes a list of integers (0-255) representing bytes and returns a string description. If the byte is printable ASCII (32-126), show the character. Otherwise, show 'Hex: XX'."
     initialCode: |
-      def count_characters(byte_list: list[int]) -> int:
-          count = 0
-          # TODO: Iterate through bytes and count the start of new characters
-          return count
+      def inspect_bytes(byte_list):
+          # Your code here
+          pass
+    difficulty: "Medium"
+    arguments:
+      - name: byte_list
+        type: List[int]
+    defaultTestCases:
+      - id: "case1"
+        inputs:
+          byte_list: "[72, 101, 108, 108, 111]"
+        expected: '"H e l l o"'
+      - id: "case2"
+        inputs:
+          byte_list: "[0, 255, 65]"
+        expected: '"Hex: 00 Hex: FF A"'
+    executionSnippet: |
+      print(inspect_bytes(byte_list))
 ---
 
 <Description>

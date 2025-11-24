@@ -11,6 +11,9 @@ export interface Challenge {
   initialCode: string;
   hint?: string;
   difficulty?: "Easy" | "Medium" | "Hard";
+  arguments?: { name: string; type: string }[];
+  defaultTestCases?: { id: string; inputs: Record<string, string>; expected: string }[];
+  executionSnippet?: string;
 }
 
 export interface PostData {
