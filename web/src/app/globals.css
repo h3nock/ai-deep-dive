@@ -58,3 +58,23 @@ body {
   background-size: 200% 200%;
   animation: gradient-shift 8s ease infinite;
 }
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #202020; /* Dark background, similar to editor's overall dark theme */
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4a4a4a; /* Medium dark gray for the thumb */
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #606060; /* Slightly lighter gray on hover */
+}
