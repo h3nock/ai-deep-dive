@@ -382,23 +382,21 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
               <button 
                 onClick={() => setActiveChallengeIndex(null)}
                 className="flex items-center gap-1 px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-500 text-sm font-medium transition-colors"
+                title="Back to Challenges"
               >
                 <ChevronLeft className="w-4 h-4" />
-                Challenges
               </button>
-              <div className="flex-1">
+              <div className="flex-1 flex justify-between items-center">
                 <h2 className="font-bold text-slate-900 dark:text-white truncate">
                   {activeChallenge.title}
                 </h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    activeChallenge.difficulty === 'Easy' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                    activeChallenge.difficulty === 'Medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                    'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                  }`}>
-                    {activeChallenge.difficulty || 'Medium'}
-                  </span>
-                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  activeChallenge.difficulty === 'Easy' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                  activeChallenge.difficulty === 'Medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                }`}>
+                  {activeChallenge.difficulty || 'Medium'}
+                </span>
               </div>
             </div>
 
