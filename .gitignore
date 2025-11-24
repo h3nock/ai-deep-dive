@@ -1,1 +1,7 @@
+harness.py
+main.py
+test_config.json
+tests.py
 drafts/
+.venv/
+.env/
