@@ -4,54 +4,61 @@ step: 1
 description: "How computers represent language (Unicode & UTF-8)."
 challenges:
   - id: "encoder"
-    title: "Challenge 1: The Encoder"
+    title: "The Encoder"
     difficulty: "Easy"
     description: |
-      **Task:** Implement a function `encode_string` that converts a given string into a list of integers representing its UTF-8 byte values.
+      Implement a function `encode_string` that converts a given string into a list of integers representing its UTF-8 byte values.
 
-      **Input:** `s = "Hello 🌍"`
-
-      **Output:** `[72, 101, 108, 108, 111, 32, 240, 159, 140, 141]`
+      **Example:**
+      *   **Input:** `s = "Hello 🌍"`
+      *   **Output:** `[72, 101, 108, 108, 111, 32, 240, 159, 140, 141]`
     initialCode: |
       def encode_string(text: str) -> list[int]:
           # TODO: Convert the text to utf-8 bytes and return as a list of integers
           pass
     arguments:
       - name: text
-        type: string
+        type: str
     defaultTestCases:
       - id: "case1"
         inputs:
-          text: '"Hello World"'
-        expected: '"48656c6c6f20576f726c64"'
+          text: '"Hello 🌍"'
+        expected: "[72, 101, 108, 108, 111, 32, 240, 159, 140, 141]"
       - id: "case2"
         inputs:
-          text: '"AI"'
-        expected: '"4149"'
+          text: '"A"'
+        expected: "[65]"
     executionSnippet: |
       print(encode_string(text))
   - id: "byte-inspector"
     title: "The Byte Inspector"
-    description: "Write a function `inspect_bytes(byte_list)` that takes a list of integers (0-255) representing bytes and returns a string description. If the byte is printable ASCII (32-126), show the character. Otherwise, show 'Hex: XX'."
-    initialCode: |
-      def inspect_bytes(byte_list):
-          # Your code here
-          pass
     difficulty: "Medium"
+    description: |
+      Write a function `count_characters` that calculates the number of **actual characters** in a list of UTF-8 bytes without decoding the entire string.
+
+      **Hint:**
+      In UTF-8, you can identify the start of a new character by looking at the binary representation of each byte:
+      *   **Start Byte:** If a byte starts with `0...` or `11...`, it marks the beginning of a new character.
+      *   **Continuation Byte:** If a byte starts with `10...`, it is part of the previous character and should be ignored.
+    initialCode: |
+      def count_characters(byte_list: list[int]) -> int:
+          count = 0
+          # TODO: Iterate through bytes and count the start of new characters
+          return count
     arguments:
       - name: byte_list
-        type: List[int]
+        type: list[int]
     defaultTestCases:
       - id: "case1"
         inputs:
-          byte_list: "[72, 101, 108, 108, 111]"
-        expected: '"H e l l o"'
+          byte_list: "[72, 101, 108, 108, 111, 32, 240, 159, 140, 141]"
+        expected: "7"
       - id: "case2"
         inputs:
-          byte_list: "[0, 255, 65]"
-        expected: '"Hex: 00 Hex: FF A"'
+          byte_list: "[65]"
+        expected: "1"
     executionSnippet: |
-      print(inspect_bytes(byte_list))
+      print(count_characters(byte_list))
 ---
 
 <Description>

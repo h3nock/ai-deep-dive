@@ -455,9 +455,6 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
                       {c.difficulty || 'Medium'}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 line-clamp-2">
-                    {c.description.replace(/[*_`#]/g, '').split('\n').filter(line => line.trim().length > 0)[0]}
-                  </p>
                 </button>
               ))}
             </div>
