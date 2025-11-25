@@ -12,8 +12,10 @@ export interface Challenge {
   hint?: string;
   difficulty?: "Easy" | "Medium" | "Hard";
   arguments?: { name: string; type: string }[];
-  defaultTestCases?: { id: string; inputs: Record<string, string>; expected: string }[];
+  defaultTestCases?: { id: string; inputs: Record<string, string>; expected: string; hidden?: boolean }[];
   executionSnippet?: string;
+  dependencies?: string[];
+  visibleTestCases?: number;
 }
 
 export interface PostData {
@@ -92,6 +94,60 @@ export async function getPostBySlug(collection: string, slug: string): Promise<P
     const fileContents = fs.readFileSync(fullPath, "utf8");
     const { data, content } = matter(fileContents);
     
+    // Load challenges from directory
+    const challengesDir = path.join(contentDirectory, "challenges", collection, slug);
+    if (fs.existsSync(challengesDir)) {
+      const challengeBundles = fs.readdirSync(challengesDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name)
+        .sort(); // Sort by folder name (e.g., 01-encoder, 02-byte-inspector)
+
+      data.challenges = challengeBundles.map(bundleName => {
+        const bundlePath = path.join(challengesDir, bundleName);
+        
+        // Load description.md
+        const descriptionPath = path.join(bundlePath, "description.md");
+        if (!fs.existsSync(descriptionPath)) {
+            console.warn(`Missing description.md in bundle: ${bundleName}`);
+            return null;
+        }
+        const descriptionContent = fs.readFileSync(descriptionPath, "utf8");
+        const { data: challengeData, content: challengeBody } = matter(descriptionContent);
+
+        // Load tests.json
+        let defaultTestCases = [];
+        const testsPath = path.join(bundlePath, "tests.json");
+        if (fs.existsSync(testsPath)) {
+          try {
+            defaultTestCases = JSON.parse(fs.readFileSync(testsPath, "utf8"));
+          } catch (e) {
+            console.error(`Failed to load tests for bundle ${bundleName}:`, e);
+          }
+        }
+
+        return {
+          ...challengeData,
+          description: challengeBody,
+          defaultTestCases
+        } as Challenge;
+      }).filter(Boolean) as Challenge[]; // Filter out nulls
+    } else if (data.challenges) {
+      // Legacy fallback: Load external test cases for existing frontmatter challenges
+      data.challenges = data.challenges.map((challenge: Challenge) => {
+        const testFilePath = path.join(contentDirectory, "tests", `${challenge.id}.json`);
+        if (fs.existsSync(testFilePath)) {
+          try {
+            const testContent = fs.readFileSync(testFilePath, "utf8");
+            const testCases = JSON.parse(testContent);
+            return { ...challenge, defaultTestCases: testCases };
+          } catch (e) {
+            console.error(`Failed to load tests for challenge ${challenge.id}:`, e);
+          }
+        }
+        return challenge;
+      });
+    }
+
     // Return raw content for RSC rendering
     return {
       slug,

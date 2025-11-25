@@ -19,14 +19,17 @@ export interface Challenge {
   hint?: string;
   difficulty?: "Easy" | "Medium" | "Hard";
   arguments?: { name: string; type: string }[];
-  defaultTestCases?: { id: string; inputs: Record<string, string>; expected: string }[];
+  defaultTestCases?: { id: string; inputs: Record<string, string>; expected: string; hidden?: boolean }[];
   executionSnippet?: string; // Code to run the function, e.g. "print(solution(numRows))"
+  dependencies?: string[];
+  visibleTestCases?: number;
 }
 
 interface TestCase {
   id: string;
   inputs: Record<string, string>;
   expected: string;
+  hidden?: boolean;
 }
 
 interface TestResult {
@@ -37,6 +40,7 @@ interface TestResult {
   output: string;
   expected: string;
   stderr?: string;
+  hidden?: boolean;
 }
 
 interface ChallengeWorkspaceProps {
@@ -100,8 +104,29 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
     if (activeChallenge) {
       setCode(activeChallenge.initialCode); // Always set code when challenge changes
       if (activeChallenge.defaultTestCases && activeChallenge.defaultTestCases.length > 0) {
-        setTestCases(activeChallenge.defaultTestCases);
-        setActiveTestCaseId(activeChallenge.defaultTestCases[0].id);
+        // Filter visible cases based on configuration
+        // If visibleTestCases is set, take first N non-hidden cases.
+        // Otherwise take all non-hidden cases.
+        // Hidden cases are always excluded from the editor tabs initially.
+        const nonHidden = activeChallenge.defaultTestCases.filter(tc => !tc.hidden);
+        const visibleCount = activeChallenge.visibleTestCases !== undefined ? activeChallenge.visibleTestCases : nonHidden.length;
+        const visibleCases = nonHidden.slice(0, visibleCount);
+        
+        // We also want to keep the hidden cases in the state so they run, but they are filtered out in the UI
+        // Actually, if we want to "hide" the extra ones, we should mark them as hidden in the state?
+        // But defaultTestCases already has hidden flags.
+        // If visibleTestCases < nonHidden.length, we treat the excess as hidden.
+        
+        const processedCases = activeChallenge.defaultTestCases.map((tc, index) => {
+            // Check if this case is one of the "visible" ones
+            const isVisible = visibleCases.some(vc => vc.id === tc.id);
+            if (isVisible) return tc;
+            return { ...tc, hidden: true };
+        });
+
+        setTestCases(processedCases);
+        const firstVisible = processedCases.find(tc => !tc.hidden);
+        setActiveTestCaseId(firstVisible ? firstVisible.id : processedCases[0].id);
       } else {
         // Default empty case if none provided or defaultTestCases is empty
         const initialInputs: Record<string, string> = {};
@@ -229,8 +254,32 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
 
   // Remove old sync test cases effect
   
-  const handleEditorDidMount = (editor: any) => {
+  // Keep latest handleRun in ref for event listeners
+  const handleRunRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    handleRunRef.current = handleRun;
+  });
+
+  // Global Keyboard Shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleRunRef.current();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Editor Command
+  const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
+    
+    // Add Cmd+Enter / Ctrl+Enter shortcut to editor
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+      handleRunRef.current();
+    });
   };
 
   const handleRun = () => {
@@ -272,9 +321,15 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
         };
       });
 
+      let runnerCode = activeChallenge?.executionSnippet || "print('No execution snippet defined')";
+      // Safety: Strip print() wrapper if present, as the harness now expects an expression
+      if (runnerCode.trim().startsWith("print(") && runnerCode.trim().endsWith(")")) {
+        runnerCode = runnerCode.trim().slice(6, -1);
+      }
+
       const config = {
         cases: formattedCases,
-        runner: activeChallenge?.executionSnippet || "print('No execution snippet defined')"
+        runner: runnerCode
       };
       
       wsRef.current.send(JSON.stringify({
@@ -366,6 +421,9 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
     };
   }, [isDraggingBottom]);
 
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+  const shortcutLabel = isMac ? "Cmd + Enter" : "Ctrl + Enter";
+
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 overflow-hidden select-none">
       
@@ -404,6 +462,8 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
             <div className="flex-1 overflow-y-auto p-6 prose prose-sm dark:prose-invert max-w-none">
               <ReactMarkdown
                 components={{
+                  p: ({node, ...props}) => <p className="mb-4 leading-relaxed" {...props} />,
+                  li: ({node, ...props}) => <li className="mb-2" {...props} />,
                   strong: ({node, ...props}) => {
                     const text = String(props.children);
                     if (text.startsWith("Input:") || text.startsWith("Output:") || text.startsWith("Task:") || text.startsWith("Hint:")) {
@@ -424,6 +484,35 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
                   <p className="text-amber-900 dark:text-amber-300 text-sm">
                     {activeChallenge.hint}
                   </p>
+                </div>
+              )}
+
+              {/* Automated Example Test Cases */}
+              {activeChallenge.defaultTestCases && activeChallenge.defaultTestCases.filter(tc => !tc.hidden).length > 0 && (
+                <div className="mt-8 not-prose">
+                  <h3 className="text-slate-900 dark:text-white font-bold text-sm mb-4">Examples</h3>
+                  <div className="flex flex-col gap-4">
+                    {(() => {
+                        const nonHidden = activeChallenge.defaultTestCases.filter(tc => !tc.hidden);
+                        const visibleCount = activeChallenge.visibleTestCases !== undefined ? activeChallenge.visibleTestCases : nonHidden.length;
+                        return nonHidden.slice(0, visibleCount).map((tc, idx) => (
+                      <div key={tc.id} className="bg-slate-100 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800">
+                        <div className="flex flex-col gap-2">
+                          <div className="text-xs font-mono">
+                            <span className="font-bold text-slate-500 uppercase mr-2">Input:</span>
+                            <span className="text-slate-900 dark:text-slate-200">
+                              {Object.entries(tc.inputs).map(([k, v]) => `${k} = ${v}`).join(", ")}
+                            </span>
+                          </div>
+                          <div className="text-xs font-mono">
+                            <span className="font-bold text-slate-500 uppercase mr-2">Output:</span>
+                            <span className="text-slate-900 dark:text-slate-200">{tc.expected}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ));
+                    })()}
+                  </div>
                 </div>
               )}
             </div>
@@ -455,6 +544,7 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
                       {c.difficulty || 'Medium'}
                     </span>
                   </div>
+
                 </button>
               ))}
             </div>
@@ -486,43 +576,7 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
               <Settings className="w-3.5 h-3.5" />
               <span className="text-xs font-medium">Vim Mode {isVimMode ? 'ON' : 'OFF'}</span>
             </button>
-            
-            {/* Install Package Button */}
-            <div className="relative">
-              <button 
-                onClick={() => setShowInstallInput(!showInstallInput)}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded hover:bg-slate-800 transition-colors ${showInstallInput ? 'text-blue-400 bg-slate-800' : ''}`}
-                title="Install Python Package"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span className="text-xs font-medium">Install</span>
-              </button>
-              
-              {showInstallInput && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-3 z-50">
-                  <form onSubmit={handleInstall} className="flex flex-col gap-2">
-                    <label className="text-xs font-medium text-slate-400">Install Package (pip)</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={installPackageName}
-                        onChange={(e) => setInstallPackageName(e.target.value)}
-                        placeholder="e.g. numpy"
-                        className="flex-1 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500"
-                        autoFocus
-                      />
-                      <button 
-                        type="submit"
-                        disabled={!isConnected || !installPackageName.trim()}
-                        className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-2 py-1 rounded text-xs font-medium"
-                      >
-                        Go
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-            </div>
+
 
             <div className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
               {isConnected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
@@ -531,6 +585,7 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
           </div>
             <button
               onClick={handleRun}
+              title={`Run Code (${shortcutLabel})`}
               className="flex items-center gap-2 px-4 py-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold rounded-md transition-colors"
             >
               <Play className="w-3 h-3" />
@@ -619,7 +674,7 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
               <div className="flex flex-col h-full">
                 {/* Case Tabs */}
                 <div className="flex items-center gap-2 p-2 border-b border-slate-800">
-                    {testCases.map((tc, idx) => (
+                    {testCases.filter(tc => !tc.hidden).map((tc, idx) => (
                         <button
                             key={tc.id}
                             onClick={() => setActiveTestCaseId(tc.id)}
@@ -630,14 +685,17 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
                             }`}
                         >
                             Case {idx + 1}
-                            {testCases.length > 1 && (
+                            {testCases.filter(t => !t.hidden).length > 1 && (
                                 <X 
                                     className="w-3 h-3 hover:text-red-400" 
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setTestCases(prev => prev.filter(c => c.id !== tc.id));
                                         if (activeTestCaseId === tc.id) {
-                                            setActiveTestCaseId(testCases[0].id);
+                                            const remaining = testCases.filter(c => c.id !== tc.id && !c.hidden);
+                                            if (remaining.length > 0) {
+                                                setActiveTestCaseId(remaining[0].id);
+                                            }
                                         }
                                     }}
                                 />
@@ -665,7 +723,7 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
                 {/* Case Editors */}
                 <div className="flex-1 flex flex-col gap-6 p-4 overflow-y-auto">
                     {testCases.map(tc => {
-                        if (tc.id !== activeTestCaseId) return null;
+                        if (tc.id !== activeTestCaseId || tc.hidden) return null;
                         return (
                             <div key={tc.id} className="flex flex-col gap-6">
                                 {activeChallenge?.arguments?.map(arg => (
@@ -720,24 +778,44 @@ export function ChallengeWorkspace({ challenges, activeChallengeIndex: externalA
                                     <AlertCircle className="w-5 h-5" /> Wrong Answer
                                 </h3>
                             )}
+                            
+                            {/* Hidden Tests Summary */}
+                            {(() => {
+                                const hiddenResults = testResults.filter(r => r.hidden);
+                                const hiddenPassed = hiddenResults.filter(r => r.status === "Accepted").length;
+                                const hiddenTotal = hiddenResults.length;
+                                
+                                if (hiddenTotal > 0) {
+                                    return (
+                                        <div className="mt-2 text-xs font-medium text-slate-500">
+                                            {hiddenPassed}/{hiddenTotal} hidden tests passed
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })()}
                         </div>
 
                         {/* Result Tabs */}
-                        <div className="flex items-center gap-2 px-4 border-b border-slate-800">
-                            {testResults.map((r, idx) => (
+                        <div className="flex items-center gap-2 px-4 border-b border-slate-800 overflow-x-auto">
+                            {testResults.map((r, idx) => {
+                                // Only show hidden tests if they failed or if they are the active one (unlikely but safe)
+                                if (r.hidden && r.status === "Accepted" && activeTestCaseId !== r.id) return null;
+                                
+                                return (
                                 <button
                                     key={r.id}
                                     onClick={() => setActiveTestCaseId(r.id)}
-                                    className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 ${
+                                    className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 whitespace-nowrap ${
                                         activeTestCaseId === r.id 
                                         ? "bg-slate-800 text-white" 
                                         : "text-slate-500 hover:bg-slate-900"
                                     }`}
                                 >
                                     <span className={`w-2 h-2 rounded-full ${r.status === "Accepted" ? "bg-green-500" : "bg-red-500"}`} />
-                                    Case {idx + 1}
+                                    {r.hidden ? "Hidden Case" : `Case ${idx + 1}`}
                                 </button>
-                            ))}
+                            )})}
                         </div>
 
                         {/* Result Details */}
