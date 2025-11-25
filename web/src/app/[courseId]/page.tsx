@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAllPosts } from "@/lib/posts";
 import { Navbar } from "@/components/Navbar";
-import { ArrowRight, ArrowLeft, Terminal, Database, Code2, Cpu, Zap, Layers, MessageSquare, BarChart3, CheckCircle2, Network } from "lucide-react";
+import { ArrowRight, ArrowLeft, Clock, BookOpen } from "lucide-react";
 
 export default async function RoadmapPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params;
@@ -24,85 +24,79 @@ export default async function RoadmapPage({ params }: { params: Promise<{ course
     description: "Select a course to begin your deep dive.",
   };
 
-  // Map step numbers to icons
-  const getIcon = (step: number) => {
-    switch (step) {
-      case 1: return <Terminal className="w-6 h-6" />; // Understanding Text
-      case 2: return <Terminal className="w-6 h-6" />; // Tokenization
-      case 3: return <Database className="w-6 h-6" />; // Embeddings
-      case 4: return <Zap className="w-6 h-6" />; // Attention
-      case 5: return <Code2 className="w-6 h-6" />; // Implementing Attention
-      case 6: return <Layers className="w-6 h-6" />; // LayerNorm
-      case 7: return <Network className="w-6 h-6" />; // Residuals
-      case 8: return <Network className="w-6 h-6" />; // Cross-Attention
-      case 9: return <CheckCircle2 className="w-6 h-6" />; // Project 1: Translator
-      case 10: return <Layers className="w-6 h-6" />; // Decoder Shift
-      case 11: return <Cpu className="w-6 h-6" />; // Project 2: GPT
-      default: return <CheckCircle2 className="w-6 h-6" />;
-    }
-  };
-
   const visiblePosts = posts.filter(post => !post.hidden);
+  const totalSteps = visiblePosts.length;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Header */}
         <div className="mb-12">
           <Link 
             href="/"
-            className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-6 transition-colors"
+            className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-8 transition-colors group"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back to Courses
           </Link>
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4 capitalize">
-            {courseId.replace('-', ' ')}
+          
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-3">
+            {metadata.title}
           </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl">
-            Master the architecture behind modern LLMs through hands-on implementation.
+          <p className="text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+            {metadata.description}
           </p>
+          
+          {/* Progress Overview */}
+          <div className="mt-6 flex items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              <span>{totalSteps} chapters</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              <span>~20 hours</span>
+            </div>
+          </div>
         </div>
 
-        <div className="grid gap-8 relative">
-          {/* Connecting Line (Desktop) */}
-          <div className="hidden md:block absolute left-[2.25rem] top-8 bottom-8 w-px bg-slate-200 dark:bg-slate-800 -z-10"></div>
+        {/* Step Cards */}
+        <div className="space-y-3">
+          {visiblePosts.map((post, index) => {
+            const isFirst = index === 0;
+            
+            return (
+              <Link 
+                key={post.slug} 
+                href={`/${courseId}/step/${post.slug}`}
+                className="group block"
+              >
+                <div className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 md:p-5 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200">
+                  <div className="flex items-center gap-4">
+                    {/* Step Number */}
+                    <div className="shrink-0 w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 font-semibold text-sm group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+                      {post.step}
+                    </div>
 
-          {visiblePosts.map((post) => (
-            <div key={post.slug} className="group relative flex gap-6 md:gap-8">
-              
-              {/* Icon Marker */}
-              <div className="shrink-0 flex flex-col items-center">
-                <div className="w-18 h-18 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-1.5 shadow-sm group-hover:border-blue-500/50 group-hover:shadow-blue-500/20 transition-all duration-300 z-10 relative">
-                  <div className="w-16 h-16 rounded-xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-                    {getIcon(post.step)}
-                  </div>
-                </div>
-              </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base md:text-lg font-medium text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
+                        {post.title}
+                      </h3>
+                      <p className="text-slate-500 dark:text-slate-500 text-sm line-clamp-1 mt-0.5">
+                        {post.description}
+                      </p>
+                    </div>
 
-              {/* Content Card */}
-              <Link href={`/${courseId}/step/${post.slug}`} className="flex-1 block group/card">
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 md:p-8 hover:border-blue-500/30 dark:hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/5 dark:hover:shadow-none transition-all duration-300 relative overflow-hidden">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-bold font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider group-hover/card:bg-blue-50 dark:group-hover/card:bg-blue-900/20 group-hover/card:text-blue-600 dark:group-hover/card:text-blue-400 transition-colors">
-                      Step {post.step.toString().padStart(2, '0')}
-                    </span>
-                  </div>
-                  
-                  <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white group-hover/card:text-blue-600 dark:group-hover/card:text-blue-400 transition-colors">
-                    {post.title}
-                  </h3>
-                  
-                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed mb-8 text-lg">
-                    {post.description}
-                  </p>
-
-                  <div className="flex items-center text-sm font-bold text-slate-900 dark:text-white group-hover/card:translate-x-1 transition-transform">
-                    Start Building <ArrowRight className="w-4 h-4 ml-2 text-blue-500" />
+                    {/* Arrow */}
+                    <div className="shrink-0 text-slate-400 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-400 group-hover:translate-x-0.5 transition-all duration-200">
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
                   </div>
                 </div>
               </Link>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

@@ -1,36 +1,30 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { CourseCard } from "@/components/CourseCard";
-import { Terminal, Network, Image as ImageIcon, Code2, Cpu, Zap } from "lucide-react";
+import { Terminal, Image as ImageIcon, Code2, Cpu, Zap } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans selection:bg-blue-500/20">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans">
       <Navbar />
       
       <main>
         {/* Hero Section */}
-        <section className="relative pt-24 pb-32 overflow-hidden">
-          <div className="absolute inset-0 bg-grid-pattern [mask-image:linear-gradient(to_bottom,white,transparent)] pointer-events-none -z-10"></div>
-          
-          <div className="container mx-auto px-4 text-center max-w-4xl relative z-10">
+        <section className="relative pt-20 pb-24">
+          <div className="container mx-auto px-4 text-center max-w-3xl">
             
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-8 text-slate-900 dark:text-white">
-              Master AI by <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                Building It.
-              </span>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 text-slate-900 dark:text-white">
+              Master AI by Building It.
             </h1>
             
-            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed mb-12">
-              No black boxes. No hand-waving. <br />
-              We build state-of-the-art AI systems from the ground up.
+            <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed mb-10">
+              No black boxes. No hand-waving. We build state-of-the-art AI systems from the ground up.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link 
                 href="#courses" 
-                className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5"
+                className="px-6 py-3 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium transition-colors"
               >
                 Explore Courses
               </Link>
@@ -38,7 +32,7 @@ export default function Home() {
                 href="https://github.com/h3nock/ai-deep-dive" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-white font-bold text-lg transition-all"
+                className="px-6 py-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 font-medium transition-colors"
               >
                 View Source
               </a>
@@ -47,71 +41,78 @@ export default function Home() {
         </section>
 
         {/* Course Catalog */}
-        <section id="courses" className="py-24 bg-slate-50/50 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-                Deep Dive Curriculum
+        <section id="courses" className="py-20 bg-slate-50 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <div className="mb-10">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                Courses
               </h2>
-              <p className="text-lg text-slate-600 dark:text-slate-400">
-                Choose your track. Every course is a complete build-from-scratch experience.
+              <p className="text-slate-600 dark:text-slate-400">
+                Every course is a complete build-from-scratch experience.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <CourseCard 
                 title="Build ChatGPT from Scratch"
-                description="The ultimate deep dive. We combine the theory of Transformers with the practice of building a production-grade GPT. From empty file to chatting with your creation."
-                icon={<Terminal className="w-6 h-6" />}
+                description="The ultimate deep dive. Build a production-grade GPT from an empty file to chatting with your creation."
+                icon={<Terminal className="w-5 h-5" />}
                 href="/build-chatgpt"
-                tags={["Transformers", "PyTorch", "GPT", "End-to-End"]}
+                tags={["Transformers", "PyTorch", "GPT"]}
                 status="available"
-                color="blue"
               />
               
               <CourseCard 
                 title="Diffusion from Scratch"
                 description="Understand how modern image generators work by building a stable diffusion model from pure noise."
-                icon={<ImageIcon className="w-6 h-6" />}
+                icon={<ImageIcon className="w-5 h-5" />}
                 tags={["Generative", "Vision", "U-Net"]}
                 status="planned"
-                color="emerald"
               />
             </div>
           </div>
         </section>
 
         {/* Philosophy Section */}
-        <section className="py-24">
-          <div className="container mx-auto px-4 max-w-6xl">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-900 dark:text-white mb-4">
-                  <Code2 className="w-6 h-6" />
+        <section className="py-20">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <div className="mb-10">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                Our Approach
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400">
+                How we teach AI engineering differently.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+                  <Code2 className="w-5 h-5" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">First Principles</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  We strip away the magic. No <code className="text-sm font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">import openai</code>. No <code className="text-sm font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">HuggingFace.load()</code>. You write the raw PyTorch to understand exactly what happens inside the matrix multiplication.
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">First Principles</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  No <code className="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">import openai</code>. You write the raw PyTorch to understand exactly what happens inside.
                 </p>
               </div>
 
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-900 dark:text-white mb-4">
-                  <Cpu className="w-6 h-6" />
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+                  <Cpu className="w-5 h-5" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">End-to-End Engineering</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Real AI engineering goes beyond the notebook. We build the full lifecycle: from raw data ingestion and custom tokenizers to efficient training loops and real-time inference APIs.
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">End-to-End</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  From raw data and custom tokenizers to efficient training loops and real-time inference APIs.
                 </p>
               </div>
 
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-900 dark:text-white mb-4">
-                  <Zap className="w-6 h-6" />
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+                  <Zap className="w-5 h-5" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Interactive Learning</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Passive learning doesn't stick. Our platform forces you to engage: interactive visualizations for theory, and a browser-based IDE where you must write the code to proceed.
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Interactive</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Interactive visualizations for theory, and a browser-based IDE where you must write the code to proceed.
                 </p>
               </div>
             </div>
