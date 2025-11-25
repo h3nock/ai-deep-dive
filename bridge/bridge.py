@@ -81,8 +81,33 @@ async def handle_connection(websocket):
 
             elif command == "run":
                 filename = data.get("filename", "main.py")
+                dependencies = data.get("dependencies", [])
                 filepath = os.path.join(WORKING_DIR, filename)
                 
+                # Install dependencies if provided
+                if dependencies:
+                    print(f"Installing dependencies: {', '.join(dependencies)}...")
+                    await websocket.send(json.dumps({"type": "stdout", "data": f"Installing dependencies: {', '.join(dependencies)}...\n"}))
+                    for package in dependencies:
+                        try:
+                            # Check if installed (optional optimization, but pip is fast enough usually)
+                            # For now, just run pip install
+                            process = subprocess.Popen(
+                                [sys.executable, "-m", "pip", "install", package],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                text=True
+                            )
+                            stdout, stderr = process.communicate()
+                            if process.returncode != 0:
+                                await websocket.send(json.dumps({"type": "stderr", "data": f"Failed to install {package}: {stderr}\n"}))
+                                # We continue even if one fails, or should we stop? Let's continue.
+                            else:
+                                # await websocket.send(json.dumps({"type": "stdout", "data": f"Installed {package}\n"}))
+                                pass 
+                        except Exception as e:
+                            await websocket.send(json.dumps({"type": "stderr", "data": f"Error installing {package}: {str(e)}\n"}))
+
                 print(f"Running {filename}...")
                 await websocket.send(json.dumps({"type": "stdout", "data": f"Running {filename}...\n"}))
 
@@ -163,7 +188,12 @@ async def main():
     print(f"Starting Local Bridge on ws://{HOST}:{PORT}")
     print(f"Working Directory: {WORKING_DIR}")
     print(f"Python Executable: {sys.executable}")
-    async with websockets.serve(handle_connection, HOST, PORT):
+    import logging
+    # Suppress benign errors from websockets
+    logging.getLogger("websockets.server").setLevel(logging.ERROR)
+    logging.getLogger("asyncio").setLevel(logging.ERROR)
+
+    async with websockets.serve(handle_connection, HOST, PORT, logger=logging.getLogger("websockets")):
         await asyncio.Future()  # run forever
 
 if __name__ == "__main__":
