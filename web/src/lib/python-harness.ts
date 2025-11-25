@@ -22,41 +22,70 @@ def run_cases():
         print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": "main.py not found"}]))
         return
 
-    runner_code = config.get("runner", "")
+    runner_expression = config.get("runner", "")
+
+    # Execute user code once to define functions/classes
+    exec_globals = {}
+    try:
+        exec(user_code, exec_globals)
+    except Exception:
+        # If user code fails to compile/run at top level, all tests fail
+        error_msg = traceback.format_exc()
+        print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": error_msg}]))
+        return
 
     for case in config.get("cases", []):
         stdout_capture = io.StringIO()
         stderr_capture = io.StringIO()
         
         input_code = case.get("input", "")
-        expected = case.get("expected", "").strip()
-        
-        # Combine: User Code -> Input Variables -> Runner Call
-        # We wrap in a try-except block within the exec to catch runtime errors per case
-        full_script = f"{user_code}\\n{input_code}\\n{runner_code}"
+        expected_json = case.get("expected", "null")
+        is_hidden = case.get("hidden", False)
         
         status = "Accepted"
-        output = ""
+        output_str = ""
         stdout_val = ""
         stderr_val = ""
         
         try:
+            # 1. Setup Input Variables
+            # We use a copy of globals to avoid pollution between cases, 
+            # but we keep the user's defined functions
+            case_globals = exec_globals.copy()
+            exec(input_code, case_globals)
+            
+            # 2. Run the Runner Expression and Capture Return Value
             with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
-                # We use a fresh dictionary for each run to avoid state pollution
-                exec_globals = {}
-                exec(full_script, exec_globals)
+                # eval() returns the value of the expression
+                actual_value = eval(runner_expression, case_globals)
             
             stdout_val = stdout_capture.getvalue()
             stderr_val = stderr_capture.getvalue()
             
-            # Heuristic: The last non-empty line of stdout is the "result"
-            # This relies on the runner_code printing the result
-            lines = [line for line in stdout_val.strip().split('\\n') if line.strip()]
-            output = lines[-1] if lines else ""
+            # 3. Compare with Expected
+            # We try to parse expected as JSON. If it fails, we treat it as a string.
+            try:
+                expected_value = json.loads(expected_json)
+            except json.JSONDecodeError:
+                expected_value = expected_json # Fallback to string comparison if not valid JSON
+
+            # Convert actual value to JSON-compatible structure for comparison
+            # This handles tuples -> lists, etc.
+            # We use json.loads(json.dumps()) to normalize
+            try:
+                actual_value_normalized = json.loads(json.dumps(actual_value))
+            except TypeError:
+                 # If not serializable, compare as string representation
+                 actual_value_normalized = str(actual_value)
+                 # Also try to normalize expected if it was parsed as JSON but actual is string?
+                 # For now, simplistic comparison
             
-            if expected and output != expected:
+            if actual_value_normalized != expected_value:
                 status = "Wrong Answer"
-                
+                output_str = json.dumps(actual_value_normalized)
+            else:
+                output_str = json.dumps(actual_value_normalized)
+
         except Exception:
             status = "Runtime Error"
             stderr_val = stderr_capture.getvalue() + "\\n" + traceback.format_exc()
@@ -66,9 +95,10 @@ def run_cases():
             "status": status,
             "input": input_code,
             "stdout": stdout_val,
-            "output": output,
-            "expected": expected,
-            "stderr": stderr_val
+            "output": output_str,
+            "expected": expected_json,
+            "stderr": stderr_val,
+            "hidden": is_hidden
         })
         
     print(json.dumps(results))

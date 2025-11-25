@@ -1,0 +1,24 @@
+[
+  {
+    "id": "case1",
+    "inputs": {
+      "text": "\"Hello 🌍\""
+    },
+    "expected": "[72, 101, 108, 108, 111, 32, 240, 159, 140, 141]"
+  },
+  {
+    "id": "case2",
+    "inputs": {
+      "text": "\"A\""
+    },
+    "expected": "[65]"
+  },
+  {
+    "id": "case3",
+    "inputs": {
+      "text": "\"\""
+    },
+    "expected": "[]",
+    "hidden": true
+  }
+]
