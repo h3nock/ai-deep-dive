@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navbar } from "./Navbar";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, BookOpen, Code2 } from "lucide-react";
 import { PostData } from "@/lib/posts";
 import { ChallengeWorkspace } from "./ChallengeWorkspace";
+import { MarkCompleteButton } from "./MarkCompleteButton";
+import { useProgress } from "@/lib/progress-context";
 
 interface StepContainerProps {
   post: PostData;
@@ -19,6 +21,14 @@ export function StepContainer({ post, prevPost, nextPost, children, collection }
   const [activeTab, setActiveTab] = useState<'guide' | 'challenges'>('guide');
   const [activeChallengeIndex, setActiveChallengeIndex] = useState<number | null>(null);
   const hasChallenges = post.challenges && post.challenges.length > 0;
+  const { setCurrentStep } = useProgress();
+
+  // Track current step when viewing a chapter
+  useEffect(() => {
+    if (post.step) {
+      setCurrentStep(collection, post.step);
+    }
+  }, [collection, post.step, setCurrentStep]);
 
   // Smart Back Link Logic
   const getBackLink = () => {
@@ -119,16 +129,28 @@ export function StepContainer({ post, prevPost, nextPost, children, collection }
                 {children}
               </div>
 
-              <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Footer: Mark Complete + Navigation */}
+              <div className="mt-10 pt-8 border-t border-slate-200 dark:border-slate-800">
+                {/* Mark Complete - subtle, left-aligned */}
+                <div className="mb-8">
+                  <MarkCompleteButton 
+                    courseId={collection} 
+                    step={post.step || 0}
+                    nextHref={nextPost ? `/${collection}/step/${nextPost.slug}` : undefined}
+                  />
+                </div>
+
+                {/* Navigation */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {prevPost ? (
                   <Link 
                     href={`/${collection}/step/${prevPost.slug}`}
-                    className="group flex flex-col p-6 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 dark:hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5 transition-all"
+                    className="group flex flex-col p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
                   >
                     <span className="text-xs font-mono text-slate-400 mb-2 flex items-center gap-1">
-                      <ChevronLeft className="w-3 h-3" /> Previous Step
+                      <ChevronLeft className="w-3 h-3" /> Previous
                     </span>
-                    <span className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <span className="font-medium text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
                       {prevPost.title}
                     </span>
                   </Link>
@@ -137,16 +159,17 @@ export function StepContainer({ post, prevPost, nextPost, children, collection }
                 {nextPost ? (
                   <Link 
                     href={`/${collection}/step/${nextPost.slug}`}
-                    className="group flex flex-col items-end text-right p-6 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 dark:hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5 transition-all"
+                    className="group flex flex-col items-end text-right p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
                   >
                     <span className="text-xs font-mono text-slate-400 mb-2 flex items-center gap-1">
-                      Next Step <ChevronRight className="w-3 h-3" />
+                      Next <ChevronRight className="w-3 h-3" />
                     </span>
-                    <span className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <span className="font-medium text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
                       {nextPost.title}
                     </span>
                   </Link>
                 ) : <div />}
+                </div>
               </div>
 
             </main>

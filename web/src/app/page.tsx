@@ -63,6 +63,8 @@ export default function Home() {
                 href="/build-chatgpt"
                 tags={["Transformers", "PyTorch", "GPT"]}
                 status="available"
+                courseId="build-chatgpt"
+                totalSteps={11}
               />
 
               <CourseCard

@@ -10,6 +10,9 @@ import {
   Code2,
   Cpu,
 } from "lucide-react";
+import { ProgressBar } from "@/components/ProgressBar";
+import { ChapterCheckbox } from "@/components/ChapterCheckbox";
+import { ContinueButton } from "@/components/ContinueButton";
 
 export default async function RoadmapPage({
   params,
@@ -79,6 +82,18 @@ export default async function RoadmapPage({
 
   const visiblePosts = posts.filter((post) => !post.hidden);
   const totalSteps = visiblePosts.length;
+  
+  // Only count main chapters (whole numbers) for progress tracking
+  // Sub-steps like 9.1, 9.2 are part of projects and tracked separately
+  const mainChapterSteps = visiblePosts
+    .filter(p => Number.isInteger(p.step))
+    .map(p => p.step);
+  
+  // Create step -> slug mapping for ContinueButton (main chapters only)
+  const slugMap: Record<number, string> = {};
+  visiblePosts
+    .filter(p => Number.isInteger(p.step))
+    .forEach(p => { slugMap[p.step] = p.slug; });
 
   // Check if step falls within a phase range (handles decimal steps like 9.1, 9.2)
   const getPhaseForStep = (step: number) => {
@@ -115,12 +130,17 @@ export default async function RoadmapPage({
           <div className="mt-6 flex items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
-              <span>{totalSteps} chapters</span>
+              <span>{mainChapterSteps.length} chapters</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span>~20 hours</span>
             </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mt-6">
+            <ProgressBar courseId={courseId} totalSteps={mainChapterSteps.length} />
           </div>
         </div>
 
@@ -188,6 +208,13 @@ export default async function RoadmapPage({
                     >
                       <div className="relative bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200">
                         <div className="flex items-center gap-4">
+                          {/* Completion Checkbox */}
+                          <ChapterCheckbox 
+                            courseId={courseId} 
+                            step={post.step} 
+                            size="sm"
+                          />
+
                           {/* Step Number */}
                           <div className="shrink-0 w-8 h-8 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 font-medium text-sm group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
                             {post.step}
@@ -217,15 +244,13 @@ export default async function RoadmapPage({
           })}
         </div>
 
-        {/* Start CTA */}
+        {/* Start/Continue CTA */}
         <div className="mt-12 text-center">
-          <Link
-            href={`/${courseId}/step/${visiblePosts[0]?.slug}`}
-            className="inline-flex items-center px-6 py-3 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium transition-colors"
-          >
-            Start Chapter 1
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Link>
+          <ContinueButton 
+            courseId={courseId} 
+            allSteps={mainChapterSteps} 
+            slugMap={slugMap} 
+          />
         </div>
       </div>
     </div>

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { ArrowRight, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProgressBar } from "./ProgressBar";
+import { useProgress } from "@/lib/progress-context";
 
 interface CourseCardProps {
   title: string;
@@ -11,6 +13,8 @@ interface CourseCardProps {
   href?: string;
   tags: string[];
   status: "available" | "coming-soon" | "planned";
+  courseId?: string;
+  totalSteps?: number;
 }
 
 export function CourseCard({
@@ -20,9 +24,15 @@ export function CourseCard({
   href,
   tags,
   status,
+  courseId,
+  totalSteps = 0,
 }: CourseCardProps) {
   const isAvailable = status === "available";
   const Component = isAvailable && href ? Link : "div";
+  const { getCompletedCount, isLoaded } = useProgress();
+  
+  const completedCount = courseId ? getCompletedCount(courseId) : 0;
+  const hasProgress = completedCount > 0;
 
   return (
     <Component
@@ -70,10 +80,23 @@ export function CourseCard({
         ))}
       </div>
 
+      {/* Progress Bar (only for available courses with progress) */}
+      {isAvailable && courseId && totalSteps > 0 && (
+        <div className="mb-4">
+          <ProgressBar 
+            courseId={courseId} 
+            totalSteps={totalSteps} 
+            size="sm"
+            showLabel={true}
+            hideWhenEmpty={true}
+          />
+        </div>
+      )}
+
       <div className="flex items-center text-sm font-medium pt-4 border-t border-slate-100 dark:border-slate-800">
         {isAvailable ? (
           <span className="flex items-center text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-            Start Building
+            {hasProgress ? 'Continue' : 'Start Building'}
             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
           </span>
         ) : (
