@@ -26,7 +26,10 @@ export function CourseCard({ title, description, icon, href, tags, status }: Cou
       )}
     >
       <div className="flex items-start justify-between mb-4">
-        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+        <div className={cn(
+          "w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 transition-colors",
+          isAvailable && "group-hover:bg-slate-200 dark:group-hover:bg-slate-700"
+        )}>
           {icon}
         </div>
         {status !== "available" && (
