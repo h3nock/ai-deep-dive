@@ -1,53 +1,117 @@
 import Link from "next/link";
 import { getAllPosts } from "@/lib/posts";
 import { Navbar } from "@/components/Navbar";
-import { ArrowRight, ArrowLeft, Clock, BookOpen } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowLeft,
+  Clock,
+  BookOpen,
+  CheckCircle2,
+  Code2,
+  Cpu,
+} from "lucide-react";
 
-export default async function RoadmapPage({ params }: { params: Promise<{ courseId: string }> }) {
+export default async function RoadmapPage({
+  params,
+}: {
+  params: Promise<{ courseId: string }>;
+}) {
   const { courseId } = await params;
   const posts = getAllPosts(courseId);
 
-  const courseMetadata: Record<string, { title: string; description: React.ReactNode }> = {
+  const courseMetadata: Record<
+    string,
+    {
+      title: string;
+      description: React.ReactNode;
+      outcome: string;
+      prerequisites: string[];
+      phases: {
+        title: string;
+        description: string;
+        stepRange: [number, number];
+        icon: React.ReactNode;
+      }[];
+    }
+  > = {
     "build-chatgpt": {
       title: "Build ChatGPT from Scratch",
-      description: (
-        <>
-          The ultimate deep dive. <br className="hidden md:block" />
-          We combine the theory of Transformers with the practice of building a production-grade GPT. From empty file to chatting with your creation.
-        </>
-      ),
+      description:
+        "From raw text to a working chatbot. You'll implement every component of a GPT-style language model and train it to have conversations.",
+      outcome:
+        "A fully functional chatbot built entirely by you, with deep understanding of how every piece works.",
+      prerequisites: [
+        "Python proficiency",
+        "Basic PyTorch (tensors, autograd)",
+        "Linear algebra fundamentals (matrix multiplication, vectors)",
+      ],
+      phases: [
+        {
+          title: "Foundations",
+          description: "How text becomes numbers for neural networks.",
+          stepRange: [1, 3.99],
+          icon: <BookOpen className="w-4 h-4" />,
+        },
+        {
+          title: "The Transformer",
+          description:
+            "Build the architecture that powers modern LLMs, then use it to build a translator.",
+          stepRange: [4, 9.99],
+          icon: <Cpu className="w-4 h-4" />,
+        },
+        {
+          title: "GPT",
+          description: "Go decoder-only and build a working chatbot.",
+          stepRange: [10, 11.99],
+          icon: <Code2 className="w-4 h-4" />,
+        },
+      ],
     },
   };
 
   const metadata = courseMetadata[courseId] || {
     title: "The Journey",
     description: "Select a course to begin your deep dive.",
+    outcome: "",
+    prerequisites: [],
+    phases: [],
   };
 
-  const visiblePosts = posts.filter(post => !post.hidden);
+  const visiblePosts = posts.filter((post) => !post.hidden);
   const totalSteps = visiblePosts.length;
+
+  // Check if step falls within a phase range (handles decimal steps like 9.1, 9.2)
+  const getPhaseForStep = (step: number) => {
+    for (let i = 0; i < metadata.phases.length; i++) {
+      const [min, max] = metadata.phases[i].stepRange;
+      if (step >= min && step < max + 1) {
+        return i;
+      }
+    }
+    return -1;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
-        <div className="mb-12">
-          <Link 
+        <div className="mb-10">
+          <Link
             href="/"
             className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white mb-8 transition-colors group"
           >
             <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back to Courses
           </Link>
-          
+
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-3">
             {metadata.title}
           </h1>
           <p className="text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
             {metadata.description}
           </p>
-          
-          {/* Progress Overview */}
+
+          {/* Stats */}
           <div className="mt-6 flex items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
@@ -60,43 +124,108 @@ export default async function RoadmapPage({ params }: { params: Promise<{ course
           </div>
         </div>
 
-        {/* Step Cards */}
-        <div className="space-y-3">
-          {visiblePosts.map((post, index) => {
-            const isFirst = index === 0;
-            
+        {/* What You'll Build & Prerequisites */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-3 text-sm">
+              What You'll Build
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              {metadata.outcome}
+            </p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-3 text-sm">
+              Prerequisites
+            </h3>
+            <ul className="space-y-2">
+              {metadata.prerequisites.map((prereq, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  {prereq}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Course Content by Phase */}
+        <div className="space-y-8">
+          {metadata.phases.map((phase, phaseIndex) => {
+            const [min, max] = phase.stepRange;
+            const phaseChapters = visiblePosts.filter(
+              (post) => post.step >= min && post.step <= max
+            );
+            if (phaseChapters.length === 0) return null;
+
             return (
-              <Link 
-                key={post.slug} 
-                href={`/${courseId}/step/${post.slug}`}
-                className="group block"
-              >
-                <div className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 md:p-5 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200">
-                  <div className="flex items-center gap-4">
-                    {/* Step Number */}
-                    <div className="shrink-0 w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 font-semibold text-sm group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
-                      {post.step}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base md:text-lg font-medium text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
-                        {post.title}
-                      </h3>
-                      <p className="text-slate-500 dark:text-slate-500 text-sm line-clamp-1 mt-0.5">
-                        {post.description}
-                      </p>
-                    </div>
-
-                    {/* Arrow */}
-                    <div className="shrink-0 text-slate-400 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-400 group-hover:translate-x-0.5 transition-all duration-200">
-                      <ArrowRight className="w-4 h-4" />
-                    </div>
+              <div key={phaseIndex}>
+                {/* Phase Header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                    {phase.icon}
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-slate-900 dark:text-white">
+                      {phase.title}
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {phase.description}
+                    </p>
                   </div>
                 </div>
-              </Link>
+
+                {/* Chapter Cards */}
+                <div className="space-y-2 ml-4 pl-7 border-l-2 border-slate-200 dark:border-slate-800">
+                  {phaseChapters.map((post) => (
+                    <Link
+                      key={post.slug}
+                      href={`/${courseId}/step/${post.slug}`}
+                      className="group block"
+                    >
+                      <div className="relative bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200">
+                        <div className="flex items-center gap-4">
+                          {/* Step Number */}
+                          <div className="shrink-0 w-8 h-8 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 font-medium text-sm group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+                            {post.step}
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm md:text-base font-medium text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
+                              {post.title}
+                            </h3>
+                            <p className="text-slate-500 dark:text-slate-500 text-xs md:text-sm line-clamp-1 mt-0.5">
+                              {post.description}
+                            </p>
+                          </div>
+
+                          {/* Arrow */}
+                          <div className="shrink-0 text-slate-400 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-400 group-hover:translate-x-0.5 transition-all duration-200">
+                            <ArrowRight className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             );
           })}
+        </div>
+
+        {/* Start CTA */}
+        <div className="mt-12 text-center">
+          <Link
+            href={`/${courseId}/step/${visiblePosts[0]?.slug}`}
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium transition-colors"
+          >
+            Start Chapter 1
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
         </div>
       </div>
     </div>
