@@ -6,34 +6,36 @@ description: "How computers represent language (Unicode & UTF-8)."
 ---
 
 <Description>
-Large Language Models are trained on massive datasets of text. Before we can feed this text into a model, we need to understand how computers represent language and how we convert human-readable characters into the numerical format computers use.
+Large Language Models are trained on massive datasets of text. Before we can feed this text into a model, we need to understand how computers represent text and how we convert human-readable characters into the numerical format computers use. When you type "Hello" into ChatGPT, the model doesn't see the word "Hello". It doesn't see letters at all. It sees a sequence of numbers. Every piece of text, in every language, gets converted to numbers before a language model can process it. This chapter covers how that conversion works. 
 </Description>
 
 <Step title="1. Text Representation">
   <Description>
-    Computers only understand binary numbers (0s and 1s). To process text, we need a consistent way to map characters to numbers. This is handled through **conventions**, agreed-upon standards that the industry follows. Currently, **Unicode** is the universal standard. Unicode acts as a large lookup table that assigns a unique number to every character in almost every language. This number is called a **Code Point**. We usually represent these code points with the notation `U+XXXX` (where XXXX is a hexadecimal number).
+    Computers only understand binary numbers (0s and 1s). To store or process text, we need a system that assigns a number to each character. As long as everyone agrees on the mapping, computers can store and exchange text reliably. This consistency is achieved through character encoding standards. Currently, **Unicode** is the universal standard. It acts as a large lookup table that assigns a unique number, called a **Code Point**, to every character in almost every language. Today, Unicode defines over 150,000 characters across 161 scripts. We usually represent these code points with the notation `U+XXXX` (where XXXX is a hexadecimal number).
   </Description>
 
+  Examples of Unicode Code Point Mappings:
   | Character | Description | Unicode Code Point | Decimal Value |
   | :--- | :--- | :--- | :--- |
   | **A** | Latin Capital Letter A | `U+0041` | 65 |
   | **a** | Latin Small Letter a | `U+0061` | 97 |
   | **é** | Latin 'e' with acute | `U+00E9` | 233 |
   | **ሀ** | Amharic Letter Ha | `U+1200` | 4608 |
+  | **中** | Chinese "Middle" | `U+4E2D` | 20,013 |
   | **😊** | Smiling Face | `U+1F60A` | 128,522 |
 
   <Callout type="note" title="Important Distinction">
-    Unicode defines **what** the number is (the abstract ID), but it does not dictate **how** that number is stored in memory (the bits). That is the job of the *Encoding*.
+    Unicode only defines **which** number respresents each character. It says nothing about **how** to store that number as bytes in memory. That's a separate decision called **encoding**, and it matters a lot for efficiency.
   </Callout>
 </Step>
 
-<Step title="2. Encoding (UTF-8)">
+<Step title="2. Encoding">
   <Description>
-    If we simply stored the code points directly, it would be inefficient. The largest Unicode values (like emojis) require **4 bytes** (32 bits) to store. If we used 4 bytes for *every* character (a format called UTF-32), a simple text file of English letters (which only need 1 byte) would be four times larger than necessary.
+    The simplest encoding would be to store every code point as a 4-byte (32-bit) integer, known as **UTF-32**. This handles any Unicode character easily, since even the largest code points fit in 4 bytes. How ever, UTF-32 is space-inefficient for most text. For example, a simple text file of English letters (which only need 1 byte) would be four times larger than necessary.
   </Description>
 
   <Description>
-    Let's see what happens if we store the word **"Hello"** using UTF-32. For code points that don't require 4 bytes, the computer has to pad the remaining space with zeros.
+    Let's consider storing **"Hello"** using UTF-32.
   </Description>
 
   | Character | Code Point | Stored in UTF-32 (Hex) |
@@ -44,144 +46,405 @@ Large Language Models are trained on massive datasets of text. Before we can fee
   | **l** | `U+006C` | `00 00 00 6C` |
   | **o** | `U+006F` | `00 00 00 6F` |
 
-  <Callout type="warning" title="The Problem with UTF-32">
-    * **Total Size:** 20 Bytes.
-    * **Wasted Space:** 15 Bytes (75% of the file is just empty zeros).
-
-    For a massive dataset like Common Crawl (which LLMs are trained on), using UTF-32 would quadruple the storage costs and download times for no added value.
-  </Callout>
-
   <Description>
-    To solve this, we use **UTF-8**. It is a **variable-width** encoding scheme:
+     For code points that don't require 4 bytes, the computer has to pad the remaining space with zeros. So, five characters require 20 bytes, but 15 of those bytes are zeros. That's 75% waste. For English text (which dominates the internet), UTF-32 uses four times more storage than necessary.
 
-    * **1 Byte:** Standard characters (A-Z).
-    * **2 Bytes:** European characters with accents.
-    * **3 Bytes:** Asian scripts (Chinese, Japanese), Amharic.
-    * **4 Bytes:** Emojis and complex symbols.
+    This makes UTF-32 impractical for almost all real-world applications. To solve this universal storage problem, we use a smarter encoding.
   </Description>
 </Step>
 
-<Step title="Concrete Example">
+<Step title="3. UTF-8: Variable-Width Encoding">
   <Description>
-    Let's see how the string **"Hi 👋"** is converted into bytes using UTF-8.
+    **UTF-8** solves the storage problem with a clever idea: use fewer bytes for common characters and more bytes only when needed. Instead of wasting 4 bytes on every character, UTF-8 adapts based on the code point's size.
   </Description>
 
-  <div className="flex flex-col gap-6 my-6">
-    <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
-      <h4 className="font-bold text-slate-900 dark:text-white mb-4">1. Breakdown</h4>
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">3.1 Byte Ranges by Character Type</h4>
+
+  <Description>
+    In UTF-8, different characters need different amounts of storage. ASCII characters (the basic Latin alphabet, digits, and punctuation) are so common that UTF-8 keeps them as single bytes for maximum efficiency. As characters become less common in English text (accented letters, then Asian scripts, then emoji), they get allocated more bytes. Here's how UTF-8 divides the Unicode space:
+  </Description>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 my-6">
+    <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+      <div className="text-2xl font-semibold text-slate-800 dark:text-slate-200 mb-1">1 Byte</div>
+      <div className="text-sm text-slate-600 dark:text-slate-400">ASCII characters</div>
+      <div className="text-xs text-slate-500 mt-2">A-Z, a-z, 0-9</div>
+      <div className="font-mono text-xs mt-2 text-slate-600 dark:text-slate-400">U+0000 to U+007F</div>
+    </div>
+    <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+      <div className="text-2xl font-semibold text-slate-800 dark:text-slate-200 mb-1">2 Bytes</div>
+      <div className="text-sm text-slate-600 dark:text-slate-400">Latin extensions, Greek, Cyrillic</div>
+      <div className="text-xs text-slate-500 mt-2">é, ñ, Ω, Д</div>
+      <div className="font-mono text-xs mt-2 text-slate-600 dark:text-slate-400">U+0080 to U+07FF</div>
+    </div>
+    <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+      <div className="text-2xl font-semibold text-slate-800 dark:text-slate-200 mb-1">3 Bytes</div>
+      <div className="text-sm text-slate-600 dark:text-slate-400">CJK, Amharic, most scripts</div>
+      <div className="text-xs text-slate-500 mt-2">中, 日, ㄱ, ሀ</div>
+      <div className="font-mono text-xs mt-2 text-slate-600 dark:text-slate-400">U+0800 to U+FFFF</div>
+    </div>
+    <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+      <div className="text-2xl font-semibold text-slate-800 dark:text-slate-200 mb-1">4 Bytes</div>
+      <div className="text-sm text-slate-600 dark:text-slate-400">Emojis, rare scripts</div>
+      <div className="text-xs text-slate-500 mt-2">😊, 🚀, 𓀀</div>
+      <div className="font-mono text-xs mt-2 text-slate-600 dark:text-slate-400">U+10000 to U+10FFFF</div>
+    </div>
+  </div>
+
+  <Description>
+    With UTF-8, "Hello" takes just 5 bytes instead of 20. English text is as compact as it was with ASCII, while still supporting every character in Unicode.
+  </Description>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">3.2 Fixed vs Variable Width: The Parsing Challenge</h4>
+
+  <Description>
+    Variable-width encoding creates a problem that fixed-width encodings don't have: how do you know where one character ends and the next begins? With UTF-32, this is trivial: every character is exactly 4 bytes, so you just read bytes in fixed chunks of four. Let's see the difference visually.
+  </Description>
+
+  <div className="my-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">UTF-32: Fixed-width parsing</div>
+    <div className="font-mono text-xs bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 overflow-x-auto">
+      <div className="text-slate-500 mb-2">Byte stream for "Aé中":</div>
+      <div className="flex flex-wrap gap-1 mb-3">
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">41</span>
+        <span className="text-slate-400 mx-1">|</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">E9</span>
+        <span className="text-slate-400 mx-1">|</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">4E</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">2D</span>
+      </div>
+      <div className="text-slate-500">Every 4 bytes = 1 character. Simple.</div>
+    </div>
+  </div>
+
+  <Description>
+    But with UTF-8, characters have variable lengths (1, 2, or 3 bytes in this example). Looking at the same string encoded in UTF-8, we see fewer bytes total, but no obvious boundaries:
+  </Description>
+
+  <div className="my-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">UTF-8: Variable-width... but where are the boundaries?</div>
+    <div className="font-mono text-xs bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 overflow-x-auto">
+      <div className="text-slate-500 mb-2">Byte stream for "Aé中":</div>
+      <div className="flex flex-wrap gap-1 mb-3">
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">41</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">C3</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">A9</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">E4</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">B8</span>
+        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded">AD</span>
+      </div>
+      <div className="text-slate-500">6 bytes total, but which bytes belong to which character?</div>
+    </div>
+  </div>
+
+  <Description>
+    This is the core challenge: when reading a stream of UTF-8 bytes, how does a computer know where one character ends and another begins? UTF-8 solves this with a clever bit pattern system.
+  </Description>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">3.3 The UTF-8 Bit Patterns</h4>
+
+  <Description>
+    UTF-8's brilliant solution is to embed the length information directly into each byte. The first few bits of every byte follow a strict pattern that tells you exactly what role that byte plays. Think of it like a prefix code: before the actual character data, each byte announces "I'm the start of a 2-byte character" or "I'm a continuation of the previous character."
+  </Description>
+
+  <Description>
+    Here's the complete pattern. Pay attention to how the leading bits change:
+  </Description>
+
+  <div className="overflow-x-auto my-6">
+    <table className="w-full text-sm border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <thead className="bg-slate-50 dark:bg-slate-800">
+        <tr>
+          <th className="text-left py-3 px-4 font-medium text-slate-700 dark:text-slate-300">Byte Count</th>
+          <th className="text-left py-3 px-4 font-medium text-slate-700 dark:text-slate-300">First Byte Pattern</th>
+          <th className="text-left py-3 px-4 font-medium text-slate-700 dark:text-slate-300">Continuation Bytes</th>
+          <th className="text-left py-3 px-4 font-medium text-slate-700 dark:text-slate-300">Bits for Data</th>
+        </tr>
+      </thead>
+      <tbody className="font-mono text-xs">
+        <tr className="border-t border-slate-100 dark:border-slate-800">
+          <td className="py-3 px-4 font-sans">1 byte</td>
+          <td className="py-3 px-4"><span className="text-emerald-600 dark:text-emerald-400 font-semibold">0</span>xxxxxxx</td>
+          <td className="py-3 px-4 text-slate-400">-</td>
+          <td className="py-3 px-4 font-sans text-slate-600 dark:text-slate-400">7 bits</td>
+        </tr>
+        <tr className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+          <td className="py-3 px-4 font-sans">2 bytes</td>
+          <td className="py-3 px-4"><span className="text-emerald-600 dark:text-emerald-400 font-semibold">110</span>xxxxx</td>
+          <td className="py-3 px-4"><span className="text-slate-400">10</span>xxxxxx</td>
+          <td className="py-3 px-4 font-sans text-slate-600 dark:text-slate-400">11 bits</td>
+        </tr>
+        <tr className="border-t border-slate-100 dark:border-slate-800">
+          <td className="py-3 px-4 font-sans">3 bytes</td>
+          <td className="py-3 px-4"><span className="text-emerald-600 dark:text-emerald-400 font-semibold">1110</span>xxxx</td>
+          <td className="py-3 px-4"><span className="text-slate-400">10</span>xxxxxx × 2</td>
+          <td className="py-3 px-4 font-sans text-slate-600 dark:text-slate-400">16 bits</td>
+        </tr>
+        <tr className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+          <td className="py-3 px-4 font-sans">4 bytes</td>
+          <td className="py-3 px-4"><span className="text-emerald-600 dark:text-emerald-400 font-semibold">11110</span>xxx</td>
+          <td className="py-3 px-4"><span className="text-slate-400">10</span>xxxxxx × 3</td>
+          <td className="py-3 px-4 font-sans text-slate-600 dark:text-slate-400">21 bits</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <Description>
+    The rule is elegantly simple: count the leading `1`s in the first byte to know how many bytes the character uses. A leading `0` means a single byte. `110` means two bytes. `1110` means three. `11110` means four. Continuation bytes always start with `10`, so they can never be mistaken for the start of a character.
+  </Description>
+
+  <div className="my-6 p-4 bg-slate-100 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Key Insight</div>
+    <div className="text-sm text-slate-600 dark:text-slate-400">
+      This pattern ensures you can <strong>never</strong> confuse bytes. If you see a byte starting with `10`, you know it's a continuation. Keep reading backward or forward to find the leading byte. If you see `0`, `110`, `1110`, or `11110`, you're at the start of a character and know exactly how many bytes to read.
+    </div>
+  </div>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">3.4 Decoding a Byte Stream</h4>
+
+  <Description>
+    Now let's apply these patterns to actually decode the UTF-8 byte stream we saw earlier. We'll go through each byte, check its leading bits to determine its role, and reconstruct the original characters. This is exactly what your computer does every time it reads a text file.
+  </Description>
+
+  <div className="my-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="space-y-4 text-sm">
+      <div className="font-mono bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700">
+        <div className="text-slate-500 mb-3">Bytes: 41 C3 A9 E4 B8 AD</div>
+        <div className="space-y-3">
+          <div>
+            <span className="text-slate-600 dark:text-slate-400">Byte 1:</span> <span className="font-semibold">41</span> = <span className="text-emerald-600 dark:text-emerald-400">0</span>1000001
+            <span className="text-slate-500 ml-2">→ starts with 0, so it's a 1-byte char</span>
+            <span className="ml-2 px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">= "A"</span>
+          </div>
+          <div>
+            <span className="text-slate-600 dark:text-slate-400">Byte 2:</span> <span className="font-semibold">C3</span> = <span className="text-emerald-600 dark:text-emerald-400">110</span>00011
+            <span className="text-slate-500 ml-2">→ starts with 110, so read 2 bytes total</span>
+          </div>
+          <div className="pl-4">
+            <span className="text-slate-600 dark:text-slate-400">Byte 3:</span> <span className="font-semibold">A9</span> = <span className="text-slate-400">10</span>101001
+            <span className="text-slate-500 ml-2">→ continuation byte</span>
+            <span className="ml-2 px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">C3 A9 = "é"</span>
+          </div>
+          <div>
+            <span className="text-slate-600 dark:text-slate-400">Byte 4:</span> <span className="font-semibold">E4</span> = <span className="text-emerald-600 dark:text-emerald-400">1110</span>0100
+            <span className="text-slate-500 ml-2">→ starts with 1110, so read 3 bytes total</span>
+          </div>
+          <div className="pl-4">
+            <span className="text-slate-600 dark:text-slate-400">Byte 5:</span> <span className="font-semibold">B8</span> = <span className="text-slate-400">10</span>111000
+            <span className="text-slate-500 ml-2">→ continuation byte</span>
+          </div>
+          <div className="pl-4">
+            <span className="text-slate-600 dark:text-slate-400">Byte 6:</span> <span className="font-semibold">AD</span> = <span className="text-slate-400">10</span>101101
+            <span className="text-slate-500 ml-2">→ continuation byte</span>
+            <span className="ml-2 px-2 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-xs">E4 B8 AD = "中"</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    And there we have it! The boundaries are now clear: `[41] [C3 A9] [E4 B8 AD]` → "A", "é", "中". Notice how we never had to guess. Each byte's leading bits told us exactly what to do. This self-describing property is what makes UTF-8 so robust: even if data gets corrupted or you start reading from the middle of a file, you can always find the next valid character boundary.
+  </Description>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">3.5 Encoding a Character to Bytes</h4>
+
+  <Description>
+    We've seen how to decode UTF-8, but how does the encoding process work in reverse? When your computer needs to save a character to a file, it must convert the Unicode code point into the correct sequence of bytes. Let's walk through this process step by step.
+  </Description>
+
+  <Description>
+    We'll encode **é** (U+00E9, decimal 233). First, we check which byte range it falls into: since 233 is larger than 127 but smaller than 2048, it needs 2 bytes. Now we need to split its bits and insert them into the UTF-8 template.
+  </Description>
+
+  <div className="my-6 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="space-y-4 text-sm">
+      <div>
+        <div className="font-medium text-slate-700 dark:text-slate-300 mb-2">Step 1: Convert code point to binary</div>
+        <div className="font-mono bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700">
+          233 in decimal = <span className="text-slate-800 dark:text-slate-200 font-semibold">11101001</span> in binary (8 bits)
+        </div>
+      </div>
+      <div>
+        <div className="font-medium text-slate-700 dark:text-slate-300 mb-2">Step 2: Split bits according to 2-byte template</div>
+        <div className="font-mono bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700">
+          <div className="text-slate-500 mb-1">Template: 110xxxxx 10xxxxxx (5 bits + 6 bits = 11 bits)</div>
+          <div className="text-slate-500 mb-1">We need to fit: 11101001 (pad to 11 bits → 00011101001)</div>
+          <div>Split: <span className="text-emerald-600 dark:text-emerald-400">00011</span> and <span className="text-emerald-600 dark:text-emerald-400">101001</span></div>
+        </div>
+      </div>
+      <div>
+        <div className="font-medium text-slate-700 dark:text-slate-300 mb-2">Step 3: Insert into UTF-8 template</div>
+        <div className="font-mono bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700">
+          <div>Byte 1: <span className="text-slate-400">110</span><span className="text-emerald-600 dark:text-emerald-400">00011</span> = 11000011 = <span className="font-semibold">195</span></div>
+          <div>Byte 2: <span className="text-slate-400">10</span><span className="text-emerald-600 dark:text-emerald-400">101001</span> = 10101001 = <span className="font-semibold">169</span></div>
+        </div>
+      </div>
+      <div>
+        <div className="font-medium text-slate-700 dark:text-slate-300 mb-2">Result</div>
+        <div className="font-mono bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700">
+          "é" → <span className="font-semibold">[195, 169]</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</Step>
+
+
+<Step title="4. Complete Example">
+  <Description>
+    Let's trace through how **"Hi 👋"** gets converted to bytes. This is the exact process that happens before text reaches a language model.
+  </Description>
+
+  <div className="flex flex-col gap-5 my-6">
+    <div className="bg-slate-50 dark:bg-slate-800/40 p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+      <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Step 1: Look up each character's code point</h4>
       <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
-        <li className="flex justify-between">
-          <span>H (U+0048)</span>
-          <span className="font-mono text-slate-900 dark:text-slate-200">Decimal 72</span>
+        <li className="flex justify-between items-center">
+          <span className="text-lg">H</span>
+          <span className="font-mono text-slate-700 dark:text-slate-300">U+0048 (decimal 72)</span>
+          <span className="text-xs px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded">1-byte</span>
         </li>
-        <li className="flex justify-between">
-          <span>i (U+0069)</span>
-          <span className="font-mono text-slate-900 dark:text-slate-200">Decimal 105</span>
+        <li className="flex justify-between items-center">
+          <span className="text-lg">i</span>
+          <span className="font-mono text-slate-700 dark:text-slate-300">U+0069 (decimal 105)</span>
+          <span className="text-xs px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded">1-byte</span>
         </li>
-        <li className="flex justify-between">
-          <span>Space (U+0020)</span>
-          <span className="font-mono text-slate-900 dark:text-slate-200">Decimal 32</span>
+        <li className="flex justify-between items-center">
+          <span className="text-lg">(space)</span>
+          <span className="font-mono text-slate-700 dark:text-slate-300">U+0020 (decimal 32)</span>
+          <span className="text-xs px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded">1-byte</span>
         </li>
-        <li className="flex justify-between">
-          <span>👋 (U+1F44B)</span>
-          <span className="font-mono text-slate-900 dark:text-slate-200">Decimal 128,443</span>
+        <li className="flex justify-between items-center">
+          <span className="text-lg">👋</span>
+          <span className="font-mono text-slate-700 dark:text-slate-300">U+1F44B (decimal 128,075)</span>
+          <span className="text-xs px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded">4-byte</span>
         </li>
       </ul>
     </div>
 
-    <div>
-      <h4 className="font-bold text-slate-900 dark:text-white mb-2">2. Byte Conversion</h4>
-      <div className="text-lg leading-8 text-slate-700 dark:text-slate-300 mb-6">
-        The first three characters fit into standard ASCII limits, so they take 1 byte each. The emoji is a large number, so UTF-8 splits it into 4 distinct bytes.
+    <div className="bg-slate-50 dark:bg-slate-800/40 p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+      <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Step 2: Encode each code point to bytes</h4>
+      <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400">
+        <p>The first three characters have code points below 128, so they map directly to single bytes: 72, 105, 32.</p>
+        <p>The emoji's code point (128,075) requires 4-byte encoding. Using the same process we showed for "é", the bits get distributed across four bytes following the `11110xxx 10xxxxxx 10xxxxxx 10xxxxxx` template, producing: 240, 159, 145, 139.</p>
       </div>
-      <ByteStream bytes={[72, 105, 32, 240, 159, 145, 139]} label="Final Byte Stream" />
+    </div>
+
+    <div>
+      <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">Step 3: The final byte sequence</h4>
+      <ByteStream bytes={[72, 105, 32, 240, 159, 145, 139]} label="What the model sees" />
       <Description>
-        This list of integers is the raw input that any text processing system actually sees.
+        Four characters became seven bytes. This sequence of integers is what text processing systems, including language models, actually receive as input.
       </Description>
     </div>
   </div>
-
 </Step>
 
-<Step title="3. Mini-Challenges">
-  <Description>
-    We have prepared a dedicated **Challenge Workspace** for you to practice. Click the **Challenges** tab at the top of the page to open the editor.
-  </Description>
-</Step>
 
-<Step title="4. Training on Raw Bytes">
+<Step title="5. Why Not Train on Raw Bytes?">
   <Description>
-    Now that we know we can convert any text into a stream of bytes, a logical step is to simply feed these raw byte values directly into the model. In this design, the model would just read the stream of bytes one by one and try to predict the next byte in the sequence. Assuming we built the system using this design, let's answer the following questions. 
-
-    <Callout type="note" title="Key Questions">
-      1. What would be the superpowers of the model? 
-      2. What specific problems would the model run into? 
-    </Callout>
+    Now that we can convert any text into a stream of bytes, a natural question arises: why not feed these raw byte values directly into the model? This approach has real advantages. The vocabulary is tiny (just 256 possible values), so the model's embedding table stays small. It's also universal: any text in any language, any emoji, even binary files can be processed without modification. But there's a serious problem with sequence length.
   </Description>
 
   <ThinkingProcess 
-    title="Stop & Think"
+    title="Think About the Trade-off"
     hint={
       <div>
-        Compare this "Byte" approach to the complete opposite extreme: <strong>The Word-Level Approach.</strong>
-        <br/><br/>
-        Imagine that instead of bytes, we assigned a unique ID to every unique word (e.g., "Apple" = 502, "Zebra" = 804, "ሰላም "= 90,210).
-        <ul className="list-disc pl-4 mt-2">
-          <li>How would the <strong>Input Size</strong> (Sequence Length) compare between Bytes vs. Words?</li>
-          <li>How would the <strong>Vocabulary Size</strong> (Memory needed for the lookup table) compare?</li>
-        </ul>
+        Compare these two approaches:
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <strong className="text-slate-700 dark:text-slate-300">Byte-Level</strong>
+            <ul className="list-disc pl-4 mt-2 text-sm">
+              <li>Vocabulary: 256</li>
+              <li>"Hello" = 5 steps</li>
+              <li>"人工智能" = 12 steps</li>
+            </ul>
+          </div>
+          <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <strong className="text-slate-700 dark:text-slate-300">Word-Level</strong>
+            <ul className="list-disc pl-4 mt-2 text-sm">
+              <li>Vocabulary: 500,000+</li>
+              <li>"Hello" = 1 step</li>
+              <li>"人工智能" = 1 step</li>
+            </ul>
+          </div>
+        </div>
+        <p className="mt-3 text-sm">What problems does each approach create?</p>
       </div>
     }
   >
 
-    <Description>
-      This approach is actually very logical. In fact, if you tried this, it *would* work—the model would learn. But as we scale up, we run into specific engineering trade-offs.
-    </Description>
-
-    <div className="flex flex-col gap-6 my-6">
-      {/* Superpower */}
-      <div className="p-6 rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/30">
-        <h4 className="font-bold text-green-800 dark:text-green-200 mb-3">The Superpower</h4>
-        <ul className="space-y-4 text-sm text-green-900 dark:text-green-100">
-          <li>
-            <strong>It can read anything:</strong> Since every digital file is made of bytes, this model could read English, Chinese, Python code, or even image files without ever crashing. It effectively solves the "Unknown Word" problem forever.
-          </li>
-          <li>
-            <strong>Tiny Memory:</strong> The model only needs to learn 256 possible input values. This makes the input layer incredibly small and efficient.
-          </li>
-        </ul>
+    <div className="flex flex-col gap-5 my-6">
+      <div className="p-5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+        <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">The Byte-Level Problem</h4>
+        <Description>
+          Consider the phrase "Artificial Intelligence". To a human, this is two words, two concepts. To a byte-level model, it's 23 separate processing steps. The model must spend capacity learning that these particular bytes frequently appear together before it can learn what the phrase actually *means*.
+          
+          Language models also have a fixed context window. If a model can process 8,000 units at once, a byte-level model would fit only about 1,600 words of context (since words average around 5 bytes). Long documents would get cut off.
+        </Description>
       </div>
 
-      {/* Bottleneck */}
-      <div className="p-6 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800/30">
-        <h4 className="font-bold text-red-800 dark:text-red-200 mb-3">The Bottleneck</h4>
-        <ul className="space-y-4 text-sm text-red-900 dark:text-red-100">
-          <li>
-            <strong>It is too "zoomed in":</strong>
-            <ul className="list-disc pl-4 mt-2 space-y-1 opacity-90">
-              <li>To a human, <strong>"Apple"</strong> is 1 unit of meaning.</li>
-              <li>To this model, it is 5 separate steps: <code>65</code>, <code>112</code>, <code>112</code>, <code>108</code>, <code>101</code>.</li>
-              <li>The model has to waste massive amounts of compute power just to learn how to spell words letter-by-letter.</li>
-            </ul>
-          </li>
-          <li>
-            <strong>The Memory Limit:</strong> Neural networks have a fixed "context window".
-            <ul className="list-disc pl-4 mt-2 space-y-1 opacity-90">
-              <li>A sentence like <em>"The quick brown fox"</em> is <strong>4 words</strong>.</li>
-              <li>But in bytes, it is <strong>19 numbers</strong>.</li>
-              <li>If we use bytes, we fill up the model's memory ~5x faster.</li>
-            </ul>
-          </li>
-        </ul>
+      <div className="p-5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+        <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">The Word-Level Problem</h4>
+        <Description>
+          The opposite extreme is word-level processing: give each word its own ID. This keeps sequences short, but creates different problems. English has over 500,000 words. Add other languages, technical terms, names, and typos, and you'd need millions of vocabulary entries. Each entry requires an embedding vector, which consumes enormous memory. And any word not in the vocabulary (like a brand new term "ChatGPT") causes an error.
+        </Description>
       </div>
     </div>
 
-    <Description>
-      * **Words** are too specific (there are too many of them).
-      * **Bytes** are too small (the sequences get too long).
-
-      **The Solution:** We need a middle ground between **Words** and **Bytes**. We need a way to group common characters together into meaningful chunks, but without storing every word in the dictionary.
-    </Description>
+    <div className="p-5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+      <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">The Middle Ground</h4>
+      <Description>
+        We need processing units that are larger than bytes (to keep sequences manageable) but smaller than words (to keep vocabulary size reasonable). The solution is to automatically learn which byte sequences should be grouped together, based on how often they appear in real text.
+      </Description>
+    </div>
 
   </ThinkingProcess>
 </Step>
+
+<Step title="6. Next: Tokenization">
+  <Description>
+    The algorithm that finds this middle ground is called **Byte Pair Encoding (BPE)**. It starts with individual bytes and iteratively merges the most frequent adjacent pairs. After training on a large text corpus, common patterns like "ing", "tion", and "the" become single units called tokens, while rare words get split into smaller recognizable pieces.
+  </Description>
+
+  <div className="my-6 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">Preview: How GPT-4 tokenizes text</div>
+    <div className="space-y-2 font-mono text-sm">
+      <div className="flex items-center gap-2">
+        <span className="text-slate-600 dark:text-slate-400">"Hello" →</span>
+        <span className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">[Hello]</span>
+        <span className="text-slate-400 text-xs">(1 token)</span>
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-slate-600 dark:text-slate-400">"Unbelievable" →</span>
+        <span className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">[Un]</span>
+        <span className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">[believ]</span>
+        <span className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded">[able]</span>
+        <span className="text-slate-400 text-xs">(3 tokens)</span>
+      </div>
+    </div>
+  </div>
+
+  <Callout type="success" title="Summary">
+    * **Unicode** assigns a unique code point to every character in every writing system
+    * **UTF-8** encodes those code points as variable-length byte sequences (1-4 bytes)
+    * Raw **bytes** are universal but create sequences that are too long for efficient processing
+    * Full **words** keep sequences short but require impossibly large vocabularies
+    * We need something in between: **tokens**
+  </Callout>
+
+  <Description>
+    In the next chapter, we'll learn how to automatically discover good groupings of bytes using an algorithm called Byte Pair Encoding. This is how modern language models like GPT-4 and Claude convert text into the units they actually process.
+  </Description>
+</Step>
+
