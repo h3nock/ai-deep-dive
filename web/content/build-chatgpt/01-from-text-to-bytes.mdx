@@ -5,13 +5,28 @@ description: "How computers represent language (Unicode & UTF-8)."
 
 ---
 
+<div className="flex flex-col gap-4">
 <Description>
-Large Language Models are trained on massive datasets of text. Before we can feed this text into a model, we need to understand how computers represent text and how we convert human-readable characters into the numerical format computers use. When you type "Hello" into ChatGPT, the model doesn't see the word "Hello". It doesn't see letters at all. It sees a sequence of numbers. Every piece of text, in every language, gets converted to numbers before a language model can process it. This chapter covers how that conversion works. 
+  Large Language Models are trained on massive datasets of text. Before we can feed this text into a model, we need to understand how computers represent text and how we convert human-readable characters into the numerical format computers use.
 </Description>
+
+<Description>
+  When you type "Hello" into ChatGPT, the model doesn't see the word "Hello". It doesn't see letters at all. It sees a sequence of numbers. Every piece of text, in every language, gets converted to numbers before a language model can process it. This chapter covers how that conversion works.
+</Description>
+</div>
+
 
 <Step title="1. Text Representation">
   <Description>
-    Computers only understand binary numbers (0s and 1s). To store or process text, we need a system that assigns a number to each character. As long as everyone agrees on the mapping, computers can store and exchange text reliably. This consistency is achieved through character encoding standards. Currently, **Unicode** is the universal standard. It acts as a large lookup table that assigns a unique number, called a **Code Point**, to every character in almost every language. Today, Unicode defines over 150,000 characters across 161 scripts. We usually represent these code points with the notation `U+XXXX` (where XXXX is a hexadecimal number).
+    Computers only understand binary numbers (0s and 1s). To store or process text, we need a system that assigns a number to each character. As long as everyone agrees on the mapping, computers can store and exchange text reliably.
+  </Description>
+
+  <Description>
+    This consistency is achieved through character encoding standards. Currently, **Unicode** is the universal standard. It acts as a large lookup table that assigns a unique number, called a **Code Point**, to every character in almost every language.
+  </Description>
+
+  <Description>
+    Today, Unicode defines over 150,000 characters across 161 scripts. We usually represent these code points with the notation `U+XXXX` (where XXXX is a hexadecimal number).
   </Description>
 
   Examples of Unicode Code Point Mappings:
@@ -31,11 +46,11 @@ Large Language Models are trained on massive datasets of text. Before we can fee
 
 <Step title="2. Encoding">
   <Description>
-    The simplest encoding would be to store every code point as a 4-byte (32-bit) integer, known as **UTF-32**. This handles any Unicode character easily, since even the largest code points fit in 4 bytes. How ever, UTF-32 is space-inefficient for most text. For example, a simple text file of English letters (which only need 1 byte) would be four times larger than necessary.
+    The simplest encoding would be to store every code point as a 4-byte (32-bit) integer, known as **UTF-32**. This handles any Unicode character easily, since even the largest code points fit in 4 bytes.
   </Description>
 
   <Description>
-    Let's consider storing **"Hello"** using UTF-32.
+    However, UTF-32 is space-inefficient for most text. For example, a simple text file of English letters (which only need 1 byte) would be four times larger than necessary. Let's consider storing **"Hello"** using UTF-32:
   </Description>
 
   | Character | Code Point | Stored in UTF-32 (Hex) |
@@ -47,9 +62,15 @@ Large Language Models are trained on massive datasets of text. Before we can fee
   | **o** | `U+006F` | `00 00 00 6F` |
 
   <Description>
-     For code points that don't require 4 bytes, the computer has to pad the remaining space with zeros. So, five characters require 20 bytes, but 15 of those bytes are zeros. That's 75% waste. For English text (which dominates the internet), UTF-32 uses four times more storage than necessary.
+    For code points that don't require 4 bytes, the computer has to pad the remaining space with zeros. So, five characters require 20 bytes, but 15 of those bytes are zeros. That's 75% waste.
+  </Description>
 
-    This makes UTF-32 impractical for almost all real-world applications. To solve this universal storage problem, we use a smarter encoding.
+  <Description>
+    For English text (which dominates the internet), UTF-32 uses four times more storage than necessary. This makes UTF-32 impractical for almost all real-world applications.
+  </Description>
+
+  <Description>
+    To solve this problem, we use a smarter encoding.
   </Description>
 </Step>
 
@@ -58,13 +79,13 @@ Large Language Models are trained on massive datasets of text. Before we can fee
     **UTF-8** solves the storage problem with a clever idea: use fewer bytes for common characters and more bytes only when needed. Instead of wasting 4 bytes on every character, UTF-8 adapts based on the code point's size.
   </Description>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">3.1 Byte Ranges by Character Type</h4>
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">3.1 Byte Ranges by Character Type</h4>
 
   <Description>
     In UTF-8, different characters need different amounts of storage. ASCII characters (the basic Latin alphabet, digits, and punctuation) are so common that UTF-8 keeps them as single bytes for maximum efficiency. As characters become less common in English text (accented letters, then Asian scripts, then emoji), they get allocated more bytes. Here's how UTF-8 divides the Unicode space:
   </Description>
 
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 my-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 my-4">
     <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
       <div className="text-2xl font-semibold text-slate-800 dark:text-slate-200 mb-1">1 Byte</div>
       <div className="text-sm text-slate-600 dark:text-slate-400">ASCII characters</div>
@@ -95,13 +116,13 @@ Large Language Models are trained on massive datasets of text. Before we can fee
     With UTF-8, "Hello" takes just 5 bytes instead of 20. English text is as compact as it was with ASCII, while still supporting every character in Unicode.
   </Description>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">3.2 Fixed vs Variable Width: The Parsing Challenge</h4>
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">3.2 Fixed vs Variable Width: The Parsing Challenge</h4>
 
   <Description>
     Variable-width encoding creates a problem that fixed-width encodings don't have: how do you know where one character ends and the next begins? With UTF-32, this is trivial: every character is exactly 4 bytes, so you just read bytes in fixed chunks of four. Let's see the difference visually.
   </Description>
 
-  <div className="my-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
     <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">UTF-32: Fixed-width parsing</div>
     <div className="font-mono text-xs bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 overflow-x-auto">
       <div className="text-slate-500 mb-2">Byte stream for "Aé中":</div>
@@ -129,7 +150,7 @@ Large Language Models are trained on massive datasets of text. Before we can fee
     But with UTF-8, characters have variable lengths (1, 2, or 3 bytes in this example). Looking at the same string encoded in UTF-8, we see fewer bytes total, but no obvious boundaries:
   </Description>
 
-  <div className="my-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
     <div className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">UTF-8: Variable-width... but where are the boundaries?</div>
     <div className="font-mono text-xs bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700 overflow-x-auto">
       <div className="text-slate-500 mb-2">Byte stream for "Aé中":</div>
@@ -149,7 +170,7 @@ Large Language Models are trained on massive datasets of text. Before we can fee
     This is the core challenge: when reading a stream of UTF-8 bytes, how does a computer know where one character ends and another begins? UTF-8 solves this with a clever bit pattern system.
   </Description>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">3.3 The UTF-8 Bit Patterns</h4>
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">3.3 The UTF-8 Bit Patterns</h4>
 
   <Description>
     UTF-8's brilliant solution is to embed the length information directly into each byte. The first few bits of every byte follow a strict pattern that tells you exactly what role that byte plays. Think of it like a prefix code: before the actual character data, each byte announces "I'm the start of a 2-byte character" or "I'm a continuation of the previous character."
@@ -159,7 +180,7 @@ Large Language Models are trained on massive datasets of text. Before we can fee
     Here's the complete pattern. Pay attention to how the leading bits change:
   </Description>
 
-  <div className="overflow-x-auto my-6">
+  <div className="overflow-x-auto my-4">
     <table className="w-full text-sm border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
       <thead className="bg-slate-50 dark:bg-slate-800">
         <tr>
@@ -202,20 +223,20 @@ Large Language Models are trained on massive datasets of text. Before we can fee
     The rule is elegantly simple: count the leading `1`s in the first byte to know how many bytes the character uses. A leading `0` means a single byte. `110` means two bytes. `1110` means three. `11110` means four. Continuation bytes always start with `10`, so they can never be mistaken for the start of a character.
   </Description>
 
-  <div className="my-6 p-4 bg-slate-100 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="my-4 p-4 bg-slate-100 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
     <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Key Insight</div>
     <div className="text-sm text-slate-600 dark:text-slate-400">
       This pattern ensures you can <strong>never</strong> confuse bytes. If you see a byte starting with `10`, you know it's a continuation. Keep reading backward or forward to find the leading byte. If you see `0`, `110`, `1110`, or `11110`, you're at the start of a character and know exactly how many bytes to read.
     </div>
   </div>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">3.4 Decoding a Byte Stream</h4>
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">3.4 Decoding a Byte Stream</h4>
 
   <Description>
     Now let's apply these patterns to actually decode the UTF-8 byte stream we saw earlier. We'll go through each byte, check its leading bits to determine its role, and reconstruct the original characters. This is exactly what your computer does every time it reads a text file.
   </Description>
 
-  <div className="my-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
     <div className="space-y-4 text-sm">
       <div className="font-mono bg-white dark:bg-slate-900 p-3 rounded border border-slate-200 dark:border-slate-700">
         <div className="text-slate-500 mb-3">Bytes: 41 C3 A9 E4 B8 AD</div>
@@ -256,7 +277,7 @@ Large Language Models are trained on massive datasets of text. Before we can fee
     And there we have it! The boundaries are now clear: `[41] [C3 A9] [E4 B8 AD]` → "A", "é", "中". Notice how we never had to guess. Each byte's leading bits told us exactly what to do. This self-describing property is what makes UTF-8 so robust: even if data gets corrupted or you start reading from the middle of a file, you can always find the next valid character boundary.
   </Description>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">3.5 Encoding a Character to Bytes</h4>
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">3.5 Encoding a Character to Bytes</h4>
 
   <Description>
     We've seen how to decode UTF-8, but how does the encoding process work in reverse? When your computer needs to save a character to a file, it must convert the Unicode code point into the correct sequence of bytes. Let's walk through this process step by step.
@@ -266,7 +287,7 @@ Large Language Models are trained on massive datasets of text. Before we can fee
     We'll encode **é** (U+00E9, decimal 233). First, we check which byte range it falls into: since 233 is larger than 127 but smaller than 2048, it needs 2 bytes. Now we need to split its bits and insert them into the UTF-8 template.
   </Description>
 
-  <div className="my-6 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="my-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
     <div className="space-y-4 text-sm">
       <div>
         <div className="font-medium text-slate-700 dark:text-slate-300 mb-2">Step 1: Convert code point to binary</div>
@@ -305,7 +326,7 @@ Large Language Models are trained on massive datasets of text. Before we can fee
     Let's trace through how **"Hi 👋"** gets converted to bytes. This is the exact process that happens before text reaches a language model.
   </Description>
 
-  <div className="flex flex-col gap-5 my-6">
+  <div className="flex flex-col gap-4 my-4">
     <div className="bg-slate-50 dark:bg-slate-800/40 p-5 rounded-lg border border-slate-200 dark:border-slate-700">
       <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4">Step 1: Look up each character's code point</h4>
       <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
@@ -353,7 +374,19 @@ Large Language Models are trained on massive datasets of text. Before we can fee
 
 <Step title="5. Why Not Train on Raw Bytes?">
   <Description>
-    Now that we can convert any text into a stream of bytes, a natural question arises: why not feed these raw byte values directly into the model? This approach has real advantages. The vocabulary is tiny (just 256 possible values), so the model's embedding table stays small. It's also universal: any text in any language, any emoji, even binary files can be processed without modification. But there's a serious problem with sequence length.
+    We have just spent this entire chapter establishing that UTF-8 is the universal standard for text. It can represent every language, every emoji, and every symbol using just 256 basic units (bytes).
+  </Description>
+
+  <Description>
+    A very natural question arises: **Why don't we just feed these raw bytes directly into the AI?**
+  </Description>
+
+  <Description>
+    It seems like the perfect solution. It's **Universal**: you would never need to update your model for new languages since Spanish, Chinese, and Python code are all just bytes. It's also **Tiny**: the model would only need a vocabulary of 256 items, which is incredibly memory efficient compared to storing hundreds of thousands of words.
+  </Description>
+
+  <Description>
+    So why doesn't GPT-4 do this?
   </Description>
 
   <ThinkingProcess 
@@ -361,21 +394,21 @@ Large Language Models are trained on massive datasets of text. Before we can fee
     hint={
       <div>
         Compare these two approaches:
-        <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
             <strong className="text-slate-700 dark:text-slate-300">Byte-Level</strong>
             <ul className="list-disc pl-4 mt-2 text-sm">
               <li>Vocabulary: 256</li>
-              <li>"Hello" = 5 steps</li>
-              <li>"人工智能" = 12 steps</li>
+              <li>"Hello" = 5 units</li>
+              <li>"人工智能" = 12 units</li>
             </ul>
           </div>
           <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
             <strong className="text-slate-700 dark:text-slate-300">Word-Level</strong>
             <ul className="list-disc pl-4 mt-2 text-sm">
               <li>Vocabulary: 500,000+</li>
-              <li>"Hello" = 1 step</li>
-              <li>"人工智能" = 1 step</li>
+              <li>"Hello" = 1 unit</li>
+              <li>"人工智能" = 1 unit</li>
             </ul>
           </div>
         </div>
@@ -383,41 +416,82 @@ Large Language Models are trained on massive datasets of text. Before we can fee
       </div>
     }
   >
-
-    <div className="flex flex-col gap-5 my-6">
-      <div className="p-5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-        <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">The Byte-Level Problem</h4>
-        <Description>
-          Consider the phrase "Artificial Intelligence". To a human, this is two words, two concepts. To a byte-level model, it's 23 separate processing steps. The model must spend capacity learning that these particular bytes frequently appear together before it can learn what the phrase actually *means*.
-          
-          Language models also have a fixed context window. If a model can process 8,000 units at once, a byte-level model would fit only about 1,600 words of context (since words average around 5 bytes). Long documents would get cut off.
-        </Description>
+    <div className="space-y-8">
+      <div>
+        <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100">The Byte-Level Problem: Drowning in Details</h4>
+        <p className="mt-3 text-base text-slate-700 dark:text-slate-300">
+          The problem isn't what the model can read; the problem is <strong>how much attention it has to spend reading it</strong>.
+        </p>
+        <p className="mt-4 text-base text-slate-700 dark:text-slate-300">
+          Imagine someone trying to tell you a story, but instead of speaking in words, they pronounced every single letter out loud:
+        </p>
+        <p className="my-4 text-lg italic text-slate-600 dark:text-slate-400 pl-4 border-l-2 border-slate-300 dark:border-slate-600">
+          "T... H... E... Q... U... I... C... K... B... R... O... W... N... F... O... X..."
+        </p>
+        <p className="text-base text-slate-700 dark:text-slate-300">
+          By the time they get to "F-O-X," you've already forgotten the beginning of the sentence. Your brain is so busy assembling letters into words that it has no capacity left to understand the actual meaning. When you read text on a page, your eyes can scan and group letters instantly. But when information arrives one piece at a time, like listening to someone speak, you must hold each piece in memory while waiting for the rest. This is the bottleneck.
+        </p>
+        <p className="mt-4 text-base text-slate-700 dark:text-slate-300">
+          AI models face the exact same limitation. Large Language Models have a fixed <strong>Context Window</strong>: a hard limit on how many units of information they can hold in working memory at once.
+        </p>
+        <p className="mt-4 text-base text-slate-700 dark:text-slate-300">
+          Consider the phrase "Artificial Intelligence". To a human, this is <strong>2</strong> concepts. To a byte-level model, it's <strong>23</strong> separate units to process. The model burns through its limited context window just to represent a single phrase. Worse, it has to re-learn that <code className="text-sm">t</code> followed by <code className="text-sm">h</code> followed by <code className="text-sm">e</code> usually means "the" over and over again. This is a massive waste of the model's capacity.
+        </p>
       </div>
 
-      <div className="p-5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-        <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">The Word-Level Problem</h4>
-        <Description>
-          The opposite extreme is word-level processing: give each word its own ID. This keeps sequences short, but creates different problems. English has over 500,000 words. Add other languages, technical terms, names, and typos, and you'd need millions of vocabulary entries. Each entry requires an embedding vector, which consumes enormous memory. And any word not in the vocabulary (like a brand new term "ChatGPT") causes an error.
-        </Description>
+      <hr className="border-slate-200 dark:border-slate-700" />
+
+      <div>
+        <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100">The Word-Level Problem: The Vocabulary Explosion</h4>
+        <p className="mt-3 text-base text-slate-700 dark:text-slate-300">
+          So, why not go to the other extreme? Why not just give every word in the English language its own unique ID number?
+        </p>
+        <div className="my-4 font-mono text-base bg-slate-100 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+          <div className="text-slate-800 dark:text-slate-200">"Apple" = 101</div>
+          <div className="text-slate-800 dark:text-slate-200">"Banana" = 102</div>
+          <div className="text-slate-800 dark:text-slate-200">"ChatGPT" = 103</div>
+        </div>
+        <p className="text-base text-slate-700 dark:text-slate-300">
+          This solves the length problem (sequences become very short), but it creates a <strong>Vocabulary Problem</strong>:
+        </p>
+        <ul className="list-disc pl-5 mt-4 space-y-3 text-base text-slate-700 dark:text-slate-300">
+          <li><strong>Size:</strong> English has over 500,000 words. Add medical terms, legal jargon, names, slang, and other languages, and you easily reach millions. The model's "dictionary" (the Embedding Table) becomes impossibly large to store in memory.</li>
+          <li><strong>Fragility:</strong> What happens when the model encounters a word it has never seen? If you train a model today, and tomorrow a new term like "GPT-5" or "metaverse" appears, a word-level model simply breaks. It has no ID for that word and must output an <code className="text-sm">&lt;UNKNOWN&gt;</code> error.</li>
+        </ul>
+      </div>
+
+      <hr className="border-slate-200 dark:border-slate-700" />
+
+      <div>
+        <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100">The Middle Ground: Sub-word Tokenization</h4>
+        <p className="mt-3 text-base text-slate-700 dark:text-slate-300">
+          Neither extreme works. Bytes give us universality but waste context. Words give us efficiency but break on anything new. We need to find a balance between these two extremes.
+        </p>
+        <p className="mt-4 text-base text-slate-700 dark:text-slate-300">
+          The insight is this: what if we could <strong>automatically learn</strong> which character sequences should be grouped together? Common patterns like "the", "ing", and "tion" appear so frequently that they deserve to be single units. But rare words like "cryptocurrency" can be broken into recognizable pieces: "crypto" + "currency".
+        </p>
+        <p className="mt-4 text-base text-slate-700 dark:text-slate-300">
+          This is exactly what <strong>Tokenization</strong> does. In modern LLMs, we don't use words or bytes. We use <strong>Tokens</strong>: variable-sized chunks that are learned from data.
+        </p>
+        <ul className="list-disc pl-5 mt-4 space-y-2 text-base text-slate-700 dark:text-slate-300">
+          <li>A common word like "apple" becomes a single token.</li>
+          <li>A complex word like "tokenization" gets split into "token" + "ization".</li>
+          <li>A rare word like "Anthropic" might become "Anthrop" + "ic".</li>
+        </ul>
+        <p className="mt-4 text-base text-slate-700 dark:text-slate-300">
+          This gives us the best of both worlds. The model can process common text quickly (short sequences), but it can also handle any text in the universe by falling back to smaller pieces when needed. No more <code className="text-sm">&lt;UNKNOWN&gt;</code> errors. No more wasted context on individual bytes.
+        </p>
       </div>
     </div>
-
-    <div className="p-5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-      <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">The Middle Ground</h4>
-      <Description>
-        We need processing units that are larger than bytes (to keep sequences manageable) but smaller than words (to keep vocabulary size reasonable). The solution is to automatically learn which byte sequences should be grouped together, based on how often they appear in real text.
-      </Description>
-    </div>
-
   </ThinkingProcess>
 </Step>
 
 <Step title="6. Next: Tokenization">
   <Description>
-    The algorithm that finds this middle ground is called **Byte Pair Encoding (BPE)**. It starts with individual bytes and iteratively merges the most frequent adjacent pairs. After training on a large text corpus, common patterns like "ing", "tion", and "the" become single units called tokens, while rare words get split into smaller recognizable pieces.
+    The algorithm that finds this middle ground is called **Byte Pair Encoding (BPE)**. It starts with individual bytes and iteratively merges the most frequent adjacent pairs. After training on a large text corpus, common patterns like "ing", "tion", and "the" become single units called **tokens**, while rare words get split into smaller recognizable pieces.
   </Description>
 
-  <div className="my-6 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
     <div className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">Preview: How GPT-4 tokenizes text</div>
     <div className="space-y-2 font-mono text-sm">
       <div className="flex items-center gap-2">
@@ -444,7 +518,7 @@ Large Language Models are trained on massive datasets of text. Before we can fee
   </Callout>
 
   <Description>
-    In the next chapter, we'll learn how to automatically discover good groupings of bytes using an algorithm called Byte Pair Encoding. This is how modern language models like GPT-4 and Claude convert text into the units they actually process.
+    In the next chapter, we'll build BPE from scratch and see exactly how models like GPT-4 convert text into the units they actually process.
   </Description>
 </Step>
 
