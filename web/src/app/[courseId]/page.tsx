@@ -134,7 +134,7 @@ export default async function RoadmapPage({
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              <span>~20 hours</span>
+              <span>~120 hours</span>
             </div>
           </div>
 
