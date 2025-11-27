@@ -285,6 +285,42 @@ description: "How BPE compresses text into the atoms of language models."
     In the walkthrough above, we used letters like `a`, `b`, `c` to make the algorithm easy to follow. But remember what we learned in Chapter 1: text is already a sequence of integers. When you encode `"hello"` as UTF-8, you get `[104, 101, 108, 108, 111]`. These byte values range from 0 to 255, giving us our **base vocabulary of 256 tokens**. When BPE merges a frequent pair, it needs to assign a new ID to that merged token. Since 0-255 are already taken by the raw bytes, new tokens start at **256**, then 257, 258, and so on.
   </Description>
 
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Breaking Down the Algorithm</h4>
+
+  <Description>
+    Looking back at our BPE walkthrough, the algorithm repeats three operations: **count** pairs, **pick** the most frequent one, and **merge** it. To implement this, we need three functions that work together:
+  </Description>
+
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400 shrink-0 mt-0.5">1</div>
+        <div>
+          <span className="font-semibold text-slate-800 dark:text-slate-200">get_stats</span>
+          <span className="text-slate-600 dark:text-slate-400"> counts how often each adjacent pair appears</span>
+        </div>
+      </div>
+      <div className="flex items-start gap-3">
+        <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400 shrink-0 mt-0.5">2</div>
+        <div>
+          <span className="font-semibold text-slate-800 dark:text-slate-200">merge</span>
+          <span className="text-slate-600 dark:text-slate-400"> replaces all occurrences of a pair with a new token</span>
+        </div>
+      </div>
+      <div className="flex items-start gap-3">
+        <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400 shrink-0 mt-0.5">3</div>
+        <div>
+          <span className="font-semibold text-slate-800 dark:text-slate-200">train_bpe</span>
+          <span className="text-slate-600 dark:text-slate-400"> is the main loop that calls the above until we reach target vocab size</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    Let's implement each one.
+  </Description>
+
   <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Function 1: Count Pair Statistics</h4>
 
   <Description>
@@ -292,7 +328,7 @@ description: "How BPE compresses text into the atoms of language models."
   </Description>
 
 ```python
-def get_stats(ids):
+def get_stats(ids: list[int]) -> dict[tuple, int]:
     """
     Given a list of integers, return a dictionary of counts of consecutive pairs.
     Example: [1, 2, 3, 1, 2] -> {(1, 2): 2, (2, 3): 1, (3, 1): 1}
@@ -310,11 +346,11 @@ def get_stats(ids):
   <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Function 2: Merge a Pair</h4>
 
   <Description>
-    The second function takes the token list and replaces every occurrence of a target pair with a new token ID. The tricky part: when you merge a pair, you consume both elements and skip ahead by 2, not 1.
+    The second function takes the token list and replaces every occurrence of a target pair with a new token ID.
   </Description>
 
 ```python
-def merge(ids, pair, new_id):
+def merge(ids: list[int], pair: tuple[int, int], new_id: int) -> list[int]:
     """
     In the list of integers (ids), replace all consecutive occurrences 
     of pair with the new token new_id.
@@ -323,8 +359,8 @@ def merge(ids, pair, new_id):
     i = 0
     while i < len(ids):
         # Check if we found the pair (and aren't at the end)
-        # If yes: append new_id, skip ahead by 2
-        # If no: append current element, move ahead by 1
+        # If match: append new_id and skip ahead by 2 (we consumed both elements)
+        # If no match: append current element and move ahead by 1
         pass
     return newids
 ```
@@ -336,11 +372,15 @@ def merge(ids, pair, new_id):
   <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Function 3: The Training Loop</h4>
 
   <Description>
-    Finally, we combine everything into a training loop. We start with UTF-8 bytes, then repeatedly find the most frequent pair and merge it with a new token ID.
+    Finally, we combine everything into a training loop. We start with UTF-8 bytes (vocab size 256) and keep merging until we reach a target vocabulary size.
+  </Description>
+
+  <Description>
+    GPT-4, for example, stops at roughly **100,000 tokens**. This is a *hyperparameter*, a number we choose before training to balance efficiency (more tokens = shorter sequences) vs. memory (larger embedding table).
   </Description>
 
 ```python
-def train_bpe(text, num_merges):
+def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
     ids = list(text.encode("utf-8"))  # Start with raw bytes
     merges = {}  # Will store our learned merge rules
     
@@ -421,9 +461,188 @@ def train_bpe(text, num_merges):
 </Step>
 
 
-<Step title="5. The Complete Pipeline">
+<Step title="5. Encoding & Decoding">
   <Description>
-    We've now covered the entire journey of text before it reaches the neural network.
+    We've trained a tokenizer and learned merge rules. Now we need two more functions: one to **decode** tokens back into text, and one to **encode** new text into tokens. Let's start with the easier one.
+  </Description>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">The Vocabulary Table</h4>
+
+  <Description>
+    First, we need a **vocabulary table** that maps each token ID to its byte sequence. Remember from Chapter 1: text is just a sequence of integers (bytes). The letter `"a"` is byte `97`, `"b"` is `98`, and so on. Our vocabulary stores these byte sequences directly:
+  </Description>
+
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">The Vocabulary: Token ID → Bytes</div>
+    <div className="space-y-3 font-mono text-sm">
+      <div>
+        <div className="text-slate-500 dark:text-slate-400 mb-1"># Base vocabulary: single bytes (0-255)</div>
+        <div className="text-slate-700 dark:text-slate-300">vocab[97] = [97] <span className="text-slate-400"># "a"</span></div>
+        <div className="text-slate-700 dark:text-slate-300">vocab[98] = [98] <span className="text-slate-400"># "b"</span></div>
+        <div className="text-slate-700 dark:text-slate-300">vocab[99] = [99] <span className="text-slate-400"># "c"</span></div>
+        <div className="text-slate-500 dark:text-slate-400">...</div>
+      </div>
+      <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+        <div className="text-slate-500 dark:text-slate-400 mb-1"># Merged tokens: pre-computed byte sequences</div>
+        <div className="text-slate-700 dark:text-slate-300">vocab[256] = [97, 97] <span className="text-slate-400"># "aa"</span></div>
+        <div className="text-slate-700 dark:text-slate-300">vocab[257] = [97, 98] <span className="text-slate-400"># "ab"</span></div>
+        <div className="text-slate-700 dark:text-slate-300">vocab[258] = [97, 97, 98] <span className="text-slate-400"># "aab"</span></div>
+        <div className="text-slate-500 dark:text-slate-400">...</div>
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    The key insight: each token ID points directly to its byte sequence, no calculation needed at runtime. When we see token `256`, we just grab `[97, 97]` from the dictionary. This is why decoding is so fast.
+  </Description>
+
+  <Callout type="tip" title="Building the Vocabulary During Training">
+    When you create a new merged token, immediately store its bytes by concatenating the bytes of the first token and the bytes of the second token: `vocab[new_id] = vocab[pair[0]] + vocab[pair[1]]`. After training, every token’s bytes are ready for instant lookup.
+  </Callout>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Decoding: Tokens → Text</h4>
+
+  <Description>
+    With a flattened vocabulary, decoding is just a dictionary lookup:
+  </Description>
+
+```python
+def decode(ids: list[int], vocab: dict[int, list[int]]) -> str:
+    """Convert token IDs back to text."""
+    # Look up each ID in vocab, concatenate the bytes, decode as UTF-8
+    pass
+```
+
+  <Callout type="note" title="Challenge: The Decoder">
+    An easy win! Switch to the **Challenge** tab to implement it.
+  </Callout>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Visual Example: Decoding</h4>
+
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Decoding [258, 99] back to text</div>
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="text-sm text-slate-500 dark:text-slate-400 w-28">Token IDs:</div>
+        <div className="flex gap-2">
+          <div className="px-3 py-2 bg-slate-200 dark:bg-slate-700 rounded font-mono text-sm">258</div>
+          <div className="px-3 py-2 bg-slate-200 dark:bg-slate-700 rounded font-mono text-sm">99</div>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="text-sm text-slate-500 dark:text-slate-400 w-28">Look up bytes:</div>
+        <div className="flex gap-3 items-center">
+          <div className="flex flex-col items-center">
+            <div className="text-xs text-slate-400 mb-1">vocab[258]</div>
+            <div className="px-3 py-2 bg-emerald-100 dark:bg-emerald-900/40 rounded font-mono text-sm border border-emerald-300 dark:border-emerald-700">[97, 97, 98]</div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="text-xs text-slate-400 mb-1">vocab[99]</div>
+            <div className="px-3 py-2 bg-emerald-100 dark:bg-emerald-900/40 rounded font-mono text-sm border border-emerald-300 dark:border-emerald-700">[99]</div>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="text-sm text-slate-500 dark:text-slate-400 w-28">Concatenate:</div>
+        <div className="px-3 py-2 bg-emerald-100 dark:bg-emerald-900/40 rounded font-mono text-sm border border-emerald-300 dark:border-emerald-700">[97, 97, 98, 99]</div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="text-sm text-slate-500 dark:text-slate-400 w-28">Decode UTF-8:</div>
+        <div className="px-3 py-2 bg-emerald-500 text-white rounded font-mono text-sm font-bold">"aabc"</div>
+      </div>
+    </div>
+  </div>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Encoding: Text → Tokens</h4>
+
+  <Description>
+    Encoding involves a few more steps. To tokenize new text, we apply our learned merge rules **in the exact order we learned them**.
+  </Description>
+
+```python
+def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
+    """Tokenize text using learned merge rules."""
+    ids = list(text.encode("utf-8"))  # Start with raw bytes
+    
+    # Apply each merge rule in the order it was learned
+    # Hint: iterate through merges.items() and use your merge function
+    pass
+```
+  <Description>
+    Since Python dictionaries preserve insertion order, we can simply iterate through `merges` and apply each rule. But why does order matter? Some merge rules depend on tokens created by earlier merges. If we learned `(97,97)→256` first and `(256,98)→257` second, the second rule can only match after the first rule has created token 256. Applying them out of order means the second rule looks for a token that doesn't exist yet, so it gets skipped. Let's see this with an example.
+  </Description>
+
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Why Order Matters: Encoding "aab" with Two Merges</div>
+    <div className="text-sm text-slate-600 dark:text-slate-400 mb-4">We have two merge rules: <span className="font-mono">merge #1: (97,97)→256</span> and <span className="font-mono">merge #2: (256,98)→257</span>. The order we apply them changes the result.</div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded border border-emerald-200 dark:border-emerald-800">
+        <div className="text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-3">✓ Correct Order: #1 then #2</div>
+        <div className="space-y-3">
+          <div className="pb-2 border-b border-emerald-200 dark:border-emerald-700">
+            <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">Apply merge #1: (97,97)→256</div>
+            <div className="font-mono text-xs text-slate-600 dark:text-slate-400">[97, 97, 98] → [<span className="text-emerald-600 dark:text-emerald-400 font-bold">256</span>, 98]</div>
+          </div>
+          <div>
+            <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">Apply merge #2: (256,98)→257</div>
+            <div className="font-mono text-xs text-slate-600 dark:text-slate-400">[256, 98] → [<span className="text-emerald-600 dark:text-emerald-400 font-bold">257</span>]</div>
+          </div>
+        </div>
+        <div className="mt-3 pt-2 border-t border-emerald-200 dark:border-emerald-700 text-xs text-emerald-600 dark:text-emerald-400 font-medium">Result: [257] (1 token)</div>
+      </div>
+      <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+        <div className="text-sm font-medium text-red-700 dark:text-red-300 mb-3">✗ Wrong Order: #2 then #1</div>
+        <div className="space-y-3">
+          <div className="pb-2 border-b border-red-200 dark:border-red-700">
+            <div className="text-xs text-red-600 dark:text-red-400 mb-1">Apply merge #2: (256,98)→257</div>
+            <div className="font-mono text-xs text-slate-600 dark:text-slate-400">[97, 97, 98] → [97, 97, 98] <span className="text-slate-400">(no 256 yet, skipped!)</span></div>
+          </div>
+          <div>
+            <div className="text-xs text-red-600 dark:text-red-400 mb-1">Apply merge #1: (97,97)→256</div>
+            <div className="font-mono text-xs text-slate-600 dark:text-slate-400">[97, 97, 98] → [<span className="text-red-600 dark:text-red-400 font-bold">256</span>, 98]</div>
+          </div>
+        </div>
+        <div className="mt-3 pt-2 border-t border-red-200 dark:border-red-700 text-xs text-red-600 dark:text-red-400 font-medium">Result: [256, 98] (2 tokens, missed merge!)</div>
+      </div>
+    </div>
+  </div>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Visual Example: Encoding</h4>
+
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Encoding "aaab" with merges: (97,97)→256, (256,97)→257</div>
+    <div className="space-y-3 font-mono text-sm">
+      <div className="flex items-center gap-3">
+        <span className="text-slate-500 w-24">Start:</span>
+        <span className="text-slate-700 dark:text-slate-300">[97, 97, 97, 98]</span>
+        <span className="text-slate-400 text-xs">← raw bytes: a, a, a, b</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="text-slate-500 w-24">Merge (a,a):</span>
+        <span className="text-slate-700 dark:text-slate-300">[<span className="text-emerald-600 dark:text-emerald-400 font-bold">256</span>, 97, 98]</span>
+        <span className="text-slate-400 text-xs">← (97,97) becomes 256</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="text-slate-500 w-24">Merge (256,a):</span>
+        <span className="text-slate-700 dark:text-slate-300">[<span className="text-emerald-600 dark:text-emerald-400 font-bold">257</span>, 98]</span>
+        <span className="text-slate-400 text-xs">← (256,97) becomes 257</span>
+      </div>
+      <div className="flex items-center gap-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+        <span className="text-slate-500 w-24">Result:</span>
+        <span className="text-emerald-600 dark:text-emerald-400 font-bold">[257, 98]</span>
+        <span className="text-slate-400 text-xs">← 4 bytes compressed to 2 tokens</span>
+      </div>
+    </div>
+  </div>
+
+  <Callout type="note" title="Challenge: The Encoder">
+    The final boss! Implement encoding to tokenize new text. Switch to the **Challenge** tab.
+  </Callout>
+</Step>
+
+<Step title="6. The Complete Pipeline">
+  <Description>
+    Let's step back and see the entire journey of text before it reaches the neural network.
   </Description>
 
   <div className="my-4 relative">
@@ -477,6 +696,8 @@ def train_bpe(text, num_merges):
     * **Tokenization** compresses text into efficient chunks called tokens
     * **BPE** learns merge rules by iteratively combining frequent pairs
     * **Regex pre-splitting** ensures words stay consistent regardless of punctuation
+    * **Decoding** is a simple vocabulary lookup since we store each token's bytes
+    * **Encoding** applies learned merges in order to tokenize new text
     * The final output is a sequence of **integer IDs**: the atoms of language models
   </Callout>
 
