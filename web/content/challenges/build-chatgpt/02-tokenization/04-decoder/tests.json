@@ -1,0 +1,37 @@
+[
+  {
+    "id": "case1",
+    "inputs": {
+      "ids": "[104, 105]",
+      "vocab": "{0: b'\\x00', 104: b'h', 105: b'i'}"
+    },
+    "expected": "\"hi\""
+  },
+  {
+    "id": "case2",
+    "inputs": {
+      "ids": "[256, 111]",
+      "vocab": "{97: b'a', 98: b'b', 111: b'o', 256: b'ab'}"
+    },
+    "expected": "\"abo\"",
+    "hidden": true
+  },
+  {
+    "id": "case3",
+    "inputs": {
+      "ids": "[257, 99]",
+      "vocab": "{97: b'a', 98: b'b', 99: b'c', 256: b'aa', 257: b'aab'}"
+    },
+    "expected": "\"aabc\"",
+    "hidden": true
+  },
+  {
+    "id": "case4",
+    "inputs": {
+      "ids": "[72, 101, 108, 108, 111]",
+      "vocab": "{72: b'H', 101: b'e', 108: b'l', 111: b'o'}"
+    },
+    "expected": "\"Hello\"",
+    "hidden": true
+  }
+]

@@ -1,0 +1,55 @@
+[
+  {
+    "id": "case1",
+    "inputs": {
+      "text": "\"aa\"",
+      "merges": "{(97, 97): 256}"
+    },
+    "expected": "[256]"
+  },
+  {
+    "id": "case2",
+    "inputs": {
+      "text": "\"aaaa\"",
+      "merges": "{(97, 97): 256}"
+    },
+    "expected": "[256, 256]",
+    "hidden": true
+  },
+  {
+    "id": "case3",
+    "inputs": {
+      "text": "\"abab\"",
+      "merges": "{(97, 98): 256}"
+    },
+    "expected": "[256, 256]",
+    "hidden": true
+  },
+  {
+    "id": "case4",
+    "inputs": {
+      "text": "\"aaa\"",
+      "merges": "{(97, 97): 256}"
+    },
+    "expected": "[256, 97]",
+    "hidden": true
+  },
+  {
+    "id": "case5",
+    "inputs": {
+      "text": "\"aabaab\"",
+      "merges": "{(97, 97): 256, (256, 98): 257}"
+    },
+    "expected": "[257, 257]",
+    "hidden": true
+  },
+  {
+    "id": "case6",
+    "inputs": {
+      "text": "\"hello\"",
+      "merges": "{}"
+    },
+    "expected": "[104, 101, 108, 108, 111]",
+    "hidden": true
+  }
+]
