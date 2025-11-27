@@ -78,3 +78,37 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #606060; /* Slightly lighter gray on hover */
 }
+
+/* Code Block Styling - rehype-pretty-code */
+[data-rehype-pretty-code-figure] {
+  margin: 1rem 0;
+}
+
+[data-rehype-pretty-code-figure] pre {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+[data-rehype-pretty-code-figure] code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.875rem;
+}
+
+/* Inline code */
+:not(pre) > code {
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+@media (prefers-color-scheme: dark) {
+  :not(pre) > code {
+    background-color: #1e293b;
+    color: #e2e8f0;
+  }
+}

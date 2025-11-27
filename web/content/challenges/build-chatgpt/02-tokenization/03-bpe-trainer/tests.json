@@ -1,0 +1,37 @@
+[
+  {
+    "id": "case1",
+    "inputs": {
+      "text": "\"aaaaaa\"",
+      "num_merges": "2"
+    },
+    "expected": "([257, 256], {(97, 97): 256, (256, 256): 257})"
+  },
+  {
+    "id": "case2",
+    "inputs": {
+      "text": "\"abababab\"",
+      "num_merges": "1"
+    },
+    "expected": "([256, 256, 256, 256], {(97, 98): 256})",
+    "hidden": true
+  },
+  {
+    "id": "case3",
+    "inputs": {
+      "text": "\"hello\"",
+      "num_merges": "1"
+    },
+    "expected": "([104, 101, 256, 111], {(108, 108): 256})",
+    "hidden": true
+  },
+  {
+    "id": "case4",
+    "inputs": {
+      "text": "\"aaa\"",
+      "num_merges": "1"
+    },
+    "expected": "([256, 97], {(97, 97): 256})",
+    "hidden": true
+  }
+]

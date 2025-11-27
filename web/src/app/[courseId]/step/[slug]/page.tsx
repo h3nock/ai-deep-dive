@@ -10,11 +10,19 @@ import { Command } from "@/components/mdx/Command";
 import { ProjectRoadmap } from "@/components/mdx/ProjectRoadmap";
 import { ThinkingProcess } from "@/components/mdx/ThinkingProcess";
 import remarkMath from "remark-math";
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/mdx/Table";
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableHeader,
+  TableCell,
+} from "@/components/mdx/Table";
 import { Callout } from "@/components/mdx/Callout";
 import { ByteStream } from "@/components/mdx/ByteStream";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
+import rehypePrettyCode from "rehype-pretty-code";
 
 const components = {
   SplitLayout,
@@ -36,22 +44,28 @@ const components = {
 
 export async function generateStaticParams() {
   // TODO: Dynamically list collections or hardcode known ones
-  const collections = ["nanochat", "transformers"];
-  
+  const collections = ["nanochat", "transformers", "build-chatgpt"];
+
   let params: { courseId: string; slug: string }[] = [];
-  
+
   for (const courseId of collections) {
     const posts = getAllPosts(courseId);
-    params = params.concat(posts.map((post) => ({
-      courseId,
-      slug: post.slug,
-    })));
+    params = params.concat(
+      posts.map((post) => ({
+        courseId,
+        slug: post.slug,
+      }))
+    );
   }
-  
+
   return params;
 }
 
-export default async function StepPage({ params }: { params: Promise<{ courseId: string; slug: string }> }) {
+export default async function StepPage({
+  params,
+}: {
+  params: Promise<{ courseId: string; slug: string }>;
+}) {
   const { courseId, slug } = await params;
   const post = await getPostBySlug(courseId, slug);
   const allPosts = getAllPosts(courseId);
@@ -62,23 +76,33 @@ export default async function StepPage({ params }: { params: Promise<{ courseId:
 
   const currentIndex = allPosts.findIndex((p) => p.slug === post.slug);
   const prevPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
-  const nextPost = currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
+  const nextPost =
+    currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
 
   return (
-    <StepContainer 
-      post={post} 
-      prevPost={prevPost} 
+    <StepContainer
+      post={post}
+      prevPost={prevPost}
       nextPost={nextPost}
       collection={courseId}
     >
-      <MDXRemote 
-        source={post.content} 
+      <MDXRemote
+        source={post.content}
         components={components}
         options={{
           mdxOptions: {
             remarkPlugins: [remarkGfm, remarkMath],
-            rehypePlugins: [rehypeKatex],
-          }
+            rehypePlugins: [
+              rehypeKatex,
+              [
+                rehypePrettyCode,
+                {
+                  theme: "github-dark",
+                  keepBackground: true,
+                },
+              ],
+            ],
+          },
         }}
       />
     </StepContainer>

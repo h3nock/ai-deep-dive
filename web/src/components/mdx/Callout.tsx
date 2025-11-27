@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertCircle, CheckCircle2, Info, Zap } from "lucide-react";
+import { AlertCircle, CheckCircle2, Info, Lightbulb } from "lucide-react";
 
 type CalloutType = "note" | "warning" | "tip" | "success";
 
@@ -11,23 +11,23 @@ interface CalloutProps {
 
 const styles = {
   note: {
-    border: "border-blue-500 dark:border-blue-400",
-    icon: "text-blue-600 dark:text-blue-400",
+    border: "border-slate-300 dark:border-slate-600",
+    icon: "text-slate-500 dark:text-slate-400",
     Icon: Info,
   },
   warning: {
-    border: "border-amber-500 dark:border-amber-400",
-    icon: "text-amber-600 dark:text-amber-400",
+    border: "border-slate-300 dark:border-slate-600",
+    icon: "text-slate-500 dark:text-slate-400",
     Icon: AlertCircle,
   },
   tip: {
-    border: "border-purple-500 dark:border-purple-400",
-    icon: "text-purple-600 dark:text-purple-400",
-    Icon: Zap,
+    border: "border-slate-300 dark:border-slate-600",
+    icon: "text-slate-500 dark:text-slate-400",
+    Icon: Lightbulb,
   },
   success: {
-    border: "border-green-500 dark:border-green-400",
-    icon: "text-green-600 dark:text-green-400",
+    border: "border-emerald-500 dark:border-emerald-400",
+    icon: "text-emerald-600 dark:text-emerald-400",
     Icon: CheckCircle2,
   },
 };
