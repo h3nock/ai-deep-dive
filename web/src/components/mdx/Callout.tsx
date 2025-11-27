@@ -1,7 +1,7 @@
 import React from "react";
 import { AlertCircle, CheckCircle2, Info, Lightbulb } from "lucide-react";
 
-type CalloutType = "note" | "warning" | "tip" | "success";
+type CalloutType = "note" | "warning" | "tip" | "success" | "info";
 
 interface CalloutProps {
   type?: CalloutType;
@@ -13,6 +13,11 @@ const styles = {
   note: {
     border: "border-slate-300 dark:border-slate-600",
     icon: "text-slate-500 dark:text-slate-400",
+    Icon: Info,
+  },
+  info: {
+    border: "border-sky-400 dark:border-sky-500",
+    icon: "text-sky-500 dark:text-sky-400",
     Icon: Info,
   },
   warning: {
