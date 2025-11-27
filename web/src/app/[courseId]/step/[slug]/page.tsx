@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
 import { notFound } from "next/navigation";
 import { StepContainer } from "@/components/StepContainer";
@@ -42,9 +44,25 @@ const components = {
   td: TableCell,
 };
 
+function getCollections() {
+  const contentDir = path.join(process.cwd(), "content");
+  if (!fs.existsSync(contentDir)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(contentDir, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isDirectory() &&
+        entry.name !== "challenges" &&
+        !entry.name.startsWith(".")
+    )
+    .map((entry) => entry.name);
+}
+
 export async function generateStaticParams() {
-  // TODO: Dynamically list collections or hardcode known ones
-  const collections = ["nanochat", "transformers", "build-chatgpt"];
+  const collections = getCollections();
 
   let params: { courseId: string; slug: string }[] = [];
 

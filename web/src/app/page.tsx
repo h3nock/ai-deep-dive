@@ -1,9 +1,30 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { CourseCard } from "@/components/CourseCard";
-import { Terminal, Image as ImageIcon } from "lucide-react";
+import { courseList } from "@/lib/course-config";
+import { getAllPosts } from "@/lib/posts";
 
-export default function Home() {
+export default async function Home() {
+  const courses = await Promise.all(
+    courseList.map(async (course) => {
+      const isAvailable = course.status === "available";
+      const visiblePosts = isAvailable
+        ? getAllPosts(course.id).filter((post) => !post.hidden)
+        : [];
+
+      // Only count main chapters (whole numbers) for progress tracking
+      const mainChapterSteps = visiblePosts
+        .filter((post) => Number.isInteger(post.step))
+        .map((post) => post.step);
+
+      return {
+        ...course,
+        totalSteps: mainChapterSteps.length,
+        href: isAvailable ? `/${course.id}` : undefined,
+      };
+    })
+  );
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans">
       <Navbar />
@@ -56,24 +77,19 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <CourseCard
-                title="Build ChatGPT from Scratch"
-                description="Build a GPT from an empty file. Tokenization, transformers, training, and a working chatbot at the end."
-                icon={<Terminal className="w-5 h-5" />}
-                href="/build-chatgpt"
-                tags={["Transformers", "PyTorch", "GPT"]}
-                status="available"
-                courseId="build-chatgpt"
-                totalSteps={11}
-              />
-
-              <CourseCard
-                title="Diffusion from Scratch"
-                description="Build an image generator from pure noise. Understand how Stable Diffusion actually works."
-                icon={<ImageIcon className="w-5 h-5" />}
-                tags={["Generative", "Vision", "U-Net"]}
-                status="planned"
-              />
+              {courses.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  title={course.title}
+                  description={course.description}
+                  icon={course.heroIcon}
+                  href={course.href}
+                  tags={course.tags}
+                  status={course.status}
+                  courseId={course.status === "available" ? course.id : undefined}
+                  totalSteps={course.totalSteps}
+                />
+              ))}
             </div>
           </div>
         </section>

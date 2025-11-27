@@ -5,14 +5,13 @@ import {
   ArrowRight,
   ArrowLeft,
   Clock,
-  BookOpen,
   CheckCircle2,
-  Code2,
-  Cpu,
+  BookOpen,
 } from "lucide-react";
 import { ProgressBar } from "@/components/ProgressBar";
 import { ChapterCheckbox } from "@/components/ChapterCheckbox";
 import { ContinueButton } from "@/components/ContinueButton";
+import { getCourseConfig } from "@/lib/course-config";
 
 export default async function RoadmapPage({
   params,
@@ -22,63 +21,18 @@ export default async function RoadmapPage({
   const { courseId } = await params;
   const posts = getAllPosts(courseId);
 
-  const courseMetadata: Record<
-    string,
-    {
-      title: string;
-      description: React.ReactNode;
-      outcome: string;
-      prerequisites: string[];
-      phases: {
-        title: string;
-        description: string;
-        stepRange: [number, number];
-        icon: React.ReactNode;
-      }[];
-    }
-  > = {
-    "build-chatgpt": {
-      title: "Build ChatGPT from Scratch",
-      description:
-        "From raw text to a working chatbot. You'll implement every component of a GPT-style language model and train it to have conversations.",
-      outcome:
-        "A fully functional chatbot built entirely by you, with deep understanding of how every piece works.",
-      prerequisites: [
-        "Python proficiency",
-        "Basic PyTorch (tensors, autograd)",
-        "Linear algebra fundamentals (matrix multiplication, vectors)",
-      ],
-      phases: [
-        {
-          title: "Foundations",
-          description: "How text becomes numbers for neural networks.",
-          stepRange: [1, 3.99],
-          icon: <BookOpen className="w-4 h-4" />,
-        },
-        {
-          title: "The Transformer",
-          description:
-            "Build the architecture that powers modern LLMs, then use it to build a translator.",
-          stepRange: [4, 9.99],
-          icon: <Cpu className="w-4 h-4" />,
-        },
-        {
-          title: "GPT",
-          description: "Go decoder-only and build a working chatbot.",
-          stepRange: [10, 11.99],
-          icon: <Code2 className="w-4 h-4" />,
-        },
-      ],
-    },
-  };
-
-  const metadata = courseMetadata[courseId] || {
-    title: "The Journey",
-    description: "Select a course to begin your deep dive.",
-    outcome: "",
-    prerequisites: [],
-    phases: [],
-  };
+  const metadata =
+    getCourseConfig(courseId) || {
+      id: courseId,
+      title: "The Journey",
+      description: "Select a course to begin your deep dive.",
+      outcome: "",
+      prerequisites: [],
+      phases: [],
+      status: "available",
+      tags: [],
+      heroIcon: null,
+    };
 
   const visiblePosts = posts.filter((post) => !post.hidden);
   const totalSteps = visiblePosts.length;
