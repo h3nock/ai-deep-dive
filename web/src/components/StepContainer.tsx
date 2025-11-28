@@ -110,11 +110,11 @@ export function StepContainer({ post, prevPost, nextPost, children, collection }
                 </div>
 
                 <div className="flex items-start justify-between gap-8">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight">
                       {post.title}
                     </h1>
-                    <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
+                    <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl xl:max-w-4xl">
                       {post.description}
                     </p>
                   </div>
