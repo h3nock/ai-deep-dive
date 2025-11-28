@@ -172,61 +172,7 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     But because we stuck to 2 dimensions for our example, we can plot these words on a standard X-Y graph.
   </Description>
 
-  <div className="my-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-center mb-4">
-      <span className="text-sm font-medium text-slate-500 dark:text-slate-400">The 2D Meaning Space</span>
-    </div>
-    
-    {/* Simple coordinate visualization */}
-    <div className="relative w-full max-w-md mx-auto aspect-square">
-      {/* Axes */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-full h-0.5 bg-slate-300 dark:bg-slate-600"></div>
-      </div>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="h-full w-0.5 bg-slate-300 dark:bg-slate-600"></div>
-      </div>
-      
-      {/* Axis Labels */}
-      <div className="absolute w-full top-1/2 -translate-y-full -mt-1 px-2 flex justify-between text-xs font-medium text-slate-500 dark:text-slate-400 pointer-events-none">
-        <span>Gender (-)</span>
-        <span>Gender (+)</span>
-      </div>
-      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 text-xs font-medium text-slate-500 dark:text-slate-400">Royalty (+)</div>
-      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs font-medium text-slate-500 dark:text-slate-400">Royalty (-)</div>
-      
-      {/* Points */}
-      <div className="absolute top-[15%] right-[20%] flex flex-col items-center">
-        <span className="text-2xl">👑</span>
-        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">King</span>
-        <span className="text-xs font-mono text-slate-400">[1, 1]</span>
-      </div>
-      
-      <div className="absolute top-[15%] left-[20%] flex flex-col items-center">
-        <span className="text-2xl">👸</span>
-        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Queen</span>
-        <span className="text-xs font-mono text-slate-400">[1, -1]</span>
-      </div>
-      
-      <div className="absolute top-[45%] right-[20%] flex flex-col items-center">
-        <span className="text-2xl">🧔</span>
-        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Man</span>
-        <span className="text-xs font-mono text-slate-400">[0, 1]</span>
-      </div>
-      
-      <div className="absolute top-[45%] left-[20%] flex flex-col items-center">
-        <span className="text-2xl">👩</span>
-        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Woman</span>
-        <span className="text-xs font-mono text-slate-400">[0, -1]</span>
-      </div>
-      
-      <div className="absolute top-[45%] left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-        <span className="text-2xl">🍎</span>
-        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Apple</span>
-        <span className="text-xs font-mono text-slate-400">[0, 0]</span>
-      </div>
-    </div>
-  </div>
+  <EmbeddingSpace />
 
   <Description>
     In this 2D space, every word lands at a specific coordinate. We have turned words into **Geometry**.
@@ -250,8 +196,10 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     Because we are now working with geometry, we can do something almost magical. We can perform **arithmetic on meaning itself**.
   </Description>
 
+  <EmbeddingSpace showArrows />
+
   <Description>
-    This is the most famous demonstration of why Embeddings work. Look at the arrow on the map that points from **King** to **Queen**. That arrow represents "Flipping Gender" while keeping Royalty constant. Now look at the arrow pointing from **Man** to **Woman**.
+    Look at the arrows on the map above. The arrow from **King** to **Queen** represents "Flipping Gender" while keeping Royalty constant. The arrow from **Man** to **Woman** represents the exact same transformation.
   </Description>
 
   <Description>

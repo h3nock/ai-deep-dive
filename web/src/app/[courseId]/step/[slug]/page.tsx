@@ -11,6 +11,7 @@ import { Action } from "@/components/mdx/Action";
 import { Command } from "@/components/mdx/Command";
 import { ProjectRoadmap } from "@/components/mdx/ProjectRoadmap";
 import { ThinkingProcess } from "@/components/mdx/ThinkingProcess";
+import { EmbeddingSpace } from "@/components/mdx/EmbeddingSpace";
 import remarkMath from "remark-math";
 import {
   Table,
@@ -34,6 +35,7 @@ const components = {
   Command,
   ProjectRoadmap,
   ThinkingProcess,
+  EmbeddingSpace,
   Callout,
   ByteStream,
   table: Table,
