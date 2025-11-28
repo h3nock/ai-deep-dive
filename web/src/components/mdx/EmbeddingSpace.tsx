@@ -18,16 +18,20 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
   const innerHeight = height - paddingTop - paddingBottom;
 
   // Convert data coordinates (-1 to 1) to SVG coordinates
-  const toSvgX = (x: number) => paddingLeft + ((x + 1) / 2) * innerWidth;
-  const toSvgY = (y: number) => paddingTop + ((1 - y) / 2) * innerHeight; // Flip Y for standard math coords
+  // Scale factor to keep points away from edges (0.75 means points go from -0.75 to 0.75 instead of -1 to 1)
+  const scaleFactor = 0.7;
+  const toSvgX = (x: number) => paddingLeft + ((x * scaleFactor + 1) / 2) * innerWidth;
+  const toSvgY = (y: number) => paddingTop + ((1 - y * scaleFactor) / 2) * innerHeight; // Flip Y for standard math coords
 
-  // Data points - positioned slightly inward to avoid edge overlap
+  // Data points - coordinates match Section 2: [Royalty, Gender]
+  // X axis = Gender (+1 masculine, -1 feminine)
+  // Y axis = Royalty (+1 royal, 0 common)
   const points = [
-    { name: "King", emoji: "👑", x: 0.8, y: 0.75, color: "#3b82f6" },
-    { name: "Queen", emoji: "👸", x: -0.8, y: 0.75, color: "#ec4899" },
-    { name: "Man", emoji: "🧔", x: 0.8, y: -0.1, color: "#3b82f6" },
-    { name: "Woman", emoji: "👩", x: -0.8, y: -0.1, color: "#ec4899" },
-    { name: "Apple", emoji: "🍎", x: 0, y: -0.1, color: "#64748b" },
+    { name: "King", emoji: "👑", x: 1.0, y: 1.0, color: "#3b82f6" },
+    { name: "Queen", emoji: "👸", x: -1.0, y: 1.0, color: "#ec4899" },
+    { name: "Man", emoji: "🧔", x: 1.0, y: 0.0, color: "#3b82f6" },
+    { name: "Woman", emoji: "👩", x: -1.0, y: 0.0, color: "#ec4899" },
+    { name: "Apple", emoji: "🍎", x: 0.0, y: 0.0, color: "#64748b" },
   ];
 
   // Arrow definitions (from -> to)
@@ -250,7 +254,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 x={toSvgX(point.x)}
                 y={toSvgY(point.y) + 54}
                 textAnchor="middle"
-                className="fill-slate-400 dark:fill-slate-500 text-[9px] font-mono"
+                className="fill-slate-600 dark:fill-slate-300 text-[11px] font-mono"
               >
                 [{point.y}, {point.x}]
               </text>
