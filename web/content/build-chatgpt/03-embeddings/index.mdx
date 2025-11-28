@@ -42,9 +42,9 @@ description: "How to represent tokens as vectors to capture semantic meaning and
   </Description>
 
   <div className="my-4 p-4 bg-slate-100 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">The Core Problem</div>
-    <div className="text-sm text-slate-600 dark:text-slate-400">
-      If we force the model to do math on these arbitrary IDs, we are asking it to find patterns in chaos. The gradients will explode because the <strong>numerical relationships</strong> (100 vs 500) contradict the <strong>semantic relationships</strong> (Fruit vs Fruit).
+    <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">The Core Problem</div>
+    <div className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+      If we force the model to do math on these arbitrary IDs, we are asking it to find patterns in chaos. The model fails because of <strong>Magnitude Bias</strong>. In a neural network, a neuron applies the <strong>same weight</strong> <code className="text-sm bg-slate-200 dark:bg-slate-700 px-1 rounded mx-1">(Output = Input × Weight)</code> to its input, regardless of the value. If the weight is 0.01, an input of 100 (Apple) produces 1.0, but an input of 500 (Banana) produces 5.0. The math forces the model to treat Banana as '5 times more intense' than Apple. There is no single weight that can work for both numbers, so the model cannot learn a consistent rule for 'Fruit'.
     </div>
   </div>
 
