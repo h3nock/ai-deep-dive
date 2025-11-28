@@ -13,10 +13,10 @@
     { "slug": "p1-02-assembly", "step": 9.2 },
     { "slug": "p1-03-training", "step": 9.3 },
     { "slug": "10-decoder-only-shift", "step": 10 },
-    { "slug": "p2-01-setup", "step": 10.1 },
-    { "slug": "p2-02-assembly", "step": 10.2 },
-    { "slug": "p2-03-training", "step": 10.3 },
-    { "slug": "p2-04-inference", "step": 10.4 },
-    { "slug": "11-project-gpt", "step": 11 }
+    { "slug": "11-project-gpt", "step": 11 },
+    { "slug": "p2-01-setup", "step": 11.1 },
+    { "slug": "p2-02-assembly", "step": 11.2 },
+    { "slug": "p2-03-training", "step": 11.3 },
+    { "slug": "p2-04-inference", "step": 11.4 }
   ]
 }
