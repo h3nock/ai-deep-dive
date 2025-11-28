@@ -188,31 +188,33 @@ description: "How to represent tokens as vectors to capture semantic meaning and
       </div>
       
       {/* Axis Labels */}
-      <div className="absolute right-2 top-1/2 transform -translate-y-6 text-xs font-medium text-slate-500 dark:text-slate-400">Gender (+)</div>
-      <div className="absolute left-2 top-1/2 transform translate-y-6 text-xs font-medium text-slate-500 dark:text-slate-400">Gender (-)</div>
+      <div className="absolute w-full top-1/2 -translate-y-full -mt-1 px-2 flex justify-between text-xs font-medium text-slate-500 dark:text-slate-400 pointer-events-none">
+        <span>Gender (-)</span>
+        <span>Gender (+)</span>
+      </div>
       <div className="absolute top-2 left-1/2 transform -translate-x-1/2 text-xs font-medium text-slate-500 dark:text-slate-400">Royalty (+)</div>
       <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs font-medium text-slate-500 dark:text-slate-400">Royalty (-)</div>
       
       {/* Points */}
-      <div className="absolute top-[10%] right-[10%] flex flex-col items-center">
+      <div className="absolute top-[15%] right-[20%] flex flex-col items-center">
         <span className="text-2xl">👑</span>
         <span className="text-xs font-medium text-slate-700 dark:text-slate-300">King</span>
         <span className="text-xs font-mono text-slate-400">[1, 1]</span>
       </div>
       
-      <div className="absolute top-[10%] left-[10%] flex flex-col items-center">
+      <div className="absolute top-[15%] left-[20%] flex flex-col items-center">
         <span className="text-2xl">👸</span>
         <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Queen</span>
         <span className="text-xs font-mono text-slate-400">[1, -1]</span>
       </div>
       
-      <div className="absolute top-[45%] right-[10%] flex flex-col items-center">
+      <div className="absolute top-[45%] right-[20%] flex flex-col items-center">
         <span className="text-2xl">🧔</span>
         <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Man</span>
         <span className="text-xs font-mono text-slate-400">[0, 1]</span>
       </div>
       
-      <div className="absolute top-[45%] left-[10%] flex flex-col items-center">
+      <div className="absolute top-[45%] left-[20%] flex flex-col items-center">
         <span className="text-2xl">👩</span>
         <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Woman</span>
         <span className="text-xs font-mono text-slate-400">[0, -1]</span>
