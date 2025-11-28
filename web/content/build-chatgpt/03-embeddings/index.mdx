@@ -165,7 +165,7 @@ description: "How to represent tokens as vectors to capture semantic meaning and
 
 <Step title="3. Visualizing the Meaning Space">
   <Description>
-    In the example above, we acted as human linguists and picked the categories. In real LLMs, we give the model 4096 dimensions and let it figure out what they mean.
+    In our simple example we acted as human linguists and hand-picked clear categories like Royalty and Gender, but in real deep learning we do not define these labels beforehand. We instead give the model a fixed number of dimensions, known as the embedding size (often denoted as $d_{model}$), which effectively serves as a list of empty attribute slots waiting to be filled. We let the model figure out what they mean during training by allowing it to discover and assign its own abstract features to these slots, representing complex relationships like plurality, sentiment, or grammatical rules that humans might not even have names for.
   </Description>
 
   <Description>
