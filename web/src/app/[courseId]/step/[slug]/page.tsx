@@ -23,6 +23,7 @@ import {
 } from "@/components/mdx/Table";
 import { Callout } from "@/components/mdx/Callout";
 import { ByteStream } from "@/components/mdx/ByteStream";
+import { ComingSoon } from "@/components/mdx/ComingSoon";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import rehypePrettyCode from "rehype-pretty-code";
@@ -44,6 +45,7 @@ const components = {
   tr: TableRow,
   th: TableHeader,
   td: TableCell,
+  ComingSoon,
 };
 
 function getCollections() {

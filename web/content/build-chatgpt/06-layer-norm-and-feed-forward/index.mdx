@@ -4,25 +4,4 @@ step: 6
 description: "Stabilizing training and adding the 'brain' to the block."
 ---
 
-<SplitLayout>
-  <Step>
-    <Description>
-      ## Layer Normalization
-      
-      To train deep networks, we need to keep the numbers stable. **Layer Normalization** ensures that for every token, the features have a mean of 0 and a variance of 1.
-
-      ## Feed-Forward Networks (FFN)
-      
-      Attention mixes information *between* tokens. The FFN processes information *within* each token. This is where the model "thinks" about what it has gathered.
-      
-      It's a simple MLP (Multi-Layer Perceptron):
-      1.  Linear: $d_{model} \to 4 \times d_{model}$
-      2.  Activation: GELU
-      3.  Linear: $4 \times d_{model} \to d_{model}$
-
-      ### Your Task
-      1. Implement `LayerNorm`.
-      2. Implement the `FeedForward` module.
-    </Description>
-  </Step>
-</SplitLayout>
+<ComingSoon />

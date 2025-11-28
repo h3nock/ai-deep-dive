@@ -4,26 +4,4 @@ step: 10
 description: "Why we drop the Encoder for generative tasks."
 ---
 
-<SplitLayout>
-  <Step>
-    <Description>
-      ## From Translator to Generator
-      
-      In Project 1, we built a **Sequence-to-Sequence** model. It had to *read* an entire input before *writing* an output.
-      
-      But GPT (Generative Pre-trained Transformer) has a different goal: **Language Modeling**. It just wants to continue the text.
-      
-      ### The GPT Block
-      We simplify our architecture. We remove the **Cross-Attention** layer because there is no separate Encoder to talk to.
-      
-      **Structure:**
-      1.  Input $x$
-      2.  LayerNorm
-      3.  **Masked Self-Attention**
-      4.  Residual Connection
-      5.  LayerNorm
-      6.  Feed-Forward Network
-      7.  Residual Connection
-    </Description>
-  </Step>
-</SplitLayout>
+<ComingSoon />

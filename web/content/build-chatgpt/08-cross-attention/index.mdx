@@ -4,24 +4,4 @@ step: 8
 description: "How the Decoder talks to the Encoder."
 ---
 
-<SplitLayout>
-  <Step>
-    <Description>
-      ## The Missing Link
-      
-      So far, we've built **Self-Attention** (tokens looking at themselves). But in translation, the output (French) needs to look at the input (English). This is **Cross-Attention**.
-      
-      ### The Mechanism
-      It's the same math as Self-Attention, but the inputs come from different places:
-      - **Queries ($Q$)**: Come from the **Decoder** (what we are generating).
-      - **Keys ($K$) & Values ($V$)**: Come from the **Encoder** (the source sentence).
-      
-      $$
-      \text{Attention}(Q_{dec}, K_{enc}, V_{enc})
-      $$
-
-      ### Your Task
-      Implement `CrossAttention`. (Hint: It's just `MultiHeadAttention` where `x` provides Queries and `context` provides Keys/Values).
-    </Description>
-  </Step>
-</SplitLayout>
+<ComingSoon />

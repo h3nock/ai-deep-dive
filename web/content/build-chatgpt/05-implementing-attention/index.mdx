@@ -4,22 +4,4 @@ step: 5
 description: "Parallelizing attention and preventing cheating with causal masking."
 ---
 
-<SplitLayout>
-  <Step>
-    <Description>
-      ## Causal Masking: No Cheating
-      
-      If we are building a model to predict the *next* token, it cannot see the future.
-      
-      We force the attention scores to $-\infty$ for all future positions. When we softmax this, the $-\infty$ becomes $0$. The model literally *cannot see* the future.
-      
-      ## Multi-Head Attention
-      
-      One head is good, but multiple heads are better. We **split** the embedding dimension into $h$ heads to allow the model to focus on different things (grammar, tone, context) simultaneously.
-
-      ### Your Task
-      1. Create a function `make_causal_mask`.
-      2. Implement the `MultiHeadAttention` class.
-    </Description>
-  </Step>
-</SplitLayout>
+<ComingSoon />
