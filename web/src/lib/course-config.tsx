@@ -43,20 +43,20 @@ export const courseConfig: Record<string, CourseConfig> = {
       {
         title: "Foundations",
         description: "How text becomes numbers for neural networks.",
-        stepRange: [0, 3.99],
+        stepRange: [0, 4.99],
         icon: <BookOpen className="w-4 h-4" />,
       },
       {
         title: "The Transformer",
         description:
           "Build the architecture that powers modern LLMs, then use it to build a translator.",
-        stepRange: [4, 9.99],
+        stepRange: [5, 10.99],
         icon: <Cpu className="w-4 h-4" />,
       },
       {
         title: "GPT",
         description: "Go decoder-only and build a working chatbot.",
-        stepRange: [10, 11.99],
+        stepRange: [11, 12.99],
         icon: <Code2 className="w-4 h-4" />,
       },
     ],

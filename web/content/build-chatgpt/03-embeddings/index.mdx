@@ -511,90 +511,21 @@ description: "How to represent tokens as vectors to capture semantic meaning and
   </Description>
 
   <Description>
-    We need a way to stamp each vector with its position. That's exactly what we'll solve next.
+    We need a way to stamp each vector with its position. That's exactly what we'll tackle in the next chapter.
   </Description>
 </Step>
 
 
-<Step title="7. The Missing Piece: Word Order">
-  <Description>
-    We have solved the meaning problem. We can translate "King" into a rich vector that captures its essence.
-  </Description>
-
-  <Description>
-    But here's a critical gap. Look at these two sentences:
-  </Description>
-
-  <div className="my-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-      <div className="flex items-center gap-3 mb-3">
-        <span className="text-2xl">👉</span>
-        <span className="font-bold text-lg text-blue-800 dark:text-blue-300">"Alice gave Bob a book"</span>
-      </div>
-      <div className="text-sm text-blue-700 dark:text-blue-300">
-        Alice = the giver, Bob = the receiver
-      </div>
-    </div>
-
-    <div className="p-5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-      <div className="flex items-center gap-3 mb-3">
-        <span className="text-2xl">👈</span>
-        <span className="font-bold text-lg text-emerald-800 dark:text-emerald-300">"Bob gave Alice a book"</span>
-      </div>
-      <div className="text-sm text-emerald-700 dark:text-emerald-300">
-        Bob = the giver, Alice = the receiver
-      </div>
-    </div>
-  </div>
-
-  <Description>
-    The exact same words. The exact same embeddings. But completely different meanings! The only difference is **position**.
-  </Description>
-
-  <Description>
-    Traditional language models (like RNNs) read words one by one, left to right, so order is built in. But this sequential approach is painfully slow—you can't process word #5 until you've finished words #1 through #4.
-  </Description>
-
-  <Description>
-    Transformer architectures (used in modern LLMs) solve the speed problem by processing all words **in parallel**, reading the entire sentence at once. This is massively faster and more scalable. But it creates a new problem: if you hand the model all words simultaneously, how does it know which came first?
-  </Description>
-
-  <Description>
-    Think back to our preprocessing pipeline: Text → Bytes → Tokens → Vectors. At no point did we encode **where** each word appears. The token ID for "Alice" is the same whether she appears first, third, or last in a sentence. And the embedding vector we just learned to look up? It only captures **what** the word means, not **where** it sits.
-  </Description>
-
-  <div className="my-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-    <div className="flex items-start gap-3">
-      <span className="text-2xl">🤔</span>
-      <div>
-        <div className="font-bold text-amber-800 dark:text-amber-300 mb-1">The Challenge</div>
-        <div className="text-sm text-amber-700 dark:text-amber-300">
-          We need to somehow inject position information into our embeddings. But how? Simple solutions like "just use the position number" have serious problems. The next chapter dives deep into this puzzle.
-        </div>
-      </div>
-    </div>
-  </div>
-</Step>
-
-
-<Step title="8. Summary">
+<Step title="7. Summary">
   <Callout type="success" title="What We Learned">
     * **Raw Token IDs** cannot be used directly because the model would treat ID 500 as "5× more" than ID 100, which is meaningless
     * **Embeddings** are vectors (lists of numbers) that encode meaning. Similar words cluster together in vector space
     * The **Embedding Matrix** is learned during training: the model gradually nudges coordinates based on context
     * **Vector arithmetic** works on concepts: King − Man + Woman ≈ Queen
-    * **Parallel processing** is fast but loses word order—we've identified this as a critical missing piece
+    * **Parallel processing** is fast and scalable but loses word order, and we've identified this as a critical missing piece
   </Callout>
 
   <Description>
-    We now have a powerful way to represent **what** each token means. The embedding for "King" captures royalty and masculinity. The embedding for "Apple" captures fruit-ness. Similar concepts cluster together in a high-dimensional space where meaning becomes geometry.
-  </Description>
-
-  <Description>
-    But we've hit a wall. Our embeddings don't know **where** they are. "Alice gave Bob" and "Bob gave Alice" produce identical embedding sequences—yet mean completely different things.
-  </Description>
-
-  <Description>
-    In the next chapter, we'll tackle **Positional Encoding**: how to stamp each vector with its location in the sentence. We'll explore why simple solutions fail and arrive at an elegant mathematical trick that modern Transformers use to understand word order.
+    We can now represent **what** each token means, but not **where** it appears. "Alice gave Bob" and "Bob gave Alice" produce identical embeddings despite meaning opposite things. In the next chapter, we'll tackle **Positional Encoding** to solve this.
   </Description>
 </Step>
