@@ -1,5 +1,6 @@
 {
   "steps": [
+    { "slug": "00-introduction", "step": 0 },
     { "slug": "01-from-text-to-bytes", "step": 1 },
     { "slug": "02-tokenization", "step": 2 },
     { "slug": "03-embeddings", "step": 3 },

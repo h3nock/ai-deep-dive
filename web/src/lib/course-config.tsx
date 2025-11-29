@@ -43,7 +43,7 @@ export const courseConfig: Record<string, CourseConfig> = {
       {
         title: "Foundations",
         description: "How text becomes numbers for neural networks.",
-        stepRange: [1, 3.99],
+        stepRange: [0, 3.99],
         icon: <BookOpen className="w-4 h-4" />,
       },
       {

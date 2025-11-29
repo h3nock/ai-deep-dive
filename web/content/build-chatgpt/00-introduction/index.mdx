@@ -1,0 +1,182 @@
+---
+title: "Introduction"
+step: 0
+description: "The big picture: how Large Language Models actually work."
+---
+
+<div className="flex flex-col gap-4">
+<Description>
+  You type a question into ChatGPT. A few seconds later, a thoughtful response appears, word by word. It feels like magic, like the computer is *thinking*. But what's actually happening inside?
+</Description>
+
+<Description>
+  In this chapter, we will see the full picture of how LLMs work before diving into technical details. Understanding how all the pieces fit together will make each chapter that follows much easier to grasp.
+</Description>
+</div>
+
+
+<Step title="1. The Core Idea">
+  <Description>
+    At its heart, a Large Language Model does one thing: **predict the next word**.
+  </Description>
+
+  <Description>
+    When you give it "The cat sat on the", the model looks at those words and outputs a probability for every possible next word in its vocabulary.
+  </Description>
+
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-base font-medium text-slate-700 dark:text-slate-300 mb-3">Iteration 1</div>
+    <div className="flex items-start gap-4">
+      <div className="flex items-center gap-1.5 flex-wrap font-mono text-base">
+        <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 rounded">The</span>
+        <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 rounded">cat</span>
+        <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 rounded">sat</span>
+        <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 rounded">on</span>
+        <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 rounded">the</span>
+      </div>
+      <span className="text-slate-400 mt-1 text-lg">→</span>
+      <div className="flex flex-col gap-1.5 font-mono text-base">
+        <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300">mat (15%)</span>
+        <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded text-slate-500">floor (12%)</span>
+        <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded text-slate-500">roof (3%)</span>
+        <span className="text-slate-400 text-sm">...</span>
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    The model picks one word (usually sampling from the high-probability ones), appends it to the input, and repeats.
+  </Description>
+
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-base font-medium text-slate-700 dark:text-slate-300 mb-3">Iteration 2</div>
+    <div className="flex items-start gap-4">
+      <div className="flex items-center gap-1.5 flex-wrap font-mono text-base">
+        <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 rounded">The</span>
+        <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 rounded">cat</span>
+        <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 rounded">sat</span>
+        <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 rounded">on</span>
+        <span className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 rounded">the</span>
+        <span className="px-2.5 py-1 bg-emerald-200 dark:bg-emerald-800 rounded text-emerald-800 dark:text-emerald-200">mat</span>
+      </div>
+      <span className="text-slate-400 mt-1 text-lg">→</span>
+      <div className="flex flex-col gap-1.5 font-mono text-base">
+        <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-700 rounded text-emerald-700 dark:text-emerald-300">and (18%)</span>
+        <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded text-slate-500">. (14%)</span>
+        <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded text-slate-500">while (8%)</span>
+        <span className="text-slate-400 text-sm">...</span>
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    This loop continues until the response is complete. This simple mechanism, repeated many times during training on massive text data, produces behavior that looks remarkably like understanding.
+  </Description>
+</Step>
+
+
+<Step title="2. The End-to-End Journey">
+  <Description>
+    When you send a message to an LLM and receive a response, your text goes through a series of transformations. Each step solves a specific problem.
+  </Description>
+
+  <div className="my-6 relative">
+    {/* Vertical connector line */}
+    <div className="absolute left-5 top-8 bottom-8 w-0.5 bg-slate-200 dark:bg-slate-700" />
+    
+    <div className="space-y-4">
+      <div className="relative flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold shrink-0 z-10">1</div>
+        <div className="flex-1 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+          <h4 className="font-semibold text-slate-800 dark:text-slate-200">Text → Bytes</h4>
+          <p className="text-base text-slate-600 dark:text-slate-400 mt-1">Your message "Hello" becomes numbers: <code className="text-sm bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">[72, 101, 108, 108, 111]</code></p>
+          <p className="text-sm text-slate-500 mt-2">Computers only understand numbers. Every character must be converted to a numerical representation.</p>
+        </div>
+      </div>
+
+      <div className="relative flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold shrink-0 z-10">2</div>
+        <div className="flex-1 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+          <h4 className="font-semibold text-slate-800 dark:text-slate-200">Bytes → Tokens</h4>
+          <p className="text-base text-slate-600 dark:text-slate-400 mt-1">Bytes are grouped into larger chunks called tokens: <code className="text-sm bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">[15496]</code></p>
+          <p className="text-sm text-slate-500 mt-2">Processing individual bytes is inefficient. Common patterns like "the" or "ing" become single tokens, making sequences shorter.</p>
+        </div>
+      </div>
+
+      <div className="relative flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold shrink-0 z-10">3</div>
+        <div className="flex-1 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+          <h4 className="font-semibold text-slate-800 dark:text-slate-200">Tokens → Vectors</h4>
+          <p className="text-base text-slate-600 dark:text-slate-400 mt-1">Each token becomes a list of numbers (a vector): <code className="text-sm bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">[0.12, -0.48, 0.91, ...]</code></p>
+          <p className="text-sm text-slate-500 mt-2">Token IDs are arbitrary labels. Vectors let the model learn semantic meaning, like understanding that "king" and "queen" are related.</p>
+        </div>
+      </div>
+
+      <div className="relative flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold shrink-0 z-10">4</div>
+        <div className="flex-1 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+          <h4 className="font-semibold text-slate-800 dark:text-slate-200">Vectors → Transformer → Next Token</h4>
+          <p className="text-base text-slate-600 dark:text-slate-400 mt-1">A Transformer is the architecture behind modern LLMs. It processes the vectors and predicts which token comes next.</p>
+          <p className="text-sm text-slate-500 mt-2">It scans the sentence for hints and uses them to pick the next word that keeps the meaning and flow on track.</p>
+        </div>
+      </div>
+
+      <div className="relative flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold shrink-0 z-10">5</div>
+        <div className="flex-1 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+          <h4 className="font-semibold text-slate-800 dark:text-slate-200">Token → Text</h4>
+          <p className="text-base text-slate-600 dark:text-slate-400 mt-1">The predicted token is converted back to text and shown to you. This loops until the response is complete.</p>
+          <p className="text-sm text-slate-500 mt-2">This is why you see the response appear word by word.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</Step>
+
+
+<Step title="3. Learning from Data">
+  <Description>
+    LLMs are built to predict the next word, but how do they get *good* at it? A freshly created model is just millions of random numbers. It knows nothing about language, grammar, or the world. If you asked it to complete "The cat sat on the", it might confidently answer "purple" or "seventeen".
+  </Description>
+
+  <Description>
+    The magic happens through training. We show the model enormous amounts of text and let it learn from its mistakes, over and over, until patterns emerge.
+  </Description>
+
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-base font-medium text-slate-700 dark:text-slate-300 mb-3">The Training Loop</div>
+    <div className="space-y-3 text-base text-slate-600 dark:text-slate-400">
+      <div className="flex items-start gap-3">
+        <span className="font-mono text-slate-400 w-6">1.</span>
+        <span><strong>Input:</strong> "The king sat on the".</span>
+      </div>
+      <div className="flex items-start gap-3">
+        <span className="font-mono text-slate-400 w-6">2.</span>
+        <span><strong>Prediction:</strong> The model guesses the next word. At first, it's random (e.g., "banana").</span>
+      </div>
+      <div className="flex items-start gap-3">
+        <span className="font-mono text-slate-400 w-6">3.</span>
+        <span><strong>Comparison:</strong> The actual next word is "throne". We measure the error.</span>
+      </div>
+      <div className="flex items-start gap-3">
+        <span className="font-mono text-slate-400 w-6">4.</span>
+        <span><strong>Update:</strong> The model adjusts its internal numbers to make "throne" more likely next time.</span>
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    By repeating this process billions of times on massive datasets, the model's parameters gradually tune themselves. Words with similar meanings align in the vector space, and the model learns to recognize complex patterns, grammar, and facts.
+  </Description>
+</Step>
+
+
+<Step title="4. What You Will Build">
+  <Description>
+    In this course, we will build every piece of this pipeline from scratch. By the end, you will understand not just *what* an LLM does, but *how* and *why* each component exists.
+  </Description>
+
+  <Description>
+    Let's start with the very first step: how computers see text.
+  </Description>
+</Step>
