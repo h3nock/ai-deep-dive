@@ -362,7 +362,11 @@ description: "How to represent tokens as vectors to capture semantic meaning and
   </Description>
 
   <Description>
-    Training is the process where the model discovers what each dimension should represent. We show it many sentences, and it gradually adjusts the coordinates based on what it sees.
+    Training is the process where the model discovers what each dimension should represent. Crucially, this happens **end-to-end** with the rest of the model. We don't create embeddings separately; they are just the first layer of the neural network.
+  </Description>
+
+  <Description>
+    When the model tries to predict the next word and makes a mistake, the "correction signal" (gradients) flows backwards through the entire network, updating the transformer blocks and finally updating the embedding coordinates. The model learns the meaning of words *at the same time* it learns how to use them.
   </Description>
 
   <div className="my-4 relative">
