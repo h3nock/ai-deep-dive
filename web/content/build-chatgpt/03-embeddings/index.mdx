@@ -358,15 +358,15 @@ description: "How to represent tokens as vectors to capture semantic meaning and
   <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">The Training Process</h4>
 
   <Description>
-    When we first create this table, every cell is filled with random numbers. "King" might start at coordinates right next to "Sandwich." The map has no structure at all.
+    When we first initialize the embedding table, every cell is filled with random numbers. "King" might start at coordinates right next to "Sandwich." The map has no structure at all.
   </Description>
 
   <Description>
-    Training is the process where the model discovers what each dimension should represent. Crucially, this happens **end-to-end** with the rest of the model. We don't create embeddings separately; they are just the first layer of the neural network.
+    Training is how the model figures out what each dimension should represent, and it happens **end-to-end** with the rest of the model. We don't build embeddings separately; the embedding table is the first learned layer that feeds into the transformer stack.
   </Description>
 
   <Description>
-    When the model tries to predict the next word and makes a mistake, the "correction signal" (gradients) flows backwards through the entire network, updating the transformer blocks and finally updating the embedding coordinates. The model learns the meaning of words *at the same time* it learns how to use them.
+    When the model tries to predict the next word and makes a mistake, the "correction signal" (gradients) flows backwards through the entire network, updating the transformer blocks and finally the embedding vectors themselves. That reshaping teaches which coordinates should pull related tokens closer and push unrelated ones apart. It's how meaning gets baked into those embedding vectors *at the same time* the model learns how to use the words in context.
   </Description>
 
   <div className="my-4 relative">
