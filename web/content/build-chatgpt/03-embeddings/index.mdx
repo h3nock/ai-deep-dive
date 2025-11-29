@@ -266,38 +266,103 @@ description: "How to represent tokens as vectors to capture semantic meaning and
 
 <Step title="5. Implementation: The Embedding Matrix">
   <Description>
-    You might be wondering: Who calculates these numbers? Do I have to manually score 50,000 words?
+    We know the model will learn these coordinates during training (remember those empty attribute slots from Section 3). But how exactly does this work in practice? Let's look at the actual data structure and the learning process.
   </Description>
 
-  <Description>
-    No. That would be impossible. In Deep Learning, we take the lazy path. We let the model **learn** the coordinates.
-  </Description>
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">The Embedding Layer: A Lookup Table</h4>
 
   <Description>
-    In code, an **Embedding Layer** is simply a massive matrix (a spreadsheet) of floating-point numbers.
+    In code, an **Embedding Layer** is a table of numbers. Think of it like a spreadsheet: each row corresponds to a token ID, and each column is one of those attribute slots. When the model sees a token, it simply looks up the corresponding row.
+  </Description>
+
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">The Embedding Matrix Structure</div>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-200 dark:border-slate-700">
+            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Token ID</th>
+            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Dim 1</th>
+            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Dim 2</th>
+            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Dim 3</th>
+            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">...</th>
+            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Dim N</th>
+          </tr>
+        </thead>
+        <tbody className="font-mono text-xs">
+          <tr className="border-b border-slate-100 dark:border-slate-800">
+            <td className="py-2 px-3 text-slate-600 dark:text-slate-400">0 ("the")</td>
+            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.12</td>
+            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">-0.45</td>
+            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.78</td>
+            <td className="py-2 px-3 text-slate-400">...</td>
+            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.33</td>
+          </tr>
+          <tr className="border-b border-slate-100 dark:border-slate-800">
+            <td className="py-2 px-3 text-slate-600 dark:text-slate-400">1 ("King")</td>
+            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.89</td>
+            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.56</td>
+            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">-0.21</td>
+            <td className="py-2 px-3 text-slate-400">...</td>
+            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.67</td>
+          </tr>
+          <tr>
+            <td className="py-2 px-3 text-slate-400">...</td>
+            <td className="py-2 px-3 text-slate-400">...</td>
+            <td className="py-2 px-3 text-slate-400">...</td>
+            <td className="py-2 px-3 text-slate-400">...</td>
+            <td className="py-2 px-3 text-slate-400">...</td>
+            <td className="py-2 px-3 text-slate-400">...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+      When the model sees token ID 1, it simply looks up row 1 and grabs that entire row as the vector. Just a table lookup.
+    </div>
+  </div>
+
+  <Description>
+    The size of this table depends on two choices you make when designing your model:
   </Description>
 
   <div className="my-4 grid grid-cols-1 md:grid-cols-2 gap-4">
     <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-      <div className="text-2xl font-semibold text-slate-800 dark:text-slate-200 mb-1">50,000</div>
-      <div className="text-sm text-slate-600 dark:text-slate-400">Rows</div>
-      <div className="text-xs text-slate-500 mt-2">One for every token ID</div>
+      <div className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-1">Vocabulary Size</div>
+      <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">Number of rows (one per token)</div>
+      <div className="text-xs text-slate-500 space-y-1">
+        <div>• GPT-2: ~50,000 tokens</div>
+        <div>• GPT-4: ~100,000 tokens</div>
+        <div>• Llama 2: ~32,000 tokens</div>
+      </div>
     </div>
     <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-      <div className="text-2xl font-semibold text-slate-800 dark:text-slate-200 mb-1">4,096</div>
-      <div className="text-sm text-slate-600 dark:text-slate-400">Columns</div>
-      <div className="text-xs text-slate-500 mt-2">The number of dimensions</div>
+      <div className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-1">Embedding Dimension</div>
+      <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">Number of columns (attributes per token)</div>
+      <div className="text-xs text-slate-500 space-y-1">
+        <div>• GPT-2 Small: 768 dimensions</div>
+        <div>• GPT-3: 12,288 dimensions</div>
+        <div>• Llama 2 70B: 8,192 dimensions</div>
+      </div>
     </div>
   </div>
+
+  <Callout type="tip" title="Why Do Models Use Different Sizes?">
+    <div className="space-y-2">
+      <div><strong>Vocabulary size</strong> (rows): More tokens means fewer unknown words, but requires more memory.</div>
+      <div><strong>Embedding dimension</strong> (columns): More dimensions allows richer meaning representation, but increases memory usage and computation time.</div>
+      <div className="pt-2 text-slate-600 dark:text-slate-400">When designing a model, you balance these based on your constraints: available compute, memory budget, target latency, and how much training data you have.</div>
+    </div>
+  </Callout>
 
   <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">The Training Process</h4>
 
   <Description>
-    When we initialize the model, we fill this matrix with random noise. "King" might start at `[0.5, -0.2]`, right next to "Sandwich." The map is nonsense.
+    When we first create this table, every cell is filled with random numbers. "King" might start at coordinates right next to "Sandwich." The map has no structure at all.
   </Description>
 
   <Description>
-    But then we start **Training**. We show the model billions of sentences.
+    Training is the process where the model discovers what each dimension should represent. We show it many sentences, and it gradually adjusts the coordinates based on what it sees.
   </Description>
 
   <div className="my-4 relative">
@@ -307,39 +372,43 @@ description: "How to represent tokens as vectors to capture semantic meaning and
       <div className="relative flex gap-4">
         <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">1</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">Model sees:</div>
-          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">"The King sat on the..."</div>
+          <div className="font-semibold text-slate-800 dark:text-slate-200">Model sees a sentence with a gap:</div>
+          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">"The King sat on the ___"</div>
         </div>
       </div>
 
       <div className="relative flex gap-4">
         <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">2</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">It guesses:</div>
-          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">A random word</div>
+          <div className="font-semibold text-slate-800 dark:text-slate-200">It makes a guess:</div>
+          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">"Banana" (totally wrong, but it's early in training!)</div>
         </div>
       </div>
 
       <div className="relative flex gap-4">
         <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">3</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">We tell it:</div>
-          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">The correct answer is "Throne"</div>
+          <div className="font-semibold text-slate-800 dark:text-slate-200">We reveal the correct answer:</div>
+          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">"The King sat on the <span className="text-emerald-600 dark:text-emerald-400 font-bold">Throne</span>"</div>
         </div>
       </div>
 
       <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 border-2 border-emerald-400 dark:border-emerald-600 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold z-0">4</div>
+        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">4</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">Backpropagation sends a signal:</div>
-          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1 italic">"Move the coordinates of 'King' slightly closer to 'Throne' and further from 'Sandwich'."</div>
+          <div className="font-semibold text-slate-800 dark:text-slate-200">The model adjusts its internal map:</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">"King" appeared near "Throne," so the model nudges "King" a little closer to "Throne" in its coordinate space, and a little further from "Banana."</div>
         </div>
       </div>
     </div>
   </div>
 
   <Description>
-    Over time, this "nudging" process organizes the random noise into the structured Library of Meaning we visualized above.
+    This process repeats many times with different sentences. Every time "King" appears near "Queen," "Crown," or "Palace," the model nudges their coordinates closer. Every time "Apple" appears near "Orange" and "Banana," those fruit words cluster together.
+  </Description>
+
+  <Description>
+    After enough examples, the random noise transforms into the structured semantic space we visualized in Section 3. The model has discovered concepts like Royalty and Gender on its own, encoded them into its dimensions, and organized all the words accordingly.
   </Description>
 </Step>
 
