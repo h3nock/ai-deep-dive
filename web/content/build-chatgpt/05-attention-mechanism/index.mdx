@@ -1,0 +1,769 @@
+---
+title: "The Attention Mechanism"
+step: 5
+description: "The core engine of the Transformer: Query, Key, and Value."
+---
+
+<ComingSoon />
+  <Description>
+    Look at the word **"Bank"** in these two sentences:
+  </Description>
+
+  <div className="my-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+      <div className="flex items-center gap-3 mb-3">
+        <span className="text-2xl">🌊</span>
+        <span className="font-bold text-lg text-blue-800 dark:text-blue-300">"The bank of the river"</span>
+      </div>
+      <div className="text-sm text-blue-700 dark:text-blue-300">
+        A natural landform, the edge of flowing water
+      </div>
+    </div>
+
+    <div className="p-5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+      <div className="flex items-center gap-3 mb-3">
+        <span className="text-2xl">🏦</span>
+        <span className="font-bold text-lg text-emerald-800 dark:text-emerald-300">"The bank of America"</span>
+      </div>
+      <div className="text-sm text-emerald-700 dark:text-emerald-300">
+        A financial institution, a place for money
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    Right now, our model is just a static lookup table. It assigns the **exact same vector** to "bank" in both sentences. To the computer, "River Bank" and "Financial Bank" look identical.
+  </Description>
+
+  <div className="my-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+    <div className="flex items-start gap-3">
+      <span className="text-2xl">⚠️</span>
+      <div>
+        <div className="font-bold text-red-800 dark:text-red-300 mb-1">This is a disaster.</div>
+        <div className="text-sm text-red-700 dark:text-red-300">
+          We need a way for words to pass information to each other. "Bank" needs to look at its neighbor "River" and realize: <em>"Oh, we are talking about nature. I should update my meaning."</em>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    This process of words looking at other words to gather context is called **Self-Attention**.
+  </Description>
+</Step>
+
+
+<Step title="2. The Thought Experiment: Why Not Just Dot Products?">
+  <Description>
+    Let's pretend we are researchers at Google in 2017. We have our word embeddings. We know we want words to "talk" to each other to figure out context.
+  </Description>
+
+  <Description>
+    We learned in Chapter 3 that the **Dot Product** is the standard mathematical tool for measuring similarity. High dot product = similar vectors.
+  </Description>
+
+  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">The Obvious Solution</div>
+    <div className="text-slate-600 dark:text-slate-400">
+      Why not just take the embedding for "Bank" and dot product it with every other word in the sentence? If "Bank" and "River" have similar features, the dot product will be high. We can use that score to decide how much they should interact.
+    </div>
+  </div>
+
+  <Description>
+    Simple, right? **No.** If we do this, we immediately hit three fatal flaws.
+  </Description>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">Flaw 1: The "Narcissist" Problem</h4>
+
+  <div className="my-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="flex items-start gap-4">
+      <div className="p-3 bg-slate-200 dark:bg-slate-700 rounded-lg text-2xl shrink-0">🪞</div>
+      <div>
+        <div className="font-bold text-slate-800 dark:text-slate-200 mb-2">Self-Similarity Dominates</div>
+        <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+          Mathematically, the dot product of a vector with itself ($A \cdot A$) is always the highest possible score.
+        </div>
+        <div className="p-3 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">
+          <div className="font-mono text-sm text-slate-700 dark:text-slate-300">
+            <div>Bank · Bank = <span className="text-red-600 dark:text-red-400 font-bold">0.95</span> ← Always wins!</div>
+            <div>Bank · River = <span className="text-slate-500">0.42</span></div>
+            <div>Bank · The = <span className="text-slate-500">0.15</span></div>
+          </div>
+        </div>
+        <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+          <strong>Result:</strong> The model becomes a narcissist. It ignores context ("River") and just stares at itself.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">Flaw 2: The "Symmetric" Problem</h4>
+
+  <div className="my-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="flex items-start gap-4">
+      <div className="p-3 bg-slate-200 dark:bg-slate-700 rounded-lg text-2xl shrink-0">↔️</div>
+      <div>
+        <div className="font-bold text-slate-800 dark:text-slate-200 mb-2">Dot Product is Commutative</div>
+        <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+          $A \cdot B$ is exactly the same as $B \cdot A$. But language relationships are rarely symmetric.
+        </div>
+        <div className="p-3 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">
+          <div className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+            <span className="font-mono">"The <span className="text-blue-600 dark:text-blue-400 font-bold">man</span> kicked the <span className="text-emerald-600 dark:text-emerald-400 font-bold">ball</span>."</span>
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            • "Kicked" needs heavy attention on "Man" (who did the kicking)<br/>
+            • "Man" might care more about "The" or previous context
+          </div>
+        </div>
+        <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+          <strong>Result:</strong> If "Kicked" loves "Man," "Man" is forced to love "Kicked" equally. This breaks asymmetric relationships.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">Flaw 3: The "Synonym" Problem</h4>
+
+  <div className="my-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="flex items-start gap-4">
+      <div className="p-3 bg-slate-200 dark:bg-slate-700 rounded-lg text-2xl shrink-0">🍎</div>
+      <div>
+        <div className="font-bold text-slate-800 dark:text-slate-200 mb-2">Similar Meaning ≠ Similar Vectors</div>
+        <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+          Raw embeddings are trained based on word similarity, not grammatical compatibility.
+        </div>
+        <div className="p-3 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">
+          <div className="text-sm text-slate-700 dark:text-slate-300 mb-2">
+            <span className="font-mono">"I <span className="text-violet-600 dark:text-violet-400 font-bold">ate</span> an <span className="text-red-600 dark:text-red-400 font-bold">apple</span>."</span>
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            • "Ate" is a verb. "Apple" is a noun.<br/>
+            • Their vectors point in different directions (not synonyms)<br/>
+            • But they are a perfect grammatical match!
+          </div>
+        </div>
+        <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+          <strong>Result:</strong> Low dot product between "ate" and "apple," even though they belong together.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Callout type="tip" title="The Fix We Need">
+    We need to separate "Who I am" from "Who I am looking for." Just because I *am* a "Bank" doesn't mean I want to *find* other "Banks." I might want to find adjectives that describe me.
+  </Callout>
+</Step>
+
+
+<Step title="3. The Solution: The Trinity (Q, K, V)">
+  <Description>
+    To solve these three problems, we realize that **one single vector per word is not enough.**
+  </Description>
+
+  <Description>
+    We need to project that single embedding into three distinct "Personas" using three learnable matrices: $W_Q$, $W_K$, $W_V$.
+  </Description>
+
+  <Description>
+    Think of this like a **Library Filing System**:
+  </Description>
+
+  <div className="my-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="p-5 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center text-violet-600 dark:text-violet-400 text-xl">📝</div>
+        <span className="font-bold text-lg text-violet-800 dark:text-violet-300">Query ($Q$)</span>
+      </div>
+      <div className="text-sm text-violet-700 dark:text-violet-300 font-medium mb-2">
+        The Sticky Note
+      </div>
+      <div className="text-sm text-violet-600 dark:text-violet-400">
+        What is this token <strong>looking for</strong>?
+      </div>
+      <div className="mt-3 p-2 bg-violet-100 dark:bg-violet-900/40 rounded text-xs text-violet-700 dark:text-violet-300 italic">
+        "Bank" as Query: "I'm a noun looking for adjectives that describe my nature."
+      </div>
+    </div>
+
+    <div className="p-5 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 text-xl">🏷️</div>
+        <span className="font-bold text-lg text-amber-800 dark:text-amber-300">Key ($K$)</span>
+      </div>
+      <div className="text-sm text-amber-700 dark:text-amber-300 font-medium mb-2">
+        The Label on the Spine
+      </div>
+      <div className="text-sm text-amber-600 dark:text-amber-400">
+        What does this token <strong>identify as</strong> to others?
+      </div>
+      <div className="mt-3 p-2 bg-amber-100 dark:bg-amber-900/40 rounded text-xs text-amber-700 dark:text-amber-300 italic">
+        "River" as Key: "I'm a nature-related noun."
+      </div>
+    </div>
+
+    <div className="p-5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-xl">📚</div>
+        <span className="font-bold text-lg text-emerald-800 dark:text-emerald-300">Value ($V$)</span>
+      </div>
+      <div className="text-sm text-emerald-700 dark:text-emerald-300 font-medium mb-2">
+        The Book Content
+      </div>
+      <div className="text-sm text-emerald-600 dark:text-emerald-400">
+        What <strong>information</strong> does this token contain?
+      </div>
+      <div className="mt-3 p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded text-xs text-emerald-700 dark:text-emerald-300 italic">
+        "River" as Value: The vector essence of 'Water' and 'Nature'.
+      </div>
+    </div>
+  </div>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">How Q, K, V Fix the Flaws</h4>
+
+  <div className="my-4 space-y-3">
+    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
+      <span className="text-lg">🪞</span>
+      <div>
+        <span className="font-bold text-slate-700 dark:text-slate-300">Narcissism Fixed:</span>
+        <span className="text-slate-600 dark:text-slate-400 ml-2">Your Query (what you want) is different from your Key (who you are). You don't necessarily match with yourself anymore.</span>
+      </div>
+    </div>
+    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
+      <span className="text-lg">↔️</span>
+      <div>
+        <span className="font-bold text-slate-700 dark:text-slate-300">Symmetry Fixed:</span>
+        <span className="text-slate-600 dark:text-slate-400 ml-2">"Man" can query "Kicked" without "Kicked" querying "Man." The relationship is now directed.</span>
+      </div>
+    </div>
+    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
+      <span className="text-lg">🍎</span>
+      <div>
+        <span className="font-bold text-slate-700 dark:text-slate-300">Synonyms Fixed:</span>
+        <span className="text-slate-600 dark:text-slate-400 ml-2">The Query matrix can learn to rotate "Ate" into a "Food-Seeker" vector, matching the "Food-Label" of "Apple."</span>
+      </div>
+    </div>
+  </div>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">The Projection Process</h4>
+
+  <Description>
+    Each token's embedding gets multiplied by three different weight matrices to produce Q, K, and V:
+  </Description>
+
+  <div className="my-4 p-4 bg-slate-900 dark:bg-slate-950 rounded-lg border border-slate-700 overflow-x-auto">
+    <div className="space-y-2 font-mono text-sm">
+      <div className="text-slate-400"># For each token embedding x:</div>
+      <div className="text-white">Q = x @ W_Q  <span className="text-slate-500"># What am I looking for?</span></div>
+      <div className="text-white">K = x @ W_K  <span className="text-slate-500"># How should others find me?</span></div>
+      <div className="text-white">V = x @ W_V  <span className="text-slate-500"># What information do I carry?</span></div>
+    </div>
+  </div>
+
+  <Description>
+    The matrices $W_Q$, $W_K$, $W_V$ are **learned during training**. The model figures out the best way to transform embeddings into these three roles.
+  </Description>
+</Step>
+
+
+<Step title="4. The Algorithm: Scaled Dot-Product Attention">
+  <Description>
+    Now that every word has generated Q, K, and V vectors, how do we combine them?
+  </Description>
+
+  <div className="my-6 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-center mb-4">
+      <span className="text-sm font-medium text-slate-500 dark:text-slate-400">The Attention Formula</span>
+    </div>
+    <div className="text-center text-lg md:text-xl font-mono text-slate-800 dark:text-slate-200">
+      $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+    </div>
+  </div>
+
+  <Description>
+    Don't let the notation scare you. It's a simple 4-step assembly line. Let's trace through how "Bank" figures out it means "river bank":
+  </Description>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">Step 1: The Interaction ($QK^T$)</h4>
+
+  <div className="my-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="flex items-start gap-4">
+      <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center text-violet-600 dark:text-violet-400 font-bold shrink-0">1</div>
+      <div className="flex-1">
+        <div className="font-bold text-slate-800 dark:text-slate-200 mb-2">Compute Attention Scores</div>
+        <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+          "Bank" takes its <strong>Query</strong> vector and performs a dot product against the <strong>Key</strong> vector of every other word.
+        </div>
+        <div className="p-3 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 font-mono text-sm">
+          <div className="space-y-1">
+            <div className="flex justify-between">
+              <span className="text-slate-600 dark:text-slate-400">Bank_Q · The_K</span>
+              <span className="text-slate-500">= 0.1 <span className="text-xs">(Low match)</span></span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600 dark:text-slate-400">Bank_Q · River_K</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold">= 0.9 <span className="text-xs">(High match!)</span></span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600 dark:text-slate-400">Bank_Q · Of_K</span>
+              <span className="text-slate-500">= 0.2 <span className="text-xs">(Low match)</span></span>
+            </div>
+          </div>
+        </div>
+        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          These raw results are called <strong>Attention Scores</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">Step 2: The Scaling ($\sqrt{d_k}$)</h4>
+
+  <div className="my-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="flex items-start gap-4">
+      <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold shrink-0">2</div>
+      <div className="flex-1">
+        <div className="font-bold text-slate-800 dark:text-slate-200 mb-2">Divide by $\sqrt{d_k}$</div>
+        <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+          We divide the scores by the square root of the dimension (usually $\sqrt{64} = 8$).
+        </div>
+        
+        <ThinkingProcess 
+          title="Why Scale?"
+          hint={
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+              What happens to Softmax when the input numbers are very large (like 100) vs. moderate (like 1)?
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            <Description>
+              If the dot products are too large (positive or negative), the Softmax function in the next step will push the probabilities to exactly 0% or 100%.
+            </Description>
+            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded">
+              <div className="font-mono text-sm">
+                <div>softmax([100, 1, 1]) → [1.0, 0.0, 0.0]  <span className="text-red-500">← All attention on one token!</span></div>
+                <div>softmax([2.0, 1, 1]) → [0.5, 0.25, 0.25]  <span className="text-emerald-500">← Balanced attention</span></div>
+              </div>
+            </div>
+            <Description>
+              When probabilities become 0 or 1, the gradients (learning signals) become flat, and the model stops learning. This is the **Vanishing Gradient** problem. Scaling keeps numbers in the "learning sweet spot."
+            </Description>
+          </div>
+        </ThinkingProcess>
+      </div>
+    </div>
+  </div>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">Step 3: The Filter (Softmax)</h4>
+
+  <div className="my-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="flex items-start gap-4">
+      <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold shrink-0">3</div>
+      <div className="flex-1">
+        <div className="font-bold text-slate-800 dark:text-slate-200 mb-2">Convert to Percentages</div>
+        <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+          Softmax converts raw scores into percentages that sum to 100%.
+        </div>
+        <div className="p-3 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-center gap-6">
+            <div className="text-center">
+              <div className="text-2xl mb-1">🌊</div>
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-300">River</div>
+              <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">75%</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl mb-1">📝</div>
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-300">The</div>
+              <div className="text-lg font-bold text-slate-500">15%</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl mb-1">🔗</div>
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-300">Of</div>
+              <div className="text-lg font-bold text-slate-500">10%</div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          These percentages tell "Bank" exactly how much of each word's information to absorb.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">Step 4: The Update (Multiplying by V)</h4>
+
+  <div className="my-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="flex items-start gap-4">
+      <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold shrink-0">4</div>
+      <div className="flex-1">
+        <div className="font-bold text-slate-800 dark:text-slate-200 mb-2">Weighted Sum of Values</div>
+        <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+          We multiply these percentages by the <strong>Values ($V$)</strong> and sum them up.
+        </div>
+        <div className="p-3 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 font-mono text-sm">
+          <div className="text-slate-700 dark:text-slate-300">
+            New_Bank = <span className="text-emerald-600 dark:text-emerald-400">0.75</span> × River_V + <span className="text-slate-500">0.15</span> × The_V + <span className="text-slate-500">0.10</span> × Of_V
+          </div>
+        </div>
+        <div className="mt-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded border border-emerald-200 dark:border-emerald-800">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">✨</span>
+            <div className="text-sm text-emerald-700 dark:text-emerald-300">
+              <strong>Result:</strong> A new vector for "Bank" that is no longer generic. It is now <strong>"River-Contextualized."</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Step>
+
+
+<Step title="5. Visualizing Self-Attention">
+  <Description>
+    Let's see the entire process visually. Watch how "Bank" gathers context from the surrounding words:
+  </Description>
+
+  <div className="my-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-center mb-4">
+      <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        Self-Attention: "Bank" Looking at the Sentence
+      </span>
+    </div>
+
+    <div className="flex justify-center">
+      <svg viewBox="0 0 500 300" className="w-full max-w-lg">
+        {/* Title */}
+        <text x="250" y="25" textAnchor="middle" className="fill-slate-700 dark:fill-slate-300 text-sm font-medium">
+          "The Bank of the River"
+        </text>
+        
+        {/* Word boxes */}
+        <g>
+          {/* The */}
+          <rect x="30" y="60" width="60" height="40" rx="6" className="fill-slate-100 dark:fill-slate-800 stroke-slate-300 dark:stroke-slate-600" strokeWidth="2"/>
+          <text x="60" y="85" textAnchor="middle" className="fill-slate-600 dark:fill-slate-400 text-sm">The</text>
+          
+          {/* Bank (highlighted) */}
+          <rect x="120" y="60" width="70" height="40" rx="6" className="fill-violet-100 dark:fill-violet-900/50 stroke-violet-500" strokeWidth="3"/>
+          <text x="155" y="85" textAnchor="middle" className="fill-violet-700 dark:fill-violet-300 text-sm font-bold">Bank</text>
+          
+          {/* of */}
+          <rect x="220" y="60" width="50" height="40" rx="6" className="fill-slate-100 dark:fill-slate-800 stroke-slate-300 dark:stroke-slate-600" strokeWidth="2"/>
+          <text x="245" y="85" textAnchor="middle" className="fill-slate-600 dark:fill-slate-400 text-sm">of</text>
+          
+          {/* the */}
+          <rect x="300" y="60" width="50" height="40" rx="6" className="fill-slate-100 dark:fill-slate-800 stroke-slate-300 dark:stroke-slate-600" strokeWidth="2"/>
+          <text x="325" y="85" textAnchor="middle" className="fill-slate-600 dark:fill-slate-400 text-sm">the</text>
+          
+          {/* River (strong connection) */}
+          <rect x="380" y="60" width="70" height="40" rx="6" className="fill-emerald-100 dark:fill-emerald-900/50 stroke-emerald-500" strokeWidth="3"/>
+          <text x="415" y="85" textAnchor="middle" className="fill-emerald-700 dark:fill-emerald-300 text-sm font-bold">River</text>
+        </g>
+
+        {/* Attention arrows from Bank */}
+        <defs>
+          <marker id="arrow-thin" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" className="fill-slate-400"/>
+          </marker>
+          <marker id="arrow-thick" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <polygon points="0 0, 8 4, 0 8" className="fill-emerald-500"/>
+          </marker>
+        </defs>
+
+        {/* Thin arrows (weak attention) */}
+        <path d="M 155 100 Q 155 140 60 140 L 60 160" className="stroke-slate-400 fill-none" strokeWidth="1" markerEnd="url(#arrow-thin)" strokeDasharray="4 2"/>
+        <path d="M 155 100 Q 155 150 245 150 L 245 160" className="stroke-slate-400 fill-none" strokeWidth="1" markerEnd="url(#arrow-thin)" strokeDasharray="4 2"/>
+        <path d="M 155 100 Q 155 145 325 145 L 325 160" className="stroke-slate-400 fill-none" strokeWidth="1" markerEnd="url(#arrow-thin)" strokeDasharray="4 2"/>
+        
+        {/* Thick arrow (strong attention to River) */}
+        <path d="M 155 100 Q 200 170 415 140 L 415 160" className="stroke-emerald-500 fill-none" strokeWidth="4" markerEnd="url(#arrow-thick)"/>
+
+        {/* Attention weights */}
+        <g className="text-xs">
+          <text x="60" y="180" textAnchor="middle" className="fill-slate-500">8%</text>
+          <text x="245" y="180" textAnchor="middle" className="fill-slate-500">5%</text>
+          <text x="325" y="180" textAnchor="middle" className="fill-slate-500">7%</text>
+          <text x="415" y="180" textAnchor="middle" className="fill-emerald-600 dark:fill-emerald-400 font-bold">80%</text>
+        </g>
+
+        {/* Legend */}
+        <g transform="translate(100, 220)">
+          <rect x="0" y="0" width="300" height="60" rx="8" className="fill-white dark:fill-slate-900 stroke-slate-200 dark:stroke-slate-700"/>
+          <circle cx="30" cy="20" r="8" className="fill-violet-500"/>
+          <text x="50" y="24" className="fill-slate-600 dark:fill-slate-400 text-xs">Query Token (Bank)</text>
+          <circle cx="30" cy="45" r="8" className="fill-emerald-500"/>
+          <text x="50" y="49" className="fill-slate-600 dark:fill-slate-400 text-xs">High Attention Target (River)</text>
+          <line x1="180" y1="20" x2="220" y2="20" className="stroke-emerald-500" strokeWidth="4"/>
+          <text x="230" y="24" className="fill-slate-600 dark:fill-slate-400 text-xs">Strong</text>
+          <line x1="180" y1="45" x2="220" y2="45" className="stroke-slate-400" strokeWidth="1" strokeDasharray="4 2"/>
+          <text x="230" y="49" className="fill-slate-600 dark:fill-slate-400 text-xs">Weak</text>
+        </g>
+      </svg>
+    </div>
+
+    <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
+      "Bank" pays 80% attention to "River," learning it refers to a natural landform, not a financial institution.
+    </p>
+  </div>
+</Step>
+
+
+<Step title="6. Multi-Head Attention: Multiple Perspectives">
+  <Description>
+    Is one perspective enough? Consider the word "Bank" again. It might need to know multiple things simultaneously:
+  </Description>
+
+  <div className="my-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">📖</span>
+        <span className="font-bold text-blue-800 dark:text-blue-300">Semantic</span>
+      </div>
+      <div className="text-sm text-blue-700 dark:text-blue-300">
+        Is it a river or a building? → Look at "River"
+      </div>
+    </div>
+    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">📝</span>
+        <span className="font-bold text-amber-800 dark:text-amber-300">Grammatical</span>
+      </div>
+      <div className="text-sm text-amber-700 dark:text-amber-300">
+        Is it the subject or object? → Look at the verb
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    A single attention mechanism can't easily focus on two different words at once. It would average them out, losing the clarity of both.
+  </Description>
+
+  <Description>
+    The solution: **Multiple Heads**. We give the model several parallel attention mechanisms, each free to focus on different aspects.
+  </Description>
+
+  <div className="my-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-center mb-4">
+      <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        Multi-Head Attention Architecture
+      </span>
+    </div>
+
+    <div className="flex justify-center">
+      <svg viewBox="0 0 500 320" className="w-full max-w-lg">
+        {/* Input */}
+        <rect x="200" y="10" width="100" height="35" rx="6" className="fill-slate-200 dark:fill-slate-700"/>
+        <text x="250" y="32" textAnchor="middle" className="fill-slate-700 dark:fill-slate-300 text-xs font-medium">Input Embedding</text>
+        
+        {/* Split arrows */}
+        <path d="M 250 45 L 250 70" className="stroke-slate-400" strokeWidth="2"/>
+        <path d="M 250 70 L 80 100" className="stroke-slate-400" strokeWidth="2"/>
+        <path d="M 250 70 L 180 100" className="stroke-slate-400" strokeWidth="2"/>
+        <path d="M 250 70 L 320 100" className="stroke-slate-400" strokeWidth="2"/>
+        <path d="M 250 70 L 420 100" className="stroke-slate-400" strokeWidth="2"/>
+
+        {/* Attention Heads */}
+        <g transform="translate(40, 100)">
+          <rect x="0" y="0" width="80" height="80" rx="8" className="fill-violet-100 dark:fill-violet-900/30 stroke-violet-400" strokeWidth="2"/>
+          <text x="40" y="25" textAnchor="middle" className="fill-violet-700 dark:fill-violet-300 text-xs font-bold">Head 1</text>
+          <text x="40" y="45" textAnchor="middle" className="fill-violet-600 dark:fill-violet-400 text-[10px]">Semantic</text>
+          <text x="40" y="60" textAnchor="middle" className="fill-violet-500 dark:fill-violet-400 text-[10px]">"Bank → River"</text>
+        </g>
+
+        <g transform="translate(140, 100)">
+          <rect x="0" y="0" width="80" height="80" rx="8" className="fill-amber-100 dark:fill-amber-900/30 stroke-amber-400" strokeWidth="2"/>
+          <text x="40" y="25" textAnchor="middle" className="fill-amber-700 dark:fill-amber-300 text-xs font-bold">Head 2</text>
+          <text x="40" y="45" textAnchor="middle" className="fill-amber-600 dark:fill-amber-400 text-[10px]">Syntax</text>
+          <text x="40" y="60" textAnchor="middle" className="fill-amber-500 dark:fill-amber-400 text-[10px]">"Bank → The"</text>
+        </g>
+
+        <g transform="translate(280, 100)">
+          <rect x="0" y="0" width="80" height="80" rx="8" className="fill-emerald-100 dark:fill-emerald-900/30 stroke-emerald-400" strokeWidth="2"/>
+          <text x="40" y="25" textAnchor="middle" className="fill-emerald-700 dark:fill-emerald-300 text-xs font-bold">Head 3</text>
+          <text x="40" y="45" textAnchor="middle" className="fill-emerald-600 dark:fill-emerald-400 text-[10px]">Position</text>
+          <text x="40" y="60" textAnchor="middle" className="fill-emerald-500 dark:fill-emerald-400 text-[10px]">"Bank → of"</text>
+        </g>
+
+        <g transform="translate(380, 100)">
+          <rect x="0" y="0" width="80" height="80" rx="8" className="fill-blue-100 dark:fill-blue-900/30 stroke-blue-400" strokeWidth="2"/>
+          <text x="40" y="25" textAnchor="middle" className="fill-blue-700 dark:fill-blue-300 text-xs font-bold">Head N</text>
+          <text x="40" y="45" textAnchor="middle" className="fill-blue-600 dark:fill-blue-400 text-[10px]">Other</text>
+          <text x="40" y="60" textAnchor="middle" className="fill-blue-500 dark:fill-blue-400 text-[10px]">patterns...</text>
+        </g>
+
+        {/* Concat arrows */}
+        <path d="M 80 180 L 80 210 L 250 230" className="stroke-slate-400" strokeWidth="2"/>
+        <path d="M 180 180 L 180 220 L 250 230" className="stroke-slate-400" strokeWidth="2"/>
+        <path d="M 320 180 L 320 220 L 250 230" className="stroke-slate-400" strokeWidth="2"/>
+        <path d="M 420 180 L 420 210 L 250 230" className="stroke-slate-400" strokeWidth="2"/>
+
+        {/* Concat box */}
+        <rect x="180" y="220" width="140" height="30" rx="6" className="fill-slate-300 dark:fill-slate-600"/>
+        <text x="250" y="240" textAnchor="middle" className="fill-slate-700 dark:fill-slate-300 text-xs font-medium">Concatenate</text>
+
+        {/* Output projection */}
+        <path d="M 250 250 L 250 265" className="stroke-slate-400" strokeWidth="2"/>
+        <rect x="175" y="265" width="150" height="30" rx="6" className="fill-slate-700 dark:fill-slate-800"/>
+        <text x="250" y="284" textAnchor="middle" className="fill-white text-xs font-medium">Linear (W_O)</text>
+
+        {/* Final output */}
+        <path d="M 250 295 L 250 310" className="stroke-slate-400" strokeWidth="2"/>
+        <text x="250" y="320" textAnchor="middle" className="fill-slate-600 dark:fill-slate-400 text-xs">Unified Output</text>
+      </svg>
+    </div>
+  </div>
+
+  <Description>
+    In GPT-4, **96 heads** run in parallel. Each head looks at the sentence through a different lens, extracting different types of information.
+  </Description>
+
+  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-8 mb-4">The Output Matrix ($W_O$)</h4>
+
+  <Description>
+    After all heads are done, we have 8, 12, or 96 different result vectors. We concatenate (glue) them together, then pass through one final Linear Layer ($W_O$). This matrix acts as the **team manager**, mixing all the insights from different heads into one unified, clean vector ready for the next layer.
+  </Description>
+
+  <div className="my-4 p-4 bg-slate-100 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Model Comparison</div>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-200 dark:border-slate-700">
+            <th className="text-left py-2 text-slate-600 dark:text-slate-400">Model</th>
+            <th className="text-center py-2 text-slate-600 dark:text-slate-400">Heads</th>
+            <th className="text-center py-2 text-slate-600 dark:text-slate-400">$d_{model}$</th>
+            <th className="text-center py-2 text-slate-600 dark:text-slate-400">$d_k$ per head</th>
+          </tr>
+        </thead>
+        <tbody className="text-slate-700 dark:text-slate-300">
+          <tr className="border-b border-slate-100 dark:border-slate-800">
+            <td className="py-2">GPT-2 Small</td>
+            <td className="text-center">12</td>
+            <td className="text-center">768</td>
+            <td className="text-center">64</td>
+          </tr>
+          <tr className="border-b border-slate-100 dark:border-slate-800">
+            <td className="py-2">GPT-3</td>
+            <td className="text-center">96</td>
+            <td className="text-center">12288</td>
+            <td className="text-center">128</td>
+          </tr>
+          <tr>
+            <td className="py-2">GPT-4 (estimated)</td>
+            <td className="text-center">96+</td>
+            <td className="text-center">~16384</td>
+            <td className="text-center">128+</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Step>
+
+
+<Step title="7. Putting It Together: The Full Picture">
+  <Description>
+    Let's trace through exactly what happens when "The bank of the river" passes through one attention layer:
+  </Description>
+
+  <div className="my-4 relative">
+    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700" />
+    
+    <div className="space-y-6">
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">1</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-slate-800 dark:text-slate-200">Input: Embedded Tokens</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Each word is a vector containing meaning + position.
+          </div>
+          <div className="font-mono text-xs text-slate-500 mt-2">
+            [The], [Bank], [of], [the], [River] → 5 vectors, each 768-dimensional
+          </div>
+        </div>
+      </div>
+
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-violet-100 dark:bg-violet-900/40 border-2 border-violet-400 dark:border-violet-600 flex items-center justify-center text-violet-700 dark:text-violet-300 font-bold z-0">2</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-slate-800 dark:text-slate-200">Project to Q, K, V</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Each token generates its Query, Key, and Value vectors.
+          </div>
+          <div className="font-mono text-xs text-slate-500 mt-2">
+            Bank → Bank_Q, Bank_K, Bank_V
+          </div>
+        </div>
+      </div>
+
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/40 border-2 border-amber-400 dark:border-amber-600 flex items-center justify-center text-amber-700 dark:text-amber-300 font-bold z-0">3</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-slate-800 dark:text-slate-200">Compute Attention</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Each token's Query searches all Keys, gets scores, then takes a weighted average of Values.
+          </div>
+          <div className="font-mono text-xs text-slate-500 mt-2">
+            Bank_Q · all_K → softmax → weighted sum of all_V
+          </div>
+        </div>
+      </div>
+
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-400 dark:border-blue-600 flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold z-0">4</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-slate-800 dark:text-slate-200">Multi-Head Magic</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Steps 2-3 happen in parallel across all heads. Each head finds different patterns.
+          </div>
+        </div>
+      </div>
+
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 border-2 border-emerald-400 dark:border-emerald-600 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold z-0">5</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-slate-800 dark:text-slate-200">Output: Contextualized Tokens</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Each token is now "context-aware." Bank knows it's a river bank.
+          </div>
+          <div className="font-mono text-xs text-emerald-600 dark:text-emerald-400 mt-2">
+            Bank_new = 75% River_info + 15% The_info + 10% of_info
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Step>
+
+
+<Step title="8. Summary">
+  <Callout type="success" title="What We Learned">
+    * **Static embeddings fail** because "bank" means the same thing regardless of context
+    * **Raw dot products** have three flaws: narcissism, symmetry, and synonym blindness
+    * **Q, K, V projections** solve this by giving each token three personas
+    * **Scaled Dot-Product Attention** is a 4-step process: compute scores, scale, softmax, weighted sum
+    * **Multi-Head Attention** runs multiple attention mechanisms in parallel to capture different relationships
+    * The result is **contextualized representations** where each token has "talked" to the others
+  </Callout>
+
+  <Description>
+    The Attention Mechanism is often described as "Memory," but that's misleading. **It's Communication.**
+  </Description>
+
+  <Description>
+    Before this layer, the tokens were isolated individuals. After this layer, they have "talked" to each other. They have absorbed the context of their neighbors. "Bank" is no longer just a word in a dictionary; it's a specific concept tied to the river mentioned three words later.
+  </Description>
+
+  <Description>
+    This is why Transformers understand context better than any previous AI architecture.
+  </Description>
+
+  <div className="my-6 p-5 bg-slate-100 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Up Next: Implementing Attention</div>
+    <div className="text-sm text-slate-600 dark:text-slate-400">
+      Now that we understand the theory, we'll implement attention from scratch in Python. We'll also tackle a critical question: during training, how do we prevent the model from "cheating" by looking at future words? The answer is <strong>Causal Masking</strong>.
+    </div>
+  </div>
+</Step>
