@@ -9,19 +9,19 @@ interface AutoResizingEditorProps {
   maxHeight?: number;
 }
 
-export function AutoResizingEditor({ 
-  value, 
-  onChange, 
-  language = "python", 
-  minHeight = 50, 
-  maxHeight = 400 
+export function AutoResizingEditor({
+  value,
+  onChange,
+  language = "python",
+  minHeight = 50,
+  maxHeight = 400,
 }: AutoResizingEditorProps) {
   const [height, setHeight] = useState(minHeight);
   const editorRef = useRef<any>(null);
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
-    
+
     // Initial resize
     updateHeight();
 
@@ -41,7 +41,10 @@ export function AutoResizingEditor({
   };
 
   return (
-    <div style={{ height: height, transition: "height 0.1s ease-out" }} className="w-full rounded-md overflow-hidden bg-slate-950">
+    <div
+      style={{ height: height, transition: "height 0.1s ease-out" }}
+      className="w-full rounded-md overflow-hidden bg-background"
+    >
       <Editor
         height={height}
         defaultLanguage={language}
