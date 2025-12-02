@@ -104,7 +104,7 @@ export function StepContainer({
           {activeTab === "guide" ? (
             <main className="flex-1 w-full py-12">
               {/* Centered Content Column with Responsive Gutter */}
-              <div className="mx-auto max-w-[65ch] px-6 lg:px-8">
+              <div className="mx-auto max-w-[85ch] px-6 lg:px-8">
                 {/* Header */}
                 <header className="mb-12">
                   <div className="flex items-center gap-3 mb-6 text-sm text-muted">

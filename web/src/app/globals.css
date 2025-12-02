@@ -59,7 +59,7 @@ body {
     @apply leading-relaxed;   /* 1.75 Line Height (Lets the eye breathe) */
     @apply tracking-wide;     /* +0.025em (Prevents letters merging in glow) */
     @apply font-normal;       /* Weight 400 (NEVER use Light/300) */
-    @apply max-w-[65ch];      /* Max 65 characters wide (Prevents neck tracking fatigue) */
+    @apply max-w-[85ch];      /* Max 85 characters wide (Technical docs standard - fits code snippets) */
   }
   
   /* Headings - High contrast for scanning */
