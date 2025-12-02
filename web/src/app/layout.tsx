@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Learn AI by Building It",
   description: "Build real AI systems from scratch. Understand every layer.",
+  themeColor: "#09090B", // Matches --color-background
 };
 
 export default function RootLayout({
@@ -25,13 +26,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className="dark"
+      style={{ colorScheme: "dark" }}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Force dark mode - prevent any light mode flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              document.documentElement.classList.add('dark');
+              document.documentElement.style.colorScheme = 'dark';
+            `,
+          }}
+        />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-secondary`}
       >
-        <ProgressProvider>
-          {children}
-        </ProgressProvider>
+        <ProgressProvider>{children}</ProgressProvider>
       </body>
     </html>
   );
