@@ -4,23 +4,23 @@ step: 3
 description: "How to represent tokens as vectors to capture semantic meaning and sequence order."
 ---
 
-<div className="flex flex-col gap-4">
-<Description>
+<div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
+<Description noMargin>
   In the previous chapter, we built a Tokenizer. We can now take a sentence like "I love cats" and convert it into a list of integers, something like `[40, 1842, 9246]`. It feels like we are ready. Computers operate on numbers, so why can we not just feed these integers directly into the Neural Network?
 </Description>
 
-<Description>
+<Description noMargin>
   To answer this, you have to understand how a Neural Network actually "thinks." It is a mathematical engine. It uses multiplication, addition, dot products, and gradients (calculus) to find patterns. Crucially, it assumes that **Magnitude Matters**.
 </Description>
 </div>
 
 
 <Step title="1. The Problem with Raw Token IDs">
-  <Description>
+  <Description attached>
     Suppose we fed raw Token IDs directly into the model. Imagine the tokenizer assigned IDs like this:
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+  <div className="content-attached p-4 bg-surface rounded-lg border border-border">
     <div className="space-y-2 font-mono text-sm">
       <div className="flex items-center gap-4">
         <span className="text-muted w-20">ID 100:</span>
@@ -42,7 +42,7 @@ description: "How to represent tokens as vectors to capture semantic meaning and
   </Description>
 
   <div className="my-8 pl-6 border-l-2 border-zinc-600">
-    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">The Core Problem</div>
+    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">The Core Problem</div>
     <p className="text-base text-secondary leading-relaxed">
       If we force the model to do math on these arbitrary IDs, we are asking it to find patterns in chaos. The model fails because of <strong className="text-primary">Magnitude Bias</strong>. In a neural network, a neuron applies the <strong className="text-primary">same weight</strong> <code className="text-sm bg-zinc-800 px-1.5 py-0.5 rounded">(Output = Input × Weight)</code> to its input, regardless of the value. If the weight is 0.01, an input of 100 (Apple) produces 1.0, but an input of 500 (Banana) produces 5.0. The math forces the model to treat Banana as "5 times more intense" than Apple. There is no single weight that can work for both numbers, so the model cannot learn a consistent rule for "Fruit".
     </p>
@@ -215,11 +215,11 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     </div>
   </div>
 
-  <Description>
+  <Description attached>
     Let's plug in the numbers from Section 2:
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+  <div className="content-attached p-4 bg-surface rounded-lg border border-border">
     <div className="space-y-3 font-mono text-sm">
       <div className="flex items-center gap-3">
         <span className="text-muted w-28">King:</span>
@@ -251,7 +251,7 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     Look back at our definitions in Section 2. Which word has the vector `[1.0, -1.0]`?
   </Description>
 
-  <div className="my-4 p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
+  <div style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-connected)" }} className="p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
     <div className="flex items-center justify-center gap-4">
       <span className="text-4xl">👸</span>
       <span className="text-2xl font-bold text-emerald-400">Queen!</span>
@@ -269,14 +269,15 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     We know the model will learn these coordinates during training (remember those empty attribute slots from Section 3). But how exactly does this work in practice? Let's look at the actual data structure and the learning process.
   </Description>
 
-  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">The Embedding Layer: A Lookup Table</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: "var(--space-section)", marginBottom: "var(--space-connected)" }}>The Embedding Layer: A Lookup Table</h4>
 
   <Description>
     In code, an **Embedding Layer** is a table of numbers. Think of it like a spreadsheet: each row corresponds to a token ID, and each column is one of those attribute slots. When the model sees a token, it simply looks up the corresponding row.
   </Description>
 
-  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">The Embedding Matrix Structure</div>
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
+  <div className="my-6">
+    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">The Embedding Matrix Structure</div>
+    <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
@@ -317,17 +318,18 @@ description: "How to represent tokens as vectors to capture semantic meaning and
         </tbody>
       </table>
     </div>
+    </div>
   </div>
 
   <p className="text-sm text-muted mt-3">
     When the model sees token ID 1, it simply looks up row 1 and grabs that entire row as the vector. Just a table lookup.
   </p>
 
-  <Description>
+  <Description attached>
     The size of this table depends on two choices you make when designing your model:
   </Description>
 
-  <div className="my-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+  <div className="content-attached grid grid-cols-1 md:grid-cols-2 gap-8">
     <div>
       <h5 className="text-base font-semibold text-primary mb-1">Vocabulary Size</h5>
       <p className="text-sm text-secondary mb-3">Number of rows (one per token)</p>
@@ -356,7 +358,7 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     </div>
   </Callout>
 
-  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">The Training Process</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: "var(--space-section)", marginBottom: "var(--space-connected)" }}>The Training Process</h4>
 
   <Description>
     When we first initialize the embedding table, every cell is filled with random numbers. "King" might start at coordinates right next to "Sandwich." The map has no structure at all.
@@ -370,7 +372,7 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     When the model tries to predict the next word and makes a mistake, the "correction signal" (gradients) flows backwards through the entire network, updating the transformer blocks and finally the embedding vectors themselves. That reshaping teaches which coordinates should pull related tokens closer and push unrelated ones apart. It's how meaning gets baked into those embedding vectors *at the same time* the model learns how to use the words in context.
   </Description>
 
-  <div className="my-4 relative">
+  <div style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-connected)" }} className="relative">
     <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
     
     <div className="space-y-4">
