@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertCircle, CheckCircle2, Info, Lightbulb } from "lucide-react";
+import { AlertTriangle, Check, Info, Lightbulb } from "lucide-react";
 
 type CalloutType = "note" | "warning" | "tip" | "success" | "info";
 
@@ -11,29 +11,29 @@ interface CalloutProps {
 
 const styles = {
   note: {
-    border: "border-slate-300 dark:border-slate-600",
-    icon: "text-slate-500 dark:text-slate-400",
+    border: "border-zinc-700",
+    icon: "text-zinc-400",
     Icon: Info,
   },
   info: {
-    border: "border-sky-400 dark:border-sky-500",
-    icon: "text-sky-500 dark:text-sky-400",
+    border: "border-sky-500/50",
+    icon: "text-sky-400",
     Icon: Info,
   },
   warning: {
-    border: "border-slate-300 dark:border-slate-600",
-    icon: "text-slate-500 dark:text-slate-400",
-    Icon: AlertCircle,
+    border: "border-amber-500/50",
+    icon: "text-amber-400",
+    Icon: AlertTriangle,
   },
   tip: {
-    border: "border-slate-300 dark:border-slate-600",
-    icon: "text-slate-500 dark:text-slate-400",
+    border: "border-zinc-700",
+    icon: "text-zinc-400",
     Icon: Lightbulb,
   },
   success: {
-    border: "border-emerald-500 dark:border-emerald-400",
-    icon: "text-emerald-600 dark:text-emerald-400",
-    Icon: CheckCircle2,
+    border: "border-emerald-400/50",
+    icon: "text-emerald-400",
+    Icon: Check,
   },
 };
 
@@ -51,46 +51,36 @@ export function Callout({ type = "note", title, children }: CalloutProps) {
   const Icon = style.Icon;
   const isSummary = type === "success" && isSummaryTitle(title);
 
-  // Render summary-style callout with enhanced readability
+  // Summary callout: Left-border pattern (no box, typography-driven)
   if (isSummary) {
     return (
-      <div className="my-8 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 overflow-hidden">
-        {/* Header */}
-        <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            <h4 className="font-semibold text-slate-800 dark:text-slate-100 text-base">
-              {title}
-            </h4>
+      <div className="my-10 pl-6 border-l-2 border-emerald-400/50">
+        {/* Header floats on void */}
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="w-5 h-5 rounded-full border border-emerald-400/50 flex items-center justify-center">
+            <Check className="w-3 h-3 text-emerald-400" strokeWidth={3} />
           </div>
+          <h4 className="font-semibold text-primary text-lg">{title}</h4>
         </div>
-        {/* Content */}
-        <div className="px-5 py-4">
-          <div className="text-slate-600 dark:text-slate-300 text-[15px] leading-[1.8] [&>ul]:list-none [&>ul]:p-0 [&>ul]:m-0 [&>ul]:space-y-2.5 [&>ul>li]:relative [&>ul>li]:pl-5 [&>ul>li]:before:content-[''] [&>ul>li]:before:absolute [&>ul>li]:before:left-0 [&>ul>li]:before:top-[0.55em] [&>ul>li]:before:w-1.5 [&>ul>li]:before:h-1.5 [&>ul>li]:before:rounded-full [&>ul>li]:before:bg-emerald-500 dark:[&>ul>li]:before:bg-emerald-400 [&>ul>li>strong]:text-slate-800 dark:[&>ul>li>strong]:text-slate-100 [&>ul>li>strong]:font-semibold [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
-            {children}
-          </div>
+        {/* Content with emerald bullets */}
+        <div className="text-secondary text-base leading-relaxed [&>ul]:list-none [&>ul]:p-0 [&>ul]:m-0 [&>ul]:space-y-3 [&>ul>li]:relative [&>ul>li]:pl-5 [&>ul>li]:before:content-[''] [&>ul>li]:before:absolute [&>ul>li]:before:left-0 [&>ul>li]:before:top-[0.6em] [&>ul>li]:before:w-1.5 [&>ul>li]:before:h-1.5 [&>ul>li]:before:rounded-full [&>ul>li]:before:bg-emerald-400 [&>ul>li>strong]:text-primary [&>ul>li>strong]:font-medium [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
+          {children}
         </div>
       </div>
     );
   }
 
-  // Default callout style
+  // Default callout: Left-border pattern (no icon, clean)
   return (
-    <div className={`my-8 pl-6 pr-4 py-1 border-l-4 ${style.border}`}>
-      <div className="flex items-start gap-3">
-        <div className={`mt-1 shrink-0 ${style.icon}`}>
-          <Icon className="w-5 h-5" />
+    <div className={`my-8 pl-6 border-l-2 ${style.border}`}>
+      {title && (
+        <div className="flex items-center gap-2 mb-2">
+          <Icon className={`w-4 h-4 ${style.icon}`} />
+          <h4 className="font-semibold text-sm text-primary">{title}</h4>
         </div>
-        <div className="flex-1 min-w-0">
-          {title && (
-            <h4 className="font-bold text-base text-slate-900 dark:text-white mb-2">
-              {title}
-            </h4>
-          )}
-          <div className="text-slate-700 dark:text-slate-300 text-base leading-relaxed [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
-            {children}
-          </div>
-        </div>
+      )}
+      <div className="text-secondary text-base leading-relaxed [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
+        {children}
       </div>
     </div>
   );
