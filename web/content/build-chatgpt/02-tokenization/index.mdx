@@ -289,27 +289,31 @@ description: "How BPE compresses text into the atoms of language models."
     Looking back at our BPE walkthrough, the algorithm repeats three operations: **count** pairs, **pick** the most frequent one, and **merge** it. To implement this, we need three functions that work together:
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="space-y-3">
-      <div className="flex items-start gap-3">
-        <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-secondary shrink-0 mt-0.5">1</div>
-        <div>
-          <span className="font-semibold text-primary">get_stats</span>
-          <span className="text-secondary"> counts how often each adjacent pair appears</span>
+  <div className="my-6 relative">
+    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
+    
+    <div className="space-y-5">
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">1</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary font-mono">get_stats</div>
+          <p className="text-sm text-secondary mt-1">Counts how often each adjacent pair appears</p>
         </div>
       </div>
-      <div className="flex items-start gap-3">
-        <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-secondary shrink-0 mt-0.5">2</div>
-        <div>
-          <span className="font-semibold text-primary">merge</span>
-          <span className="text-secondary"> replaces all occurrences of a pair with a new token</span>
+
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">2</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary font-mono">merge</div>
+          <p className="text-sm text-secondary mt-1">Replaces all occurrences of a pair with a new token</p>
         </div>
       </div>
-      <div className="flex items-start gap-3">
-        <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-secondary shrink-0 mt-0.5">3</div>
-        <div>
-          <span className="font-semibold text-primary">train_bpe</span>
-          <span className="text-secondary"> is the main loop that calls the above until we reach target vocab size</span>
+
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">3</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary font-mono">train_bpe</div>
+          <p className="text-sm text-secondary mt-1">The main loop that calls the above until we reach target vocab size</p>
         </div>
       </div>
     </div>

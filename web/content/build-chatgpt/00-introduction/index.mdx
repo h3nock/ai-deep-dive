@@ -142,24 +142,40 @@ description: "The big picture: how Large Language Models actually work."
     The magic happens through training. We show the model enormous amounts of text and let it learn from its mistakes, over and over, until patterns emerge.
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-base font-medium text-primary mb-3">The Training Loop</div>
-    <div className="space-y-3 text-base text-secondary">
-      <div className="flex items-start gap-3">
-        <span className="font-mono text-muted w-6">1.</span>
-        <span><strong>Input:</strong> "The king sat on the".</span>
+  <div className="my-6 relative">
+    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
+    
+    <div className="space-y-6">
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">1</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary">Input</div>
+          <div className="font-mono text-sm text-secondary mt-1">"The king sat on the"</div>
+        </div>
       </div>
-      <div className="flex items-start gap-3">
-        <span className="font-mono text-muted w-6">2.</span>
-        <span><strong>Prediction:</strong> The model guesses the next word. At first, it's random (e.g., "banana").</span>
+
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">2</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary">Prediction</div>
+          <p className="text-sm text-secondary mt-1">The model guesses the next word. At first, it's random (e.g., "banana").</p>
+        </div>
       </div>
-      <div className="flex items-start gap-3">
-        <span className="font-mono text-muted w-6">3.</span>
-        <span><strong>Comparison:</strong> The actual next word is "throne". We measure the error.</span>
+
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">3</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary">Comparison</div>
+          <p className="text-sm text-secondary mt-1">The actual next word is "throne". We measure the error.</p>
+        </div>
       </div>
-      <div className="flex items-start gap-3">
-        <span className="font-mono text-muted w-6">4.</span>
-        <span><strong>Update:</strong> The model adjusts its internal numbers to make "throne" more likely next time.</span>
+
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">4</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary">Update</div>
+          <p className="text-sm text-secondary mt-1">The model adjusts its internal numbers to make "throne" more likely next time.</p>
+        </div>
       </div>
     </div>
   </div>

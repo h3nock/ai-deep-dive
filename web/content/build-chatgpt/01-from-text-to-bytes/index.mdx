@@ -223,12 +223,9 @@ description: "How computers represent language (Unicode & UTF-8)."
     The rule is elegantly simple: count the leading `1`s in the first byte to know how many bytes the character uses. A leading `0` means a single byte. `110` means two bytes. `1110` means three. `11110` means four. Continuation bytes always start with `10`, so they can never be mistaken for the start of a character.
   </Description>
 
-  <div className="my-6 p-4 bg-[#121212] rounded-lg border border-zinc-800">
-    <h5 className="text-sm font-medium text-primary mb-2">Key Insight</h5>
-    <p className="text-sm text-secondary">
-      This pattern ensures you can <strong>never</strong> confuse bytes. If you see a byte starting with `10`, you know it's a continuation. Keep reading backward or forward to find the leading byte. If you see `0`, `110`, `1110`, or `11110`, you're at the start of a character and know exactly how many bytes to read.
-    </p>
-  </div>
+  <Callout type="tip" title="Key Insight">
+    This pattern ensures you can **never** confuse bytes. If you see a byte starting with `10`, you know it's a continuation. Keep reading backward or forward to find the leading byte. If you see `0`, `110`, `1110`, or `11110`, you're at the start of a character and know exactly how many bytes to read.
+  </Callout>
 
   <h4 className="text-lg font-semibold text-primary mt-6 mb-3">3.4 Decoding a Byte Stream</h4>
 
