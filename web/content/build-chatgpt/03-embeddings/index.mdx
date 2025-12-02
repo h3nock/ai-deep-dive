@@ -20,15 +20,15 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     Suppose we fed raw Token IDs directly into the model. Imagine the tokenizer assigned IDs like this:
   </Description>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
     <div className="space-y-2 font-mono text-sm">
       <div className="flex items-center gap-4">
-        <span className="text-slate-500 dark:text-slate-400 w-20">ID 100:</span>
-        <span className="text-slate-800 dark:text-slate-200 font-semibold">"Apple"</span>
+        <span className="text-muted w-20">ID 100:</span>
+        <span className="text-primary font-semibold">"Apple"</span>
       </div>
       <div className="flex items-center gap-4">
-        <span className="text-slate-500 dark:text-slate-400 w-20">ID 500:</span>
-        <span className="text-slate-800 dark:text-slate-200 font-semibold">"Banana"</span>
+        <span className="text-muted w-20">ID 500:</span>
+        <span className="text-primary font-semibold">"Banana"</span>
       </div>
     </div>
   </div>
@@ -41,10 +41,10 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     This relationship is purely arithmetic. It has nothing to do with the relationship between an Apple and a Banana. These numbers are distinct labels, similar to Employee IDs in a company database. Employee #500 is not "5 times better" than Employee #100; they are just different people.
   </Description>
 
-  <div className="my-4 p-4 bg-slate-100 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">The Core Problem</div>
-    <div className="text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-      If we force the model to do math on these arbitrary IDs, we are asking it to find patterns in chaos. The model fails because of <strong>Magnitude Bias</strong>. In a neural network, a neuron applies the <strong>same weight</strong> <code className="text-sm bg-slate-200 dark:bg-slate-700 px-1 rounded mx-1">(Output = Input × Weight)</code> to its input, regardless of the value. If the weight is 0.01, an input of 100 (Apple) produces 1.0, but an input of 500 (Banana) produces 5.0. The math forces the model to treat Banana as '5 times more intense' than Apple. There is no single weight that can work for both numbers, so the model cannot learn a consistent rule for 'Fruit'.
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+    <div className="text-sm font-semibold text-primary mb-2">The Core Problem</div>
+    <div className="text-base text-secondary leading-relaxed">
+      If we force the model to do math on these arbitrary IDs, we are asking it to find patterns in chaos. The model fails because of <strong>Magnitude Bias</strong>. In a neural network, a neuron applies the <strong>same weight</strong> <code className="text-sm bg-zinc-800 px-1 rounded mx-1">(Output = Input × Weight)</code> to its input, regardless of the value. If the weight is 0.01, an input of 100 (Apple) produces 1.0, but an input of 500 (Banana) produces 5.0. The math forces the model to treat Banana as '5 times more intense' than Apple. There is no single weight that can work for both numbers, so the model cannot learn a consistent rule for 'Fruit'.
     </div>
   </div>
 
@@ -72,86 +72,86 @@ description: "How to represent tokens as vectors to capture semantic meaning and
   </Description>
 
   <div className="my-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="p-4 bg-surface rounded-lg border border-border">
       <div className="flex items-center gap-3 mb-3">
         <span className="text-2xl">👑</span>
-        <span className="font-bold text-lg text-slate-800 dark:text-slate-200">King</span>
+        <span className="font-bold text-lg text-primary">King</span>
       </div>
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Royalty:</span>
-          <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">1.0</span>
+          <span className="text-muted">Royalty:</span>
+          <span className="font-mono font-semibold text-emerald-400">1.0</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Gender:</span>
+          <span className="text-muted">Gender:</span>
           <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">1.0</span>
         </div>
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Vector:</span>
-          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">[1.0, 1.0]</span>
+        <div className="pt-2 border-t border-border flex justify-between">
+          <span className="text-muted">Vector:</span>
+          <span className="font-mono font-bold text-primary">[1.0, 1.0]</span>
         </div>
       </div>
     </div>
 
-    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="p-4 bg-surface rounded-lg border border-border">
       <div className="flex items-center gap-3 mb-3">
         <span className="text-2xl">👸</span>
-        <span className="font-bold text-lg text-slate-800 dark:text-slate-200">Queen</span>
+        <span className="font-bold text-lg text-primary">Queen</span>
       </div>
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Royalty:</span>
-          <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">1.0</span>
+          <span className="text-muted">Royalty:</span>
+          <span className="font-mono font-semibold text-emerald-400">1.0</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Gender:</span>
+          <span className="text-muted">Gender:</span>
           <span className="font-mono font-semibold text-pink-600 dark:text-pink-400">-1.0</span>
         </div>
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Vector:</span>
-          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">[1.0, -1.0]</span>
+        <div className="pt-2 border-t border-border flex justify-between">
+          <span className="text-muted">Vector:</span>
+          <span className="font-mono font-bold text-primary">[1.0, -1.0]</span>
         </div>
       </div>
     </div>
 
-    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="p-4 bg-surface rounded-lg border border-border">
       <div className="flex items-center gap-3 mb-3">
         <span className="text-2xl">🧔</span>
-        <span className="font-bold text-lg text-slate-800 dark:text-slate-200">Man</span>
+        <span className="font-bold text-lg text-primary">Man</span>
       </div>
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Royalty:</span>
-          <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">0.0</span>
+          <span className="text-muted">Royalty:</span>
+          <span className="font-mono font-semibold text-muted">0.0</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Gender:</span>
+          <span className="text-muted">Gender:</span>
           <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">1.0</span>
         </div>
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Vector:</span>
-          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">[0.0, 1.0]</span>
+        <div className="pt-2 border-t border-border flex justify-between">
+          <span className="text-muted">Vector:</span>
+          <span className="font-mono font-bold text-primary">[0.0, 1.0]</span>
         </div>
       </div>
     </div>
 
-    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="p-4 bg-surface rounded-lg border border-border">
       <div className="flex items-center gap-3 mb-3">
         <span className="text-2xl">🍎</span>
-        <span className="font-bold text-lg text-slate-800 dark:text-slate-200">Apple</span>
+        <span className="font-bold text-lg text-primary">Apple</span>
       </div>
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Royalty:</span>
-          <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">0.0</span>
+          <span className="text-muted">Royalty:</span>
+          <span className="font-mono font-semibold text-muted">0.0</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Gender:</span>
-          <span className="font-mono font-semibold text-slate-500 dark:text-slate-400">0.0</span>
+          <span className="text-muted">Gender:</span>
+          <span className="font-mono font-semibold text-muted">0.0</span>
         </div>
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between">
-          <span className="text-slate-500 dark:text-slate-400">Vector:</span>
-          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">[0.0, 0.0]</span>
+        <div className="pt-2 border-t border-border flex justify-between">
+          <span className="text-muted">Vector:</span>
+          <span className="font-mono font-bold text-primary">[0.0, 0.0]</span>
         </div>
       </div>
     </div>
@@ -179,13 +179,13 @@ description: "How to represent tokens as vectors to capture semantic meaning and
   </Description>
 
   <div className="my-4 space-y-3">
-    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
-      <span className="font-bold text-slate-700 dark:text-slate-300 w-32 shrink-0">Similarity = Closeness</span>
-      <span className="text-slate-600 dark:text-slate-400">Words with similar meanings cluster together. King and Queen both sit in the upper region (high Royalty). Man and King share the right side (positive Gender). Meanwhile, Apple sits alone at the origin. It has nothing in common with royalty or gender.</span>
+    <div className="flex items-start gap-3 p-3 bg-surface rounded-lg border border-border">
+      <span className="font-bold text-primary w-32 shrink-0">Similarity = Closeness</span>
+      <span className="text-secondary">Words with similar meanings cluster together. King and Queen both sit in the upper region (high Royalty). Man and King share the right side (positive Gender). Meanwhile, Apple sits alone at the origin. It has nothing in common with royalty or gender.</span>
     </div>
-    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
-      <span className="font-bold text-slate-700 dark:text-slate-300 w-32 shrink-0">Region = Topic</span>
-      <span className="text-slate-600 dark:text-slate-400">The top half of the graph is the "Royal Region." The right half is the "Male Region." Words naturally organize into neighborhoods of related concepts.</span>
+    <div className="flex items-start gap-3 p-3 bg-surface rounded-lg border border-border">
+      <span className="font-bold text-primary w-32 shrink-0">Region = Topic</span>
+      <span className="text-secondary">The top half of the graph is the "Royal Region." The right half is the "Male Region." Words naturally organize into neighborhoods of related concepts.</span>
     </div>
   </div>
 </Step>
@@ -206,12 +206,12 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     In a well-trained model, those two arrows are almost identical. The model has learned that the concept of "Gender" isn't just a label. It is a **specific direction in space**.
   </Description>
 
-  <div className="my-6 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border">
     <div className="text-center mb-4">
-      <span className="text-sm font-medium text-slate-500 dark:text-slate-400">The Famous Word Puzzle</span>
+      <span className="text-sm font-medium text-muted">The Famous Word Puzzle</span>
     </div>
-    <div className="text-center text-lg font-mono text-slate-800 dark:text-slate-200">
-      King - Man + Woman = <span className="text-emerald-600 dark:text-emerald-400 font-bold">?</span>
+    <div className="text-center text-lg font-mono text-primary">
+      King - Man + Woman = <span className="text-emerald-400 font-bold">?</span>
     </div>
   </div>
 
@@ -219,29 +219,29 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     Let's plug in the numbers from Section 2:
   </Description>
 
-  <div className="my-4 p-4 bg-slate-900 dark:bg-slate-950 rounded-lg border border-slate-700">
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
     <div className="space-y-3 font-mono text-sm">
       <div className="flex items-center gap-3">
-        <span className="text-slate-400 w-28">King:</span>
-        <span className="text-white">[1.0, 1.0]</span>
+        <span className="text-muted w-28">King:</span>
+        <span className="text-primary">[1.0, 1.0]</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-slate-400 w-28">Minus Man:</span>
+        <span className="text-muted w-28">Minus Man:</span>
         <span className="text-red-400">-[0.0, 1.0]</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-slate-400 w-28">Plus Woman:</span>
+        <span className="text-muted w-28">Plus Woman:</span>
         <span className="text-emerald-400">+[0.0, -1.0]</span>
       </div>
-      <div className="pt-3 border-t border-slate-700">
-        <div className="text-xs text-slate-500 mb-2">Calculation:</div>
+      <div className="pt-3 border-t border-border">
+        <div className="text-xs text-muted mb-2">Calculation:</div>
         <div className="space-y-1">
-          <div className="text-slate-300">First dimension (Royalty): $1.0 - 0.0 + 0.0 = $ <span className="text-emerald-400 font-bold">1.0</span></div>
-          <div className="text-slate-300">Second dimension (Gender): $1.0 - 1.0 + (-1.0) = $ <span className="text-emerald-400 font-bold">-1.0</span></div>
+          <div className="text-secondary">First dimension (Royalty): $1.0 - 0.0 + 0.0 = $ <span className="text-emerald-400 font-bold">1.0</span></div>
+          <div className="text-secondary">Second dimension (Gender): $1.0 - 1.0 + (-1.0) = $ <span className="text-emerald-400 font-bold">-1.0</span></div>
         </div>
       </div>
-      <div className="pt-3 border-t border-slate-700 flex items-center gap-3">
-        <span className="text-slate-400 w-28">Result:</span>
+      <div className="pt-3 border-t border-border flex items-center gap-3">
+        <span className="text-muted w-28">Result:</span>
         <span className="text-emerald-400 font-bold text-lg">[1.0, -1.0]</span>
       </div>
     </div>
@@ -251,10 +251,10 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     Look back at our definitions in Section 2. Which word has the vector `[1.0, -1.0]`?
   </Description>
 
-  <div className="my-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+  <div className="my-4 p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
     <div className="flex items-center justify-center gap-4">
       <span className="text-4xl">👸</span>
-      <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">Queen!</span>
+      <span className="text-2xl font-bold text-emerald-400">Queen!</span>
     </div>
   </div>
 
@@ -269,55 +269,55 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     We know the model will learn these coordinates during training (remember those empty attribute slots from Section 3). But how exactly does this work in practice? Let's look at the actual data structure and the learning process.
   </Description>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">The Embedding Layer: A Lookup Table</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">The Embedding Layer: A Lookup Table</h4>
 
   <Description>
     In code, an **Embedding Layer** is a table of numbers. Think of it like a spreadsheet: each row corresponds to a token ID, and each column is one of those attribute slots. When the model sees a token, it simply looks up the corresponding row.
   </Description>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">The Embedding Matrix Structure</div>
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+    <div className="text-sm font-medium text-primary mb-3">The Embedding Matrix Structure</div>
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 dark:border-slate-700">
-            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Token ID</th>
-            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Dim 1</th>
-            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Dim 2</th>
-            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Dim 3</th>
-            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">...</th>
-            <th className="text-left py-2 px-3 text-slate-500 dark:text-slate-400 font-medium">Dim N</th>
+          <tr className="border-b border-border">
+            <th className="text-left py-2 px-3 text-muted font-medium">Token ID</th>
+            <th className="text-left py-2 px-3 text-muted font-medium">Dim 1</th>
+            <th className="text-left py-2 px-3 text-muted font-medium">Dim 2</th>
+            <th className="text-left py-2 px-3 text-muted font-medium">Dim 3</th>
+            <th className="text-left py-2 px-3 text-muted font-medium">...</th>
+            <th className="text-left py-2 px-3 text-muted font-medium">Dim N</th>
           </tr>
         </thead>
         <tbody className="font-mono text-xs">
-          <tr className="border-b border-slate-100 dark:border-slate-800">
-            <td className="py-2 px-3 text-slate-600 dark:text-slate-400">0 ("the")</td>
-            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.12</td>
-            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">-0.45</td>
-            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.78</td>
-            <td className="py-2 px-3 text-slate-400">...</td>
-            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.33</td>
+          <tr className="border-b border-border">
+            <td className="py-2 px-3 text-secondary">0 ("the")</td>
+            <td className="py-2 px-3 text-primary">0.12</td>
+            <td className="py-2 px-3 text-primary">-0.45</td>
+            <td className="py-2 px-3 text-primary">0.78</td>
+            <td className="py-2 px-3 text-muted">...</td>
+            <td className="py-2 px-3 text-primary">0.33</td>
           </tr>
-          <tr className="border-b border-slate-100 dark:border-slate-800">
-            <td className="py-2 px-3 text-slate-600 dark:text-slate-400">1 ("King")</td>
-            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.89</td>
-            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.56</td>
-            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">-0.21</td>
-            <td className="py-2 px-3 text-slate-400">...</td>
-            <td className="py-2 px-3 text-slate-700 dark:text-slate-300">0.67</td>
+          <tr className="border-b border-border">
+            <td className="py-2 px-3 text-secondary">1 ("King")</td>
+            <td className="py-2 px-3 text-primary">0.89</td>
+            <td className="py-2 px-3 text-primary">0.56</td>
+            <td className="py-2 px-3 text-primary">-0.21</td>
+            <td className="py-2 px-3 text-muted">...</td>
+            <td className="py-2 px-3 text-primary">0.67</td>
           </tr>
           <tr>
-            <td className="py-2 px-3 text-slate-400">...</td>
-            <td className="py-2 px-3 text-slate-400">...</td>
-            <td className="py-2 px-3 text-slate-400">...</td>
-            <td className="py-2 px-3 text-slate-400">...</td>
-            <td className="py-2 px-3 text-slate-400">...</td>
-            <td className="py-2 px-3 text-slate-400">...</td>
+            <td className="py-2 px-3 text-muted">...</td>
+            <td className="py-2 px-3 text-muted">...</td>
+            <td className="py-2 px-3 text-muted">...</td>
+            <td className="py-2 px-3 text-muted">...</td>
+            <td className="py-2 px-3 text-muted">...</td>
+            <td className="py-2 px-3 text-muted">...</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+    <div className="mt-3 text-xs text-muted">
       When the model sees token ID 1, it simply looks up row 1 and grabs that entire row as the vector. Just a table lookup.
     </div>
   </div>
@@ -327,19 +327,19 @@ description: "How to represent tokens as vectors to capture semantic meaning and
   </Description>
 
   <div className="my-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-      <div className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-1">Vocabulary Size</div>
-      <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">Number of rows (one per token)</div>
-      <div className="text-xs text-slate-500 space-y-1">
+    <div className="p-4 rounded-lg bg-surface border border-border">
+      <div className="text-lg font-semibold text-primary mb-1">Vocabulary Size</div>
+      <div className="text-sm text-secondary mb-2">Number of rows (one per token)</div>
+      <div className="text-xs text-muted space-y-1">
         <div>• GPT-2: ~50,000 tokens</div>
         <div>• GPT-4: ~100,000 tokens</div>
         <div>• Llama 2: ~32,000 tokens</div>
       </div>
     </div>
-    <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-      <div className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-1">Embedding Dimension</div>
-      <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">Number of columns (attributes per token)</div>
-      <div className="text-xs text-slate-500 space-y-1">
+    <div className="p-4 rounded-lg bg-surface border border-border">
+      <div className="text-lg font-semibold text-primary mb-1">Embedding Dimension</div>
+      <div className="text-sm text-secondary mb-2">Number of columns (attributes per token)</div>
+      <div className="text-xs text-muted space-y-1">
         <div>• GPT-2 Small: 768 dimensions</div>
         <div>• GPT-3: 12,288 dimensions</div>
         <div>• Llama 2 70B: 8,192 dimensions</div>
@@ -351,11 +351,11 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     <div className="space-y-2">
       <div><strong>Vocabulary size</strong> (rows): More tokens means fewer unknown words, but requires more memory.</div>
       <div><strong>Embedding dimension</strong> (columns): More dimensions allows richer meaning representation, but increases memory usage and computation time.</div>
-      <div className="pt-2 text-slate-600 dark:text-slate-400">When designing a model, you balance these based on your constraints: available compute, memory budget, target latency, and how much training data you have.</div>
+      <div className="pt-2 text-secondary">When designing a model, you balance these based on your constraints: available compute, memory budget, target latency, and how much training data you have.</div>
     </div>
   </Callout>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">The Training Process</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">The Training Process</h4>
 
   <Description>
     When we first initialize the embedding table, every cell is filled with random numbers. "King" might start at coordinates right next to "Sandwich." The map has no structure at all.
@@ -370,38 +370,38 @@ description: "How to represent tokens as vectors to capture semantic meaning and
   </Description>
 
   <div className="my-4 relative">
-    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700" />
+    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
     
     <div className="space-y-4">
       <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">1</div>
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">1</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">Model sees a sentence with a gap:</div>
-          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">"The King sat on the ___"</div>
+          <div className="font-semibold text-primary">Model sees a sentence with a gap:</div>
+          <div className="font-mono text-sm text-secondary mt-1">"The King sat on the ___"</div>
         </div>
       </div>
 
       <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">2</div>
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">2</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">It makes a guess:</div>
-          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">"Banana" (totally wrong, but it's early in training!)</div>
+          <div className="font-semibold text-primary">It makes a guess:</div>
+          <div className="font-mono text-sm text-secondary mt-1">"Banana" (totally wrong, but it's early in training!)</div>
         </div>
       </div>
 
       <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">3</div>
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">3</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">We reveal the correct answer:</div>
-          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">"The King sat on the <span className="text-emerald-600 dark:text-emerald-400 font-bold">Throne</span>"</div>
+          <div className="font-semibold text-primary">We reveal the correct answer:</div>
+          <div className="font-mono text-sm text-secondary mt-1">"The King sat on the <span className="text-emerald-400 font-bold">Throne</span>"</div>
         </div>
       </div>
 
       <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">4</div>
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">4</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">The model adjusts its internal map:</div>
-          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">"King" appeared near "Throne," so the model nudges "King" a little closer to "Throne" in its coordinate space, and a little further from "Banana."</div>
+          <div className="font-semibold text-primary">The model adjusts its internal map:</div>
+          <div className="text-sm text-secondary mt-1">"King" appeared near "Throne," so the model nudges "King" a little closer to "Throne" in its coordinate space, and a little further from "Banana."</div>
         </div>
       </div>
     </div>
@@ -446,58 +446,58 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     <table className="w-full text-sm border-collapse">
       <thead>
         <tr>
-          <th className="p-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600"></th>
-          <th className="p-2 bg-blue-50 dark:bg-blue-900/30 border border-slate-300 dark:border-slate-600 font-mono text-blue-700 dark:text-blue-300">Alice</th>
-          <th className="p-2 bg-emerald-50 dark:bg-emerald-900/30 border border-slate-300 dark:border-slate-600 font-mono text-emerald-700 dark:text-emerald-300">gave</th>
-          <th className="p-2 bg-amber-50 dark:bg-amber-900/30 border border-slate-300 dark:border-slate-600 font-mono text-amber-700 dark:text-amber-300">Bob</th>
-          <th className="p-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 font-mono text-slate-600 dark:text-slate-400">a</th>
-          <th className="p-2 bg-purple-50 dark:bg-purple-900/30 border border-slate-300 dark:border-slate-600 font-mono text-purple-700 dark:text-purple-300">book</th>
+          <th className="p-2 bg-surface border border-border"></th>
+          <th className="p-2 bg-blue-50 dark:bg-blue-900/30 border border-border font-mono text-blue-700 dark:text-blue-300">Alice</th>
+          <th className="p-2 bg-emerald-500/10 border border-border font-mono text-emerald-400">gave</th>
+          <th className="p-2 bg-amber-50 dark:bg-amber-900/30 border border-border font-mono text-amber-700 dark:text-amber-300">Bob</th>
+          <th className="p-2 bg-surface border border-border font-mono text-secondary">a</th>
+          <th className="p-2 bg-purple-50 dark:bg-purple-900/30 border border-border font-mono text-purple-700 dark:text-purple-300">book</th>
         </tr>
       </thead>
       <tbody className="text-xs">
         <tr>
-          <td className="p-2 bg-blue-50 dark:bg-blue-900/30 border border-slate-300 dark:border-slate-600 font-mono font-medium text-blue-700 dark:text-blue-300">Alice</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-500">—</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(Alice, gave)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(Alice, Bob)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(Alice, a)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(Alice, book)</td>
+          <td className="p-2 bg-blue-50 dark:bg-blue-900/30 border border-border font-mono font-medium text-blue-700 dark:text-blue-300">Alice</td>
+          <td className="p-2 bg-surface border border-border text-center text-muted">—</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(Alice, gave)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(Alice, Bob)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(Alice, a)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(Alice, book)</td>
         </tr>
         <tr>
-          <td className="p-2 bg-emerald-50 dark:bg-emerald-900/30 border border-slate-300 dark:border-slate-600 font-mono font-medium text-emerald-700 dark:text-emerald-300">gave</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(gave, Alice)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-500">—</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(gave, Bob)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(gave, a)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(gave, book)</td>
+          <td className="p-2 bg-emerald-500/10 border border-border font-mono font-medium text-emerald-400">gave</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(gave, Alice)</td>
+          <td className="p-2 bg-surface border border-border text-center text-muted">—</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(gave, Bob)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(gave, a)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(gave, book)</td>
         </tr>
         <tr>
-          <td className="p-2 bg-amber-50 dark:bg-amber-900/30 border border-slate-300 dark:border-slate-600 font-mono font-medium text-amber-700 dark:text-amber-300">Bob</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(Bob, Alice)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(Bob, gave)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-500">—</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(Bob, a)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(Bob, book)</td>
+          <td className="p-2 bg-amber-50 dark:bg-amber-900/30 border border-border font-mono font-medium text-amber-700 dark:text-amber-300">Bob</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(Bob, Alice)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(Bob, gave)</td>
+          <td className="p-2 bg-surface border border-border text-center text-muted">—</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(Bob, a)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(Bob, book)</td>
         </tr>
         <tr>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 font-mono font-medium text-slate-600 dark:text-slate-400">a</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(a, Alice)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(a, gave)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(a, Bob)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-500">—</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(a, book)</td>
+          <td className="p-2 bg-surface border border-border font-mono font-medium text-secondary">a</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(a, Alice)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(a, gave)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(a, Bob)</td>
+          <td className="p-2 bg-surface border border-border text-center text-muted">—</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(a, book)</td>
         </tr>
         <tr>
-          <td className="p-2 bg-purple-50 dark:bg-purple-900/30 border border-slate-300 dark:border-slate-600 font-mono font-medium text-purple-700 dark:text-purple-300">book</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(book, Alice)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(book, gave)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(book, Bob)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-600 dark:text-slate-400">compare(book, a)</td>
-          <td className="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-600 text-center text-slate-500">—</td>
+          <td className="p-2 bg-purple-50 dark:bg-purple-900/30 border border-border font-mono font-medium text-purple-700 dark:text-purple-300">book</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(book, Alice)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(book, gave)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(book, Bob)</td>
+          <td className="p-2 bg-surface border border-border text-center text-secondary">compare(book, a)</td>
+          <td className="p-2 bg-surface border border-border text-center text-muted">—</td>
         </tr>
       </tbody>
     </table>
-    <div className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">
+    <div className="text-xs text-muted mt-2 text-center">
       Each cell shows one word examining another. All comparisons happen simultaneously.
     </div>
   </div>

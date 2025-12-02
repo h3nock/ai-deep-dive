@@ -24,17 +24,15 @@ description: "How BPE compresses text into the atoms of language models."
     Think about how you text. You don't type "Laughing Out Loud" every time. That's 17 characters. Instead, you type "LOL" (3 characters). You've mentally agreed that this sequence appears so frequently it deserves to be a single unit.
   </Description>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="flex items-center justify-center gap-8">
-      <div className="text-center">
-        <div className="font-mono text-sm text-slate-500 dark:text-slate-400 px-3 py-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">"Laughing Out Loud"</div>
-        <div className="text-xs text-slate-400 mt-2">17 characters</div>
-      </div>
-      <div className="text-xl text-slate-400">→</div>
-      <div className="text-center">
-        <div className="font-mono text-sm font-bold text-slate-800 dark:text-slate-200 px-3 py-2 bg-slate-100 dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600">"LOL"</div>
-        <div className="text-xs text-slate-500 mt-2">3 characters</div>
-      </div>
+  <div className="my-6 flex items-center justify-center gap-8">
+    <div className="text-center">
+      <div className="font-mono text-sm text-secondary">"Laughing Out Loud"</div>
+      <div className="text-xs text-muted mt-1">17 characters</div>
+    </div>
+    <div className="text-xl text-muted">→</div>
+    <div className="text-center">
+      <div className="font-mono text-sm font-bold text-primary">"LOL"</div>
+      <div className="text-xs text-muted mt-1">3 characters</div>
     </div>
   </div>
 
@@ -43,23 +41,23 @@ description: "How BPE compresses text into the atoms of language models."
   </Description>
 
   <div className="my-4 space-y-2">
-    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
-      <span className="font-mono text-slate-500">t + h</span>
-      <span className="text-slate-400">→</span>
-      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">th</span>
-      <span className="text-sm text-slate-500 ml-auto">appears constantly together</span>
+    <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-border">
+      <span className="font-mono text-muted">t + h</span>
+      <span className="text-muted">→</span>
+      <span className="font-mono font-bold text-primary">th</span>
+      <span className="text-sm text-muted ml-auto">appears constantly together</span>
     </div>
-    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
-      <span className="font-mono text-slate-500">th + e</span>
-      <span className="text-slate-400">→</span>
-      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">the</span>
-      <span className="text-sm text-slate-500 ml-auto">one of the most common words</span>
+    <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-border">
+      <span className="font-mono text-muted">th + e</span>
+      <span className="text-muted">→</span>
+      <span className="font-mono font-bold text-primary">the</span>
+      <span className="text-sm text-muted ml-auto">one of the most common words</span>
     </div>
-    <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700">
-      <span className="font-mono text-slate-500">in + g</span>
-      <span className="text-slate-400">→</span>
-      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">ing</span>
-      <span className="text-sm text-slate-500 ml-auto">common suffix</span>
+    <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-border">
+      <span className="font-mono text-muted">in + g</span>
+      <span className="text-muted">→</span>
+      <span className="font-mono font-bold text-primary">ing</span>
+      <span className="text-sm text-muted ml-auto">common suffix</span>
     </div>
   </div>
 
@@ -74,46 +72,46 @@ description: "How BPE compresses text into the atoms of language models."
     To truly understand BPE, we need to run the algorithm by hand. We'll use a simple sequence to see the mechanics clearly before scaling up to real text.
   </Description>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">The Dataset</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">The Dataset</h4>
 
   <Description>
     Imagine we are training a tokenizer on this string:
   </Description>
 
-  <div className="my-4 p-4 bg-slate-900 dark:bg-slate-950 rounded-lg border border-slate-700">
-    <div className="font-mono text-xl text-center text-white tracking-wider">
-      a a a b d a a a b a c
-    </div>
+  <div className="my-6 flex flex-wrap justify-center gap-2">
+    {['a', 'a', 'a', 'b', 'd', 'a', 'a', 'a', 'b', 'a', 'c'].map((char, i) => (
+      <span key={i} className="w-8 h-8 flex items-center justify-center font-mono text-sm text-primary bg-zinc-800 rounded">{char}</span>
+    ))}
   </div>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Iteration 0: The Starting Point</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Iteration 0: The Starting Point</h4>
 
   <Description>
     Our vocabulary consists only of individual characters. The sequence has **11 tokens**.
   </Description>
 
   <div className="my-4 flex flex-wrap gap-2">
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">b</div>
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">d</div>
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">b</div>
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">c</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">b</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">d</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">b</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">c</div>
   </div>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Step 1: Count the Pairs</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Step 1: Count the Pairs</h4>
 
   <Description>
     The algorithm scans every **adjacent pair**, each token paired with the one right next to it. Here's how to see the pairs:
   </Description>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm text-slate-600 dark:text-slate-400 mb-3">Adjacent pairs in our sequence (same color = same pair type):</div>
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+    <div className="text-sm text-secondary mb-3">Adjacent pairs in our sequence (same color = same pair type):</div>
     <div className="flex flex-wrap gap-x-1 gap-y-4 font-mono text-lg">
       {/* (a,a) - amber */}
       <div className="flex items-end">
@@ -166,7 +164,7 @@ description: "How BPE compresses text into the atoms of language models."
         <span className="px-2 py-1 bg-pink-100 dark:bg-pink-900/40 rounded-t border-b-2 border-pink-500">c</span>
       </div>
     </div>
-    <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
+    <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-secondary">
       <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-amber-500"></span>(a,a) × 4</span>
       <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-violet-500"></span>(a,b) × 2</span>
       <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-rose-500"></span>(b,d) × 1</span>
@@ -177,52 +175,52 @@ description: "How BPE compresses text into the atoms of language models."
   </div>
 
   <div className="my-4 flex flex-wrap gap-2">
-    <div className="px-3 py-2 bg-emerald-50 dark:bg-emerald-900/30 rounded border-2 border-emerald-500 dark:border-emerald-400 text-center">
-      <div className="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-300">(a,a)</div>
-      <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">4</div>
+    <div className="px-3 py-2 bg-emerald-500/10 rounded border-2 border-emerald-400 text-center">
+      <div className="font-mono text-sm font-bold text-emerald-400">(a,a)</div>
+      <div className="text-lg font-bold text-emerald-400">4</div>
     </div>
-    <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-slate-700 text-center">
-      <div className="font-mono text-sm text-slate-600 dark:text-slate-400">(a,b)</div>
-      <div className="text-lg font-bold text-slate-500">2</div>
+    <div className="px-3 py-2 bg-surface rounded border border-border text-center">
+      <div className="font-mono text-sm text-secondary">(a,b)</div>
+      <div className="text-lg font-bold text-muted">2</div>
     </div>
-    <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-slate-700 text-center">
-      <div className="font-mono text-sm text-slate-600 dark:text-slate-400">(b,d)</div>
-      <div className="text-lg font-bold text-slate-500">1</div>
+    <div className="px-3 py-2 bg-surface rounded border border-border text-center">
+      <div className="font-mono text-sm text-secondary">(b,d)</div>
+      <div className="text-lg font-bold text-muted">1</div>
     </div>
-    <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-slate-700 text-center">
-      <div className="font-mono text-sm text-slate-600 dark:text-slate-400">(d,a)</div>
-      <div className="text-lg font-bold text-slate-500">1</div>
+    <div className="px-3 py-2 bg-surface rounded border border-border text-center">
+      <div className="font-mono text-sm text-secondary">(d,a)</div>
+      <div className="text-lg font-bold text-muted">1</div>
     </div>
-    <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-slate-700 text-center">
-      <div className="font-mono text-sm text-slate-600 dark:text-slate-400">(b,a)</div>
-      <div className="text-lg font-bold text-slate-500">1</div>
+    <div className="px-3 py-2 bg-surface rounded border border-border text-center">
+      <div className="font-mono text-sm text-secondary">(b,a)</div>
+      <div className="text-lg font-bold text-muted">1</div>
     </div>
-    <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-slate-700 text-center">
-      <div className="font-mono text-sm text-slate-600 dark:text-slate-400">(a,c)</div>
-      <div className="text-lg font-bold text-slate-500">1</div>
+    <div className="px-3 py-2 bg-surface rounded border border-border text-center">
+      <div className="font-mono text-sm text-secondary">(a,c)</div>
+      <div className="text-lg font-bold text-muted">1</div>
     </div>
   </div>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Step 2: The First Merge</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Step 2: The First Merge</h4>
 
   <Description>
     The winner is `(a, a)` with 4 occurrences. The algorithm creates a **new token** to represent this pair. Let's call it `Z`. We add `Z` to our vocabulary and replace every `aa` in our data.
   </Description>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">After Merge #1: (a, a) → Z</div>
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+    <div className="text-sm font-medium text-primary mb-3">After Merge #1: (a, a) → Z</div>
     <div className="flex flex-wrap gap-2">
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white font-mono font-bold">Z</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">b</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">d</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white font-mono font-bold">Z</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">b</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">c</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500 text-white font-mono font-bold">Z</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">b</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">d</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500 text-white font-mono font-bold">Z</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">b</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">c</div>
     </div>
-    <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+    <div className="mt-3 text-sm text-secondary">
       <strong>Length: 9 tokens</strong> (down from 11)
     </div>
   </div>
@@ -231,45 +229,45 @@ description: "How BPE compresses text into the atoms of language models."
     We just **compressed** the data. The information is identical, but the sequence is shorter. This is the core of BPE.
   </Callout>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Step 3: Repeat</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Step 3: Repeat</h4>
 
   <Description>
     Now we count pairs again on the new sequence. Both `(Z, a)` and `(a, b)` appear twice. The algorithm picks one (let's choose `ab`). We create token `Y`.
   </Description>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">After Merge #2: (a, b) → Y</div>
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+    <div className="text-sm font-medium text-primary mb-3">After Merge #2: (a, b) → Y</div>
     <div className="flex flex-wrap gap-2">
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white font-mono font-bold">Z</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500/20 dark:bg-emerald-400/20 border-2 border-emerald-500 dark:border-emerald-400 text-emerald-700 dark:text-emerald-300 font-mono font-bold">Y</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">d</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white font-mono font-bold">Z</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500/20 dark:bg-emerald-400/20 border-2 border-emerald-500 dark:border-emerald-400 text-emerald-700 dark:text-emerald-300 font-mono font-bold">Y</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">a</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-700 dark:text-slate-300">c</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500 text-white font-mono font-bold">Z</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-400/20 border-2 border-emerald-400 text-emerald-400 font-mono font-bold">Y</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">d</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500 text-white font-mono font-bold">Z</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-400/20 border-2 border-emerald-400 text-emerald-400 font-mono font-bold">Y</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">c</div>
     </div>
-    <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+    <div className="mt-3 text-sm text-secondary">
       <strong>Length: 7 tokens</strong> (down from 9)
     </div>
   </div>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">The Result</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">The Result</h4>
 
-  <div className="my-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="my-4 p-5 bg-surface rounded-lg border border-border">
     <div className="grid grid-cols-3 gap-4 text-center">
       <div>
-        <div className="text-3xl font-bold text-slate-400">11</div>
-        <div className="text-sm text-slate-500">Starting tokens</div>
+        <div className="text-3xl font-bold text-muted">11</div>
+        <div className="text-sm text-muted">Starting tokens</div>
       </div>
       <div className="flex items-center justify-center">
-        <div className="text-2xl text-slate-400">→</div>
+        <div className="text-2xl text-muted">→</div>
       </div>
       <div>
-        <div className="text-3xl font-bold text-slate-800 dark:text-slate-200">7</div>
-        <div className="text-sm text-slate-500">After 2 merges</div>
+        <div className="text-3xl font-bold text-primary">7</div>
+        <div className="text-sm text-muted">After 2 merges</div>
       </div>
     </div>
-    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 text-center text-sm text-slate-600 dark:text-slate-400">
+    <div className="mt-4 pt-4 border-t border-border text-center text-sm text-secondary">
       Scaled to the entire internet, BPE typically achieves <strong>50-60% compression</strong> compared to raw bytes.
     </div>
   </div>
@@ -285,33 +283,33 @@ description: "How BPE compresses text into the atoms of language models."
     In the walkthrough above, we used letters like `a`, `b`, `c` to make the algorithm easy to follow. But remember what we learned in Chapter 1: text is already a sequence of integers. When you encode `"hello"` as UTF-8, you get `[104, 101, 108, 108, 111]`. These byte values range from 0 to 255, giving us our **base vocabulary of 256 tokens**. When BPE merges a frequent pair, it needs to assign a new ID to that merged token. Since 0-255 are already taken by the raw bytes, new tokens start at **256**, then 257, 258, and so on.
   </Description>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Breaking Down the Algorithm</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Breaking Down the Algorithm</h4>
 
   <Description>
     Looking back at our BPE walkthrough, the algorithm repeats three operations: **count** pairs, **pick** the most frequent one, and **merge** it. To implement this, we need three functions that work together:
   </Description>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
     <div className="space-y-3">
       <div className="flex items-start gap-3">
-        <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400 shrink-0 mt-0.5">1</div>
+        <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-secondary shrink-0 mt-0.5">1</div>
         <div>
-          <span className="font-semibold text-slate-800 dark:text-slate-200">get_stats</span>
-          <span className="text-slate-600 dark:text-slate-400"> counts how often each adjacent pair appears</span>
+          <span className="font-semibold text-primary">get_stats</span>
+          <span className="text-secondary"> counts how often each adjacent pair appears</span>
         </div>
       </div>
       <div className="flex items-start gap-3">
-        <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400 shrink-0 mt-0.5">2</div>
+        <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-secondary shrink-0 mt-0.5">2</div>
         <div>
-          <span className="font-semibold text-slate-800 dark:text-slate-200">merge</span>
-          <span className="text-slate-600 dark:text-slate-400"> replaces all occurrences of a pair with a new token</span>
+          <span className="font-semibold text-primary">merge</span>
+          <span className="text-secondary"> replaces all occurrences of a pair with a new token</span>
         </div>
       </div>
       <div className="flex items-start gap-3">
-        <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400 shrink-0 mt-0.5">3</div>
+        <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-secondary shrink-0 mt-0.5">3</div>
         <div>
-          <span className="font-semibold text-slate-800 dark:text-slate-200">train_bpe</span>
-          <span className="text-slate-600 dark:text-slate-400"> is the main loop that calls the above until we reach target vocab size</span>
+          <span className="font-semibold text-primary">train_bpe</span>
+          <span className="text-secondary"> is the main loop that calls the above until we reach target vocab size</span>
         </div>
       </div>
     </div>
@@ -321,7 +319,7 @@ description: "How BPE compresses text into the atoms of language models."
     Let's implement each one.
   </Description>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Function 1: Count Pair Statistics</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Function 1: Count Pair Statistics</h4>
 
   <Description>
     The first function scans a list of integers and returns a dictionary counting how often each adjacent pair occurs. For example, `[1, 2, 3, 1, 2]` should return `{(1, 2): 2, (2, 3): 1, (3, 1): 1}`.
@@ -343,7 +341,7 @@ def get_stats(ids: list[int]) -> dict[tuple, int]:
     Try implementing this yourself! Switch to the **Challenge** tab to test your solution.
   </Callout>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Function 2: Merge a Pair</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Function 2: Merge a Pair</h4>
 
   <Description>
     The second function takes the token list and replaces every occurrence of a target pair with a new token ID.
@@ -369,7 +367,7 @@ def merge(ids: list[int], pair: tuple[int, int], new_id: int) -> list[int]:
     This one requires careful index management. Switch to the **Challenge** tab to try it!
   </Callout>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Function 3: The Training Loop</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Function 3: The Training Loop</h4>
 
   <Description>
     Finally, we combine everything into a training loop. We start with UTF-8 bytes (vocab size 256) and keep merging until we reach a target vocabulary size.
@@ -415,42 +413,42 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
     To a human, the core concept is **"dog"**. But our simple algorithm treats spaces and punctuation as characters to merge. It might see `dog.` as completely different from `dog ` (with a space). It might even merge `g` and `.` into a weird token `g.`.
   </Description>
 
-  <div className="my-4 p-4 bg-slate-100 dark:bg-slate-800/60 rounded-lg border border-slate-300 dark:border-slate-600">
-    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">The Problem</div>
-    <div className="font-mono text-sm space-y-1 text-slate-600 dark:text-slate-400">
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+    <div className="text-sm font-medium text-primary mb-2">The Problem</div>
+    <div className="font-mono text-sm space-y-1 text-secondary">
       <div>"dog" + space → one pattern</div>
       <div>"dog" + period → different pattern</div>
       <div>"dog" + exclamation → yet another pattern</div>
     </div>
-    <div className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+    <div className="mt-2 text-sm text-secondary">
       The model has to learn "dog" three separate times!
     </div>
   </div>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">The Fix: Regex Splitting</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">The Fix: Regex Splitting</h4>
 
   <Description>
     Modern tokenizers (like GPT-4's) use **Regular Expressions** to pre-split text into meaningful chunks *before* applying BPE. They force boundaries between words and punctuation.
   </Description>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">The Solution</div>
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+    <div className="text-sm font-medium text-primary mb-2">The Solution</div>
     <div className="space-y-2">
       <div className="flex items-center gap-3">
-        <span className="text-sm text-slate-600 dark:text-slate-400">Input:</span>
-        <span className="font-mono bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">"dog. dog!"</span>
+        <span className="text-sm text-secondary">Input:</span>
+        <span className="font-mono bg-background px-2 py-1 rounded border border-border">"dog. dog!"</span>
       </div>
       <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-sm text-slate-600 dark:text-slate-400">After regex:</span>
+        <span className="text-sm text-secondary">After regex:</span>
         <div className="flex gap-1 flex-wrap">
-          <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded text-slate-700 dark:text-slate-300">"dog"</span>
-          <span className="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-500 dark:text-slate-400">"."</span>
-          <span className="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded text-slate-700 dark:text-slate-300">" dog"</span>
-          <span className="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-500 dark:text-slate-400">"!"</span>
+          <span className="font-mono bg-zinc-800 px-2 py-1 rounded text-primary">"dog"</span>
+          <span className="font-mono bg-surface px-2 py-1 rounded text-muted">"."</span>
+          <span className="font-mono bg-zinc-800 px-2 py-1 rounded text-primary">" dog"</span>
+          <span className="font-mono bg-surface px-2 py-1 rounded text-muted">"!"</span>
         </div>
       </div>
     </div>
-    <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+    <div className="mt-3 text-sm text-secondary">
       BPE runs on each chunk independently. "dog" is always tokenized as "dog".
     </div>
   </div>
@@ -466,28 +464,28 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
     We've trained a tokenizer and learned merge rules. Now we need two more functions: one to **decode** tokens back into text, and one to **encode** new text into tokens. Let's start with the easier one.
   </Description>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">The Vocabulary Table</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">The Vocabulary Table</h4>
 
   <Description>
     First, we need a **vocabulary table** that maps each token ID to its byte sequence. Remember from Chapter 1: text is just a sequence of integers (bytes). The letter `"a"` is byte `97`, `"b"` is `98`, and so on. Our vocabulary stores these byte sequences directly:
   </Description>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">The Vocabulary: Token ID → Bytes</div>
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+    <div className="text-sm font-medium text-primary mb-3">The Vocabulary: Token ID → Bytes</div>
     <div className="space-y-3 font-mono text-sm">
       <div>
-        <div className="text-slate-500 dark:text-slate-400 mb-1"># Base vocabulary: single bytes (0-255)</div>
-        <div className="text-slate-700 dark:text-slate-300">vocab[97] = [97] <span className="text-slate-400"># "a"</span></div>
-        <div className="text-slate-700 dark:text-slate-300">vocab[98] = [98] <span className="text-slate-400"># "b"</span></div>
-        <div className="text-slate-700 dark:text-slate-300">vocab[99] = [99] <span className="text-slate-400"># "c"</span></div>
-        <div className="text-slate-500 dark:text-slate-400">...</div>
+        <div className="text-muted mb-1"># Base vocabulary: single bytes (0-255)</div>
+        <div className="text-primary">vocab[97] = [97] <span className="text-muted"># "a"</span></div>
+        <div className="text-primary">vocab[98] = [98] <span className="text-muted"># "b"</span></div>
+        <div className="text-primary">vocab[99] = [99] <span className="text-muted"># "c"</span></div>
+        <div className="text-muted">...</div>
       </div>
-      <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-        <div className="text-slate-500 dark:text-slate-400 mb-1"># Merged tokens: pre-computed byte sequences</div>
-        <div className="text-slate-700 dark:text-slate-300">vocab[256] = [97, 97] <span className="text-slate-400"># "aa"</span></div>
-        <div className="text-slate-700 dark:text-slate-300">vocab[257] = [97, 98] <span className="text-slate-400"># "ab"</span></div>
-        <div className="text-slate-700 dark:text-slate-300">vocab[258] = [97, 97, 98] <span className="text-slate-400"># "aab"</span></div>
-        <div className="text-slate-500 dark:text-slate-400">...</div>
+      <div className="pt-2 border-t border-border">
+        <div className="text-muted mb-1"># Merged tokens: pre-computed byte sequences</div>
+        <div className="text-primary">vocab[256] = [97, 97] <span className="text-muted"># "aa"</span></div>
+        <div className="text-primary">vocab[257] = [97, 98] <span className="text-muted"># "ab"</span></div>
+        <div className="text-primary">vocab[258] = [97, 97, 98] <span className="text-muted"># "aab"</span></div>
+        <div className="text-muted">...</div>
       </div>
     </div>
   </div>
@@ -500,7 +498,7 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
     When you create a new merged token, immediately store its bytes by concatenating the bytes of the first token and the bytes of the second token: `vocab[new_id] = vocab[pair[0]] + vocab[pair[1]]`. After training, every token’s bytes are ready for instant lookup.
   </Callout>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Decoding: Tokens → Text</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Decoding: Tokens → Text</h4>
 
   <Description>
     With a flattened vocabulary, decoding is just a dictionary lookup:
@@ -517,43 +515,43 @@ def decode(ids: list[int], vocab: dict[int, list[int]]) -> str:
     An easy win! Switch to the **Challenge** tab to implement it.
   </Callout>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Visual Example: Decoding</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Visual Example: Decoding</h4>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Decoding [258, 99] back to text</div>
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+    <div className="text-sm font-medium text-primary mb-3">Decoding [258, 99] back to text</div>
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <div className="text-sm text-slate-500 dark:text-slate-400 w-28">Token IDs:</div>
+        <div className="text-sm text-muted w-28">Token IDs:</div>
         <div className="flex gap-2">
-          <div className="px-3 py-2 bg-slate-200 dark:bg-slate-700 rounded font-mono text-sm">258</div>
-          <div className="px-3 py-2 bg-slate-200 dark:bg-slate-700 rounded font-mono text-sm">99</div>
+          <div className="px-3 py-2 bg-zinc-800 rounded font-mono text-sm">258</div>
+          <div className="px-3 py-2 bg-zinc-800 rounded font-mono text-sm">99</div>
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <div className="text-sm text-slate-500 dark:text-slate-400 w-28">Look up bytes:</div>
+        <div className="text-sm text-muted w-28">Look up bytes:</div>
         <div className="flex gap-3 items-center">
           <div className="flex flex-col items-center">
-            <div className="text-xs text-slate-400 mb-1">vocab[258]</div>
-            <div className="px-3 py-2 bg-emerald-100 dark:bg-emerald-900/40 rounded font-mono text-sm border border-emerald-300 dark:border-emerald-700">[97, 97, 98]</div>
+            <div className="text-xs text-muted mb-1">vocab[258]</div>
+            <div className="px-3 py-2 bg-emerald-500/10 rounded font-mono text-sm border border-emerald-500/30">[97, 97, 98]</div>
           </div>
           <div className="flex flex-col items-center">
-            <div className="text-xs text-slate-400 mb-1">vocab[99]</div>
-            <div className="px-3 py-2 bg-emerald-100 dark:bg-emerald-900/40 rounded font-mono text-sm border border-emerald-300 dark:border-emerald-700">[99]</div>
+            <div className="text-xs text-muted mb-1">vocab[99]</div>
+            <div className="px-3 py-2 bg-emerald-500/10 rounded font-mono text-sm border border-emerald-500/30">[99]</div>
           </div>
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <div className="text-sm text-slate-500 dark:text-slate-400 w-28">Concatenate:</div>
-        <div className="px-3 py-2 bg-emerald-100 dark:bg-emerald-900/40 rounded font-mono text-sm border border-emerald-300 dark:border-emerald-700">[97, 97, 98, 99]</div>
+        <div className="text-sm text-muted w-28">Concatenate:</div>
+        <div className="px-3 py-2 bg-emerald-500/10 rounded font-mono text-sm border border-emerald-500/30">[97, 97, 98, 99]</div>
       </div>
       <div className="flex items-center gap-3">
-        <div className="text-sm text-slate-500 dark:text-slate-400 w-28">Decode UTF-8:</div>
+        <div className="text-sm text-muted w-28">Decode UTF-8:</div>
         <div className="px-3 py-2 bg-emerald-500 text-white rounded font-mono text-sm font-bold">"aabc"</div>
       </div>
     </div>
   </div>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Encoding: Text → Tokens</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Encoding: Text → Tokens</h4>
 
   <Description>
     Encoding involves a few more steps. To tokenize new text, we apply our learned merge rules **in the exact order we learned them**.
@@ -572,65 +570,104 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
     Since Python dictionaries preserve insertion order, we can simply iterate through `merges` and apply each rule. But why does order matter? Some merge rules depend on tokens created by earlier merges. If we learned `(97,97)→256` first and `(256,98)→257` second, the second rule can only match after the first rule has created token 256. Applying them out of order means the second rule looks for a token that doesn't exist yet, so it gets skipped. Let's see this with an example.
   </Description>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Why Order Matters: Encoding "aab" with Two Merges</div>
-    <div className="text-sm text-slate-600 dark:text-slate-400 mb-4">We have two merge rules: <span className="font-mono">merge #1: (97,97)→256</span> and <span className="font-mono">merge #2: (256,98)→257</span>. The order we apply them changes the result.</div>
+  {/* Why Order Matters - Terminal Style Comparison */}
+  <div className="my-8">
+    <h4 className="text-base font-semibold text-primary mb-2">Why Order Matters: Encoding "aab" with Two Merges</h4>
+    <p className="text-sm text-secondary mb-5">
+      We have two merge rules: <code className="font-mono text-xs bg-zinc-800 px-1.5 py-0.5 rounded">merge #1: (97,97)→256</code> and <code className="font-mono text-xs bg-zinc-800 px-1.5 py-0.5 rounded">merge #2: (256,98)→257</code>. The order we apply them changes the result.
+    </p>
+    
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded border border-emerald-200 dark:border-emerald-800">
-        <div className="text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-3">✓ Correct Order: #1 then #2</div>
-        <div className="space-y-3">
-          <div className="pb-2 border-b border-emerald-200 dark:border-emerald-700">
-            <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">Apply merge #1: (97,97)→256</div>
-            <div className="font-mono text-xs text-slate-600 dark:text-slate-400">[97, 97, 98] → [<span className="text-emerald-600 dark:text-emerald-400 font-bold">256</span>, 98]</div>
+      {/* Valid Path */}
+      <div className="p-4 bg-background rounded-lg border border-emerald-500/20">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-emerald-400">✓</span>
+          <span className="text-sm font-semibold text-primary">Correct Order: #1 then #2</span>
+        </div>
+        
+        <div className="space-y-4">
+          {/* Step 1 */}
+          <div className="pb-3 border-b border-border">
+            <div className="text-xs text-emerald-400 mb-1.5 font-medium">Step 1 · Apply merge #1: (97,97)→256</div>
+            <div className="font-mono text-sm text-secondary">
+              [97, 97, 98] <span className="text-muted">→</span> [<span className="text-emerald-400 font-bold">256</span>, 98]
+            </div>
           </div>
+          
+          {/* Step 2 */}
           <div>
-            <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">Apply merge #2: (256,98)→257</div>
-            <div className="font-mono text-xs text-slate-600 dark:text-slate-400">[256, 98] → [<span className="text-emerald-600 dark:text-emerald-400 font-bold">257</span>]</div>
+            <div className="text-xs text-emerald-400 mb-1.5 font-medium">Step 2 · Apply merge #2: (256,98)→257</div>
+            <div className="font-mono text-sm text-secondary">
+              [256, 98] <span className="text-muted">→</span> [<span className="text-emerald-400 font-bold">257</span>]
+            </div>
           </div>
         </div>
-        <div className="mt-3 pt-2 border-t border-emerald-200 dark:border-emerald-700 text-xs text-emerald-600 dark:text-emerald-400 font-medium">Result: [257] (1 token)</div>
+        
+        {/* Result */}
+        <div className="mt-4 pt-3 border-t border-border">
+          <span className="text-xs text-emerald-400 font-semibold">Result: [257]</span>
+          <span className="text-xs text-muted ml-2">(1 token)</span>
+        </div>
       </div>
-      <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
-        <div className="text-sm font-medium text-red-700 dark:text-red-300 mb-3">✗ Wrong Order: #2 then #1</div>
-        <div className="space-y-3">
-          <div className="pb-2 border-b border-red-200 dark:border-red-700">
-            <div className="text-xs text-red-600 dark:text-red-400 mb-1">Apply merge #2: (256,98)→257</div>
-            <div className="font-mono text-xs text-slate-600 dark:text-slate-400">[97, 97, 98] → [97, 97, 98] <span className="text-slate-400">(no 256 yet, skipped!)</span></div>
+      
+      {/* Invalid Path */}
+      <div className="p-4 bg-background rounded-lg border border-rose-500/20">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-rose-400">✗</span>
+          <span className="text-sm font-semibold text-primary">Wrong Order: #2 then #1</span>
+        </div>
+        
+        <div className="space-y-4">
+          {/* Step 1 */}
+          <div className="pb-3 border-b border-border">
+            <div className="text-xs text-rose-400 mb-1.5 font-medium">Step 1 · Apply merge #2: (256,98)→257</div>
+            <div className="font-mono text-sm text-secondary">
+              [97, 97, 98] <span className="text-muted">→</span> [97, 97, 98] <span className="text-muted text-xs">(no 256 yet, skipped!)</span>
+            </div>
           </div>
+          
+          {/* Step 2 */}
           <div>
-            <div className="text-xs text-red-600 dark:text-red-400 mb-1">Apply merge #1: (97,97)→256</div>
-            <div className="font-mono text-xs text-slate-600 dark:text-slate-400">[97, 97, 98] → [<span className="text-red-600 dark:text-red-400 font-bold">256</span>, 98]</div>
+            <div className="text-xs text-rose-400 mb-1.5 font-medium">Step 2 · Apply merge #1: (97,97)→256</div>
+            <div className="font-mono text-sm text-secondary">
+              [97, 97, 98] <span className="text-muted">→</span> [<span className="text-rose-400 font-bold">256</span>, 98]
+            </div>
           </div>
         </div>
-        <div className="mt-3 pt-2 border-t border-red-200 dark:border-red-700 text-xs text-red-600 dark:text-red-400 font-medium">Result: [256, 98] (2 tokens, missed merge!)</div>
+        
+        {/* Result */}
+        <div className="mt-4 pt-3 border-t border-border">
+          <span className="text-xs text-rose-400 font-semibold">Result: [256, 98]</span>
+          <span className="text-xs text-muted ml-2">(2 tokens, missed merge!)</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-6 mb-3">Visual Example: Encoding</h4>
+  <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Visual Example: Encoding</h4>
 
-  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Encoding "aaab" with merges: (97,97)→256, (256,97)→257</div>
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
+    <div className="text-sm font-medium text-primary mb-3">Encoding "aaab" with merges: (97,97)→256, (256,97)→257</div>
     <div className="space-y-3 font-mono text-sm">
       <div className="flex items-center gap-3">
-        <span className="text-slate-500 w-24">Start:</span>
-        <span className="text-slate-700 dark:text-slate-300">[97, 97, 97, 98]</span>
-        <span className="text-slate-400 text-xs">← raw bytes: a, a, a, b</span>
+        <span className="text-muted w-24">Start:</span>
+        <span className="text-primary">[97, 97, 97, 98]</span>
+        <span className="text-muted text-xs">← raw bytes: a, a, a, b</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-slate-500 w-24">Merge (a,a):</span>
-        <span className="text-slate-700 dark:text-slate-300">[<span className="text-emerald-600 dark:text-emerald-400 font-bold">256</span>, 97, 98]</span>
-        <span className="text-slate-400 text-xs">← (97,97) becomes 256</span>
+        <span className="text-muted w-24">Merge (a,a):</span>
+        <span className="text-primary">[<span className="text-emerald-400 font-bold">256</span>, 97, 98]</span>
+        <span className="text-muted text-xs">← (97,97) becomes 256</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-slate-500 w-24">Merge (256,a):</span>
-        <span className="text-slate-700 dark:text-slate-300">[<span className="text-emerald-600 dark:text-emerald-400 font-bold">257</span>, 98]</span>
-        <span className="text-slate-400 text-xs">← (256,97) becomes 257</span>
+        <span className="text-muted w-24">Merge (256,a):</span>
+        <span className="text-primary">[<span className="text-emerald-400 font-bold">257</span>, 98]</span>
+        <span className="text-muted text-xs">← (256,97) becomes 257</span>
       </div>
-      <div className="flex items-center gap-3 pt-2 border-t border-slate-200 dark:border-slate-700">
-        <span className="text-slate-500 w-24">Result:</span>
-        <span className="text-emerald-600 dark:text-emerald-400 font-bold">[257, 98]</span>
-        <span className="text-slate-400 text-xs">← 4 bytes compressed to 2 tokens</span>
+      <div className="flex items-center gap-3 pt-2 border-t border-border">
+        <span className="text-muted w-24">Result:</span>
+        <span className="text-emerald-400 font-bold">[257, 98]</span>
+        <span className="text-muted text-xs">← 4 bytes compressed to 2 tokens</span>
       </div>
     </div>
   </div>
@@ -646,47 +683,47 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
   </Description>
 
   <div className="my-4 relative">
-    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700" />
+    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
     
     <div className="space-y-6">
       <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">1</div>
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">1</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">Raw Text</div>
-          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">"Hello World"</div>
+          <div className="font-semibold text-primary">Raw Text</div>
+          <div className="font-mono text-sm text-secondary mt-1">"Hello World"</div>
         </div>
       </div>
 
       <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">2</div>
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">2</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">Regex Split</div>
-          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">["Hello", " World"]</div>
+          <div className="font-semibold text-primary">Regex Split</div>
+          <div className="font-mono text-sm text-secondary mt-1">["Hello", " World"]</div>
         </div>
       </div>
 
       <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">3</div>
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">3</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">UTF-8 Encoding</div>
-          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">[72, 101, 108, 108, 111], [32, 87, 111, 114, 108, 100]</div>
+          <div className="font-semibold text-primary">UTF-8 Encoding</div>
+          <div className="font-mono text-sm text-secondary mt-1">[72, 101, 108, 108, 111], [32, 87, 111, 114, 108, 100]</div>
         </div>
       </div>
 
       <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">4</div>
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">4</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">BPE Merging</div>
-          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">Apply learned merge rules to compress bytes into tokens</div>
+          <div className="font-semibold text-primary">BPE Merging</div>
+          <div className="text-sm text-secondary mt-1">Apply learned merge rules to compress bytes into tokens</div>
         </div>
       </div>
 
       <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold z-0">5</div>
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">5</div>
         <div className="flex-1 pt-2">
-          <div className="font-semibold text-slate-800 dark:text-slate-200">Token IDs</div>
-          <div className="font-mono text-sm text-slate-600 dark:text-slate-400 mt-1">[15496, 995]</div>
-          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">This is what the neural network actually sees</div>
+          <div className="font-semibold text-primary">Token IDs</div>
+          <div className="font-mono text-sm text-secondary mt-1">[15496, 995]</div>
+          <div className="text-sm text-secondary mt-1">This is what the neural network actually sees</div>
         </div>
       </div>
     </div>
