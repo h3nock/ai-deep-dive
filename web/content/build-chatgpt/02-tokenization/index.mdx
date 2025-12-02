@@ -40,24 +40,27 @@ description: "How BPE compresses text into the atoms of language models."
     BPE does exactly this, but **automatically**. It reads through massive amounts of text (like Wikipedia) and asks: *"Which sequences of characters appear together most often?"*
   </Description>
 
-  <div className="my-4 space-y-2">
-    <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-border">
-      <span className="font-mono text-muted">t + h</span>
-      <span className="text-muted">→</span>
-      <span className="font-mono font-bold text-primary">th</span>
-      <span className="text-sm text-muted ml-auto">appears constantly together</span>
-    </div>
-    <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-border">
-      <span className="font-mono text-muted">th + e</span>
-      <span className="text-muted">→</span>
-      <span className="font-mono font-bold text-primary">the</span>
-      <span className="text-sm text-muted ml-auto">one of the most common words</span>
-    </div>
-    <div className="flex items-center gap-3 p-3 bg-surface rounded-lg border border-border">
-      <span className="font-mono text-muted">in + g</span>
-      <span className="text-muted">→</span>
-      <span className="font-mono font-bold text-primary">ing</span>
-      <span className="text-sm text-muted ml-auto">common suffix</span>
+  <div className="my-6">
+    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">Common Patterns Learned</div>
+    <div className="bg-[#121212] rounded-lg border border-zinc-800 divide-y divide-zinc-800">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <span className="font-mono text-secondary">t + h</span>
+        <span className="text-muted">→</span>
+        <span className="font-mono font-bold text-primary">th</span>
+        <span className="text-sm text-muted ml-auto">appears constantly together</span>
+      </div>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <span className="font-mono text-secondary">th + e</span>
+        <span className="text-muted">→</span>
+        <span className="font-mono font-bold text-primary">the</span>
+        <span className="text-sm text-muted ml-auto">one of the most common words</span>
+      </div>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <span className="font-mono text-secondary">in + g</span>
+        <span className="text-muted">→</span>
+        <span className="font-mono font-bold text-primary">ing</span>
+        <span className="text-sm text-muted ml-auto">common suffix</span>
+      </div>
     </div>
   </div>
 
