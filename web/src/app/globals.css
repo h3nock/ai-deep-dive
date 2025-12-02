@@ -9,6 +9,40 @@
 /* Force dark mode at CSS level - ignore system preferences */
 :root {
   color-scheme: dark !important;
+  
+  /* ==========================================================================
+     4-TIER SPACING SYSTEM (Gestalt-Driven)
+     
+     Whitespace is the primary structural element in our "Void" layout.
+     Proximity = Relationship. Never use random values.
+     ========================================================================== */
+  
+  /* TIER 1: Atomic Gap (Tightest)
+     Purpose: Glue a label/caption to its data. Single visual unit.
+     Use for: Header + Subheader, Figure label + Image, Meta text + Component
+     Theory: Eye captures both in single fixation without moving. */
+  --space-atomic: 0.5rem;      /* 8px */
+  
+  /* TIER 2: Connected Gap (The Magnet)
+     Purpose: Connect intro sentence to the object it introduces.
+     Use for: "Here is the code:" → [Code Block], Description → Visualization
+     Theory: Visibly smaller than paragraph spacing. Acts as magnet. */
+  --space-connected: 1rem;     /* 16px */
+  
+  /* TIER 3: Flow Gap (Standard)
+     Purpose: Breathing room between thoughts while maintaining narrative.
+     Use for: Between paragraphs, standard content rhythm.
+     Theory: Large enough to distinguish blocks, small enough to show continuity. */
+  --space-flow: 1.5rem;        /* 24px */
+  
+  /* TIER 4: Section Gap (The Break)
+     Purpose: Signal hard reset / topic change.
+     Use for: Between major sections, end of concept → start of next headline.
+     Theory: Massive gap replaces horizontal dividers in Void layout. */
+  --space-section: 3rem;       /* 48px */
+  
+  /* Extended scale for extra-large breaks */
+  --space-section-lg: 4rem;    /* 64px - between Steps */
 }
 
 @media (prefers-color-scheme: light) {
@@ -134,9 +168,11 @@ body {
   background: #3f3f46; /* Zinc-700 */
 }
 
-/* Code Block Styling - rehype-pretty-code (Deep Tech Terminal Style) */
+/* Code Block Styling - rehype-pretty-code (Deep Tech Terminal Style)
+   SPACING: Uses Component Sandwich pattern (connected top, flow bottom) */
 [data-rehype-pretty-code-figure] {
-  margin: 1.5rem 0;
+  margin-top: var(--space-connected);
+  margin-bottom: var(--space-flow);
 }
 
 [data-rehype-pretty-code-figure] pre {
@@ -155,7 +191,7 @@ body {
   background: transparent !important;
 }
 
-/* Code block with title/caption */
+/* Code block with title/caption - uses Atomic gap */
 [data-rehype-pretty-code-title] {
   padding: 0.5rem 1rem;
   font-size: 0.75rem;
@@ -184,6 +220,7 @@ body {
 
 /* ==========================================================================
    Prose Overrides - Night Reading Safe (No Glow/Bloom)
+   4-Tier Spacing Applied
    ========================================================================== */
 
 .prose {
@@ -205,10 +242,54 @@ body {
   --tw-prose-td-borders: #27272A;     /* Zinc-800 */
 }
 
-/* Table Styling - Unified Column (matches text width) */
+/* Prose Paragraphs - Tier 3 (Flow) spacing */
+.prose p {
+  margin-bottom: var(--space-flow);
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+/* Prose Headings - Section breaks with connected content */
+.prose h2 {
+  margin-top: var(--space-section);
+  margin-bottom: var(--space-connected);
+}
+
+.prose h3 {
+  margin-top: var(--space-section);
+  margin-bottom: var(--space-connected);
+}
+
+.prose h4 {
+  margin-top: var(--space-flow);
+  margin-bottom: var(--space-atomic);
+}
+
+/* First heading after section start - no extra top margin */
+.prose h2:first-child,
+.prose h3:first-child,
+.prose h4:first-child {
+  margin-top: 0;
+}
+
+/* Prose Lists - Flow spacing */
+.prose ul, .prose ol {
+  margin-top: var(--space-connected);
+  margin-bottom: var(--space-flow);
+}
+
+.prose li {
+  margin-top: var(--space-atomic);
+  margin-bottom: var(--space-atomic);
+}
+
+/* Table Styling - Component Sandwich (connected top, flow bottom) */
 .prose table {
   width: 100%;
-  margin: 1.5rem 0;
+  margin-top: var(--space-connected);
+  margin-bottom: var(--space-flow);
   border-collapse: collapse;
   font-size: 0.875rem;
 }
@@ -351,6 +432,63 @@ body {
 
 .card-glow-disabled:hover::before {
   opacity: 0;
+}
+
+/* ==========================================================================
+   Semantic Spacing Utilities for MDX Content
+   Use these instead of raw my-*, mt-*, mb-* when possible
+   ========================================================================== */
+
+/* Component Wrapper - Standard block with asymmetric "sandwich" spacing */
+.content-block {
+  margin-top: var(--space-connected);
+  margin-bottom: var(--space-flow);
+}
+
+/* Section Wrapper - Major topic change */
+.section-block {
+  margin-top: var(--space-section);
+  margin-bottom: var(--space-section);
+}
+
+/* Caption/Label that precedes a component */
+.content-label {
+  margin-bottom: var(--space-atomic);
+}
+
+/* Internal h4 headings within Steps */
+.content-heading {
+  margin-top: var(--space-flow);
+  margin-bottom: var(--space-atomic);
+}
+
+/* ==========================================================================
+   Content Attached Pattern
+   Use when a paragraph ending with ":" introduces a table, code block, or container.
+   The content is semantically part of the paragraph (an illustration/example).
+   ========================================================================== */
+
+/* Wrapper for content directly attached to intro paragraph */
+.content-attached {
+  margin-top: var(--space-atomic) !important;
+  margin-bottom: var(--space-flow);
+}
+
+/* Remove any internal top margins from prose elements */
+.content-attached table,
+.content-attached pre,
+.content-attached .prose table,
+.content-attached .prose pre {
+  margin-top: 0 !important;
+}
+
+/* Legacy alias - use content-attached instead */
+.table-attached {
+  margin-top: var(--space-atomic) !important;
+}
+
+.table-attached table {
+  margin-top: 0 !important;
 }
 
 /* ==========================================================================
