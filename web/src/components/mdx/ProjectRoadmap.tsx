@@ -29,30 +29,30 @@ export function ProjectRoadmap({ courseId, prefix }: ProjectRoadmapProps) {
               href={`/${courseId}/step/${post.slug}`}
               className="group block relative"
             >
-              <div className="relative flex items-center gap-4 py-3 px-4 -mx-4 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <div className="relative flex items-center gap-4 py-3 px-4 -mx-4 rounded-lg hover:bg-zinc-800/50 transition-colors">
                 {/* Step Number with Connector */}
                 <div className="relative shrink-0">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 text-sm font-medium group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors relative z-10">
+                  <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center text-muted text-sm font-medium group-hover:bg-zinc-800 transition-colors relative z-10">
                     {stepNumber}
                   </div>
                   {/* Connector line */}
                   {!isLast && (
-                    <div className="absolute left-1/2 top-8 w-px h-[calc(100%+0.25rem)] bg-slate-200 dark:bg-slate-700 -translate-x-1/2" />
+                    <div className="absolute left-1/2 top-8 w-px h-[calc(100%+0.25rem)] bg-border -translate-x-1/2" />
                   )}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors no-underline">
+                  <h4 className="text-sm font-medium text-primary group-hover:text-secondary transition-colors no-underline">
                     {post.title}
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-500 line-clamp-1 mt-0.5">
+                  <p className="text-xs text-muted line-clamp-1 mt-0.5">
                     {post.description}
                   </p>
                 </div>
 
                 {/* Arrow */}
-                <div className="shrink-0 text-slate-300 dark:text-slate-700 group-hover:text-slate-400 dark:group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all duration-200">
+                <div className="shrink-0 text-muted group-hover:text-secondary group-hover:translate-x-0.5 transition-all duration-200">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>

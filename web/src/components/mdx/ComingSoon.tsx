@@ -4,9 +4,9 @@ import { Description } from "./Description";
 export function ComingSoon() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="mb-6 rounded-full bg-blue-50 p-4 dark:bg-blue-900/20">
+      <div className="mb-6 rounded-full bg-sky-500/20 p-4">
         <svg
-          className="h-8 w-8 text-blue-600 dark:text-blue-400"
+          className="h-8 w-8 text-sky-400"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -19,12 +19,10 @@ export function ComingSoon() {
           />
         </svg>
       </div>
-      <h2 className="mb-3 text-2xl font-semibold text-slate-900 dark:text-white">
-        Coming Soon
-      </h2>
-      <p className="max-w-md text-slate-600 dark:text-slate-400">
-        We're currently polishing this chapter to ensure it meets our high standards. 
-        Check back soon for the complete content!
+      <h2 className="mb-3 text-2xl font-semibold text-primary">Coming Soon</h2>
+      <p className="max-w-md text-muted">
+        We're currently polishing this chapter to ensure it meets our high
+        standards. Check back soon for the complete content!
       </p>
     </div>
   );

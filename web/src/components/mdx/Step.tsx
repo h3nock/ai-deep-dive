@@ -18,10 +18,8 @@ export function Step({ title, children }: StepProps) {
   }
 
   return (
-    <div className="relative py-8 border-b border-slate-100 dark:border-slate-800 last:border-0">
-      <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-        {title}
-      </h3>
+    <div className="relative py-8 border-b border-border last:border-0">
+      <h3 className="text-2xl font-bold text-primary mb-6">{title}</h3>
       <div className="flex flex-col gap-4">{children}</div>
     </div>
   );

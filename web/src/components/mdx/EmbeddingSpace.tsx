@@ -20,8 +20,10 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
   // Convert data coordinates (-1 to 1) to SVG coordinates
   // Scale factor to keep points away from edges (0.75 means points go from -0.75 to 0.75 instead of -1 to 1)
   const scaleFactor = 0.7;
-  const toSvgX = (x: number) => paddingLeft + ((x * scaleFactor + 1) / 2) * innerWidth;
-  const toSvgY = (y: number) => paddingTop + ((1 - y * scaleFactor) / 2) * innerHeight; // Flip Y for standard math coords
+  const toSvgX = (x: number) =>
+    paddingLeft + ((x * scaleFactor + 1) / 2) * innerWidth;
+  const toSvgY = (y: number) =>
+    paddingTop + ((1 - y * scaleFactor) / 2) * innerHeight; // Flip Y for standard math coords
 
   // Data points - coordinates match Section 2: [Royalty, Gender]
   // X axis = Gender (+1 masculine, -1 feminine)
@@ -43,9 +45,9 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
   const getPoint = (name: string) => points.find((p) => p.name === name)!;
 
   return (
-    <div className="my-6 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+    <div className="my-6 p-6 bg-surface rounded-lg border border-border">
       <div className="text-center mb-4">
-        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <span className="text-sm font-medium text-muted">
           {showArrows
             ? "Vector Arithmetic: The Gender Direction"
             : "The 2D Meaning Space"}
@@ -88,7 +90,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
             y={paddingTop}
             width={innerWidth}
             height={innerHeight}
-            className="fill-white dark:fill-slate-900/50"
+            className="fill-background"
             rx="4"
           />
 
@@ -101,11 +103,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 y1={paddingTop}
                 x2={toSvgX(v)}
                 y2={height - paddingBottom}
-                className={
-                  v === 0
-                    ? "stroke-slate-400 dark:stroke-slate-500"
-                    : "stroke-slate-200 dark:stroke-slate-700"
-                }
+                className={v === 0 ? "stroke-zinc-500" : "stroke-zinc-700"}
                 strokeWidth={v === 0 ? 2 : 1}
                 strokeDasharray={v === 0 ? "" : "4 4"}
               />
@@ -115,11 +113,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 y1={toSvgY(v)}
                 x2={width - paddingRight}
                 y2={toSvgY(v)}
-                className={
-                  v === 0
-                    ? "stroke-slate-400 dark:stroke-slate-500"
-                    : "stroke-slate-200 dark:stroke-slate-700"
-                }
+                className={v === 0 ? "stroke-zinc-500" : "stroke-zinc-700"}
                 strokeWidth={v === 0 ? 2 : 1}
                 strokeDasharray={v === 0 ? "" : "4 4"}
               />
@@ -130,14 +124,14 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={width - paddingRight + 8}
             y={toSvgY(0) + 4}
-            className="fill-slate-500 dark:fill-slate-400 text-[10px] font-medium"
+            className="fill-zinc-400 text-[10px] font-medium"
           >
             Gender (+)
           </text>
           <text
             x={paddingLeft - 8}
             y={toSvgY(0) + 4}
-            className="fill-slate-500 dark:fill-slate-400 text-[10px] font-medium"
+            className="fill-zinc-400 text-[10px] font-medium"
             textAnchor="end"
           >
             Gender (-)
@@ -145,7 +139,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={toSvgX(0)}
             y={paddingTop - 10}
-            className="fill-slate-500 dark:fill-slate-400 text-[10px] font-medium"
+            className="fill-zinc-400 text-[10px] font-medium"
             textAnchor="middle"
           >
             Royalty (+)
@@ -153,7 +147,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={toSvgX(0)}
             y={height - paddingBottom + 20}
-            className="fill-slate-500 dark:fill-slate-400 text-[10px] font-medium"
+            className="fill-zinc-400 text-[10px] font-medium"
             textAnchor="middle"
           >
             Royalty (-)
@@ -189,7 +183,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                     y1={y1}
                     x2={x2}
                     y2={y2}
-                    className="stroke-amber-500 dark:stroke-amber-400"
+                    className="stroke-amber-400"
                     strokeWidth="3"
                     markerEnd="url(#arrowhead)"
                     strokeLinecap="round"
@@ -203,13 +197,13 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                         width="80"
                         height="18"
                         rx="4"
-                        className="fill-amber-100 dark:fill-amber-900/50"
+                        className="fill-amber-500/20"
                       />
                       <text
                         x={mx}
                         y={my - 10}
                         textAnchor="middle"
-                        className="fill-amber-700 dark:fill-amber-300 text-[10px] font-semibold"
+                        className="fill-amber-300 text-[10px] font-semibold"
                       >
                         {arrow.label}
                       </text>
@@ -227,7 +221,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 cx={toSvgX(point.x)}
                 cy={toSvgY(point.y)}
                 r="24"
-                className="fill-white dark:fill-slate-800 stroke-slate-200 dark:stroke-slate-600"
+                className="fill-surface stroke-border"
                 strokeWidth="2"
               />
               {/* Emoji */}
@@ -245,7 +239,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 x={toSvgX(point.x)}
                 y={toSvgY(point.y) + 42}
                 textAnchor="middle"
-                className="fill-slate-700 dark:fill-slate-300 text-[11px] font-semibold"
+                className="fill-zinc-300 text-[11px] font-semibold"
               >
                 {point.name}
               </text>
@@ -254,7 +248,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 x={toSvgX(point.x)}
                 y={toSvgY(point.y) + 54}
                 textAnchor="middle"
-                className="fill-slate-600 dark:fill-slate-300 text-[11px] font-mono"
+                className="fill-zinc-400 text-[11px] font-mono"
               >
                 [{point.y}, {point.x}]
               </text>
@@ -267,18 +261,16 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
       {showArrows && (
         <div className="mt-4 flex flex-col sm:flex-row justify-center items-center gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-1 bg-amber-500 dark:bg-amber-400 rounded-full relative">
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-l-[6px] border-l-amber-500 dark:border-l-amber-400 border-y-4 border-y-transparent"></div>
+            <div className="w-8 h-1 bg-amber-400 rounded-full relative">
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-l-[6px] border-l-amber-400 border-y-4 border-y-transparent"></div>
             </div>
-            <span className="text-slate-600 dark:text-slate-400">
-              Same direction = Same concept
-            </span>
+            <span className="text-muted">Same direction = Same concept</span>
           </div>
         </div>
       )}
 
       {/* Caption */}
-      <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
+      <p className="text-center text-xs text-muted mt-4">
         {showArrows
           ? 'Both arrows point in the same direction, showing that "Gender" is a consistent direction in the space.'
           : "Words are positioned based on their Royalty and Gender attributes."}
