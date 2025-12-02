@@ -80,52 +80,51 @@ description: "The big picture: how Large Language Models actually work."
     When you send a message to an LLM and receive a response, your text goes through a series of transformations. Each step solves a specific problem.
   </Description>
 
-  <div className="my-6 relative">
-    {/* Vertical connector line */}
-    <div className="absolute left-5 top-8 bottom-8 w-0.5 bg-zinc-800" />
+  <div className="my-4 relative">
+    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
     
-    <div className="space-y-4">
-      <div className="relative flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full bg-surface border-2 border-border text-primary flex items-center justify-center font-bold shrink-0 z-10">1</div>
-        <div className="flex-1 p-4 bg-surface rounded-lg border border-border">
-          <h4 className="font-semibold text-primary">Text → Bytes</h4>
-          <p className="text-base text-secondary mt-1">Your message "Hello" becomes numbers: <code className="text-sm bg-zinc-800 px-1.5 py-0.5 rounded">[72, 101, 108, 108, 111]</code></p>
+    <div className="space-y-6">
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">1</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary">Text → Bytes</div>
+          <div className="font-mono text-sm text-secondary mt-1">"Hello" → [72, 101, 108, 108, 111]</div>
           <p className="text-sm text-muted mt-2">Computers only understand numbers. Every character must be converted to a numerical representation.</p>
         </div>
       </div>
 
-      <div className="relative flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full bg-surface border-2 border-border text-primary flex items-center justify-center font-bold shrink-0 z-10">2</div>
-        <div className="flex-1 p-4 bg-surface rounded-lg border border-border">
-          <h4 className="font-semibold text-primary">Bytes → Tokens</h4>
-          <p className="text-base text-secondary mt-1">Bytes are grouped into larger chunks called tokens: <code className="text-sm bg-zinc-800 px-1.5 py-0.5 rounded">[15496]</code></p>
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">2</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary">Bytes → Tokens</div>
+          <div className="font-mono text-sm text-secondary mt-1">[72, 101, 108, 108, 111] → [15496]</div>
           <p className="text-sm text-muted mt-2">Processing individual bytes is inefficient. Common patterns like "the" or "ing" become single tokens, making sequences shorter.</p>
         </div>
       </div>
 
-      <div className="relative flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full bg-surface border-2 border-border text-primary flex items-center justify-center font-bold shrink-0 z-10">3</div>
-        <div className="flex-1 p-4 bg-surface rounded-lg border border-border">
-          <h4 className="font-semibold text-primary">Tokens → Vectors</h4>
-          <p className="text-base text-secondary mt-1">Each token becomes a list of numbers (a vector): <code className="text-sm bg-zinc-800 px-1.5 py-0.5 rounded">[0.12, -0.48, 0.91, ...]</code></p>
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">3</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary">Tokens → Vectors</div>
+          <div className="font-mono text-sm text-secondary mt-1">[15496] → [0.12, -0.48, 0.91, ...]</div>
           <p className="text-sm text-muted mt-2">Token IDs are arbitrary labels. Vectors let the model learn semantic meaning, like understanding that "king" and "queen" are related.</p>
         </div>
       </div>
 
-      <div className="relative flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full bg-surface border-2 border-border text-primary flex items-center justify-center font-bold shrink-0 z-10">4</div>
-        <div className="flex-1 p-4 bg-surface rounded-lg border border-border">
-          <h4 className="font-semibold text-primary">Vectors → Transformer → Next Token</h4>
-          <p className="text-base text-secondary mt-1">A Transformer is the architecture behind modern LLMs. It processes the vectors and predicts which token comes next.</p>
-          <p className="text-sm text-muted mt-2">It scans the sentence for hints and uses them to pick the next word that keeps the meaning and flow on track.</p>
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">4</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary">Vectors → Transformer → Next Token</div>
+          <p className="text-sm text-secondary mt-1">A Transformer is the architecture behind modern LLMs. It processes the vectors and predicts which token comes next.</p>
+          <p className="text-sm text-muted mt-2">It scans the sentence for context and uses it to pick the next word that keeps the meaning and flow on track.</p>
         </div>
       </div>
 
-      <div className="relative flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full bg-surface border-2 border-border text-primary flex items-center justify-center font-bold shrink-0 z-10">5</div>
-        <div className="flex-1 p-4 bg-surface rounded-lg border border-border">
-          <h4 className="font-semibold text-primary">Token → Text</h4>
-          <p className="text-base text-secondary mt-1">The predicted token is converted back to text and shown to you. This loops until the response is complete.</p>
+      <div className="relative flex gap-4">
+        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">5</div>
+        <div className="flex-1 pt-2">
+          <div className="font-semibold text-primary">Token → Text</div>
+          <p className="text-sm text-secondary mt-1">The predicted token is converted back to text and shown to you. This loops until the response is complete.</p>
           <p className="text-sm text-muted mt-2">This is why you see the response appear word by word.</p>
         </div>
       </div>
