@@ -113,8 +113,8 @@ description: "How BPE compresses text into the atoms of language models."
     The algorithm scans every **adjacent pair**, each token paired with the one right next to it. Here's how to see the pairs:
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-sm text-secondary mb-3">Adjacent pairs in our sequence (same color = same pair type):</div>
+  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">Adjacent pairs in our sequence (same color = same pair type)</div>
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="flex flex-wrap gap-x-1 gap-y-4 font-mono text-lg">
       {/* (a,a) - amber */}
       <div className="flex items-end">
@@ -210,8 +210,8 @@ description: "How BPE compresses text into the atoms of language models."
     The winner is `(a, a)` with 4 occurrences. The algorithm creates a **new token** to represent this pair. Let's call it `Z`. We add `Z` to our vocabulary and replace every `aa` in our data.
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-sm font-medium text-primary mb-3">After Merge #1: (a, a) → Z</div>
+  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">After Merge #1: (a, a) → Z</div>
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="flex flex-wrap gap-2">
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500 text-white font-mono font-bold">Z</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
@@ -238,8 +238,8 @@ description: "How BPE compresses text into the atoms of language models."
     Now we count pairs again on the new sequence. Both `(Z, a)` and `(a, b)` appear twice. The algorithm picks one (let's choose `ab`). We create token `Y`.
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-sm font-medium text-primary mb-3">After Merge #2: (a, b) → Y</div>
+  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">After Merge #2: (a, b) → Y</div>
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="flex flex-wrap gap-2">
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500 text-white font-mono font-bold">Z</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-400/20 border-2 border-emerald-400 text-emerald-400 font-mono font-bold">Y</div>
@@ -420,8 +420,8 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
     To a human, the core concept is **"dog"**. But our simple algorithm treats spaces and punctuation as characters to merge. It might see `dog.` as completely different from `dog ` (with a space). It might even merge `g` and `.` into a weird token `g.`.
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-sm font-medium text-primary mb-2">The Problem</div>
+  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">The Problem</div>
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="font-mono text-sm space-y-1 text-secondary">
       <div>"dog" + space → one pattern</div>
       <div>"dog" + period → different pattern</div>
@@ -438,8 +438,8 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
     Modern tokenizers (like GPT-4's) use **Regular Expressions** to pre-split text into meaningful chunks *before* applying BPE. They force boundaries between words and punctuation.
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-sm font-medium text-primary mb-2">The Solution</div>
+  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">The Solution</div>
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="space-y-2">
       <div className="flex items-center gap-3">
         <span className="text-sm text-secondary">Input:</span>
@@ -477,8 +477,8 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
     First, we need a **vocabulary table** that maps each token ID to its byte sequence. Remember from Chapter 1: text is just a sequence of integers (bytes). The letter `"a"` is byte `97`, `"b"` is `98`, and so on. Our vocabulary stores these byte sequences directly:
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-sm font-medium text-primary mb-3">The Vocabulary: Token ID → Bytes</div>
+  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">The Vocabulary: Token ID → Bytes</div>
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="space-y-3 font-mono text-sm">
       <div>
         <div className="text-muted mb-1"># Base vocabulary: single bytes (0-255)</div>
@@ -524,8 +524,8 @@ def decode(ids: list[int], vocab: dict[int, list[int]]) -> str:
 
   <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Visual Example: Decoding</h4>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-sm font-medium text-primary mb-3">Decoding [258, 99] back to text</div>
+  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">Decoding [258, 99] back to text</div>
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className="text-sm text-muted w-28">Token IDs:</div>
@@ -653,8 +653,8 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
 
   <h4 className="text-lg font-semibold text-primary mt-6 mb-3">Visual Example: Encoding</h4>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-sm font-medium text-primary mb-3">Encoding "aaab" with merges: (97,97)→256, (256,97)→257</div>
+  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">Encoding "aaab" with merges: (97,97)→256, (256,97)→257</div>
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="space-y-3 font-mono text-sm">
       <div className="flex items-center gap-3">
         <span className="text-muted w-24">Start:</span>

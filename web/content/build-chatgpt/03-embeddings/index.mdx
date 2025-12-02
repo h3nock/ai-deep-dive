@@ -41,8 +41,8 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     This relationship is purely arithmetic. It has nothing to do with the relationship between an Apple and a Banana. These numbers are distinct labels, similar to Employee IDs in a company database. Employee #500 is not "5 times better" than Employee #100; they are just different people.
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-sm font-semibold text-primary mb-2">The Core Problem</div>
+  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">The Core Problem</div>
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="text-base text-secondary leading-relaxed">
       If we force the model to do math on these arbitrary IDs, we are asking it to find patterns in chaos. The model fails because of <strong>Magnitude Bias</strong>. In a neural network, a neuron applies the <strong>same weight</strong> <code className="text-sm bg-zinc-800 px-1 rounded mx-1">(Output = Input × Weight)</code> to its input, regardless of the value. If the weight is 0.01, an input of 100 (Apple) produces 1.0, but an input of 500 (Banana) produces 5.0. The math forces the model to treat Banana as '5 times more intense' than Apple. There is no single weight that can work for both numbers, so the model cannot learn a consistent rule for 'Fruit'.
     </div>
@@ -275,8 +275,8 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     In code, an **Embedding Layer** is a table of numbers. Think of it like a spreadsheet: each row corresponds to a token ID, and each column is one of those attribute slots. When the model sees a token, it simply looks up the corresponding row.
   </Description>
 
-  <div className="my-4 p-4 bg-surface rounded-lg border border-border">
-    <div className="text-sm font-medium text-primary mb-3">The Embedding Matrix Structure</div>
+  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">The Embedding Matrix Structure</div>
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
