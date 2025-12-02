@@ -7,6 +7,14 @@ interface ProjectRoadmapProps {
   prefix: string;
 }
 
+/**
+ * ProjectRoadmap Component - Navigation List
+ *
+ * SPACING STRATEGY:
+ * - Top margin: Tier 2 (Connected) - follows intro text
+ * - Bottom margin: none - let parent handle
+ * - Internal items use tight spacing for visual cohesion
+ */
 export function ProjectRoadmap({ courseId, prefix }: ProjectRoadmapProps) {
   const posts = getAllPosts(courseId);
 
@@ -17,7 +25,7 @@ export function ProjectRoadmap({ courseId, prefix }: ProjectRoadmapProps) {
     .sort((a, b) => a.step - b.step);
 
   return (
-    <div className="mt-4 not-prose">
+    <div className="not-prose" style={{ marginTop: "var(--space-connected)" }}>
       <div className="relative">
         {projectSteps.map((post, index) => {
           const stepNumber = index + 1;

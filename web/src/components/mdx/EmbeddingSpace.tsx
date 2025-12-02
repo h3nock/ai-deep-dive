@@ -6,6 +6,14 @@ interface EmbeddingSpaceProps {
   showArrows?: boolean;
 }
 
+/**
+ * EmbeddingSpace Component - Interactive Visualization
+ *
+ * SPACING STRATEGY (Component Sandwich - Asymmetric):
+ * - Top margin: Tier 2 (Connected) - pulls toward intro text
+ * - Bottom margin: Tier 3 (Flow) - provides reset before next paragraph
+ * - Internal elements use Tier 1 (Atomic) for tight label-to-visual relationships
+ */
 export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
   // Grid configuration
   const width = 440;
@@ -45,8 +53,17 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
   const getPoint = (name: string) => points.find((p) => p.name === name)!;
 
   return (
-    <div className="my-6 p-6 bg-surface rounded-lg border border-border">
-      <div className="text-center mb-4">
+    <div
+      className="p-6 bg-surface rounded-lg border border-border"
+      style={{
+        marginTop: "var(--space-connected)",
+        marginBottom: "var(--space-flow)",
+      }}
+    >
+      <div
+        className="text-center"
+        style={{ marginBottom: "var(--space-connected)" }}
+      >
         <span className="text-sm font-medium text-muted">
           {showArrows
             ? "Vector Arithmetic: The Gender Direction"
@@ -259,7 +276,10 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
 
       {/* Legend for arrows version */}
       {showArrows && (
-        <div className="mt-4 flex flex-col sm:flex-row justify-center items-center gap-4 text-sm">
+        <div
+          className="flex flex-col sm:flex-row justify-center items-center gap-4 text-sm"
+          style={{ marginTop: "var(--space-connected)" }}
+        >
           <div className="flex items-center gap-2">
             <div className="w-8 h-1 bg-amber-400 rounded-full relative">
               <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-l-[6px] border-l-amber-400 border-y-4 border-y-transparent"></div>
@@ -270,7 +290,10 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
       )}
 
       {/* Caption */}
-      <p className="text-center text-xs text-muted mt-4">
+      <p
+        className="text-center text-xs text-muted"
+        style={{ marginTop: "var(--space-connected)" }}
+      >
         {showArrows
           ? 'Both arrows point in the same direction, showing that "Gender" is a consistent direction in the space.'
           : "Words are positioned based on their Royalty and Gender attributes."}

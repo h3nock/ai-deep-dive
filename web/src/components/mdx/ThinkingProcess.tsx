@@ -9,6 +9,15 @@ interface ThinkingProcessProps {
   children: React.ReactNode; // The answer/explanation
 }
 
+/**
+ * ThinkingProcess Component - Interactive Learning Block
+ *
+ * SPACING STRATEGY:
+ * - Top margin: Tier 4 (Section) - this is a major interactive element
+ * - Bottom margin: Tier 4 (Section) - provides significant break after engagement
+ * - Internal spacing uses Tier 2 (Connected) for related elements
+ * - This component signals a "pause and think" moment in the narrative
+ */
 export function ThinkingProcess({
   title = "Think About It",
   hint,
@@ -18,21 +27,32 @@ export function ThinkingProcess({
   const [isAnswerOpen, setIsAnswerOpen] = useState(false);
 
   return (
-    <div className="my-12">
+    <div
+      style={{
+        marginTop: "var(--space-section)",
+        marginBottom: "var(--space-section)",
+      }}
+    >
       {/* Header - floats on the void */}
-      <div className="flex items-center gap-3 mb-2">
+      <div
+        className="flex items-center gap-3"
+        style={{ marginBottom: "var(--space-atomic)" }}
+      >
         <BrainCircuit className="w-6 h-6 text-amber-400" />
         <h3 className="text-xl font-semibold text-primary">{title}</h3>
       </div>
 
       {/* Subtext */}
-      <p className="text-sm text-muted italic mb-6">
+      <p
+        className="text-sm text-muted italic"
+        style={{ marginBottom: "var(--space-flow)" }}
+      >
         Take a moment to think before revealing the answer.
       </p>
 
       {/* Hint section (if provided) */}
       {hint && (
-        <div className="mb-6">
+        <div style={{ marginBottom: "var(--space-flow)" }}>
           <button
             onClick={() => setIsHintOpen(!isHintOpen)}
             className="group flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
@@ -46,7 +66,10 @@ export function ThinkingProcess({
           </button>
 
           {isHintOpen && (
-            <div className="mt-4 text-secondary animate-in fade-in slide-in-from-top-2 duration-200">
+            <div
+              className="text-secondary animate-in fade-in slide-in-from-top-2 duration-200"
+              style={{ marginTop: "var(--space-connected)" }}
+            >
               {hint}
             </div>
           )}
@@ -54,7 +77,13 @@ export function ThinkingProcess({
       )}
 
       {/* Reveal Answer - Ghost button, centered */}
-      <div className="flex justify-center my-8">
+      <div
+        className="flex justify-center"
+        style={{
+          marginTop: "var(--space-flow)",
+          marginBottom: "var(--space-flow)",
+        }}
+      >
         <button
           onClick={() => setIsAnswerOpen(!isAnswerOpen)}
           className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-zinc-100 border border-zinc-800 hover:border-zinc-600 rounded-lg transition-all duration-200"

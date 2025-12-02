@@ -5,9 +5,22 @@ import { Check, Copy, Terminal } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Action Component - Terminal Command Block
+ *
+ * SPACING STRATEGY (Component Sandwich - Asymmetric):
+ * - Top margin: Tier 2 (Connected) - pulls toward intro text ("Run this command:")
+ * - Bottom margin: Tier 3 (Flow) - provides reset before next paragraph
+ */
 export function Action({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative group my-6">
+    <div
+      className="relative group"
+      style={{
+        marginTop: "var(--space-connected)",
+        marginBottom: "var(--space-flow)",
+      }}
+    >
       <div className="absolute -inset-1 bg-gradient-to-r from-sky-500 to-indigo-500 rounded-2xl opacity-10 group-hover:opacity-20 transition-opacity blur"></div>
       <div className="relative rounded-xl bg-background border border-border overflow-hidden shadow-2xl">
         {/* Terminal Header */}

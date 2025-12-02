@@ -5,11 +5,27 @@ interface ByteStreamProps {
   label?: string;
 }
 
+/**
+ * ByteStream Component - Visual Data Display
+ *
+ * SPACING STRATEGY (Component Sandwich - Asymmetric):
+ * - Top margin: Tier 2 (Connected) - pulls toward intro text ("Here's the bytes:")
+ * - Bottom margin: Tier 3 (Flow) - provides moderate reset before next paragraph
+ * - Label uses Tier 1 (Atomic) gap to data - they are one visual unit
+ */
 export function ByteStream({ bytes, label }: ByteStreamProps) {
   return (
-    <div className="mt-4 mb-2">
+    <div
+      style={{
+        marginTop: "var(--space-connected)",
+        marginBottom: "var(--space-flow)",
+      }}
+    >
       {label && (
-        <div className="text-xs font-bold text-muted uppercase tracking-wider mb-3">
+        <div
+          className="text-xs font-bold text-muted uppercase tracking-wider"
+          style={{ marginBottom: "var(--space-atomic)" }}
+        >
           {label}
         </div>
       )}

@@ -1,8 +1,22 @@
 import React from "react";
 
+/**
+ * Table Component - Data Display Block
+ *
+ * SPACING STRATEGY (Component Sandwich - Asymmetric):
+ * - Top margin: Tier 2 (Connected) - pulls toward the intro text above
+ * - Bottom margin: Tier 3 (Flow) - provides reset before next paragraph
+ * - Tables typically follow "Here's the data:" pattern
+ */
 export function Table(props: React.HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="my-8 w-full overflow-x-auto rounded-xl border border-border shadow-sm">
+    <div
+      className="w-full overflow-x-auto rounded-xl border border-border shadow-sm"
+      style={{
+        marginTop: "var(--space-connected)",
+        marginBottom: "var(--space-flow)",
+      }}
+    >
       <table className="w-full text-left text-sm" {...props} />
     </div>
   );
