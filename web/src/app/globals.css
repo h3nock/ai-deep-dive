@@ -1,42 +1,97 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Eye-Safe Theme Configuration (Tailwind v4 CSS-First)
+   HARD LOCKED TO DARK MODE - No light mode support
+   Optimized for 4+ hour reading sessions
+   ========================================================================== */
+
+/* Force dark mode at CSS level - ignore system preferences */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark !important;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    color-scheme: dark !important;
   }
 }
 
+@theme inline {
+  /* THE CANVAS - Warm enough to avoid blue light strain, dark enough for immersion */
+  --color-background: #09090B; /* Zinc-950 */
+  --color-surface: #18181B;    /* Zinc-900 (Cards/Sidebars) */
+  
+  /* THE TEXT HIERARCHY - Night Reading Optimized (No Glow/Bloom) */
+  --color-primary: #D4D4D8;    /* Zinc-300 (Headings - soft, no halation) */
+  --color-secondary: #A1A1AA;  /* Zinc-400 (Body text) */
+  --color-muted: #71717A;      /* Zinc-500 (Meta/Captions) */
+  --color-border: #27272A;     /* Zinc-800 (Dividers) */
+  
+  /* SEMANTIC STATES - Correct/Error feedback */
+  --color-success: #34D399;    /* Emerald-400 (Correct states) */
+  --color-error: #FB7185;      /* Rose-400 (Error states) */
+  
+  /* Legacy support */
+  --color-foreground: var(--color-secondary);
+  
+  /* Typography */
+  --font-sans: var(--font-geist-sans), "Geist Sans", "Inter", sans-serif;
+  --font-mono: var(--font-geist-mono), "Geist Mono", "JetBrains Mono", monospace;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-secondary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   Base Typography - Eye-Safe Reading Configuration
+   ========================================================================== */
+
+@layer base {
+  /* THE READING PARAGRAPH - Most important class for course content */
+  p {
+    @apply text-lg;           /* 18px (Standard 16px too small for long sessions) */
+    @apply leading-relaxed;   /* 1.75 Line Height (Lets the eye breathe) */
+    @apply tracking-wide;     /* +0.025em (Prevents letters merging in glow) */
+    @apply font-normal;       /* Weight 400 (NEVER use Light/300) */
+    @apply max-w-[65ch];      /* Max 65 characters wide (Prevents neck tracking fatigue) */
+  }
+  
+  /* Headings - High contrast for scanning */
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-primary);
+    @apply font-semibold;
+  }
+  
+  /* Meta text - Low noise */
+  small, .text-muted {
+    color: var(--color-muted);
+  }
+  
+  /* CODE BLOCKS - Deep Tech Terminal Style */
+  pre {
+    @apply text-[0.875rem];
+    background-color: #121212 !important; /* Slightly lighter than page void */
+    border: 1px solid #27272A; /* Zinc-800 - subtle edge */
+    border-radius: 0.5rem;
+  }
+  
+  code {
+    @apply text-[0.875em];
+    font-family: var(--font-mono);
+  }
 }
 
 /* Professional Grid Pattern */
 .bg-grid-pattern {
   background-size: 40px 40px;
-  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-}
-
-@media (prefers-color-scheme: dark) {
-  .bg-grid-pattern {
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  }
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
 /* Subtle Gradient Animation */
@@ -59,56 +114,250 @@ body {
   animation: gradient-shift 8s ease infinite;
 }
 
-/* Custom Scrollbar Styles */
+/* Custom Scrollbar Styles - Eye-Safe Zinc Theme */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #202020; /* Dark background, similar to editor's overall dark theme */
+  background: #09090B; /* Matches --color-background */
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4a4a4a; /* Medium dark gray for the thumb */
+  background: #27272A; /* Matches --color-border (Zinc-800) */
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #606060; /* Slightly lighter gray on hover */
+  background: #3f3f46; /* Zinc-700 */
 }
 
-/* Code Block Styling - rehype-pretty-code */
+/* Code Block Styling - rehype-pretty-code (Deep Tech Terminal Style) */
 [data-rehype-pretty-code-figure] {
-  margin: 1rem 0;
+  margin: 1.5rem 0;
 }
 
 [data-rehype-pretty-code-figure] pre {
-  padding: 1rem;
+  padding: 1rem 1.25rem;
   border-radius: 0.5rem;
   overflow-x: auto;
   font-size: 0.875rem;
-  line-height: 1.6;
+  line-height: 1.7;
+  background-color: #121212 !important; /* Slightly lighter than page void */
+  border: 1px solid #27272A; /* Zinc-800 - subtle edge */
 }
 
 [data-rehype-pretty-code-figure] code {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.875rem;
+  background: transparent !important;
 }
 
-/* Inline code */
+/* Code block with title/caption */
+[data-rehype-pretty-code-title] {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: #71717A; /* Zinc-500 (muted) */
+  background-color: #121212;
+  border: 1px solid #27272A;
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+[data-rehype-pretty-code-title] + pre {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  margin-top: 0 !important;
+}
+
+/* Inline code - Eye-Safe */
 :not(pre) > code {
   padding: 0.2em 0.4em;
   border-radius: 0.25rem;
   font-size: 0.875em;
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: #18181B; /* Zinc-900 (surface) */
+  color: #D4D4D8; /* Zinc-300 (secondary) */
 }
 
-@media (prefers-color-scheme: dark) {
-  :not(pre) > code {
-    background-color: #1e293b;
-    color: #e2e8f0;
-  }
+/* ==========================================================================
+   Prose Overrides - Night Reading Safe (No Glow/Bloom)
+   ========================================================================== */
+
+.prose {
+  --tw-prose-body: #A1A1AA;           /* Zinc-400 */
+  --tw-prose-headings: #D4D4D8;       /* Zinc-300 (same as primary - no bright whites) */
+  --tw-prose-lead: #A1A1AA;           /* Zinc-400 */
+  --tw-prose-links: #D4D4D8;          /* Zinc-300 */
+  --tw-prose-bold: #D4D4D8;           /* Zinc-300 (matches headings - no bloom) */
+  --tw-prose-counters: #71717A;       /* Zinc-500 (muted) */
+  --tw-prose-bullets: #52525B;        /* Zinc-600 */
+  --tw-prose-hr: #27272A;             /* Zinc-800 (border) */
+  --tw-prose-quotes: #A1A1AA;         /* Zinc-400 */
+  --tw-prose-quote-borders: #27272A;  /* Zinc-800 */
+  --tw-prose-captions: #71717A;       /* Zinc-500 (muted) */
+  --tw-prose-code: #A1A1AA;           /* Zinc-400 (same as body) */
+  --tw-prose-pre-code: #A1A1AA;       /* Zinc-400 */
+  --tw-prose-pre-bg: #121212;         /* Code void */
+  --tw-prose-th-borders: #27272A;     /* Zinc-800 */
+  --tw-prose-td-borders: #27272A;     /* Zinc-800 */
 }
+
+/* Table Styling - Unified Column (matches text width) */
+.prose table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.prose thead {
+  background-color: #18181B; /* Zinc-900 (surface) */
+}
+
+.prose th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 500;
+  color: #D4D4D8; /* Primary */
+  border-bottom: 1px solid #27272A;
+}
+
+.prose td {
+  padding: 0.75rem 1rem;
+  color: #A1A1AA; /* Secondary */
+  border-bottom: 1px solid #27272A;
+}
+
+.prose tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.prose table code {
+  font-size: 0.8125rem;
+  padding: 0.125rem 0.375rem;
+  background-color: #27272A; /* Zinc-800 */
+  border-radius: 0.25rem;
+}
+
+/* Override prose-invert since we're dark-only */
+.prose-invert {
+  --tw-prose-body: #A1A1AA;
+  --tw-prose-headings: #D4D4D8;
+  --tw-prose-lead: #A1A1AA;
+  --tw-prose-links: #D4D4D8;
+  --tw-prose-bold: #D4D4D8;           /* No bloom - same as headings */
+  --tw-prose-counters: #71717A;
+  --tw-prose-bullets: #52525B;
+  --tw-prose-hr: #27272A;
+  --tw-prose-quotes: #A1A1AA;
+  --tw-prose-quote-borders: #27272A;
+  --tw-prose-captions: #71717A;
+  --tw-prose-code: #A1A1AA;
+  --tw-prose-pre-code: #A1A1AA;
+  --tw-prose-pre-bg: #121212;
+  --tw-prose-th-borders: #27272A;
+  --tw-prose-td-borders: #27272A;
+}
+
+/* ==========================================================================
+   Linear/Vercel-Style Card Hover Effects
+   Border-driven glow with stable background
+   ========================================================================== */
+
+/* Card Glow Container - handles the glow effect on border */
+.card-glow {
+  --glow-color: rgba(161, 161, 170, 0); /* Zinc-400 at 0% */
+  position: relative;
+  border-radius: 0.75rem;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The glow ring - positioned behind the card */
+.card-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    var(--glow-color),
+    transparent 40%,
+    transparent 60%,
+    var(--glow-color)
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+/* Hover state - activate the glow */
+.card-glow:hover {
+  --glow-color: rgba(161, 161, 170, 0.5); /* Zinc-400 at 50% */
+}
+
+.card-glow:hover::before {
+  opacity: 1;
+}
+
+/* Subtle box shadow glow for depth */
+.card-glow:hover {
+  box-shadow: 
+    0 0 0 1px rgba(161, 161, 170, 0.15),
+    0 4px 24px -4px rgba(0, 0, 0, 0.4),
+    0 0 40px -8px rgba(161, 161, 170, 0.1);
+}
+
+/* Interactive variant - for clickable cards */
+.card-glow-interactive {
+  cursor: pointer;
+}
+
+.card-glow-interactive:hover {
+  --glow-color: rgba(212, 212, 216, 0.4); /* Zinc-300 - slightly brighter for interactive */
+  transform: translateY(-2px);
+}
+
+.card-glow-interactive:hover::before {
+  opacity: 1;
+}
+
+.card-glow-interactive:active {
+  transform: translateY(0);
+  transition-duration: 100ms;
+}
+
+/* Disabled state */
+.card-glow-disabled {
+  cursor: default;
+}
+
+.card-glow-disabled:hover {
+  --glow-color: rgba(161, 161, 170, 0);
+  transform: none;
+  box-shadow: none;
+}
+
+.card-glow-disabled:hover::before {
+  opacity: 0;
+}
+
+/* ==========================================================================
+   Debug Utility - Uncomment to find pure white/black violations
+   ========================================================================== */
+/* 
+.debug-contrast * {
+  outline: 1px solid red;
+}
+*/
