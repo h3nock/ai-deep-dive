@@ -35,9 +35,10 @@ export const courseConfig: Record<string, CourseConfig> = {
     outcome:
       "A fully functional chatbot built entirely by you, with deep understanding of how every piece works.",
     prerequisites: [
-      "Python proficiency",
-      "Basic PyTorch (tensors, autograd)",
+      "Python proficiency (classes, lists, dictionaries)",
       "Linear algebra fundamentals (matrix multiplication, vectors)",
+      "Basic PyTorch (tensors)",
+      "Basic understanding of neural networks (Loss functions, Gradient Descent, Activation functions)",
     ],
     phases: [
       {
