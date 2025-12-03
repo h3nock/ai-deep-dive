@@ -104,8 +104,10 @@ export function Callout({ type = "note", title, children }: CalloutProps) {
           className="flex items-center gap-2"
           style={{ marginBottom: "var(--space-atomic)" }}
         >
-          <Icon className={`w-4 h-4 ${style.icon}`} />
-          <h4 className="font-semibold text-sm text-primary">{title}</h4>
+          <Icon className={`w-4 h-4 shrink-0 ${style.icon}`} />
+          <span className="font-semibold text-sm text-primary leading-none">
+            {title}
+          </span>
         </div>
       )}
       <div className="text-secondary text-base leading-relaxed [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
