@@ -106,7 +106,7 @@ export function StepContainer({
               {/* Centered Content Column with Responsive Gutter */}
               <div className="mx-auto max-w-[85ch] px-6 lg:px-8">
                 {/* Header */}
-                <header className="mb-12">
+                <header className="mb-12 border-b border-border pb-8">
                   <div className="flex items-center gap-3 mb-6 text-sm text-muted">
                     <Link
                       href={backLink.href}
@@ -126,7 +126,7 @@ export function StepContainer({
                       <h1 className="text-3xl md:text-4xl font-bold text-primary mb-4 tracking-tight">
                         {post.title}
                       </h1>
-                      <p className="text-lg text-secondary leading-relaxed">
+                      <p className="text-lg text-muted leading-relaxed">
                         {post.description}
                       </p>
                     </div>
