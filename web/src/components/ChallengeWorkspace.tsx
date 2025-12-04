@@ -64,6 +64,7 @@ export interface Challenge {
     inputs: Record<string, string>;
     expected: string;
     hidden?: boolean;
+    explanation?: string;
   }[];
   executionSnippet?: string; // Code to run the function, e.g. "print(solution(numRows))"
   dependencies?: string[]; // Required packages (determines browser vs CLI execution)
@@ -77,6 +78,7 @@ interface TestCase {
   inputs: Record<string, string>;
   expected: string;
   hidden?: boolean;
+  explanation?: string;
 }
 
 interface TestResult {
@@ -94,6 +96,58 @@ interface ChallengeWorkspaceProps {
   challenges: Challenge[];
   activeChallengeIndex?: number | null;
   setActiveChallengeIndex?: (index: number | null) => void;
+}
+
+// ExampleCard component for displaying test cases with optional explanations
+function ExampleCard({ testCase }: { testCase: TestCase }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="flex flex-col gap-2 font-mono text-sm">
+        <div>
+          <span className="text-muted">Input:</span>{" "}
+          <span className="text-secondary">
+            {Object.entries(testCase.inputs)
+              .map(([k, v]) => `${k} = ${v}`)
+              .join(", ")}
+          </span>
+        </div>
+        <div>
+          <span className="text-muted">Output:</span>{" "}
+          <span className="text-secondary">{testCase.expected}</span>
+        </div>
+      </div>
+
+      {/* Explanation toggle */}
+      {testCase.explanation && (
+        <div className="mt-3 pt-3 border-t border-zinc-800">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-1.5 text-xs text-muted hover:text-secondary transition-colors"
+          >
+            {isExpanded ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+            <span>{isExpanded ? "Hide explanation" : "Why?"}</span>
+          </button>
+
+          {isExpanded && (
+            <div className="mt-3 text-sm text-secondary font-sans prose prose-invert prose-sm max-w-none [&>p]:my-2 [&>ul]:my-2 [&>ol]:my-2 [&_code]:text-xs [&_code]:bg-zinc-800 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+              >
+                {testCase.explanation}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function ChallengeWorkspace({
@@ -749,27 +803,7 @@ export function ChallengeWorkspace({
                         return nonHidden
                           .slice(0, visibleCount)
                           .map((tc, idx) => (
-                            <div
-                              key={tc.id}
-                              className="p-4 bg-[#121212] rounded-lg border border-zinc-800"
-                            >
-                              <div className="flex flex-col gap-2 font-mono text-sm">
-                                <div>
-                                  <span className="text-muted">Input:</span>{" "}
-                                  <span className="text-secondary">
-                                    {Object.entries(tc.inputs)
-                                      .map(([k, v]) => `${k} = ${v}`)
-                                      .join(", ")}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-muted">Output:</span>{" "}
-                                  <span className="text-secondary">
-                                    {tc.expected}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
+                            <ExampleCard key={tc.id} testCase={tc} />
                           ));
                       })()}
                     </div>

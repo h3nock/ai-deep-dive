@@ -29,6 +29,7 @@ export interface Challenge {
     inputs: Record<string, string>;
     expected: string;
     hidden?: boolean;
+    explanation?: string;
   }[];
   executionSnippet?: string;
   dependencies?: string[];
