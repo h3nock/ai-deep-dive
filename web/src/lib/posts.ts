@@ -270,6 +270,13 @@ export async function getPostBySlug(
           const problemMatch = bundleName.match(/^(\d+)/);
           const problemNumber = problemMatch ? problemMatch[1] : undefined;
 
+          // Auto-generate unique ID from chapter and problem numbers
+          // Format: "02-03" for chapter 02, problem 03
+          const autoId =
+            chapterNumber && problemNumber
+              ? `${chapterNumber}-${problemNumber}`
+              : bundleName;
+
           // Load description.md
           const descriptionPath = path.join(bundlePath, "description.md");
           if (!fs.existsSync(descriptionPath)) {
@@ -296,6 +303,7 @@ export async function getPostBySlug(
 
           return {
             ...challengeData,
+            id: autoId, // Override with auto-generated ID (always unique)
             description: challengeBody,
             defaultTestCases,
             chapterNumber,

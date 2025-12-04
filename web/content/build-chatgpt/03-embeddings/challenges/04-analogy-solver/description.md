@@ -1,5 +1,4 @@
 ---
-id: "analogy-solver"
 title: "The Analogy Solver"
 difficulty: "Hard"
 initialCode: |

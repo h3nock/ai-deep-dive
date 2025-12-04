@@ -1,5 +1,4 @@
 ---
-id: "byte-inspector"
 title: "The Byte Inspector"
 difficulty: "Medium"
 initialCode: |

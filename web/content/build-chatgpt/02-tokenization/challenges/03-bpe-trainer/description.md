@@ -1,5 +1,4 @@
 ---
-id: "bpe-trainer"
 title: "The BPE Trainer"
 difficulty: "Hard"
 initialCode: |

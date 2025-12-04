@@ -1,5 +1,4 @@
 ---
-id: "matrix-construction"
 title: "The Matrix Constructor"
 difficulty: "Easy"
 initialCode: |

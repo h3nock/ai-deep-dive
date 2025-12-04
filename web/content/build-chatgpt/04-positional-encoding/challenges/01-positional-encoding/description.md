@@ -1,5 +1,4 @@
 ---
-id: "positional-encoding"
 title: "Injecting Position"
 difficulty: "Easy"
 initialCode: |

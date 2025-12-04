@@ -1,5 +1,4 @@
 ---
-id: "pair-counter"
 title: "The Pair Counter"
 difficulty: "Easy"
 initialCode: |

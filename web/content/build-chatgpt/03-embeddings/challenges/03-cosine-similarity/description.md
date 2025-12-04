@@ -1,5 +1,4 @@
 ---
-id: "cosine-similarity"
 title: "Cosine Similarity"
 difficulty: "Medium"
 initialCode: |

@@ -1,5 +1,4 @@
 ---
-id: "encoder"
 title: "The Encoder"
 difficulty: "Easy"
 initialCode: |

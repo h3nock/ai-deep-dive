@@ -1,5 +1,4 @@
 ---
-id: "embedding-lookup"
 title: "The Embedding Lookup"
 difficulty: "Easy"
 initialCode: |

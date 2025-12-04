@@ -1,5 +1,4 @@
 ---
-id: "token-merger"
 title: "The Token Merger"
 difficulty: "Medium"
 initialCode: |
