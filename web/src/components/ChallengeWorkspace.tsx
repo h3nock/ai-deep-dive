@@ -14,18 +14,14 @@ import {
   Loader2,
   RotateCcw,
   Send,
-  ChevronRight,
   ChevronUp,
   ChevronDown,
   ArrowRight,
   Terminal,
-  ExternalLink,
 } from "lucide-react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import { AutoResizingEditor } from "./AutoResizingEditor";
 import ReactMarkdown from "react-markdown";
-import { useDebounce } from "use-debounce";
-import { PYTHON_HARNESS } from "@/lib/python-harness";
 import {
   loadPyodide,
   isPyodideLoaded,
@@ -69,7 +65,6 @@ export interface Challenge {
   executionSnippet?: string; // Code to run the function, e.g. "print(solution(numRows))"
   dependencies?: string[]; // Required packages (determines browser vs CLI execution)
   visibleTestCases?: number;
-  browserOnly?: boolean; // Force browser execution even if bridge connected
   chapterNumber?: string; // e.g., "02" from "02-tokenization"
   problemNumber?: string; // e.g., "01" from "01-pair-counter"
 }
@@ -139,19 +134,14 @@ export function ChallengeWorkspace({
     "console" | "testcases" | "result"
   >("console");
 
-  // Bridge State
-  const [isConnected, setIsConnected] = useState(false);
+  // Execution State
   const [isRunning, setIsRunning] = useState(false);
-  const [showInstallInput, setShowInstallInput] = useState(false);
-  const [installPackageName, setInstallPackageName] = useState("");
-  const wsRef = useRef<WebSocket | null>(null);
-  const [debouncedCode] = useDebounce(code, 1000);
 
   // Pyodide State
   const [pyodideStatus, setPyodideStatus] = useState<
     "idle" | "loading" | "ready" | "error"
   >("idle");
-  const [executionMode, setExecutionMode] = useState<"browser" | "bridge">(
+  const [executionMode, setExecutionMode] = useState<"browser" | "cli">(
     "browser"
   );
   // We don't need to debounce test cases for sync anymore, we send them on run
@@ -214,7 +204,7 @@ export function ChallengeWorkspace({
       setExecutionMode("browser");
     } else {
       // Requires packages not available in Pyodide - must use CLI
-      setExecutionMode("bridge");
+      setExecutionMode("cli");
     }
   }, [activeChallenge]);
 
@@ -335,99 +325,6 @@ export function ChallengeWorkspace({
       }
     };
   }, [isVimMode, monaco]);
-
-  // WebSocket Bridge Connection
-  useEffect(() => {
-    const connect = () => {
-      const ws = new WebSocket("ws://localhost:8000");
-
-      ws.onopen = () => {
-        setIsConnected(true);
-        ws.send(JSON.stringify({ command: "handshake" }));
-      };
-
-      ws.onclose = () => {
-        setIsConnected(false);
-        // Try to reconnect after 3 seconds
-        setTimeout(connect, 3000);
-      };
-
-      ws.onerror = (err) => {
-        console.error("WebSocket error:", err);
-        ws.close();
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "stdout") {
-            // If we are running the harness, the output is the JSON result
-            // But we might get partial lines. For now, let's just accumulate raw output
-            // and try to parse it at the end if it looks like JSON?
-            // Actually, the harness prints the JSON at the very end.
-            setOutput((prev) => (prev || "") + data.data);
-          } else if (data.type === "stderr") {
-            setOutput((prev) => (prev || "") + data.data);
-          } else if (data.type === "exit") {
-            setIsRunning(false);
-            // Try to parse the last line of output as JSON results
-            // This is a bit hacky but works for the harness
-            setOutput((prev) => {
-              const fullOutput = prev || "";
-              const lines = fullOutput.trim().split("\n");
-              const lastLine = lines[lines.length - 1];
-              try {
-                const results = JSON.parse(lastLine);
-                if (Array.isArray(results)) {
-                  setTestResults(results);
-                  setActiveTab("result");
-                  // Reset to initial height when expanding
-                  if (isBottomPanelCollapsed) {
-                    setBottomPanelHeight(45);
-                  }
-                  setIsBottomPanelCollapsed(false);
-                }
-              } catch (e) {
-                // Not JSON, just regular output
-              }
-              return fullOutput;
-            });
-          }
-        } catch (e) {
-          console.error("Failed to parse message:", event.data);
-        }
-      };
-
-      wsRef.current = ws;
-    };
-
-    connect();
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, []);
-
-  // Sync Code to Local Bridge
-  useEffect(() => {
-    if (
-      isConnected &&
-      wsRef.current &&
-      wsRef.current.readyState === WebSocket.OPEN
-    ) {
-      wsRef.current.send(
-        JSON.stringify({
-          command: "sync",
-          filename: "main.py",
-          content: debouncedCode,
-        })
-      );
-    }
-  }, [debouncedCode, isConnected]);
-
-  // Remove old sync test cases effect
 
   // Keep latest handleRun in ref for event listeners
   const handleRunRef = useRef<(mode?: "run" | "submit") => void>(() => {});
@@ -571,76 +468,6 @@ export function ChallengeWorkspace({
         } finally {
           setIsRunning(false);
         }
-      } else if (isConnected) {
-        // === BRIDGE EXECUTION (Local Python) ===
-        setIsRunning(true);
-        setOutput("");
-        setTestResults(null);
-        setLastRunMode(mode);
-
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          // 1. Sync User Code
-          wsRef.current.send(
-            JSON.stringify({
-              command: "sync",
-              filename: "main.py",
-              content: code,
-            })
-          );
-
-          // 2. Sync Harness
-          wsRef.current.send(
-            JSON.stringify({
-              command: "sync",
-              filename: "harness.py",
-              content: PYTHON_HARNESS,
-            })
-          );
-
-          // 3. Sync Test Config
-          const formattedCases = casesToRun.map((tc) => {
-            let inputCode = "";
-            Object.entries(tc.inputs).forEach(([key, value]) => {
-              inputCode += `${key} = ${value}\n`;
-            });
-            return {
-              id: tc.id,
-              input: inputCode,
-              expected: tc.expected,
-            };
-          });
-
-          let runnerCode =
-            activeChallenge?.executionSnippet ||
-            "print('No execution snippet defined')";
-          if (
-            runnerCode.trim().startsWith("print(") &&
-            runnerCode.trim().endsWith(")")
-          ) {
-            runnerCode = runnerCode.trim().slice(6, -1);
-          }
-
-          const config = {
-            cases: formattedCases,
-            runner: runnerCode,
-          };
-
-          wsRef.current.send(
-            JSON.stringify({
-              command: "sync",
-              filename: "test_config.json",
-              content: JSON.stringify(config),
-            })
-          );
-
-          // 4. Run Harness
-          wsRef.current.send(
-            JSON.stringify({
-              command: "run",
-              filename: "harness.py",
-            })
-          );
-        }
       } else {
         // No execution method available - show instructions
         if (browserSupported) {
@@ -673,31 +500,9 @@ export function ChallengeWorkspace({
       activeChallenge,
       executionMode,
       pyodideStatus,
-      isConnected,
       isBottomPanelCollapsed,
     ]
   );
-
-  const handleInstall = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isConnected || !installPackageName.trim()) return;
-
-    setOutput(
-      (prev) =>
-        (prev || "") + `\n> Requesting install: ${installPackageName}...\n`
-    );
-
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({
-          command: "install",
-          package: installPackageName.trim(),
-        })
-      );
-      setInstallPackageName("");
-      setShowInstallInput(false);
-    }
-  };
 
   // Resizer Logic (Left Panel)
   const startResizingLeft = (e: React.MouseEvent) => {
@@ -870,7 +675,7 @@ export function ChallengeWorkspace({
               </ReactMarkdown>
 
               {/* CLI Mode Note */}
-              {executionMode === "bridge" && (
+              {executionMode === "cli" && (
                 <div className="mt-6 pl-4 border-l-2 border-amber-400">
                   <p className="text-sm text-secondary">
                     This challenge requires local implementation.{" "}
@@ -1119,9 +924,7 @@ export function ChallengeWorkspace({
                   onClick={() => handleRun("run")}
                   disabled={
                     isRunning ||
-                    (executionMode === "browser" &&
-                      pyodideStatus === "error") ||
-                    (executionMode === "bridge" && !isConnected)
+                    (executionMode === "browser" && pyodideStatus === "error")
                   }
                   title={`Run visible tests (${shortcutLabel})`}
                   className="flex items-center gap-2 px-4 py-1.5 bg-zinc-600 hover:bg-zinc-500 disabled:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors"
@@ -1139,9 +942,7 @@ export function ChallengeWorkspace({
                   onClick={() => handleRun("submit")}
                   disabled={
                     isRunning ||
-                    (executionMode === "browser" &&
-                      pyodideStatus === "error") ||
-                    (executionMode === "bridge" && !isConnected)
+                    (executionMode === "browser" && pyodideStatus === "error")
                   }
                   title="Submit and run all tests"
                   className="flex items-center gap-2 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors"

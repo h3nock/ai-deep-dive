@@ -11,12 +11,12 @@ export interface AllProgress {
   [courseId: string]: CourseProgress;
 }
 
-const STORAGE_KEY = 'course-progress';
+const STORAGE_KEY = "course-progress";
 
 // Get all progress data
 export function getAllProgress(): AllProgress {
-  if (typeof window === 'undefined') return {};
-  
+  if (typeof window === "undefined") return {};
+
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     return data ? JSON.parse(data) : {};
@@ -33,14 +33,14 @@ export function getCourseProgress(courseId: string): CourseProgress | null {
 
 // Save progress for a course
 function saveProgress(courseId: string, progress: CourseProgress): void {
-  if (typeof window === 'undefined') return;
-  
+  if (typeof window === "undefined") return;
+
   try {
     const all = getAllProgress();
     all[courseId] = progress;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
   } catch (error) {
-    console.error('Failed to save progress:', error);
+    console.error("Failed to save progress:", error);
   }
 }
 
@@ -51,12 +51,12 @@ export function markStepComplete(courseId: string, step: number): void {
     lastVisited: new Date().toISOString(),
     currentStep: step,
   };
-  
+
   if (!progress.completedSteps.includes(step)) {
     progress.completedSteps.push(step);
     progress.completedSteps.sort((a, b) => a - b);
   }
-  
+
   progress.lastVisited = new Date().toISOString();
   saveProgress(courseId, progress);
 }
@@ -65,8 +65,8 @@ export function markStepComplete(courseId: string, step: number): void {
 export function markStepIncomplete(courseId: string, step: number): void {
   const progress = getCourseProgress(courseId);
   if (!progress) return;
-  
-  progress.completedSteps = progress.completedSteps.filter(s => s !== step);
+
+  progress.completedSteps = progress.completedSteps.filter((s) => s !== step);
   progress.lastVisited = new Date().toISOString();
   saveProgress(courseId, progress);
 }
@@ -75,7 +75,7 @@ export function markStepIncomplete(courseId: string, step: number): void {
 export function toggleStepComplete(courseId: string, step: number): boolean {
   const progress = getCourseProgress(courseId);
   const isCompleted = progress?.completedSteps.includes(step) ?? false;
-  
+
   if (isCompleted) {
     markStepIncomplete(courseId, step);
     return false;
@@ -98,63 +98,27 @@ export function updateCurrentStep(courseId: string, step: number): void {
     lastVisited: new Date().toISOString(),
     currentStep: step,
   };
-  
+
   progress.currentStep = step;
   progress.lastVisited = new Date().toISOString();
   saveProgress(courseId, progress);
 }
 
 // Get completion percentage
-export function getCompletionPercentage(courseId: string, totalSteps: number): number {
+export function getCompletionPercentage(
+  courseId: string,
+  totalSteps: number
+): number {
   const progress = getCourseProgress(courseId);
   if (!progress || totalSteps === 0) return 0;
-  
+
   return Math.round((progress.completedSteps.length / totalSteps) * 100);
-}
-
-// Get the next incomplete step (for "Continue" button)
-export function getNextStep(courseId: string, allSteps: number[]): number | null {
-  const progress = getCourseProgress(courseId);
-  if (!progress) return allSteps[0] ?? null;
-  
-  // Find first incomplete step
-  for (const step of allSteps) {
-    if (!progress.completedSteps.includes(step)) {
-      return step;
-    }
-  }
-  
-  // All complete, return last step
-  return allSteps[allSteps.length - 1] ?? null;
-}
-
-// Export progress as JSON (for backup)
-export function exportProgress(): string {
-  return JSON.stringify(getAllProgress(), null, 2);
-}
-
-// Import progress from JSON (for restore)
-export function importProgress(json: string): boolean {
-  try {
-    const data = JSON.parse(json);
-    if (typeof window === 'undefined') return false;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Clear all progress
-export function clearAllProgress(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(STORAGE_KEY);
 }
 
 // Clear progress for a specific course
 export function clearCourseProgress(courseId: string): void {
   const all = getAllProgress();
   delete all[courseId];
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 }

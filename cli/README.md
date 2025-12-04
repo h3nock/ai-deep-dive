@@ -53,7 +53,7 @@ The test command will:
 - Find your solution file (even if you reorganized the folder)
 - Run the test suite
 - Show detailed results
-- Sync your progress to the website (if bridge is connected)
+- Update your local progress
 
 ## Commands
 
@@ -79,7 +79,7 @@ You can reorganize your files however you like within the workspace. The CLI wil
 
 ### Progress Sync
 
-Your progress is stored locally in `~/.ai-deep-dive/status.json`. When the website bridge is running, progress syncs automatically.
+Your progress is stored locally in `~/.ai-deep-dive/status.json`. Use `ai-deep-dive sync` to sync your progress to the website.
 
 ## Development
 
