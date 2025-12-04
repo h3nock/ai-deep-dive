@@ -499,3 +499,26 @@ body {
   outline: 1px solid red;
 }
 */
+
+/* ==========================================================================
+   Monaco Editor Overrides
+   Ensures no white flash during editor loading
+   ========================================================================== */
+
+/* Monaco editor wrapper - force dark background immediately */
+.monaco-editor,
+.monaco-editor-background,
+.monaco-editor .overflow-guard {
+  background-color: #09090B !important;
+}
+
+/* Monaco loader wrapper (before editor is ready) */
+section[style*="display: flex"][style*="justify-content: center"] {
+  background-color: #09090B !important;
+}
+
+/* Force all Monaco internal containers to use dark background */
+.monaco-editor .margin,
+.monaco-editor .monaco-scrollable-element {
+  background-color: #09090B !important;
+}

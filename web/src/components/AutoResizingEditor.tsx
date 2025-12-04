@@ -1,5 +1,23 @@
 import React, { useRef, useState } from "react";
-import Editor, { OnMount } from "@monaco-editor/react";
+import Editor, { OnMount, BeforeMount } from "@monaco-editor/react";
+
+// Custom Monaco Theme - Eye-Safe Zinc Dark (matches ChallengeWorkspace)
+const ZINC_DARK_THEME = {
+  base: "vs-dark" as const,
+  inherit: true,
+  rules: [],
+  colors: {
+    "editor.background": "#09090B",
+    "editor.foreground": "#D4D4D8",
+    "editor.lineHighlightBackground": "#18181B",
+    "editor.selectionBackground": "#27272A",
+    "editorGutter.background": "#09090B",
+    "editorCursor.foreground": "#D4D4D8",
+    "minimap.background": "#09090B",
+    "scrollbarSlider.background": "#27272A80",
+    "scrollbarSlider.hoverBackground": "#3f3f4680",
+  },
+};
 
 interface AutoResizingEditorProps {
   value: string;
@@ -18,6 +36,11 @@ export function AutoResizingEditor({
 }: AutoResizingEditorProps) {
   const [height, setHeight] = useState(minHeight);
   const editorRef = useRef<any>(null);
+
+  const handleBeforeMount: BeforeMount = (monaco) => {
+    // Define theme before mount to prevent flash
+    monaco.editor.defineTheme("zinc-dark", ZINC_DARK_THEME);
+  };
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -43,15 +66,17 @@ export function AutoResizingEditor({
   return (
     <div
       style={{ height: height, transition: "height 0.1s ease-out" }}
-      className="w-full rounded-md overflow-hidden bg-background"
+      className="w-full rounded-md overflow-hidden bg-[#09090B]"
     >
       <Editor
         height={height}
         defaultLanguage={language}
         value={value}
         onChange={onChange}
-        theme="vs-dark"
+        theme="zinc-dark"
+        beforeMount={handleBeforeMount}
         onMount={handleEditorDidMount}
+        loading={<div className="w-full h-full bg-[#09090B]" />}
         options={{
           minimap: { enabled: false },
           fontSize: 14,

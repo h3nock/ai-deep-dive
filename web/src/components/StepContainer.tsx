@@ -8,6 +8,7 @@ import { PostData } from "@/lib/posts";
 import { ChallengeWorkspace } from "./ChallengeWorkspace";
 import { MarkCompleteButton } from "./MarkCompleteButton";
 import { useProgress } from "@/lib/progress-context";
+import { preloadMonaco } from "@/lib/monaco-preload";
 
 interface StepContainerProps {
   post: PostData;
@@ -37,6 +38,14 @@ export function StepContainer({
       setCurrentStep(collection, post.step);
     }
   }, [collection, post.step, setCurrentStep]);
+
+  // Preload Monaco editor in the background when page loads
+  // This ensures the editor is ready before user clicks "Challenges"
+  useEffect(() => {
+    if (hasChallenges) {
+      preloadMonaco();
+    }
+  }, [hasChallenges]);
 
   // Smart Back Link Logic
   const getBackLink = () => {

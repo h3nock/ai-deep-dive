@@ -451,8 +451,7 @@ export function ChallengeWorkspace({
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
 
-    // Define and apply custom Zinc dark theme
-    monaco.editor.defineTheme("zinc-dark", ZINC_DARK_THEME);
+    // Theme is already defined in beforeMount, just ensure it's applied
     monaco.editor.setTheme("zinc-dark");
 
     // Add Cmd+Enter / Ctrl+Enter shortcut to editor
@@ -1158,7 +1157,7 @@ export function ChallengeWorkspace({
             </div>
 
             {/* Editor Area */}
-            <div className="flex-1 relative min-h-0">
+            <div className="flex-1 relative min-h-0 bg-[#09090B]">
               <Editor
                 height="100%"
                 defaultLanguage="python"
@@ -1166,6 +1165,15 @@ export function ChallengeWorkspace({
                 onChange={(value) => setCode(value || "")}
                 theme="zinc-dark"
                 onMount={handleEditorDidMount}
+                beforeMount={(monaco) => {
+                  // Define theme before mount to prevent flash
+                  monaco.editor.defineTheme("zinc-dark", ZINC_DARK_THEME);
+                }}
+                loading={
+                  <div className="w-full h-full bg-[#09090B] flex items-center justify-center">
+                    <div className="text-muted text-sm">Loading editor...</div>
+                  </div>
+                }
                 options={{
                   minimap: { enabled: false },
                   fontSize: 14,
