@@ -33,6 +33,8 @@ export interface Challenge {
   executionSnippet?: string;
   dependencies?: string[];
   visibleTestCases?: number;
+  chapterNumber?: string; // e.g., "02" from "02-tokenization"
+  problemNumber?: string; // e.g., "01" from "01-pair-counter"
 }
 
 export interface PostData {
@@ -250,6 +252,10 @@ export async function getPostBySlug(
       : legacyChallenges;
 
     if (fs.existsSync(challengesDir)) {
+      // Extract chapter number from slug (e.g., "02-tokenization" -> "02")
+      const chapterMatch = slug.match(/^(\d+)/);
+      const chapterNumber = chapterMatch ? chapterMatch[1] : undefined;
+
       const challengeBundles = fs
         .readdirSync(challengesDir, { withFileTypes: true })
         .filter((dirent) => dirent.isDirectory())
@@ -259,6 +265,10 @@ export async function getPostBySlug(
       data.challenges = challengeBundles
         .map((bundleName) => {
           const bundlePath = path.join(challengesDir, bundleName);
+
+          // Extract problem number from bundle name (e.g., "01-pair-counter" -> "01")
+          const problemMatch = bundleName.match(/^(\d+)/);
+          const problemNumber = problemMatch ? problemMatch[1] : undefined;
 
           // Load description.md
           const descriptionPath = path.join(bundlePath, "description.md");
@@ -288,6 +298,8 @@ export async function getPostBySlug(
             ...challengeData,
             description: challengeBody,
             defaultTestCases,
+            chapterNumber,
+            problemNumber,
           } as Challenge;
         })
         .filter(Boolean) as Challenge[]; // Filter out nulls
