@@ -22,6 +22,9 @@ import {
 import Editor, { useMonaco } from "@monaco-editor/react";
 import { AutoResizingEditor } from "./AutoResizingEditor";
 import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import {
   loadPyodide,
   isPyodideLoaded,
@@ -674,33 +677,11 @@ export function ChallengeWorkspace({
               </div>
             </div>
 
-            {/* Description */}
-            <div className="flex-1 overflow-y-auto p-6 prose prose-lg prose-invert max-w-none">
+            {/* Description - prose handles typography, custom overrides via Tailwind */}
+            <div className="flex-1 overflow-y-auto p-6 prose prose-invert max-w-none">
               <ReactMarkdown
-                components={{
-                  p: ({ node, ...props }) => (
-                    <p className="mb-4 leading-relaxed" {...props} />
-                  ),
-                  li: ({ node, ...props }) => (
-                    <li className="mb-2" {...props} />
-                  ),
-                  strong: ({ node, ...props }) => {
-                    const text = String(props.children);
-                    if (
-                      text.startsWith("Input:") ||
-                      text.startsWith("Output:") ||
-                      text.startsWith("Task:") ||
-                      text.startsWith("Hint:")
-                    ) {
-                      return (
-                        <div className="font-bold mt-4 mb-2 text-primary">
-                          {props.children}
-                        </div>
-                      );
-                    }
-                    return <strong {...props} />;
-                  },
-                }}
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
               >
                 {activeChallenge.description}
               </ReactMarkdown>
@@ -770,9 +751,9 @@ export function ChallengeWorkspace({
                           .map((tc, idx) => (
                             <div
                               key={tc.id}
-                              className="p-3 bg-[#121212] rounded-lg border border-zinc-800"
+                              className="p-4 bg-[#121212] rounded-lg border border-zinc-800"
                             >
-                              <div className="flex flex-col gap-1.5 font-mono text-xs">
+                              <div className="flex flex-col gap-2 font-mono text-sm">
                                 <div>
                                   <span className="text-muted">Input:</span>{" "}
                                   <span className="text-secondary">
