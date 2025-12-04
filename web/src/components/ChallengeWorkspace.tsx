@@ -1002,8 +1002,29 @@ export function ChallengeWorkspace({
                   monaco.editor.defineTheme("zinc-dark", ZINC_DARK_THEME);
                 }}
                 loading={
-                  <div className="w-full h-full bg-[#09090B] flex items-center justify-center">
-                    <div className="text-muted text-sm">Loading editor...</div>
+                  <div className="w-full h-full bg-[#09090B] pt-2 pl-4 font-mono text-sm leading-5">
+                    <div className="space-y-0 animate-pulse">
+                      <div className="flex items-center h-5">
+                        <span className="text-zinc-700 w-8 text-right select-none pr-4">1</span>
+                        <div className="h-3.5 bg-zinc-800/60 rounded w-56" />
+                      </div>
+                      <div className="flex items-center h-5">
+                        <span className="text-zinc-700 w-8 text-right select-none pr-4">2</span>
+                        <div className="ml-6 h-3.5 bg-zinc-800/40 rounded w-72" />
+                      </div>
+                      <div className="flex items-center h-5">
+                        <span className="text-zinc-700 w-8 text-right select-none pr-4">3</span>
+                        <div className="ml-6 h-3.5 bg-zinc-800/60 rounded w-48" />
+                      </div>
+                      <div className="flex items-center h-5">
+                        <span className="text-zinc-700 w-8 text-right select-none pr-4">4</span>
+                        <div className="ml-6 h-3.5 bg-zinc-800/40 rounded w-80" />
+                      </div>
+                      <div className="flex items-center h-5">
+                        <span className="text-zinc-700 w-8 text-right select-none pr-4">5</span>
+                        <div className="ml-6 h-3.5 bg-zinc-800/60 rounded w-64" />
+                      </div>
+                    </div>
                   </div>
                 }
                 options={{
