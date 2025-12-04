@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAllPosts } from "@/lib/posts";
 import { Navbar } from "@/components/Navbar";
-import { ArrowRight, ArrowLeft, Clock, Check, BookOpen } from "lucide-react";
+import { ArrowRight, ArrowLeft, Clock, BookOpen } from "lucide-react";
 import { ProgressBar } from "@/components/ProgressBar";
 import { ChapterCheckbox } from "@/components/ChapterCheckbox";
 import { ContinueButton } from "@/components/ContinueButton";
@@ -102,9 +102,23 @@ export default async function RoadmapPage({
             <h3 className="font-semibold text-primary mb-3 text-sm">
               What You'll Build
             </h3>
-            <p className="text-sm text-muted leading-relaxed">
-              {metadata.outcome}
-            </p>
+            {Array.isArray(metadata.outcome) ? (
+              <ul className="space-y-2">
+                {metadata.outcome.map((item, i) => (
+                  <li
+                    key={i}
+                    className="flex items-baseline gap-2 text-sm text-muted"
+                  >
+                    <span className="text-zinc-600">•</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted leading-relaxed">
+                {metadata.outcome}
+              </p>
+            )}
           </div>
           <div className="bg-surface rounded-xl border border-border p-5">
             <h3 className="font-semibold text-primary mb-3 text-sm">
@@ -114,14 +128,9 @@ export default async function RoadmapPage({
               {metadata.prerequisites.map((prereq, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2.5 text-sm text-muted"
+                  className="flex items-baseline gap-2 text-sm text-muted"
                 >
-                  <div className="w-4 h-4 rounded-full border border-emerald-400/50 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check
-                      className="w-2.5 h-2.5 text-emerald-400"
-                      strokeWidth={3}
-                    />
-                  </div>
+                  <span className="text-zinc-600">•</span>
                   {prereq}
                 </li>
               ))}

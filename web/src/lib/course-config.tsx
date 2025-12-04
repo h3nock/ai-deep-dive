@@ -18,7 +18,7 @@ export type CourseConfig = {
   id: string;
   title: string;
   description: string;
-  outcome: string;
+  outcome: string | string[];
   prerequisites: string[];
   phases: CoursePhase[];
   status: "available" | "coming-soon" | "planned";
@@ -31,9 +31,11 @@ export const courseConfig: Record<string, CourseConfig> = {
     id: "build-chatgpt",
     title: "Build ChatGPT from Scratch",
     description:
-      "From raw text to a working chatbot. You'll implement every component of a GPT-style language model and train it to have conversations.",
-    outcome:
-      "A fully functional chatbot built entirely by you, with deep understanding of how every piece works.",
+      "From raw text to a working GPT. You'll implement every component of a transformer-based language model from the ground up.",
+    outcome: [
+      "An encoder-decoder Transformer that translates between languages",
+      "A decoder-only GPT that generates text, trained on FineWeb-Edu",
+    ],
     prerequisites: [
       "Python proficiency (classes, lists, dictionaries)",
       "Linear algebra fundamentals (matrix multiplication, vectors)",
@@ -56,7 +58,7 @@ export const courseConfig: Record<string, CourseConfig> = {
       },
       {
         title: "GPT",
-        description: "Go decoder-only and build a working chatbot.",
+        description: "Go decoder-only and build a text-generating GPT.",
         stepRange: [11, 12.99],
         icon: <Code2 className="w-4 h-4" />,
       },
