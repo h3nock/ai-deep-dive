@@ -14,6 +14,11 @@ import {
   Plus,
   Globe,
   Loader2,
+  RotateCcw,
+  Send,
+  Trophy,
+  Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import { AutoResizingEditor } from "./AutoResizingEditor";
@@ -99,6 +104,9 @@ export function ChallengeWorkspace({
     null
   );
   const [code, setCode] = useState("");
+  const [isSolved, setIsSolved] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Active Pane Tracking - for focus ring styling
   const [activePane, setActivePane] = useState<"prose" | "editor">("editor");
@@ -167,13 +175,17 @@ export function ChallengeWorkspace({
   const activeChallenge =
     activeChallengeIndex !== null ? challenges[activeChallengeIndex] : null;
 
-  // Preload Pyodide for browser-compatible challenges
+  // Preload Pyodide once on component mount (not per challenge)
+  // This ensures the Python runtime is ready before user needs it
   useEffect(() => {
-    if (
-      activeChallenge &&
-      canRunInBrowser(activeChallenge.dependencies) &&
-      pyodideStatus === "idle"
-    ) {
+    // Only load if not already loaded or loading
+    if (pyodideStatus === "idle") {
+      // Check if already loaded globally
+      if (isPyodideLoaded()) {
+        setPyodideStatus("ready");
+        return;
+      }
+
       setPyodideStatus("loading");
       loadPyodide()
         .then(() => {
@@ -184,7 +196,7 @@ export function ChallengeWorkspace({
           setPyodideStatus("error");
         });
     }
-  }, [activeChallenge, pyodideStatus]);
+  }, []); // Empty dependency array - run once on mount
 
   // Determine execution mode based on challenge and connection
   useEffect(() => {
@@ -204,10 +216,21 @@ export function ChallengeWorkspace({
     }
   }, [activeChallenge, isConnected]);
 
-  // Initialize code and test cases when challenge changes
+  // Load code from localStorage or use initial code when challenge changes
   useEffect(() => {
     if (activeChallenge) {
-      setCode(activeChallenge.initialCode); // Always set code when challenge changes
+      const storedCode = localStorage.getItem(`sol_${activeChallenge.id}_code`);
+      if (storedCode !== null) {
+        setCode(storedCode);
+      } else {
+        setCode(activeChallenge.initialCode);
+      }
+
+      // Load solved status
+      const storedStatus = localStorage.getItem(
+        `sol_${activeChallenge.id}_status`
+      );
+      setIsSolved(storedStatus === "solved");
       if (
         activeChallenge.defaultTestCases &&
         activeChallenge.defaultTestCases.length > 0
@@ -260,6 +283,27 @@ export function ChallengeWorkspace({
       setOutput("");
     }
   }, [activeChallenge]);
+
+  // Save code to localStorage with debounce
+  useEffect(() => {
+    if (!activeChallenge) return;
+
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce save operation (1000ms)
+    saveTimeoutRef.current = setTimeout(() => {
+      localStorage.setItem(`sol_${activeChallenge.id}_code`, code);
+    }, 1000);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [code, activeChallenge]);
 
   // Vim Mode Effect
   useEffect(() => {
@@ -378,7 +422,7 @@ export function ChallengeWorkspace({
   // Remove old sync test cases effect
 
   // Keep latest handleRun in ref for event listeners
-  const handleRunRef = useRef<() => void>(() => {});
+  const handleRunRef = useRef<(mode?: "run" | "submit") => void>(() => {});
   useEffect(() => {
     handleRunRef.current = handleRun;
   });
@@ -405,165 +449,196 @@ export function ChallengeWorkspace({
 
     // Add Cmd+Enter / Ctrl+Enter shortcut to editor
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      handleRunRef.current();
+      handleRunRef.current("run");
     });
   };
 
-  const handleRun = useCallback(async () => {
-    const browserSupported = canRunInBrowser(activeChallenge?.dependencies);
+  // Reset handler
+  const handleReset = useCallback(() => {
+    if (!activeChallenge) return;
 
-    // Determine which execution path to use
-    const useBrowser =
-      executionMode === "browser" &&
-      browserSupported &&
-      (pyodideStatus === "ready" || pyodideStatus === "loading");
-
-    if (useBrowser) {
-      // === BROWSER EXECUTION (Pyodide) ===
-      setIsRunning(true);
-      setOutput("");
-      setTestResults(null);
-
-      try {
-        // Wait for Pyodide if still loading
-        if (pyodideStatus === "loading") {
-          setOutput("Loading Python runtime...\n");
-          await loadPyodide();
-          setPyodideStatus("ready");
-        }
-
-        // Build test config
-        const formattedCases = testCases.map((tc) => {
-          let inputCode = "";
-          Object.entries(tc.inputs).forEach(([key, value]) => {
-            inputCode += `${key} = ${value}\n`;
-          });
-          return {
-            id: tc.id,
-            input: inputCode,
-            expected: tc.expected,
-            hidden: tc.hidden,
-          };
-        });
-
-        let runnerCode =
-          activeChallenge?.executionSnippet ||
-          "print('No execution snippet defined')";
-        // Strip print() wrapper if present
-        if (
-          runnerCode.trim().startsWith("print(") &&
-          runnerCode.trim().endsWith(")")
-        ) {
-          runnerCode = runnerCode.trim().slice(6, -1);
-        }
-
-        const config: TestConfig = {
-          cases: formattedCases,
-          runner: runnerCode,
-        };
-
-        // Run tests with Pyodide
-        const results = await runTestsWithPyodide(
-          code,
-          config,
-          (text) => setOutput((prev) => (prev || "") + text),
-          (text) => setOutput((prev) => (prev || "") + text)
-        );
-
-        setTestResults(results);
-        setActiveTab("result");
-      } catch (err: any) {
-        setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
-      } finally {
-        setIsRunning(false);
-      }
-    } else if (isConnected) {
-      // === BRIDGE EXECUTION (Local Python) ===
-      setIsRunning(true);
-      setOutput("");
-      setTestResults(null);
-
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        // 1. Sync User Code
-        wsRef.current.send(
-          JSON.stringify({
-            command: "sync",
-            filename: "main.py",
-            content: code,
-          })
-        );
-
-        // 2. Sync Harness
-        wsRef.current.send(
-          JSON.stringify({
-            command: "sync",
-            filename: "harness.py",
-            content: PYTHON_HARNESS,
-          })
-        );
-
-        // 3. Sync Test Config
-        const formattedCases = testCases.map((tc) => {
-          let inputCode = "";
-          Object.entries(tc.inputs).forEach(([key, value]) => {
-            inputCode += `${key} = ${value}\n`;
-          });
-          return {
-            id: tc.id,
-            input: inputCode,
-            expected: tc.expected,
-          };
-        });
-
-        let runnerCode =
-          activeChallenge?.executionSnippet ||
-          "print('No execution snippet defined')";
-        if (
-          runnerCode.trim().startsWith("print(") &&
-          runnerCode.trim().endsWith(")")
-        ) {
-          runnerCode = runnerCode.trim().slice(6, -1);
-        }
-
-        const config = {
-          cases: formattedCases,
-          runner: runnerCode,
-        };
-
-        wsRef.current.send(
-          JSON.stringify({
-            command: "sync",
-            filename: "test_config.json",
-            content: JSON.stringify(config),
-          })
-        );
-
-        // 4. Run Harness
-        wsRef.current.send(
-          JSON.stringify({
-            command: "run",
-            filename: "harness.py",
-          })
-        );
-      }
-    } else {
-      // No execution method available
-      setOutput(
-        "Unable to run code.\n\n" +
-          (browserSupported
-            ? "Loading Python runtime... Please wait."
-            : "This challenge requires packages not available in the browser.\n" +
-              "Please run 'python bridge.py' locally for CLI execution.")
-      );
+    const confirmed = window.confirm(
+      "Are you sure you want to reset your code to the initial template? This cannot be undone."
+    );
+    if (confirmed) {
+      setCode(activeChallenge.initialCode);
+      localStorage.removeItem(`sol_${activeChallenge.id}_code`);
     }
-  }, [
-    code,
-    testCases,
-    activeChallenge,
-    executionMode,
-    pyodideStatus,
-    isConnected,
-  ]);
+  }, [activeChallenge]);
+
+  const handleRun = useCallback(
+    async (mode: "run" | "submit" = "run") => {
+      const browserSupported = canRunInBrowser(activeChallenge?.dependencies);
+
+      // Determine which execution path to use
+      const useBrowser =
+        executionMode === "browser" &&
+        browserSupported &&
+        (pyodideStatus === "ready" || pyodideStatus === "loading");
+
+      // Filter test cases based on mode
+      const casesToRun =
+        mode === "run" ? testCases.filter((tc) => !tc.hidden) : testCases; // Submit runs ALL test cases including hidden
+
+      if (useBrowser) {
+        // === BROWSER EXECUTION (Pyodide) ===
+        setIsRunning(true);
+        setOutput("");
+        setTestResults(null);
+
+        try {
+          // Wait for Pyodide if still loading
+          if (pyodideStatus === "loading") {
+            setOutput("Loading Python runtime...\n");
+            await loadPyodide();
+            setPyodideStatus("ready");
+          }
+
+          // Build test config
+          const formattedCases = casesToRun.map((tc) => {
+            let inputCode = "";
+            Object.entries(tc.inputs).forEach(([key, value]) => {
+              inputCode += `${key} = ${value}\n`;
+            });
+            return {
+              id: tc.id,
+              input: inputCode,
+              expected: tc.expected,
+              hidden: tc.hidden,
+            };
+          });
+
+          let runnerCode =
+            activeChallenge?.executionSnippet ||
+            "print('No execution snippet defined')";
+          // Strip print() wrapper if present
+          if (
+            runnerCode.trim().startsWith("print(") &&
+            runnerCode.trim().endsWith(")")
+          ) {
+            runnerCode = runnerCode.trim().slice(6, -1);
+          }
+
+          const config: TestConfig = {
+            cases: formattedCases,
+            runner: runnerCode,
+          };
+
+          // Run tests with Pyodide
+          const results = await runTestsWithPyodide(
+            code,
+            config,
+            (text) => setOutput((prev) => (prev || "") + text),
+            (text) => setOutput((prev) => (prev || "") + text)
+          );
+
+          setTestResults(results);
+          setActiveTab("result");
+
+          // Update solved status only in submit mode
+          if (
+            mode === "submit" &&
+            results.every((r) => r.status === "Accepted") &&
+            activeChallenge
+          ) {
+            localStorage.setItem(`sol_${activeChallenge.id}_status`, "solved");
+            setIsSolved(true);
+            setShowSuccessModal(true);
+          }
+        } catch (err: any) {
+          setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
+        } finally {
+          setIsRunning(false);
+        }
+      } else if (isConnected) {
+        // === BRIDGE EXECUTION (Local Python) ===
+        setIsRunning(true);
+        setOutput("");
+        setTestResults(null);
+
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          // 1. Sync User Code
+          wsRef.current.send(
+            JSON.stringify({
+              command: "sync",
+              filename: "main.py",
+              content: code,
+            })
+          );
+
+          // 2. Sync Harness
+          wsRef.current.send(
+            JSON.stringify({
+              command: "sync",
+              filename: "harness.py",
+              content: PYTHON_HARNESS,
+            })
+          );
+
+          // 3. Sync Test Config
+          const formattedCases = casesToRun.map((tc) => {
+            let inputCode = "";
+            Object.entries(tc.inputs).forEach(([key, value]) => {
+              inputCode += `${key} = ${value}\n`;
+            });
+            return {
+              id: tc.id,
+              input: inputCode,
+              expected: tc.expected,
+            };
+          });
+
+          let runnerCode =
+            activeChallenge?.executionSnippet ||
+            "print('No execution snippet defined')";
+          if (
+            runnerCode.trim().startsWith("print(") &&
+            runnerCode.trim().endsWith(")")
+          ) {
+            runnerCode = runnerCode.trim().slice(6, -1);
+          }
+
+          const config = {
+            cases: formattedCases,
+            runner: runnerCode,
+          };
+
+          wsRef.current.send(
+            JSON.stringify({
+              command: "sync",
+              filename: "test_config.json",
+              content: JSON.stringify(config),
+            })
+          );
+
+          // 4. Run Harness
+          wsRef.current.send(
+            JSON.stringify({
+              command: "run",
+              filename: "harness.py",
+            })
+          );
+        }
+      } else {
+        // No execution method available
+        setOutput(
+          "Unable to run code.\n\n" +
+            (browserSupported
+              ? "Loading Python runtime... Please wait."
+              : "This challenge requires packages not available in the browser.\n" +
+                "Please run 'python bridge.py' locally for CLI execution.")
+        );
+      }
+    },
+    [
+      code,
+      testCases,
+      activeChallenge,
+      executionMode,
+      pyodideStatus,
+      isConnected,
+    ]
+  );
 
   const handleInstall = (e: React.FormEvent) => {
     e.preventDefault();
@@ -678,9 +753,14 @@ export function ChallengeWorkspace({
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <div className="flex-1 flex justify-between items-center">
-                <h2 className="font-bold text-primary truncate">
-                  {activeChallenge.title}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-bold text-primary truncate">
+                    {activeChallenge.title}
+                  </h2>
+                  {isSolved && (
+                    <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  )}
+                </div>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                     activeChallenge.difficulty === "Easy"
@@ -803,34 +883,42 @@ export function ChallengeWorkspace({
 
               {/* Negative margin so hover padding doesn't break text alignment */}
               <div className="-mx-4 divide-y divide-border">
-                {challenges.map((c, idx) => (
-                  <div key={c.id} className="py-1">
-                    <button
-                      onClick={() => setActiveChallengeIndex(idx)}
-                      className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-surface transition-all group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className="text-muted/60 text-sm font-mono w-6">
-                          {String(idx + 1).padStart(2, "0")}
-                        </span>
-                        <span className="text-secondary group-hover:text-primary transition-colors">
-                          {c.title}
-                        </span>
-                      </div>
-                      <span
-                        className={`text-xs font-medium ${
-                          c.difficulty === "Easy"
-                            ? "text-emerald-400"
-                            : c.difficulty === "Medium"
-                            ? "text-amber-400"
-                            : "text-rose-400"
-                        }`}
+                {challenges.map((c, idx) => {
+                  const challengeSolved =
+                    typeof window !== "undefined" &&
+                    localStorage.getItem(`sol_${c.id}_status`) === "solved";
+                  return (
+                    <div key={c.id} className="py-1">
+                      <button
+                        onClick={() => setActiveChallengeIndex(idx)}
+                        className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-surface transition-all group"
                       >
-                        {c.difficulty || "Medium"}
-                      </span>
-                    </button>
-                  </div>
-                ))}
+                        <div className="flex items-center gap-4">
+                          <span className="text-muted/60 text-sm font-mono w-6">
+                            {String(idx + 1).padStart(2, "0")}
+                          </span>
+                          <span className="text-secondary group-hover:text-primary transition-colors flex items-center gap-2">
+                            {c.title}
+                            {challengeSolved && (
+                              <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            )}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-xs font-medium ${
+                            c.difficulty === "Easy"
+                              ? "text-emerald-400"
+                              : c.difficulty === "Medium"
+                              ? "text-amber-400"
+                              : "text-rose-400"
+                          }`}
+                        >
+                          {c.difficulty || "Medium"}
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -915,23 +1003,58 @@ export function ChallengeWorkspace({
                   </div>
                 )}
               </div>
-              <button
-                onClick={handleRun}
-                disabled={
-                  isRunning ||
-                  (executionMode === "browser" && pyodideStatus === "error") ||
-                  (executionMode === "bridge" && !isConnected)
-                }
-                title={`Run Code (${shortcutLabel})`}
-                className="flex items-center gap-2 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-zinc-950 text-sm font-semibold rounded-md transition-colors"
-              >
-                {isRunning ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <Play className="w-3 h-3" />
-                )}
-                {isRunning ? "Running..." : "Run Code"}
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Reset Button */}
+                <button
+                  onClick={handleReset}
+                  disabled={isRunning}
+                  title="Reset to initial code"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-muted hover:text-secondary hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-md transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset
+                </button>
+
+                {/* Run Code Button (visible tests only) */}
+                <button
+                  onClick={() => handleRun("run")}
+                  disabled={
+                    isRunning ||
+                    (executionMode === "browser" &&
+                      pyodideStatus === "error") ||
+                    (executionMode === "bridge" && !isConnected)
+                  }
+                  title={`Run visible tests (${shortcutLabel})`}
+                  className="flex items-center gap-2 px-4 py-1.5 bg-zinc-600 hover:bg-zinc-500 disabled:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors"
+                >
+                  {isRunning ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Play className="w-3 h-3" />
+                  )}
+                  Run
+                </button>
+
+                {/* Submit Button (all tests including hidden) */}
+                <button
+                  onClick={() => handleRun("submit")}
+                  disabled={
+                    isRunning ||
+                    (executionMode === "browser" &&
+                      pyodideStatus === "error") ||
+                    (executionMode === "bridge" && !isConnected)
+                  }
+                  title="Submit and run all tests"
+                  className="flex items-center gap-2 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors"
+                >
+                  {isRunning ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Send className="w-3 h-3" />
+                  )}
+                  Submit
+                </button>
+              </div>
             </div>
 
             {/* Editor Area */}
@@ -1281,6 +1404,91 @@ export function ChallengeWorkspace({
             </div>
           </div>
         </>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && activeChallenge && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowSuccessModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-zinc-900 border border-zinc-700 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+            {/* Close button */}
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-4 right-4 text-muted hover:text-secondary transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Success content */}
+            <div className="flex flex-col items-center text-center">
+              {/* Trophy icon with glow effect */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-green-500/20 blur-2xl rounded-full" />
+                <div className="relative bg-gradient-to-br from-green-400 to-emerald-500 p-4 rounded-full">
+                  <Trophy className="w-10 h-10 text-white" />
+                </div>
+              </div>
+
+              {/* Congratulations text */}
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-5 h-5 text-amber-400" />
+                <h2 className="text-2xl font-bold text-white">
+                  Congratulations!
+                </h2>
+                <Sparkles className="w-5 h-5 text-amber-400" />
+              </div>
+
+              <p className="text-zinc-400 mb-6">
+                You successfully completed{" "}
+                <span className="text-white font-semibold">
+                  {activeChallenge.title}
+                </span>
+              </p>
+
+              {/* Stats */}
+              <div className="w-full bg-zinc-800/50 rounded-lg p-4 mb-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-zinc-400 text-sm">
+                    All tests passed
+                  </span>
+                  <span className="text-green-400 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" />
+                    {testResults?.length || 0}/{testResults?.length || 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="flex-1 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  Review Solution
+                </button>
+                {activeChallengeIndex !== null &&
+                  activeChallengeIndex < challenges.length - 1 && (
+                    <button
+                      onClick={() => {
+                        setShowSuccessModal(false);
+                        setActiveChallengeIndex(activeChallengeIndex + 1);
+                      }}
+                      className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      Next Challenge
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
