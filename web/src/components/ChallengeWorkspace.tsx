@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   Play,
   CheckCircle2,
@@ -8,21 +9,17 @@ import {
   ChevronLeft,
   Code2,
   Settings,
-  Wifi,
-  WifiOff,
   X,
   Plus,
-  Globe,
   Loader2,
   RotateCcw,
   Send,
-  Trophy,
-  Sparkles,
   ChevronRight,
   ChevronUp,
   ChevronDown,
-  PanelBottomClose,
-  PanelBottomOpen,
+  ArrowRight,
+  Terminal,
+  ExternalLink,
 } from "lucide-react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import { AutoResizingEditor } from "./AutoResizingEditor";
@@ -73,6 +70,8 @@ export interface Challenge {
   dependencies?: string[]; // Required packages (determines browser vs CLI execution)
   visibleTestCases?: number;
   browserOnly?: boolean; // Force browser execution even if bridge connected
+  chapterNumber?: string; // e.g., "02" from "02-tokenization"
+  problemNumber?: string; // e.g., "01" from "01-pair-counter"
 }
 
 interface TestCase {
@@ -109,7 +108,7 @@ export function ChallengeWorkspace({
   );
   const [code, setCode] = useState("");
   const [isSolved, setIsSolved] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastRunMode, setLastRunMode] = useState<"run" | "submit" | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Active Pane Tracking - for focus ring styling
@@ -161,6 +160,7 @@ export function ChallengeWorkspace({
   const editorRef = useRef<any>(null);
   const vimModeRef = useRef<any>(null);
   const consoleRef = useRef<HTMLDivElement>(null);
+  const rightPanelRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll console
   useEffect(() => {
@@ -203,23 +203,20 @@ export function ChallengeWorkspace({
     }
   }, []); // Empty dependency array - run once on mount
 
-  // Determine execution mode based on challenge and connection
+  // Determine execution mode based on challenge dependencies
   useEffect(() => {
     if (!activeChallenge) return;
 
     const browserSupported = canRunInBrowser(activeChallenge.dependencies);
 
-    if (activeChallenge.browserOnly || !isConnected) {
-      // Force browser mode or no bridge available
+    if (browserSupported) {
+      // Can run in browser with Pyodide
       setExecutionMode("browser");
-    } else if (!browserSupported) {
-      // Challenge requires packages not available in Pyodide
-      setExecutionMode("bridge");
     } else {
-      // Default to browser for simplicity
-      setExecutionMode("browser");
+      // Requires packages not available in Pyodide - must use CLI
+      setExecutionMode("bridge");
     }
-  }, [activeChallenge, isConnected]);
+  }, [activeChallenge]);
 
   // Load code from localStorage or use initial code when challenge changes
   useEffect(() => {
@@ -286,6 +283,7 @@ export function ChallengeWorkspace({
       }
       setTestResults(null);
       setOutput("");
+      setLastRunMode(null);
     }
   }, [activeChallenge]);
 
@@ -383,6 +381,11 @@ export function ChallengeWorkspace({
                 if (Array.isArray(results)) {
                   setTestResults(results);
                   setActiveTab("result");
+                  // Reset to initial height when expanding
+                  if (isBottomPanelCollapsed) {
+                    setBottomPanelHeight(45);
+                  }
+                  setIsBottomPanelCollapsed(false);
                 }
               } catch (e) {
                 // Not JSON, just regular output
@@ -490,6 +493,7 @@ export function ChallengeWorkspace({
         setIsRunning(true);
         setOutput("");
         setTestResults(null);
+        setLastRunMode(mode);
 
         try {
           // Wait for Pyodide if still loading
@@ -539,16 +543,29 @@ export function ChallengeWorkspace({
 
           setTestResults(results);
           setActiveTab("result");
+          // Reset to initial height when expanding
+          if (isBottomPanelCollapsed) {
+            setBottomPanelHeight(45);
+          }
+          setIsBottomPanelCollapsed(false);
+
+          // Auto-select appropriate test case tab
+          const allPassed = results.every((r) => r.status === "Accepted");
+          if (allPassed) {
+            // Select first test case
+            setActiveTestCaseId(results[0]?.id || "1");
+          } else {
+            // Select first failed test case
+            const firstFailed = results.find((r) => r.status !== "Accepted");
+            if (firstFailed) {
+              setActiveTestCaseId(firstFailed.id);
+            }
+          }
 
           // Update solved status only in submit mode
-          if (
-            mode === "submit" &&
-            results.every((r) => r.status === "Accepted") &&
-            activeChallenge
-          ) {
+          if (mode === "submit" && allPassed && activeChallenge) {
             localStorage.setItem(`sol_${activeChallenge.id}_status`, "solved");
             setIsSolved(true);
-            setShowSuccessModal(true);
           }
         } catch (err: any) {
           setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
@@ -560,6 +577,7 @@ export function ChallengeWorkspace({
         setIsRunning(true);
         setOutput("");
         setTestResults(null);
+        setLastRunMode(mode);
 
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           // 1. Sync User Code
@@ -625,14 +643,29 @@ export function ChallengeWorkspace({
           );
         }
       } else {
-        // No execution method available
-        setOutput(
-          "Unable to run code.\n\n" +
-            (browserSupported
-              ? "Loading Python runtime... Please wait."
-              : "This challenge requires packages not available in the browser.\n" +
-                "Please run 'python bridge.py' locally for CLI execution.")
-        );
+        // No execution method available - show instructions
+        if (browserSupported) {
+          setOutput("Loading Python runtime... Please wait.");
+        } else {
+          // CLI-only challenge - show clear instructions
+          const challengeId = activeChallenge?.id || "<id>";
+          setOutput(
+            `This challenge requires PyTorch and must be run locally.\n\n` +
+              `Install CLI:\n` +
+              `  $ pip install ai-deep-dive\n\n` +
+              `Run tests:\n` +
+              `  $ ai-deep-dive test ${challengeId}\n\n` +
+              `Sync progress to web:\n` +
+              `  $ ai-deep-dive sync\n\n` +
+              `See /setup for the full setup guide.`
+          );
+        }
+        // Expand panel and show console
+        setActiveTab("console");
+        if (isBottomPanelCollapsed) {
+          setBottomPanelHeight(45);
+        }
+        setIsBottomPanelCollapsed(false);
       }
     },
     [
@@ -642,6 +675,7 @@ export function ChallengeWorkspace({
       executionMode,
       pyodideStatus,
       isConnected,
+      isBottomPanelCollapsed,
     ]
   );
 
@@ -703,33 +737,39 @@ export function ChallengeWorkspace({
   useEffect(() => {
     const stopResizing = () => setIsDraggingBottom(false);
     const resize = (e: MouseEvent) => {
-      if (isDraggingBottom) {
-        const containerHeight = window.innerHeight;
-        // Calculate height from bottom: Total Height - Mouse Y Position
-        const newHeight =
-          ((containerHeight - e.clientY) / containerHeight) * 100;
+      if (!isDraggingBottom || !rightPanelRef.current) return;
 
-        // If dragged below 5%, collapse the panel
-        if (newHeight < 5) {
-          setIsBottomPanelCollapsed(true);
-        } else if (newHeight < 95) {
-          // Expand if collapsed and set new height
-          if (isBottomPanelCollapsed) {
-            setIsBottomPanelCollapsed(false);
-          }
-          setBottomPanelHeight(newHeight);
+      // Get the actual bounds of the right panel
+      const rect = rightPanelRef.current.getBoundingClientRect();
+      const panelTop = rect.top;
+      const panelHeight = rect.height;
+
+      // Calculate height from bottom of panel
+      const mouseYInPanel = e.clientY - panelTop;
+      const heightFromBottom = panelHeight - mouseYInPanel;
+      const newHeightPercent = (heightFromBottom / panelHeight) * 100;
+
+      // If dragged below 8%, collapse the panel
+      if (newHeightPercent < 8) {
+        setIsBottomPanelCollapsed(true);
+      } else if (newHeightPercent >= 8 && newHeightPercent <= 85) {
+        // Expand if collapsed and set new height
+        if (isBottomPanelCollapsed) {
+          setIsBottomPanelCollapsed(false);
         }
+        setBottomPanelHeight(newHeightPercent);
       }
     };
 
     if (isDraggingBottom) {
-      window.addEventListener("mousemove", resize);
-      window.addEventListener("mouseup", stopResizing);
+      // Use capture phase for immediate response
+      document.addEventListener("mousemove", resize, { passive: true });
+      document.addEventListener("mouseup", stopResizing);
     }
 
     return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
+      document.removeEventListener("mousemove", resize);
+      document.removeEventListener("mouseup", stopResizing);
     };
   }, [isDraggingBottom, isBottomPanelCollapsed]);
 
@@ -738,8 +778,20 @@ export function ChallengeWorkspace({
     /Mac|iPod|iPhone|iPad/.test(navigator.platform);
   const shortcutLabel = isMac ? "Cmd + Enter" : "Ctrl + Enter";
 
+  // Dragging state for premium feel
+  const isDragging = isDraggingLeft || isDraggingBottom;
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background border-t border-border overflow-hidden select-none">
+    <div
+      className={`flex h-[calc(100vh-4rem)] bg-background border-t border-border overflow-hidden select-none ${
+        isDragging ? "cursor-grabbing" : ""
+      }`}
+      style={{
+        // Prevent text selection and iframe capture during drag
+        userSelect: isDragging ? "none" : undefined,
+        WebkitUserSelect: isDragging ? "none" : undefined,
+      }}
+    >
       {/* Left Panel - Prose (full width when no challenge selected) */}
       <div
         className={`flex flex-col bg-background overflow-hidden transition-colors ${
@@ -770,7 +822,7 @@ export function ChallengeWorkspace({
                     {activeChallenge.title}
                   </h2>
                   {isSolved && (
-                    <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
                   )}
                 </div>
                 <span
@@ -818,12 +870,43 @@ export function ChallengeWorkspace({
                 {activeChallenge.description}
               </ReactMarkdown>
 
+              {/* CLI Mode Note */}
+              {executionMode === "bridge" && (
+                <div className="mt-6 pl-4 border-l-2 border-amber-400">
+                  <p className="text-sm text-secondary">
+                    This challenge requires local implementation.{" "}
+                    {activeChallenge?.chapterNumber &&
+                    activeChallenge?.problemNumber ? (
+                      <>
+                        Write your solution in your editor and test with{" "}
+                        <code className="px-1.5 py-0.5 bg-zinc-800 rounded text-xs">
+                          ai-deep-dive test {activeChallenge.chapterNumber}-
+                          {activeChallenge.problemNumber}
+                        </code>
+                      </>
+                    ) : (
+                      <>
+                        Write your solution in your editor and test using the
+                        CLI
+                      </>
+                    )}
+                    .{" "}
+                    <Link
+                      href="/setup"
+                      className="text-muted hover:text-secondary underline underline-offset-2"
+                    >
+                      Setup guide
+                    </Link>
+                  </p>
+                </div>
+              )}
+
               {activeChallenge.hint && (
-                <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg not-prose">
-                  <h4 className="text-amber-400 font-bold text-xs uppercase mb-1 flex items-center gap-2">
-                    <AlertCircle className="w-3 h-3" /> Hint
-                  </h4>
-                  <p className="text-amber-300 text-sm">
+                <div className="mt-6 pl-4 border-l-2 border-zinc-600 not-prose">
+                  <p className="text-xs font-medium text-muted uppercase tracking-wider mb-1">
+                    Hint
+                  </p>
+                  <p className="text-sm text-secondary">
                     {activeChallenge.hint}
                   </p>
                 </div>
@@ -834,10 +917,10 @@ export function ChallengeWorkspace({
                 activeChallenge.defaultTestCases.filter((tc) => !tc.hidden)
                   .length > 0 && (
                   <div className="mt-8 not-prose">
-                    <h3 className="text-primary font-bold text-sm mb-4">
+                    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">
                       Examples
-                    </h3>
-                    <div className="flex flex-col gap-4">
+                    </div>
+                    <div className="flex flex-col gap-3">
                       {(() => {
                         const nonHidden =
                           activeChallenge.defaultTestCases.filter(
@@ -852,23 +935,19 @@ export function ChallengeWorkspace({
                           .map((tc, idx) => (
                             <div
                               key={tc.id}
-                              className="bg-surface rounded-lg p-4 border border-border"
+                              className="p-3 bg-[#121212] rounded-lg border border-zinc-800"
                             >
-                              <div className="flex flex-col gap-2">
-                                <div className="text-xs font-mono">
-                                  <span className="font-bold text-muted uppercase mr-2">
-                                    Input:
-                                  </span>
+                              <div className="flex flex-col gap-1.5 font-mono text-xs">
+                                <div>
+                                  <span className="text-muted">Input:</span>{" "}
                                   <span className="text-secondary">
                                     {Object.entries(tc.inputs)
                                       .map(([k, v]) => `${k} = ${v}`)
                                       .join(", ")}
                                   </span>
                                 </div>
-                                <div className="text-xs font-mono">
-                                  <span className="font-bold text-muted uppercase mr-2">
-                                    Output:
-                                  </span>
+                                <div>
+                                  <span className="text-muted">Output:</span>{" "}
                                   <span className="text-secondary">
                                     {tc.expected}
                                   </span>
@@ -942,78 +1021,87 @@ export function ChallengeWorkspace({
         <>
           {/* Resizer Handle (Left) */}
           <div
-            className="w-1 bg-border hover:bg-zinc-600 cursor-col-resize transition-colors z-10 flex items-center justify-center"
+            className={`w-1.5 cursor-col-resize z-10 flex items-center justify-center group transition-colors duration-150 ${
+              isDraggingLeft
+                ? "bg-emerald-500/50"
+                : "bg-transparent hover:bg-zinc-700"
+            }`}
             onMouseDown={startResizingLeft}
           >
-            <div className="w-0.5 h-8 bg-muted rounded-full" />
+            <div
+              className={`w-0.5 h-12 rounded-full transition-all duration-150 ${
+                isDraggingLeft
+                  ? "bg-emerald-400 h-16"
+                  : "bg-zinc-600 group-hover:bg-zinc-500 group-hover:h-16"
+              }`}
+            />
           </div>
 
           {/* Right Panel: Editor */}
           <div
+            ref={rightPanelRef}
             className={`flex-1 flex flex-col bg-background min-w-[300px] border-l transition-colors ${
               activePane === "editor" ? "border-zinc-600" : "border-border"
             }`}
             onClick={() => setActivePane("editor")}
           >
             {/* Toolbar */}
-            <div className="h-12 flex items-center justify-between px-4 border-b border-border bg-surface">
-              <div className="flex items-center gap-4 text-muted text-sm">
-                <div className="flex items-center gap-2">
-                  <Code2 className="w-4 h-4" />
-                  <span>Python 3</span>
+            <div className="h-11 flex items-center justify-between px-3 border-b border-border bg-surface">
+              <div className="flex items-center gap-1 text-muted text-sm">
+                {/* Language Badge */}
+                <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-secondary">
+                  <Code2 className="w-3.5 h-3.5" />
+                  <span>Python</span>
                 </div>
-                <button
-                  onClick={() => setIsVimMode(!isVimMode)}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded hover:bg-background transition-colors ${
-                    isVimMode ? "text-emerald-400" : ""
-                  }`}
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  <span className="text-xs font-medium">
-                    Vim Mode {isVimMode ? "ON" : "OFF"}
-                  </span>
-                </button>
 
-                {/* Execution Mode Indicator */}
-                {canRunInBrowser(activeChallenge?.dependencies) ? (
+                <div className="w-px h-4 bg-border mx-1" />
+
+                {/* Status Indicator - Show appropriate mode */}
+                {executionMode === "browser" ? (
                   <div
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
                       pyodideStatus === "ready"
-                        ? "text-emerald-400"
+                        ? "text-emerald-400 bg-emerald-400/10"
                         : pyodideStatus === "loading"
                         ? "text-amber-400"
                         : "text-muted"
                     }`}
+                    title="This challenge runs in your browser. Click Run to test."
                   >
                     {pyodideStatus === "loading" ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      <Globe className="w-3.5 h-3.5" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
                     )}
-                    <span className="text-xs font-medium">
-                      {pyodideStatus === "loading"
-                        ? "Loading Python..."
-                        : pyodideStatus === "ready"
-                        ? "Browser Mode"
-                        : "Browser Ready"}
+                    <span>
+                      {pyodideStatus === "loading" ? "Loading..." : "Browser"}
                     </span>
                   </div>
                 ) : (
                   <div
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
-                      isConnected ? "text-emerald-400" : "text-rose-400"
-                    }`}
+                    className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium text-amber-400 bg-amber-400/10"
+                    title="This challenge requires PyTorch. Implement locally and test with: ai-deep-dive test"
                   >
-                    {isConnected ? (
-                      <Wifi className="w-3.5 h-3.5" />
-                    ) : (
-                      <WifiOff className="w-3.5 h-3.5" />
-                    )}
-                    <span className="text-xs font-medium">
-                      {isConnected ? "Bridge Connected" : "Bridge Required"}
-                    </span>
+                    <Terminal className="w-3 h-3" />
+                    <span>Local</span>
                   </div>
                 )}
+
+                <div className="w-px h-4 bg-border mx-1" />
+
+                {/* Vim Toggle - More subtle */}
+                <button
+                  onClick={() => setIsVimMode(!isVimMode)}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                    isVimMode
+                      ? "text-emerald-400 bg-emerald-400/10"
+                      : "text-muted hover:text-secondary hover:bg-zinc-800"
+                  }`}
+                  title="Toggle Vim keybindings"
+                >
+                  <Settings className="w-3 h-3" />
+                  <span>Vim</span>
+                </button>
               </div>
               <div className="flex items-center gap-2">
                 {/* Reset Button */}
@@ -1095,25 +1183,44 @@ export function ChallengeWorkspace({
               )}
             </div>
 
-            {/* Resizer Handle (Bottom) - always visible for dragging */}
-            <div
-              className="h-1.5 bg-background hover:bg-zinc-600 cursor-row-resize transition-colors z-10 flex items-center justify-center border-t border-border"
-              onMouseDown={startResizingBottom}
-            >
-              <div className="h-0.5 w-8 bg-muted rounded-full" />
-            </div>
+            {/* Resizer Handle (Bottom) - only visible when panel is expanded */}
+            {!isBottomPanelCollapsed && (
+              <div
+                className={`h-2 cursor-row-resize z-10 flex items-center justify-center border-t transition-colors duration-150 group ${
+                  isDraggingBottom
+                    ? "bg-emerald-500/20 border-emerald-500/50"
+                    : "bg-background border-border hover:bg-zinc-800/50 hover:border-zinc-600"
+                }`}
+                onMouseDown={startResizingBottom}
+              >
+                <div
+                  className={`h-0.5 rounded-full transition-all duration-150 ${
+                    isDraggingBottom
+                      ? "w-16 bg-emerald-400"
+                      : "w-8 bg-zinc-600 group-hover:w-12 group-hover:bg-zinc-500"
+                  }`}
+                />
+              </div>
+            )}
 
             {/* Bottom Panel (Console / Test Cases) */}
             <div
-              className="bg-background flex flex-col relative transition-all duration-200"
+              className={`bg-background flex flex-col relative ${
+                isDraggingBottom ? "" : "transition-[height] duration-200"
+              }`}
               style={{
                 height: isBottomPanelCollapsed
                   ? "auto"
                   : `${bottomPanelHeight}%`,
+                minHeight: isBottomPanelCollapsed ? undefined : "100px",
               }}
             >
               {/* Tabs Header */}
-              <div className="flex items-center border-t border-border bg-surface">
+              <div
+                className={`flex items-center bg-surface ${
+                  isBottomPanelCollapsed ? "border-t border-border" : ""
+                }`}
+              >
                 <button
                   onClick={() => {
                     setActiveTab("console");
@@ -1335,52 +1442,116 @@ export function ChallengeWorkspace({
                         <>
                           {/* Overall Status */}
                           <div className="p-4 pb-2">
-                            {testResults.every(
-                              (r) => r.status === "Accepted"
-                            ) ? (
-                              <h3 className="text-emerald-400 font-bold text-lg flex items-center gap-2">
-                                <CheckCircle2 className="w-5 h-5" /> Accepted
-                              </h3>
-                            ) : (
-                              <h3 className="text-rose-400 font-bold text-lg flex items-center gap-2">
-                                <AlertCircle className="w-5 h-5" /> Wrong Answer
-                              </h3>
-                            )}
-
-                            {/* Hidden Tests Summary */}
                             {(() => {
-                              const hiddenResults = testResults.filter(
-                                (r) => r.hidden
-                              );
-                              const hiddenPassed = hiddenResults.filter(
+                              const totalTests = testResults.length;
+                              const passedTests = testResults.filter(
                                 (r) => r.status === "Accepted"
                               ).length;
-                              const hiddenTotal = hiddenResults.length;
+                              const allPassed = passedTests === totalTests;
 
-                              if (hiddenTotal > 0) {
+                              if (allPassed) {
+                                // All tests passed
+                                if (lastRunMode === "submit" && isSolved) {
+                                  // Submit mode success - Challenge Complete
+                                  return (
+                                    <div className="flex flex-col gap-3">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                                          </div>
+                                          <div>
+                                            <h3 className="text-primary font-semibold">
+                                              Challenge Complete
+                                            </h3>
+                                            <p className="text-sm text-muted">
+                                              {passedTests} / {totalTests} tests
+                                              passed
+                                            </p>
+                                          </div>
+                                        </div>
+                                        {/* Next Challenge Link */}
+                                        {activeChallengeIndex !== null &&
+                                          activeChallengeIndex <
+                                            challenges.length - 1 && (
+                                            <button
+                                              onClick={() =>
+                                                setActiveChallengeIndex(
+                                                  activeChallengeIndex + 1
+                                                )
+                                              }
+                                              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 text-secondary hover:text-primary rounded-md transition-colors group"
+                                            >
+                                              <span>Next Challenge</span>
+                                              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                            </button>
+                                          )}
+                                      </div>
+                                    </div>
+                                  );
+                                } else {
+                                  // Run mode success - visible tests only
+                                  return (
+                                    <div className="flex items-center justify-between">
+                                      <h3 className="text-emerald-400 font-medium flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        {passedTests} / {totalTests} tests
+                                        passed
+                                      </h3>
+                                      {!isSolved && (
+                                        <span className="text-xs text-muted">
+                                          Submit to run all tests
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                }
+                              } else {
+                                // Some tests failed
                                 return (
-                                  <div className="mt-2 text-xs font-medium text-muted">
-                                    {hiddenPassed}/{hiddenTotal} hidden tests
-                                    passed
+                                  <div className="flex items-center justify-between">
+                                    <h3 className="text-rose-400 font-medium flex items-center gap-2">
+                                      <AlertCircle className="w-4 h-4" />
+                                      {passedTests} / {totalTests} tests passed
+                                    </h3>
                                   </div>
                                 );
                               }
-                              return null;
                             })()}
                           </div>
 
                           {/* Result Tabs */}
                           <div className="flex items-center gap-2 px-4 border-b border-border overflow-x-auto">
-                            {testResults.map((r, idx) => {
-                              // Only show hidden tests if they failed or if they are the active one (unlikely but safe)
-                              if (
-                                r.hidden &&
-                                r.status === "Accepted" &&
-                                activeTestCaseId !== r.id
-                              )
-                                return null;
+                            {(() => {
+                              // Determine which test results to show as tabs
+                              const visibleResults = testResults.filter(
+                                (r) => !r.hidden
+                              );
+                              const hiddenResults = testResults.filter(
+                                (r) => r.hidden
+                              );
+                              const allVisiblePassed = visibleResults.every(
+                                (r) => r.status === "Accepted"
+                              );
+                              const firstFailedHidden = hiddenResults.find(
+                                (r) => r.status !== "Accepted"
+                              );
 
-                              return (
+                              // Build the list of results to display
+                              let resultsToShow: typeof testResults = [];
+
+                              if (lastRunMode === "submit") {
+                                // Submit mode: show visible tests + first failed hidden (if all visible passed)
+                                resultsToShow = [...visibleResults];
+                                if (allVisiblePassed && firstFailedHidden) {
+                                  resultsToShow.push(firstFailedHidden);
+                                }
+                              } else {
+                                // Run mode: only visible tests were run
+                                resultsToShow = visibleResults;
+                              }
+
+                              return resultsToShow.map((r, idx) => (
                                 <button
                                   key={r.id}
                                   onClick={() => setActiveTestCaseId(r.id)}
@@ -1397,10 +1568,10 @@ export function ChallengeWorkspace({
                                         : "bg-rose-500"
                                     }`}
                                   />
-                                  {r.hidden ? "Hidden Case" : `Case ${idx + 1}`}
+                                  {r.hidden ? "Hidden Test" : `Case ${idx + 1}`}
                                 </button>
-                              );
-                            })}
+                              ));
+                            })()}
                           </div>
 
                           {/* Result Details */}
@@ -1467,91 +1638,6 @@ export function ChallengeWorkspace({
             </div>
           </div>
         </>
-      )}
-
-      {/* Success Modal */}
-      {showSuccessModal && activeChallenge && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setShowSuccessModal(false)}
-          />
-
-          {/* Modal */}
-          <div className="relative bg-zinc-900 border border-zinc-700 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-in fade-in zoom-in duration-200">
-            {/* Close button */}
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="absolute top-4 right-4 text-muted hover:text-secondary transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Success content */}
-            <div className="flex flex-col items-center text-center">
-              {/* Trophy icon with glow effect */}
-              <div className="relative mb-6">
-                <div className="absolute inset-0 bg-green-500/20 blur-2xl rounded-full" />
-                <div className="relative bg-gradient-to-br from-green-400 to-emerald-500 p-4 rounded-full">
-                  <Trophy className="w-10 h-10 text-white" />
-                </div>
-              </div>
-
-              {/* Congratulations text */}
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-5 h-5 text-amber-400" />
-                <h2 className="text-2xl font-bold text-white">
-                  Congratulations!
-                </h2>
-                <Sparkles className="w-5 h-5 text-amber-400" />
-              </div>
-
-              <p className="text-zinc-400 mb-6">
-                You successfully completed{" "}
-                <span className="text-white font-semibold">
-                  {activeChallenge.title}
-                </span>
-              </p>
-
-              {/* Stats */}
-              <div className="w-full bg-zinc-800/50 rounded-lg p-4 mb-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-400 text-sm">
-                    All tests passed
-                  </span>
-                  <span className="text-green-400 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" />
-                    {testResults?.length || 0}/{testResults?.length || 0}
-                  </span>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex gap-3 w-full">
-                <button
-                  onClick={() => setShowSuccessModal(false)}
-                  className="flex-1 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-lg transition-colors"
-                >
-                  Review Solution
-                </button>
-                {activeChallengeIndex !== null &&
-                  activeChallengeIndex < challenges.length - 1 && (
-                    <button
-                      onClick={() => {
-                        setShowSuccessModal(false);
-                        setActiveChallengeIndex(activeChallengeIndex + 1);
-                      }}
-                      className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
-                    >
-                      Next Challenge
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  )}
-              </div>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
