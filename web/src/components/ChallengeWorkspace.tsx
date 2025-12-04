@@ -122,7 +122,12 @@ export function ChallengeWorkspace({
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
 
   const [output, setOutput] = useState<string | null>(null); // Raw console output (fallback)
-  const [isVimMode, setIsVimMode] = useState(false);
+  const [isVimMode, setIsVimMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("editor_vim_mode") === "true";
+    }
+    return false;
+  });
   const [leftPanelWidth, setLeftPanelWidth] = useState(40); // Percentage
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
 
@@ -151,6 +156,7 @@ export function ChallengeWorkspace({
   const vimModeRef = useRef<any>(null);
   const consoleRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
+  const isVimModeInitializedRef = useRef(false); // Track if vim was loaded from localStorage
 
   // Auto-scroll console
   useEffect(() => {
@@ -302,6 +308,12 @@ export function ChallengeWorkspace({
   useEffect(() => {
     if (!editorRef.current || !monaco) return;
 
+    // Always dispose existing vim mode first
+    if (vimModeRef.current) {
+      vimModeRef.current.dispose();
+      vimModeRef.current = null;
+    }
+
     if (isVimMode) {
       try {
         // @ts-ignore
@@ -311,11 +323,6 @@ export function ChallengeWorkspace({
       } catch (e) {
         console.error("Failed to enable Vim mode:", e);
       }
-    } else {
-      if (vimModeRef.current) {
-        vimModeRef.current.dispose();
-        vimModeRef.current = null;
-      }
     }
 
     return () => {
@@ -324,7 +331,16 @@ export function ChallengeWorkspace({
         vimModeRef.current = null;
       }
     };
-  }, [isVimMode, monaco]);
+  }, [isVimMode, monaco, activeChallenge?.id]);
+
+  // Persist vim mode preference (skip on initial mount to avoid writing the same value back)
+  useEffect(() => {
+    if (isVimModeInitializedRef.current) {
+      localStorage.setItem("editor_vim_mode", isVimMode ? "true" : "false");
+    } else {
+      isVimModeInitializedRef.current = true;
+    }
+  }, [isVimMode]);
 
   // Keep latest handleRun in ref for event listeners
   const handleRunRef = useRef<(mode?: "run" | "submit") => void>(() => {});
@@ -345,16 +361,31 @@ export function ChallengeWorkspace({
   }, []);
 
   // Editor Command
-  const handleEditorDidMount = (editor: any, monaco: any) => {
+  const handleEditorDidMount = (editor: any, monacoInstance: any) => {
     editorRef.current = editor;
 
     // Theme is already defined in beforeMount, just ensure it's applied
-    monaco.editor.setTheme("zinc-dark");
+    monacoInstance.editor.setTheme("zinc-dark");
 
     // Add Cmd+Enter / Ctrl+Enter shortcut to editor
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+    editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter, () => {
       handleRunRef.current("run");
     });
+
+    // Initialize vim mode if already enabled from localStorage
+    // This handles the case where useEffect runs before the editor mounts
+    if (isVimMode && !vimModeRef.current) {
+      try {
+        // @ts-ignore
+        const { initVimMode } = require("monaco-vim");
+        const statusNode = document.getElementById("vim-status-bar");
+        if (statusNode) {
+          vimModeRef.current = initVimMode(editor, statusNode);
+        }
+      } catch (e) {
+        console.error("Failed to enable Vim mode:", e);
+      }
+    }
   };
 
   // Reset handler
