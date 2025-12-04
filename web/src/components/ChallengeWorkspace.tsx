@@ -19,6 +19,10 @@ import {
   Trophy,
   Sparkles,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  PanelBottomClose,
+  PanelBottomOpen,
 } from "lucide-react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import { AutoResizingEditor } from "./AutoResizingEditor";
@@ -131,6 +135,7 @@ export function ChallengeWorkspace({
   // Bottom Panel State
   const [bottomPanelHeight, setBottomPanelHeight] = useState(45); // Percentage
   const [isDraggingBottom, setIsDraggingBottom] = useState(false);
+  const [isBottomPanelCollapsed, setIsBottomPanelCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "console" | "testcases" | "result"
   >("console");
@@ -704,7 +709,14 @@ export function ChallengeWorkspace({
         const newHeight =
           ((containerHeight - e.clientY) / containerHeight) * 100;
 
-        if (newHeight > 5 && newHeight < 95) {
+        // If dragged below 5%, collapse the panel
+        if (newHeight < 5) {
+          setIsBottomPanelCollapsed(true);
+        } else if (newHeight < 95) {
+          // Expand if collapsed and set new height
+          if (isBottomPanelCollapsed) {
+            setIsBottomPanelCollapsed(false);
+          }
           setBottomPanelHeight(newHeight);
         }
       }
@@ -719,7 +731,7 @@ export function ChallengeWorkspace({
       window.removeEventListener("mousemove", resize);
       window.removeEventListener("mouseup", stopResizing);
     };
-  }, [isDraggingBottom]);
+  }, [isDraggingBottom, isBottomPanelCollapsed]);
 
   const isMac =
     typeof navigator !== "undefined" &&
@@ -1083,9 +1095,9 @@ export function ChallengeWorkspace({
               )}
             </div>
 
-            {/* Resizer Handle (Bottom) */}
+            {/* Resizer Handle (Bottom) - always visible for dragging */}
             <div
-              className="h-1 bg-background hover:bg-zinc-600 cursor-row-resize transition-colors z-10 flex items-center justify-center border-t border-border"
+              className="h-1.5 bg-background hover:bg-zinc-600 cursor-row-resize transition-colors z-10 flex items-center justify-center border-t border-border"
               onMouseDown={startResizingBottom}
             >
               <div className="h-0.5 w-8 bg-muted rounded-full" />
@@ -1093,15 +1105,23 @@ export function ChallengeWorkspace({
 
             {/* Bottom Panel (Console / Test Cases) */}
             <div
-              className="bg-background flex flex-col relative"
-              style={{ height: `${bottomPanelHeight}%` }}
+              className="bg-background flex flex-col relative transition-all duration-200"
+              style={{
+                height: isBottomPanelCollapsed
+                  ? "auto"
+                  : `${bottomPanelHeight}%`,
+              }}
             >
-              {/* Tabs */}
-              <div className="flex items-center border-b border-border bg-surface">
+              {/* Tabs Header */}
+              <div className="flex items-center border-t border-border bg-surface">
                 <button
-                  onClick={() => setActiveTab("console")}
+                  onClick={() => {
+                    setActiveTab("console");
+                    if (isBottomPanelCollapsed)
+                      setIsBottomPanelCollapsed(false);
+                  }}
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
-                    activeTab === "console"
+                    activeTab === "console" && !isBottomPanelCollapsed
                       ? "text-primary bg-background"
                       : "text-muted hover:text-secondary"
                   }`}
@@ -1109,9 +1129,13 @@ export function ChallengeWorkspace({
                   Console
                 </button>
                 <button
-                  onClick={() => setActiveTab("testcases")}
+                  onClick={() => {
+                    setActiveTab("testcases");
+                    if (isBottomPanelCollapsed)
+                      setIsBottomPanelCollapsed(false);
+                  }}
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
-                    activeTab === "testcases"
+                    activeTab === "testcases" && !isBottomPanelCollapsed
                       ? "text-primary bg-background"
                       : "text-muted hover:text-secondary"
                   }`}
@@ -1119,288 +1143,327 @@ export function ChallengeWorkspace({
                   Test Cases
                 </button>
                 <button
-                  onClick={() => setActiveTab("result")}
+                  onClick={() => {
+                    setActiveTab("result");
+                    if (isBottomPanelCollapsed)
+                      setIsBottomPanelCollapsed(false);
+                  }}
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
-                    activeTab === "result"
+                    activeTab === "result" && !isBottomPanelCollapsed
                       ? "text-primary bg-background"
                       : "text-muted hover:text-secondary"
                   }`}
                 >
                   Result
                 </button>
+
+                {/* Spacer */}
+                <div className="flex-1" />
+
+                {/* Collapse/Expand Toggle Button */}
+                <button
+                  onClick={() => {
+                    if (isBottomPanelCollapsed) {
+                      // Reset to initial height when expanding via button
+                      setBottomPanelHeight(45);
+                    }
+                    setIsBottomPanelCollapsed(!isBottomPanelCollapsed);
+                  }}
+                  className="px-3 py-2 text-muted hover:text-secondary transition-colors flex items-center gap-1.5"
+                  title={
+                    isBottomPanelCollapsed ? "Expand panel" : "Collapse panel"
+                  }
+                >
+                  {isBottomPanelCollapsed ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
               </div>
 
-              {/* Content */}
-              <div className="flex-1 overflow-hidden relative">
-                {activeTab === "console" && (
-                  <div
-                    ref={consoleRef}
-                    className="h-full p-4 font-mono text-sm text-secondary overflow-y-auto whitespace-pre-wrap"
-                  >
-                    {output || (
-                      <span className="text-muted italic">
-                        Run code to see output...
-                      </span>
-                    )}
-                  </div>
-                )}
-                {activeTab === "testcases" && (
-                  <div className="flex flex-col h-full">
-                    {/* Case Tabs */}
-                    <div className="flex items-center gap-2 p-2 border-b border-border">
-                      {testCases
-                        .filter((tc) => !tc.hidden)
-                        .map((tc, idx) => (
-                          <button
-                            key={tc.id}
-                            onClick={() => setActiveTestCaseId(tc.id)}
-                            className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 ${
-                              activeTestCaseId === tc.id
-                                ? "bg-surface text-primary"
-                                : "text-muted hover:bg-surface"
-                            }`}
-                          >
-                            Case {idx + 1}
-                            {testCases.filter((t) => !t.hidden).length > 1 && (
-                              <X
-                                className="w-3 h-3 hover:text-rose-400"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTestCases((prev) =>
-                                    prev.filter((c) => c.id !== tc.id)
-                                  );
-                                  if (activeTestCaseId === tc.id) {
-                                    const remaining = testCases.filter(
-                                      (c) => c.id !== tc.id && !c.hidden
-                                    );
-                                    if (remaining.length > 0) {
-                                      setActiveTestCaseId(remaining[0].id);
-                                    }
-                                  }
-                                }}
-                              />
-                            )}
-                          </button>
-                        ))}
-                      <button
-                        onClick={() => {
-                          const newId = Math.random().toString(36).substr(2, 9);
-                          const initialInputs: Record<string, string> = {};
-                          if (activeChallenge?.arguments) {
-                            activeChallenge.arguments.forEach((arg) => {
-                              initialInputs[arg.name] = "";
-                            });
-                          }
-                          setTestCases([
-                            ...testCases,
-                            { id: newId, inputs: initialInputs, expected: "" },
-                          ]);
-                          setActiveTestCaseId(newId);
-                        }}
-                        className="p-1 text-muted hover:text-primary"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
+              {/* Content - only show when not collapsed */}
+              {!isBottomPanelCollapsed && (
+                <div className="flex-1 overflow-hidden relative">
+                  {activeTab === "console" && (
+                    <div
+                      ref={consoleRef}
+                      className="h-full p-4 font-mono text-sm text-secondary overflow-y-auto whitespace-pre-wrap"
+                    >
+                      {output || (
+                        <span className="text-muted italic">
+                          Run code to see output...
+                        </span>
+                      )}
                     </div>
+                  )}
+                  {activeTab === "testcases" && (
+                    <div className="flex flex-col h-full">
+                      {/* Case Tabs */}
+                      <div className="flex items-center gap-2 p-2 border-b border-border">
+                        {testCases
+                          .filter((tc) => !tc.hidden)
+                          .map((tc, idx) => (
+                            <button
+                              key={tc.id}
+                              onClick={() => setActiveTestCaseId(tc.id)}
+                              className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 ${
+                                activeTestCaseId === tc.id
+                                  ? "bg-surface text-primary"
+                                  : "text-muted hover:bg-surface"
+                              }`}
+                            >
+                              Case {idx + 1}
+                              {testCases.filter((t) => !t.hidden).length >
+                                1 && (
+                                <X
+                                  className="w-3 h-3 hover:text-rose-400"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTestCases((prev) =>
+                                      prev.filter((c) => c.id !== tc.id)
+                                    );
+                                    if (activeTestCaseId === tc.id) {
+                                      const remaining = testCases.filter(
+                                        (c) => c.id !== tc.id && !c.hidden
+                                      );
+                                      if (remaining.length > 0) {
+                                        setActiveTestCaseId(remaining[0].id);
+                                      }
+                                    }
+                                  }}
+                                />
+                              )}
+                            </button>
+                          ))}
+                        <button
+                          onClick={() => {
+                            const newId = Math.random()
+                              .toString(36)
+                              .substr(2, 9);
+                            const initialInputs: Record<string, string> = {};
+                            if (activeChallenge?.arguments) {
+                              activeChallenge.arguments.forEach((arg) => {
+                                initialInputs[arg.name] = "";
+                              });
+                            }
+                            setTestCases([
+                              ...testCases,
+                              {
+                                id: newId,
+                                inputs: initialInputs,
+                                expected: "",
+                              },
+                            ]);
+                            setActiveTestCaseId(newId);
+                          }}
+                          className="p-1 text-muted hover:text-primary"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
 
-                    {/* Case Editors */}
-                    <div className="flex-1 flex flex-col gap-6 p-4 overflow-y-auto">
-                      {testCases.map((tc) => {
-                        if (tc.id !== activeTestCaseId || tc.hidden)
-                          return null;
-                        return (
-                          <div key={tc.id} className="flex flex-col gap-6">
-                            {activeChallenge?.arguments?.map((arg) => (
-                              <div
-                                key={arg.name}
-                                className="flex flex-col gap-2"
-                              >
+                      {/* Case Editors */}
+                      <div className="flex-1 flex flex-col gap-6 p-4 overflow-y-auto">
+                        {testCases.map((tc) => {
+                          if (tc.id !== activeTestCaseId || tc.hidden)
+                            return null;
+                          return (
+                            <div key={tc.id} className="flex flex-col gap-6">
+                              {activeChallenge?.arguments?.map((arg) => (
+                                <div
+                                  key={arg.name}
+                                  className="flex flex-col gap-2"
+                                >
+                                  <label className="text-xs font-medium text-muted">
+                                    {arg.name}{" "}
+                                    <span className="text-muted/60">
+                                      ({arg.type})
+                                    </span>
+                                  </label>
+                                  <AutoResizingEditor
+                                    value={tc.inputs[arg.name] || ""}
+                                    onChange={(val) => {
+                                      setTestCases((prev) =>
+                                        prev.map((c) =>
+                                          c.id === tc.id
+                                            ? {
+                                                ...c,
+                                                inputs: {
+                                                  ...c.inputs,
+                                                  [arg.name]: val || "",
+                                                },
+                                              }
+                                            : c
+                                        )
+                                      );
+                                    }}
+                                  />
+                                </div>
+                              ))}
+                              <div className="flex flex-col gap-2">
                                 <label className="text-xs font-medium text-muted">
-                                  {arg.name}{" "}
-                                  <span className="text-muted/60">
-                                    ({arg.type})
-                                  </span>
+                                  Expected Output
                                 </label>
                                 <AutoResizingEditor
-                                  value={tc.inputs[arg.name] || ""}
+                                  value={tc.expected}
                                   onChange={(val) => {
                                     setTestCases((prev) =>
                                       prev.map((c) =>
                                         c.id === tc.id
-                                          ? {
-                                              ...c,
-                                              inputs: {
-                                                ...c.inputs,
-                                                [arg.name]: val || "",
-                                              },
-                                            }
+                                          ? { ...c, expected: val || "" }
                                           : c
                                       )
                                     );
                                   }}
                                 />
                               </div>
-                            ))}
-                            <div className="flex flex-col gap-2">
-                              <label className="text-xs font-medium text-muted">
-                                Expected Output
-                              </label>
-                              <AutoResizingEditor
-                                value={tc.expected}
-                                onChange={(val) => {
-                                  setTestCases((prev) =>
-                                    prev.map((c) =>
-                                      c.id === tc.id
-                                        ? { ...c, expected: val || "" }
-                                        : c
-                                    )
-                                  );
-                                }}
-                              />
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "result" && (
-                  <div className="flex flex-col h-full">
-                    {!testResults ? (
-                      <div className="flex-1 flex items-center justify-center text-muted text-sm italic">
-                        Run code to see results...
+                          );
+                        })}
                       </div>
-                    ) : (
-                      <>
-                        {/* Overall Status */}
-                        <div className="p-4 pb-2">
-                          {testResults.every((r) => r.status === "Accepted") ? (
-                            <h3 className="text-emerald-400 font-bold text-lg flex items-center gap-2">
-                              <CheckCircle2 className="w-5 h-5" /> Accepted
-                            </h3>
-                          ) : (
-                            <h3 className="text-rose-400 font-bold text-lg flex items-center gap-2">
-                              <AlertCircle className="w-5 h-5" /> Wrong Answer
-                            </h3>
-                          )}
+                    </div>
+                  )}
 
-                          {/* Hidden Tests Summary */}
-                          {(() => {
-                            const hiddenResults = testResults.filter(
-                              (r) => r.hidden
-                            );
-                            const hiddenPassed = hiddenResults.filter(
+                  {activeTab === "result" && (
+                    <div className="flex flex-col h-full">
+                      {!testResults ? (
+                        <div className="flex-1 flex items-center justify-center text-muted text-sm italic">
+                          Run code to see results...
+                        </div>
+                      ) : (
+                        <>
+                          {/* Overall Status */}
+                          <div className="p-4 pb-2">
+                            {testResults.every(
                               (r) => r.status === "Accepted"
-                            ).length;
-                            const hiddenTotal = hiddenResults.length;
+                            ) ? (
+                              <h3 className="text-emerald-400 font-bold text-lg flex items-center gap-2">
+                                <CheckCircle2 className="w-5 h-5" /> Accepted
+                              </h3>
+                            ) : (
+                              <h3 className="text-rose-400 font-bold text-lg flex items-center gap-2">
+                                <AlertCircle className="w-5 h-5" /> Wrong Answer
+                              </h3>
+                            )}
 
-                            if (hiddenTotal > 0) {
+                            {/* Hidden Tests Summary */}
+                            {(() => {
+                              const hiddenResults = testResults.filter(
+                                (r) => r.hidden
+                              );
+                              const hiddenPassed = hiddenResults.filter(
+                                (r) => r.status === "Accepted"
+                              ).length;
+                              const hiddenTotal = hiddenResults.length;
+
+                              if (hiddenTotal > 0) {
+                                return (
+                                  <div className="mt-2 text-xs font-medium text-muted">
+                                    {hiddenPassed}/{hiddenTotal} hidden tests
+                                    passed
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+
+                          {/* Result Tabs */}
+                          <div className="flex items-center gap-2 px-4 border-b border-border overflow-x-auto">
+                            {testResults.map((r, idx) => {
+                              // Only show hidden tests if they failed or if they are the active one (unlikely but safe)
+                              if (
+                                r.hidden &&
+                                r.status === "Accepted" &&
+                                activeTestCaseId !== r.id
+                              )
+                                return null;
+
                               return (
-                                <div className="mt-2 text-xs font-medium text-muted">
-                                  {hiddenPassed}/{hiddenTotal} hidden tests
-                                  passed
+                                <button
+                                  key={r.id}
+                                  onClick={() => setActiveTestCaseId(r.id)}
+                                  className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 whitespace-nowrap ${
+                                    activeTestCaseId === r.id
+                                      ? "bg-surface text-primary"
+                                      : "text-muted hover:bg-surface"
+                                  }`}
+                                >
+                                  <span
+                                    className={`w-2 h-2 rounded-full ${
+                                      r.status === "Accepted"
+                                        ? "bg-emerald-500"
+                                        : "bg-rose-500"
+                                    }`}
+                                  />
+                                  {r.hidden ? "Hidden Case" : `Case ${idx + 1}`}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Result Details */}
+                          <div className="flex-1 p-4 overflow-y-auto">
+                            {testResults.map((r) => {
+                              if (r.id !== activeTestCaseId) return null;
+                              return (
+                                <div key={r.id} className="flex flex-col gap-4">
+                                  {r.status === "Runtime Error" && (
+                                    <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-md text-rose-400 text-xs font-mono whitespace-pre-wrap">
+                                      {r.stderr}
+                                    </div>
+                                  )}
+
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted">
+                                      Input
+                                    </label>
+                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
+                                      {r.input}
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted">
+                                      Stdout
+                                    </label>
+                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
+                                      {r.stdout || (
+                                        <span className="text-muted italic">
+                                          No output
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted">
+                                      Output
+                                    </label>
+                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
+                                      {r.output}
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted">
+                                      Expected
+                                    </label>
+                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
+                                      {r.expected}
+                                    </div>
+                                  </div>
                                 </div>
                               );
-                            }
-                            return null;
-                          })()}
-                        </div>
-
-                        {/* Result Tabs */}
-                        <div className="flex items-center gap-2 px-4 border-b border-border overflow-x-auto">
-                          {testResults.map((r, idx) => {
-                            // Only show hidden tests if they failed or if they are the active one (unlikely but safe)
-                            if (
-                              r.hidden &&
-                              r.status === "Accepted" &&
-                              activeTestCaseId !== r.id
-                            )
-                              return null;
-
-                            return (
-                              <button
-                                key={r.id}
-                                onClick={() => setActiveTestCaseId(r.id)}
-                                className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 whitespace-nowrap ${
-                                  activeTestCaseId === r.id
-                                    ? "bg-surface text-primary"
-                                    : "text-muted hover:bg-surface"
-                                }`}
-                              >
-                                <span
-                                  className={`w-2 h-2 rounded-full ${
-                                    r.status === "Accepted"
-                                      ? "bg-emerald-500"
-                                      : "bg-rose-500"
-                                  }`}
-                                />
-                                {r.hidden ? "Hidden Case" : `Case ${idx + 1}`}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Result Details */}
-                        <div className="flex-1 p-4 overflow-y-auto">
-                          {testResults.map((r) => {
-                            if (r.id !== activeTestCaseId) return null;
-                            return (
-                              <div key={r.id} className="flex flex-col gap-4">
-                                {r.status === "Runtime Error" && (
-                                  <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-md text-rose-400 text-xs font-mono whitespace-pre-wrap">
-                                    {r.stderr}
-                                  </div>
-                                )}
-
-                                <div className="space-y-1">
-                                  <label className="text-xs font-medium text-muted">
-                                    Input
-                                  </label>
-                                  <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                    {r.input}
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1">
-                                  <label className="text-xs font-medium text-muted">
-                                    Stdout
-                                  </label>
-                                  <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                    {r.stdout || (
-                                      <span className="text-muted italic">
-                                        No output
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1">
-                                  <label className="text-xs font-medium text-muted">
-                                    Output
-                                  </label>
-                                  <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                    {r.output}
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1">
-                                  <label className="text-xs font-medium text-muted">
-                                    Expected
-                                  </label>
-                                  <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                    {r.expected}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
+                            })}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </>
