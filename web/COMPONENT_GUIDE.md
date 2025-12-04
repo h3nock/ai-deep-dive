@@ -53,6 +53,11 @@ Use for all body text. Handles typography styling automatically.
 </Description>
 ```
 
+**Behavior**:
+- Links are automatically styled as `text-primary` with a subtle underline (`decoration-zinc-700`).
+- Hover states brighten the decoration.
+```
+
 **Props**:
 
 - `noMargin` - Remove bottom margin (when parent uses `gap`)

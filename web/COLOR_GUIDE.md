@@ -29,6 +29,7 @@ Depth Stack (darkest to lightest):
 | **Primary**   | `#D4D4D8` | `text-primary`   | Headings, bold text, important labels   |
 | **Secondary** | `#A1A1AA` | `text-secondary` | Body text, paragraphs                   |
 | **Muted**     | `#71717A` | `text-muted`     | Labels, captions, meta info, timestamps |
+| **Links**     | `#D4D4D8` | `text-primary`   | Interactive text elements (underline)   |
 
 ```
 Reading contrast (lightest to darkest):
@@ -151,6 +152,7 @@ bg-zinc-800 text-secondary
 | Forbidden          | Why                            | Use Instead                          |
 | ------------------ | ------------------------------ | ------------------------------------ |
 | `text-white`     | Too bright, causes eye strain  | `text-primary` (#D4D4D8)           |
+| `text-sky-400`   | Breaks monochrome theme (body) | `text-primary underline`           |
 | `text-black`     | Not visible on dark bg         | `text-secondary` or `text-muted` |
 | `bg-white`       | We're dark-mode only           | Never needed                         |
 | `bg-black`       | Slightly warmer void is better | `bg-background` (#09090B)          |
@@ -173,6 +175,7 @@ TEXT
   Headings/Bold:    text-primary     #D4D4D8
   Body:             text-secondary   #A1A1AA
   Labels/Meta:      text-muted       #71717A
+  Links:            text-primary     #D4D4D8 (underline)
 
 BORDERS
   Default:          border-border    #27272A
