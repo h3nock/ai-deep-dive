@@ -18,15 +18,4 @@ executionSnippet: |
 visibleTestCases: 2
 ---
 
-Before we can use vectors, we have to build the storage system.
-
-In a neural network, the **Embedding Layer** is not magic. It is simply a list of lists (a matrix).
-
-- **Rows** represent specific words (indexed by Token ID).
-- **Columns** represent the dimensions of meaning.
-
-**Your Task:**
-
-1. Create a matrix (list of lists) filled with `0.0` with shape `vocab_size` rows × `embed_dim` columns.
-2. Update the specific rows using the `concept_map`. The keys are Token IDs, and the values are the vectors to insert.
-3. Return the final matrix.
+The embedding layer is just a lookup table. Implement a function that builds this table as a matrix of zeros, then populates specific rows using `concept_map`, which maps Token IDs (keys) to their pre-trained vectors (values).

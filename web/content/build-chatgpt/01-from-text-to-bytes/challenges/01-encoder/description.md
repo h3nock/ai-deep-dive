@@ -13,4 +13,4 @@ executionSnippet: |
 visibleTestCases: 2
 ---
 
-Given a string `text`, your task is to implement a function that converts it into a sequence of bytes using the UTF-8 encoding scheme. The function should return a list of integers, where each integer represents a single byte.
+Given a string `text`, implement a function that converts it into a sequence of bytes using the UTF-8 encoding scheme. Return a list of integers, where each integer represents a single byte.

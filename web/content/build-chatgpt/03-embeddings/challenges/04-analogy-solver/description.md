@@ -23,22 +23,10 @@ executionSnippet: |
 visibleTestCases: 2
 ---
 
-This challenge proves that we can perform **algebra on meaning**.
-
-We want to solve analogies like: _"Man is to King as Woman is to...?"_
-
-Mathematically, this becomes:
+Solve analogies like _"Man is to King as Woman is to...?"_ using vector arithmetic:
 
 $$Target = Vector(King) - Vector(Man) + Vector(Woman)$$
 
-The answer is the word whose vector is closest to the Target.
-
-**Your Task:**
-
-1. Retrieve the vectors for `word_a`, `word_b`, and `word_c` from the vocab.
-2. Compute the `Target` vector: $A - B + C$ (element-wise arithmetic).
-3. Find the word in `vocab` with the **highest Cosine Similarity** to the Target.
-4. Exclude the three input words from consideration.
-5. Return the winning word.
+Compute `Target = word_a - word_b + word_c` (element-wise), then find the word in `vocab` with the highest cosine similarity to Target. Exclude the input words from consideration.
 
 _Hint: You'll need to implement (or reuse) cosine similarity logic._

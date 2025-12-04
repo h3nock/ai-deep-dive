@@ -13,10 +13,4 @@ executionSnippet: |
   count_characters(byte_list)
 ---
 
-You are given a list of integers `byte_list`, which represents a sequence of bytes encoded in UTF-8. Your task is to implement a function that determines the number of characters in this sequence **without decoding the entire byte list into a string**.
-
-To do this, you'll need to inspect the binary representation of each byte. In UTF-8:
-- A byte that starts with `0...` or `11...` marks the beginning of a new character.
-- A byte that starts with `10...` is a "continuation byte" and is part of the previous character.
-
-Your function should count and return the total number of start bytes.
+Count the number of characters in a UTF-8 `byte_list` without decoding it. In UTF-8, bytes starting with `0...` or `11...` mark new characters, while `10...` bytes are continuations. Count the start bytes.

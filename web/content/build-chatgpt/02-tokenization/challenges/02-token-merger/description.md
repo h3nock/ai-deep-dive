@@ -17,8 +17,6 @@ executionSnippet: |
 visibleTestCases: 2
 ---
 
-Once we've identified the most frequent pair, we need to merge it.
-
 Given a list of token integers `ids`, a `pair` to find, and a `new_id` to replace it with, return a new list where every consecutive occurrence of the pair is replaced with `new_id`.
 
 **Note:** When you replace a pair, both elements are consumed. Think carefully about how this affects overlapping patterns like `[1, 1, 1]` when merging `(1, 1)`.

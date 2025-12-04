@@ -18,18 +18,10 @@ executionSnippet: |
 visibleTestCases: 2
 ---
 
-In high-dimensional space, Euclidean distance (measuring with a ruler) can be misleading. Instead, we measure the **angle** between vectors.
-
-**What the values mean:**
-
-- **1.0**: Perfect match (vectors point the same direction)
-- **0.0**: No relation (vectors are perpendicular, 90° angle)
-- **-1.0**: Opposites (vectors point opposite directions, 180° angle)
-
-**Your Task:**
-
-Implement the Cosine Similarity formula:
+Implement the Cosine Similarity formula to measure how similar two vectors are:
 
 $$Similarity = \frac{\sum(A_i \cdot B_i)}{\sqrt{\sum A_i^2} \times \sqrt{\sum B_i^2}}$$
+
+Returns a value between -1 and 1, where 1 means identical and 0 means unrelated.
 
 _Hint: The numerator is the dot product. The denominator is the product of the magnitudes._

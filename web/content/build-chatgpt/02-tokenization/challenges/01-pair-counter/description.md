@@ -13,6 +13,4 @@ executionSnippet: |
 visibleTestCases: 2
 ---
 
-The first step of BPE is finding which pairs of tokens appear most frequently.
-
-Given a list of integers `ids`, return a dictionary where each key is a tuple of two adjacent elements `(ids[i], ids[i+1])`, and each value is how many times that pair appears in the list.
+Given a list of integers `ids`, count how often each consecutive pair appears. Return a dictionary where each key is a tuple `(ids[i], ids[i+1])` and each value is the pair's count.
