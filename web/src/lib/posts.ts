@@ -24,7 +24,12 @@ export interface Challenge {
   hint?: string;
   difficulty?: "Easy" | "Medium" | "Hard";
   arguments?: { name: string; type: string }[];
-  defaultTestCases?: { id: string; inputs: Record<string, string>; expected: string; hidden?: boolean }[];
+  defaultTestCases?: {
+    id: string;
+    inputs: Record<string, string>;
+    expected: string;
+    hidden?: boolean;
+  }[];
   executionSnippet?: string;
   dependencies?: string[];
   visibleTestCases?: number;
@@ -68,8 +73,7 @@ function loadPostFrontmatter(
   frontmatterData?: Record<string, any>
 ): Omit<PostData, "content"> {
   const data =
-    frontmatterData ??
-    matter(fs.readFileSync(filePath, "utf8")).data;
+    frontmatterData ?? matter(fs.readFileSync(filePath, "utf8")).data;
 
   const stepCandidate =
     data.step ?? manifestStep?.step ?? deriveStepFromSlug(slug);
@@ -127,21 +131,19 @@ function sortPosts(
       manifest.steps.map((step, index) => [step.slug, index])
     );
 
-    return posts
-      .slice()
-      .sort((a, b) => {
-        const orderA = manifestOrder.get(a.slug);
-        const orderB = manifestOrder.get(b.slug);
+    return posts.slice().sort((a, b) => {
+      const orderA = manifestOrder.get(a.slug);
+      const orderB = manifestOrder.get(b.slug);
 
-        if (orderA !== undefined && orderB !== undefined) {
-          return orderA - orderB;
-        }
-        if (orderA !== undefined) return -1;
-        if (orderB !== undefined) return 1;
+      if (orderA !== undefined && orderB !== undefined) {
+        return orderA - orderB;
+      }
+      if (orderA !== undefined) return -1;
+      if (orderB !== undefined) return 1;
 
-        if (a.step === b.step) return a.slug.localeCompare(b.slug);
-        return a.step > b.step ? 1 : -1;
-      });
+      if (a.step === b.step) return a.slug.localeCompare(b.slug);
+      return a.step > b.step ? 1 : -1;
+    });
   }
 
   return posts.slice().sort((a, b) => {
@@ -175,7 +177,12 @@ export function getAllPosts(collection: string): Omit<PostData, "content">[] {
       if (!postPath) return;
 
       const manifestStep = manifestLookup.get(slug);
-      const post = loadPostFrontmatter(postPath, slug, collection, manifestStep);
+      const post = loadPostFrontmatter(
+        postPath,
+        slug,
+        collection,
+        manifestStep
+      );
       uniquePosts.set(slug, post);
     });
 
@@ -183,7 +190,8 @@ export function getAllPosts(collection: string): Omit<PostData, "content">[] {
   entries
     .filter(
       (entry) =>
-        entry.isFile() && (entry.name.endsWith(".md") || entry.name.endsWith(".mdx"))
+        entry.isFile() &&
+        (entry.name.endsWith(".md") || entry.name.endsWith(".mdx"))
     )
     .forEach((entry) => {
       const slug = entry.name.replace(/\.mdx?$/, "");
@@ -191,14 +199,22 @@ export function getAllPosts(collection: string): Omit<PostData, "content">[] {
 
       const manifestStep = manifestLookup.get(slug);
       const postPath = path.join(collectionPath, entry.name);
-      const post = loadPostFrontmatter(postPath, slug, collection, manifestStep);
+      const post = loadPostFrontmatter(
+        postPath,
+        slug,
+        collection,
+        manifestStep
+      );
       uniquePosts.set(slug, post);
     });
 
   return sortPosts(Array.from(uniquePosts.values()), manifest);
 }
 
-export async function getPostBySlug(collection: string, slug: string): Promise<PostData | null> {
+export async function getPostBySlug(
+  collection: string,
+  slug: string
+): Promise<PostData | null> {
   try {
     const collectionPath = path.join(contentDirectory, collection);
 
@@ -223,7 +239,12 @@ export async function getPostBySlug(collection: string, slug: string): Promise<P
 
     // Load challenges from co-located folder, else fallback to legacy path
     const coLocatedChallenges = path.join(path.dirname(postPath), "challenges");
-    const legacyChallenges = path.join(contentDirectory, "challenges", collection, slug);
+    const legacyChallenges = path.join(
+      contentDirectory,
+      "challenges",
+      collection,
+      slug
+    );
     const challengesDir = fs.existsSync(coLocatedChallenges)
       ? coLocatedChallenges
       : legacyChallenges;
@@ -246,7 +267,8 @@ export async function getPostBySlug(collection: string, slug: string): Promise<P
             return null;
           }
           const descriptionContent = fs.readFileSync(descriptionPath, "utf8");
-          const { data: challengeData, content: challengeBody } = matter(descriptionContent);
+          const { data: challengeData, content: challengeBody } =
+            matter(descriptionContent);
 
           // Load tests.json
           let defaultTestCases = [];
@@ -255,7 +277,10 @@ export async function getPostBySlug(collection: string, slug: string): Promise<P
             try {
               defaultTestCases = JSON.parse(fs.readFileSync(testsPath, "utf8"));
             } catch (e) {
-              console.error(`Failed to load tests for bundle ${bundleName}:`, e);
+              console.error(
+                `Failed to load tests for bundle ${bundleName}:`,
+                e
+              );
             }
           }
 
@@ -266,21 +291,6 @@ export async function getPostBySlug(collection: string, slug: string): Promise<P
           } as Challenge;
         })
         .filter(Boolean) as Challenge[]; // Filter out nulls
-    } else if (data.challenges) {
-      // Legacy fallback: Load external test cases for existing frontmatter challenges
-      data.challenges = data.challenges.map((challenge: Challenge) => {
-        const testFilePath = path.join(contentDirectory, "tests", `${challenge.id}.json`);
-        if (fs.existsSync(testFilePath)) {
-          try {
-            const testContent = fs.readFileSync(testFilePath, "utf8");
-            const testCases = JSON.parse(testContent);
-            return { ...challenge, defaultTestCases: testCases };
-          } catch (e) {
-            console.error(`Failed to load tests for challenge ${challenge.id}:`, e);
-          }
-        }
-        return challenge;
-      });
     }
 
     // Return raw content for RSC rendering
