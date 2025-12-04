@@ -85,15 +85,32 @@ export async function generateStaticParams() {
 
 export default async function StepPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ courseId: string; slug: string }>;
+  searchParams: Promise<{ view?: string; c?: string }>;
 }) {
   const { courseId, slug } = await params;
+  const { view, c } = await searchParams;
   const post = await getPostBySlug(courseId, slug);
   const allPosts = getAllPosts(courseId);
 
   if (!post) {
     notFound();
+  }
+
+  // Compute initial navigation state server-side to prevent hydration flash
+  const hasChallenges = post.challenges && post.challenges.length > 0;
+  const initialTab: "guide" | "challenges" =
+    view === "challenges" && hasChallenges ? "challenges" : "guide";
+
+  // Parse challenge index, validate it's within bounds
+  let initialChallengeIndex: number | null = null;
+  if (c !== undefined && hasChallenges) {
+    const parsed = parseInt(c, 10);
+    if (!isNaN(parsed) && parsed >= 0 && parsed < post.challenges!.length) {
+      initialChallengeIndex = parsed;
+    }
   }
 
   const currentIndex = allPosts.findIndex((p) => p.slug === post.slug);
@@ -107,6 +124,8 @@ export default async function StepPage({
       prevPost={prevPost}
       nextPost={nextPost}
       collection={courseId}
+      initialTab={initialTab}
+      initialChallengeIndex={initialChallengeIndex}
     >
       <MDXRemote
         source={post.content}
@@ -130,3 +149,4 @@ export default async function StepPage({
     </StepContainer>
   );
 }
+

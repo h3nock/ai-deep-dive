@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Navbar } from "./Navbar";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, BookOpen, Code2 } from "lucide-react";
 import { PostData } from "@/lib/posts";
@@ -16,6 +16,8 @@ interface StepContainerProps {
   nextPost: Omit<PostData, "content"> | null;
   children: React.ReactNode; // The rendered MDX guide
   collection: string;
+  initialTab?: "guide" | "challenges";
+  initialChallengeIndex?: number | null;
 }
 
 export function StepContainer({
@@ -24,13 +26,84 @@ export function StepContainer({
   nextPost,
   children,
   collection,
+  initialTab = "guide",
+  initialChallengeIndex = null,
 }: StepContainerProps) {
-  const [activeTab, setActiveTab] = useState<"guide" | "challenges">("guide");
-  const [activeChallengeIndex, setActiveChallengeIndex] = useState<
-    number | null
-  >(null);
+  const pathname = usePathname();
+
+  // State is the source of truth - initialized from server props to prevent flash
+  const [activeTab, setActiveTab] = useState<"guide" | "challenges">(initialTab);
+  const [activeChallengeIndex, setActiveChallengeIndex] = useState<number | null>(
+    initialChallengeIndex
+  );
+
   const hasChallenges = post.challenges && post.challenges.length > 0;
   const { setCurrentStep } = useProgress();
+
+  // Track if we should sync state to URL (skip initial mount)
+  const shouldSyncToUrl = useRef(false);
+
+  // Sync state TO URL when state changes (after initial mount)
+  // Uses history.replaceState for instant URL update (no Next.js navigation overhead)
+  useEffect(() => {
+    if (!shouldSyncToUrl.current) {
+      shouldSyncToUrl.current = true;
+      return;
+    }
+
+    const params = new URLSearchParams();
+
+    if (activeTab === "challenges") {
+      params.set("view", "challenges");
+      if (activeChallengeIndex !== null) {
+        params.set("c", activeChallengeIndex.toString());
+      }
+    }
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+
+    // Use history.replaceState for instant URL update (no navigation)
+    window.history.replaceState(null, "", newUrl);
+  }, [activeTab, activeChallengeIndex, pathname]);
+
+  // Sync state FROM URL when browser navigates (back/forward)
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get("view");
+      const cParam = params.get("c");
+
+      const newTab = viewParam === "challenges" && hasChallenges ? "challenges" : "guide";
+      setActiveTab(newTab);
+
+      if (cParam !== null && hasChallenges) {
+        const parsed = parseInt(cParam, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed < post.challenges!.length) {
+          setActiveChallengeIndex(parsed);
+        } else {
+          setActiveChallengeIndex(null);
+        }
+      } else {
+        setActiveChallengeIndex(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [hasChallenges, post.challenges?.length]);
+
+  // Simple handlers that just update state
+  const handleTabChange = useCallback((tab: "guide" | "challenges") => {
+    setActiveTab(tab);
+    // Always clear challenge index when switching tabs
+    // (going to guide = no challenge, going to challenges = show list)
+    setActiveChallengeIndex(null);
+  }, []);
+
+  const handleChallengeIndexChange = useCallback((index: number | null) => {
+    setActiveChallengeIndex(index);
+  }, []);
 
   // Track current step when viewing a chapter
   useEffect(() => {
@@ -39,8 +112,8 @@ export function StepContainer({
     }
   }, [collection, post.step, setCurrentStep]);
 
-  // Preload Monaco editor in the background when page loads
-  // This ensures the editor is ready before user clicks "Challenges"
+  // Preload Monaco editor - run immediately for faster load
+  // When starting on challenges tab, Monaco will already be loading
   useEffect(() => {
     if (hasChallenges) {
       preloadMonaco();
@@ -79,7 +152,7 @@ export function StepContainer({
             <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-6">
               <div className="max-w-5xl mx-auto flex gap-6">
                 <button
-                  onClick={() => setActiveTab("guide")}
+                  onClick={() => handleTabChange("guide")}
                   className={`py-4 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
                     activeTab === "guide"
                       ? "border-primary text-primary"
@@ -90,10 +163,7 @@ export function StepContainer({
                   Guide
                 </button>
                 <button
-                  onClick={() => {
-                    setActiveTab("challenges");
-                    setActiveChallengeIndex(null);
-                  }}
+                  onClick={() => handleTabChange("challenges")}
                   className={`py-4 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
                     activeTab === "challenges"
                       ? "border-primary text-primary"
@@ -214,7 +284,7 @@ export function StepContainer({
             <ChallengeWorkspace
               challenges={post.challenges || []}
               activeChallengeIndex={activeChallengeIndex}
-              setActiveChallengeIndex={setActiveChallengeIndex}
+              setActiveChallengeIndex={handleChallengeIndexChange}
             />
           )}
         </div>
