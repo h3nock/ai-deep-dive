@@ -400,6 +400,22 @@ body {
   --tw-prose-td-borders: #27272A;
 }
 
+/* Inline code - slightly smaller than body text but readable */
+.prose :not(pre)>code {
+  font-size: 0.9375rem;
+  /* 15px - close to body text */
+  padding: 0.125rem 0.375rem;
+  background-color: #27272A;
+  /* Zinc-800 */
+  border-radius: 0.25rem;
+  font-feature-settings: normal;
+}
+
+/* Ensure list items match paragraph font size */
+.prose li {
+  font-size: inherit;
+}
+
 /* ==========================================================================
    Linear/Vercel-Style Card Hover Effects
    Border-driven glow with stable background
