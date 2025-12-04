@@ -4,7 +4,7 @@ import webbrowser
 from urllib.parse import quote
 
 from ai_deep_dive.config import (
-    WEBSITE_URL,
+    get_website_url,
     get_course_status,
 )
 
@@ -31,7 +31,8 @@ def generate_sync_url(course_id: str) -> str | None:
     # URL encode (though our format is already URL-safe)
     encoded = quote(data, safe=":,-")
     
-    return f"{WEBSITE_URL}/sync#{encoded}"
+    website_url = get_website_url()
+    return f"{website_url}/sync#{encoded}"
 
 
 def open_sync_url(course_id: str) -> tuple[bool, str]:

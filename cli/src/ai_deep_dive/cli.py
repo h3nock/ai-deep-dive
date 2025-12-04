@@ -8,6 +8,7 @@ from ai_deep_dive.commands.test import test_command
 from ai_deep_dive.commands.status import status_command
 from ai_deep_dive.commands.list import list_command
 from ai_deep_dive.commands.sync import sync_command
+from ai_deep_dive.commands.config import config_command
 
 
 @click.group()
@@ -27,6 +28,7 @@ cli.add_command(test_command, name="test")
 cli.add_command(status_command, name="status")
 cli.add_command(list_command, name="list")
 cli.add_command(sync_command, name="sync")
+cli.add_command(config_command, name="config")
 
 
 def main() -> None:

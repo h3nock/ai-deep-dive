@@ -5,13 +5,14 @@ import os
 from pathlib import Path
 from typing import Optional
 
-# Website URL
-WEBSITE_URL = "https://aideep.dev"
+# Default Website URL (can be overridden in global config)
+DEFAULT_WEBSITE_URL = "https://learning.h3nok.dev"
 
 # Directory names
 CONFIG_DIR_NAME = ".ai-deep-dive"
 CONFIG_FILE_NAME = "config.json"
 GLOBAL_CONFIG_DIR = Path.home() / ".ai-deep-dive"
+GLOBAL_CONFIG_FILE = GLOBAL_CONFIG_DIR / "config.json"
 STATUS_FILE = GLOBAL_CONFIG_DIR / "status.json"
 
 
@@ -19,6 +20,38 @@ def get_global_config_dir() -> Path:
     """Get or create the global config directory (~/.ai-deep-dive/)."""
     GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     return GLOBAL_CONFIG_DIR
+
+
+def get_global_config() -> dict:
+    """Load global configuration from ~/.ai-deep-dive/config.json."""
+    get_global_config_dir()  # Ensure dir exists
+    
+    if not GLOBAL_CONFIG_FILE.exists():
+        return {}
+    
+    with open(GLOBAL_CONFIG_FILE, "r") as f:
+        return json.load(f)
+
+
+def save_global_config(config: dict) -> None:
+    """Save global configuration to ~/.ai-deep-dive/config.json."""
+    get_global_config_dir()  # Ensure dir exists
+    
+    with open(GLOBAL_CONFIG_FILE, "w") as f:
+        json.dump(config, f, indent=2)
+
+
+def get_website_url() -> str:
+    """Get the website URL from global config, or use default."""
+    config = get_global_config()
+    return config.get("website_url", DEFAULT_WEBSITE_URL)
+
+
+def set_website_url(url: str) -> None:
+    """Set a custom website URL in global config."""
+    config = get_global_config()
+    config["website_url"] = url.rstrip("/")  # Remove trailing slash
+    save_global_config(config)
 
 
 def get_workspace_root(start_path: Optional[Path] = None) -> Optional[Path]:
