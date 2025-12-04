@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   Play,
   CheckCircle2,
@@ -8,20 +9,30 @@ import {
   ChevronLeft,
   Code2,
   Settings,
-  List,
-  Wifi,
-  WifiOff,
-  Download,
   X,
   Plus,
-  Trash2,
-  Copy,
+  Loader2,
+  RotateCcw,
+  Send,
+  ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  ArrowRight,
+  Terminal,
+  ExternalLink,
 } from "lucide-react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import { AutoResizingEditor } from "./AutoResizingEditor";
 import ReactMarkdown from "react-markdown";
 import { useDebounce } from "use-debounce";
 import { PYTHON_HARNESS } from "@/lib/python-harness";
+import {
+  loadPyodide,
+  isPyodideLoaded,
+  runTestsWithPyodide,
+  canRunInBrowser,
+  type TestConfig,
+} from "@/lib/pyodide";
 
 // Custom Monaco Theme - Eye-Safe Zinc Dark
 const ZINC_DARK_THEME = {
@@ -56,8 +67,11 @@ export interface Challenge {
     hidden?: boolean;
   }[];
   executionSnippet?: string; // Code to run the function, e.g. "print(solution(numRows))"
-  dependencies?: string[];
+  dependencies?: string[]; // Required packages (determines browser vs CLI execution)
   visibleTestCases?: number;
+  browserOnly?: boolean; // Force browser execution even if bridge connected
+  chapterNumber?: string; // e.g., "02" from "02-tokenization"
+  problemNumber?: string; // e.g., "01" from "01-pair-counter"
 }
 
 interface TestCase {
@@ -93,6 +107,9 @@ export function ChallengeWorkspace({
     null
   );
   const [code, setCode] = useState("");
+  const [isSolved, setIsSolved] = useState(false);
+  const [lastRunMode, setLastRunMode] = useState<"run" | "submit" | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Active Pane Tracking - for focus ring styling
   const [activePane, setActivePane] = useState<"prose" | "editor">("editor");
@@ -117,6 +134,7 @@ export function ChallengeWorkspace({
   // Bottom Panel State
   const [bottomPanelHeight, setBottomPanelHeight] = useState(45); // Percentage
   const [isDraggingBottom, setIsDraggingBottom] = useState(false);
+  const [isBottomPanelCollapsed, setIsBottomPanelCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "console" | "testcases" | "result"
   >("console");
@@ -128,12 +146,21 @@ export function ChallengeWorkspace({
   const [installPackageName, setInstallPackageName] = useState("");
   const wsRef = useRef<WebSocket | null>(null);
   const [debouncedCode] = useDebounce(code, 1000);
+
+  // Pyodide State
+  const [pyodideStatus, setPyodideStatus] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+  const [executionMode, setExecutionMode] = useState<"browser" | "bridge">(
+    "browser"
+  );
   // We don't need to debounce test cases for sync anymore, we send them on run
 
   const monaco = useMonaco();
   const editorRef = useRef<any>(null);
   const vimModeRef = useRef<any>(null);
   const consoleRef = useRef<HTMLDivElement>(null);
+  const rightPanelRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll console
   useEffect(() => {
@@ -153,10 +180,59 @@ export function ChallengeWorkspace({
   const activeChallenge =
     activeChallengeIndex !== null ? challenges[activeChallengeIndex] : null;
 
-  // Initialize code and test cases when challenge changes
+  // Preload Pyodide once on component mount (not per challenge)
+  // This ensures the Python runtime is ready before user needs it
+  useEffect(() => {
+    // Only load if not already loaded or loading
+    if (pyodideStatus === "idle") {
+      // Check if already loaded globally
+      if (isPyodideLoaded()) {
+        setPyodideStatus("ready");
+        return;
+      }
+
+      setPyodideStatus("loading");
+      loadPyodide()
+        .then(() => {
+          setPyodideStatus("ready");
+        })
+        .catch((err) => {
+          console.error("Failed to load Pyodide:", err);
+          setPyodideStatus("error");
+        });
+    }
+  }, []); // Empty dependency array - run once on mount
+
+  // Determine execution mode based on challenge dependencies
+  useEffect(() => {
+    if (!activeChallenge) return;
+
+    const browserSupported = canRunInBrowser(activeChallenge.dependencies);
+
+    if (browserSupported) {
+      // Can run in browser with Pyodide
+      setExecutionMode("browser");
+    } else {
+      // Requires packages not available in Pyodide - must use CLI
+      setExecutionMode("bridge");
+    }
+  }, [activeChallenge]);
+
+  // Load code from localStorage or use initial code when challenge changes
   useEffect(() => {
     if (activeChallenge) {
-      setCode(activeChallenge.initialCode); // Always set code when challenge changes
+      const storedCode = localStorage.getItem(`sol_${activeChallenge.id}_code`);
+      if (storedCode !== null) {
+        setCode(storedCode);
+      } else {
+        setCode(activeChallenge.initialCode);
+      }
+
+      // Load solved status
+      const storedStatus = localStorage.getItem(
+        `sol_${activeChallenge.id}_status`
+      );
+      setIsSolved(storedStatus === "solved");
       if (
         activeChallenge.defaultTestCases &&
         activeChallenge.defaultTestCases.length > 0
@@ -207,8 +283,30 @@ export function ChallengeWorkspace({
       }
       setTestResults(null);
       setOutput("");
+      setLastRunMode(null);
     }
   }, [activeChallenge]);
+
+  // Save code to localStorage with debounce
+  useEffect(() => {
+    if (!activeChallenge) return;
+
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce save operation (1000ms)
+    saveTimeoutRef.current = setTimeout(() => {
+      localStorage.setItem(`sol_${activeChallenge.id}_code`, code);
+    }, 1000);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [code, activeChallenge]);
 
   // Vim Mode Effect
   useEffect(() => {
@@ -283,6 +381,11 @@ export function ChallengeWorkspace({
                 if (Array.isArray(results)) {
                   setTestResults(results);
                   setActiveTab("result");
+                  // Reset to initial height when expanding
+                  if (isBottomPanelCollapsed) {
+                    setBottomPanelHeight(45);
+                  }
+                  setIsBottomPanelCollapsed(false);
                 }
               } catch (e) {
                 // Not JSON, just regular output
@@ -327,7 +430,7 @@ export function ChallengeWorkspace({
   // Remove old sync test cases effect
 
   // Keep latest handleRun in ref for event listeners
-  const handleRunRef = useRef<() => void>(() => {});
+  const handleRunRef = useRef<(mode?: "run" | "submit") => void>(() => {});
   useEffect(() => {
     handleRunRef.current = handleRun;
   });
@@ -354,88 +457,227 @@ export function ChallengeWorkspace({
 
     // Add Cmd+Enter / Ctrl+Enter shortcut to editor
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      handleRunRef.current();
+      handleRunRef.current("run");
     });
   };
 
-  const handleRun = () => {
-    if (!isConnected) {
-      setOutput(
-        "Error: Local Bridge not connected.\nPlease run 'python bridge.py' in your terminal."
-      );
-      return;
+  // Reset handler
+  const handleReset = useCallback(() => {
+    if (!activeChallenge) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to reset your code to the initial template? This cannot be undone."
+    );
+    if (confirmed) {
+      setCode(activeChallenge.initialCode);
+      localStorage.removeItem(`sol_${activeChallenge.id}_code`);
     }
+  }, [activeChallenge]);
 
-    setIsRunning(true);
-    setOutput(""); // Clear previous output
-    setTestResults(null);
+  const handleRun = useCallback(
+    async (mode: "run" | "submit" = "run") => {
+      const browserSupported = canRunInBrowser(activeChallenge?.dependencies);
 
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      // 1. Sync User Code
-      wsRef.current.send(
-        JSON.stringify({
-          command: "sync",
-          filename: "main.py",
-          content: code,
-        })
-      );
+      // Determine which execution path to use
+      const useBrowser =
+        executionMode === "browser" &&
+        browserSupported &&
+        (pyodideStatus === "ready" || pyodideStatus === "loading");
 
-      // 2. Sync Harness
-      wsRef.current.send(
-        JSON.stringify({
-          command: "sync",
-          filename: "harness.py",
-          content: PYTHON_HARNESS,
-        })
-      );
+      // Filter test cases based on mode
+      const casesToRun =
+        mode === "run" ? testCases.filter((tc) => !tc.hidden) : testCases; // Submit runs ALL test cases including hidden
 
-      // 3. Sync Test Config
-      // Convert structured inputs to python assignment code for the harness
-      const formattedCases = testCases.map((tc) => {
-        let inputCode = "";
-        Object.entries(tc.inputs).forEach(([key, value]) => {
-          inputCode += `${key} = ${value}\n`;
-        });
-        return {
-          id: tc.id,
-          input: inputCode, // Harness expects 'input' as code to execute
-          expected: tc.expected,
-        };
-      });
+      if (useBrowser) {
+        // === BROWSER EXECUTION (Pyodide) ===
+        setIsRunning(true);
+        setOutput("");
+        setTestResults(null);
+        setLastRunMode(mode);
 
-      let runnerCode =
-        activeChallenge?.executionSnippet ||
-        "print('No execution snippet defined')";
-      // Safety: Strip print() wrapper if present, as the harness now expects an expression
-      if (
-        runnerCode.trim().startsWith("print(") &&
-        runnerCode.trim().endsWith(")")
-      ) {
-        runnerCode = runnerCode.trim().slice(6, -1);
+        try {
+          // Wait for Pyodide if still loading
+          if (pyodideStatus === "loading") {
+            setOutput("Loading Python runtime...\n");
+            await loadPyodide();
+            setPyodideStatus("ready");
+          }
+
+          // Build test config
+          const formattedCases = casesToRun.map((tc) => {
+            let inputCode = "";
+            Object.entries(tc.inputs).forEach(([key, value]) => {
+              inputCode += `${key} = ${value}\n`;
+            });
+            return {
+              id: tc.id,
+              input: inputCode,
+              expected: tc.expected,
+              hidden: tc.hidden,
+            };
+          });
+
+          let runnerCode =
+            activeChallenge?.executionSnippet ||
+            "print('No execution snippet defined')";
+          // Strip print() wrapper if present
+          if (
+            runnerCode.trim().startsWith("print(") &&
+            runnerCode.trim().endsWith(")")
+          ) {
+            runnerCode = runnerCode.trim().slice(6, -1);
+          }
+
+          const config: TestConfig = {
+            cases: formattedCases,
+            runner: runnerCode,
+          };
+
+          // Run tests with Pyodide
+          const results = await runTestsWithPyodide(
+            code,
+            config,
+            (text) => setOutput((prev) => (prev || "") + text),
+            (text) => setOutput((prev) => (prev || "") + text)
+          );
+
+          setTestResults(results);
+          setActiveTab("result");
+          // Reset to initial height when expanding
+          if (isBottomPanelCollapsed) {
+            setBottomPanelHeight(45);
+          }
+          setIsBottomPanelCollapsed(false);
+
+          // Auto-select appropriate test case tab
+          const allPassed = results.every((r) => r.status === "Accepted");
+          if (allPassed) {
+            // Select first test case
+            setActiveTestCaseId(results[0]?.id || "1");
+          } else {
+            // Select first failed test case
+            const firstFailed = results.find((r) => r.status !== "Accepted");
+            if (firstFailed) {
+              setActiveTestCaseId(firstFailed.id);
+            }
+          }
+
+          // Update solved status only in submit mode
+          if (mode === "submit" && allPassed && activeChallenge) {
+            localStorage.setItem(`sol_${activeChallenge.id}_status`, "solved");
+            setIsSolved(true);
+          }
+        } catch (err: any) {
+          setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
+        } finally {
+          setIsRunning(false);
+        }
+      } else if (isConnected) {
+        // === BRIDGE EXECUTION (Local Python) ===
+        setIsRunning(true);
+        setOutput("");
+        setTestResults(null);
+        setLastRunMode(mode);
+
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          // 1. Sync User Code
+          wsRef.current.send(
+            JSON.stringify({
+              command: "sync",
+              filename: "main.py",
+              content: code,
+            })
+          );
+
+          // 2. Sync Harness
+          wsRef.current.send(
+            JSON.stringify({
+              command: "sync",
+              filename: "harness.py",
+              content: PYTHON_HARNESS,
+            })
+          );
+
+          // 3. Sync Test Config
+          const formattedCases = casesToRun.map((tc) => {
+            let inputCode = "";
+            Object.entries(tc.inputs).forEach(([key, value]) => {
+              inputCode += `${key} = ${value}\n`;
+            });
+            return {
+              id: tc.id,
+              input: inputCode,
+              expected: tc.expected,
+            };
+          });
+
+          let runnerCode =
+            activeChallenge?.executionSnippet ||
+            "print('No execution snippet defined')";
+          if (
+            runnerCode.trim().startsWith("print(") &&
+            runnerCode.trim().endsWith(")")
+          ) {
+            runnerCode = runnerCode.trim().slice(6, -1);
+          }
+
+          const config = {
+            cases: formattedCases,
+            runner: runnerCode,
+          };
+
+          wsRef.current.send(
+            JSON.stringify({
+              command: "sync",
+              filename: "test_config.json",
+              content: JSON.stringify(config),
+            })
+          );
+
+          // 4. Run Harness
+          wsRef.current.send(
+            JSON.stringify({
+              command: "run",
+              filename: "harness.py",
+            })
+          );
+        }
+      } else {
+        // No execution method available - show instructions
+        if (browserSupported) {
+          setOutput("Loading Python runtime... Please wait.");
+        } else {
+          // CLI-only challenge - show clear instructions
+          const challengeId = activeChallenge?.id || "<id>";
+          setOutput(
+            `This challenge requires PyTorch and must be run locally.\n\n` +
+              `Install CLI:\n` +
+              `  $ pip install ai-deep-dive\n\n` +
+              `Run tests:\n` +
+              `  $ ai-deep-dive test ${challengeId}\n\n` +
+              `Sync progress to web:\n` +
+              `  $ ai-deep-dive sync\n\n` +
+              `See /setup for the full setup guide.`
+          );
+        }
+        // Expand panel and show console
+        setActiveTab("console");
+        if (isBottomPanelCollapsed) {
+          setBottomPanelHeight(45);
+        }
+        setIsBottomPanelCollapsed(false);
       }
-
-      const config = {
-        cases: formattedCases,
-        runner: runnerCode,
-      };
-
-      wsRef.current.send(
-        JSON.stringify({
-          command: "sync",
-          filename: "test_config.json",
-          content: JSON.stringify(config),
-        })
-      );
-
-      // 4. Run Harness
-      wsRef.current.send(
-        JSON.stringify({
-          command: "run",
-          filename: "harness.py",
-        })
-      );
-    }
-  };
+    },
+    [
+      code,
+      testCases,
+      activeChallenge,
+      executionMode,
+      pyodideStatus,
+      isConnected,
+      isBottomPanelCollapsed,
+    ]
+  );
 
   const handleInstall = (e: React.FormEvent) => {
     e.preventDefault();
@@ -495,42 +737,71 @@ export function ChallengeWorkspace({
   useEffect(() => {
     const stopResizing = () => setIsDraggingBottom(false);
     const resize = (e: MouseEvent) => {
-      if (isDraggingBottom) {
-        const containerHeight = window.innerHeight;
-        // Calculate height from bottom: Total Height - Mouse Y Position
-        const newHeight =
-          ((containerHeight - e.clientY) / containerHeight) * 100;
+      if (!isDraggingBottom || !rightPanelRef.current) return;
 
-        if (newHeight > 5 && newHeight < 95) {
-          setBottomPanelHeight(newHeight);
+      // Get the actual bounds of the right panel
+      const rect = rightPanelRef.current.getBoundingClientRect();
+      const panelTop = rect.top;
+      const panelHeight = rect.height;
+
+      // Calculate height from bottom of panel
+      const mouseYInPanel = e.clientY - panelTop;
+      const heightFromBottom = panelHeight - mouseYInPanel;
+      const newHeightPercent = (heightFromBottom / panelHeight) * 100;
+
+      // If dragged below 8%, collapse the panel
+      if (newHeightPercent < 8) {
+        setIsBottomPanelCollapsed(true);
+      } else if (newHeightPercent >= 8 && newHeightPercent <= 85) {
+        // Expand if collapsed and set new height
+        if (isBottomPanelCollapsed) {
+          setIsBottomPanelCollapsed(false);
         }
+        setBottomPanelHeight(newHeightPercent);
       }
     };
 
     if (isDraggingBottom) {
-      window.addEventListener("mousemove", resize);
-      window.addEventListener("mouseup", stopResizing);
+      // Use capture phase for immediate response
+      document.addEventListener("mousemove", resize, { passive: true });
+      document.addEventListener("mouseup", stopResizing);
     }
 
     return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
+      document.removeEventListener("mousemove", resize);
+      document.removeEventListener("mouseup", stopResizing);
     };
-  }, [isDraggingBottom]);
+  }, [isDraggingBottom, isBottomPanelCollapsed]);
 
   const isMac =
     typeof navigator !== "undefined" &&
     /Mac|iPod|iPhone|iPad/.test(navigator.platform);
   const shortcutLabel = isMac ? "Cmd + Enter" : "Ctrl + Enter";
 
+  // Dragging state for premium feel
+  const isDragging = isDraggingLeft || isDraggingBottom;
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background border-t border-border overflow-hidden select-none">
-      {/* Left Panel - Prose */}
+    <div
+      className={`flex h-[calc(100vh-4rem)] bg-background border-t border-border overflow-hidden select-none ${
+        isDragging ? "cursor-grabbing" : ""
+      }`}
+      style={{
+        // Prevent text selection and iframe capture during drag
+        userSelect: isDragging ? "none" : undefined,
+        WebkitUserSelect: isDragging ? "none" : undefined,
+      }}
+    >
+      {/* Left Panel - Prose (full width when no challenge selected) */}
       <div
-        className={`flex flex-col bg-background overflow-hidden border-r transition-colors ${
-          activePane === "prose" ? "border-zinc-600" : "border-border"
+        className={`flex flex-col bg-background overflow-hidden transition-colors ${
+          activeChallenge
+            ? `border-r ${
+                activePane === "prose" ? "border-zinc-600" : "border-border"
+              }`
+            : ""
         }`}
-        style={{ width: `${leftPanelWidth}%` }}
+        style={{ width: activeChallenge ? `${leftPanelWidth}%` : "100%" }}
         onClick={() => setActivePane("prose")}
       >
         {activeChallenge ? (
@@ -546,9 +817,14 @@ export function ChallengeWorkspace({
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <div className="flex-1 flex justify-between items-center">
-                <h2 className="font-bold text-primary truncate">
-                  {activeChallenge.title}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-bold text-primary truncate">
+                    {activeChallenge.title}
+                  </h2>
+                  {isSolved && (
+                    <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+                  )}
+                </div>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                     activeChallenge.difficulty === "Easy"
@@ -594,12 +870,43 @@ export function ChallengeWorkspace({
                 {activeChallenge.description}
               </ReactMarkdown>
 
+              {/* CLI Mode Note */}
+              {executionMode === "bridge" && (
+                <div className="mt-6 pl-4 border-l-2 border-amber-400">
+                  <p className="text-sm text-secondary">
+                    This challenge requires local implementation.{" "}
+                    {activeChallenge?.chapterNumber &&
+                    activeChallenge?.problemNumber ? (
+                      <>
+                        Write your solution in your editor and test with{" "}
+                        <code className="px-1.5 py-0.5 bg-zinc-800 rounded text-xs">
+                          ai-deep-dive test {activeChallenge.chapterNumber}-
+                          {activeChallenge.problemNumber}
+                        </code>
+                      </>
+                    ) : (
+                      <>
+                        Write your solution in your editor and test using the
+                        CLI
+                      </>
+                    )}
+                    .{" "}
+                    <Link
+                      href="/setup"
+                      className="text-muted hover:text-secondary underline underline-offset-2"
+                    >
+                      Setup guide
+                    </Link>
+                  </p>
+                </div>
+              )}
+
               {activeChallenge.hint && (
-                <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg not-prose">
-                  <h4 className="text-amber-400 font-bold text-xs uppercase mb-1 flex items-center gap-2">
-                    <AlertCircle className="w-3 h-3" /> Hint
-                  </h4>
-                  <p className="text-amber-300 text-sm">
+                <div className="mt-6 pl-4 border-l-2 border-zinc-600 not-prose">
+                  <p className="text-xs font-medium text-muted uppercase tracking-wider mb-1">
+                    Hint
+                  </p>
+                  <p className="text-sm text-secondary">
                     {activeChallenge.hint}
                   </p>
                 </div>
@@ -610,10 +917,10 @@ export function ChallengeWorkspace({
                 activeChallenge.defaultTestCases.filter((tc) => !tc.hidden)
                   .length > 0 && (
                   <div className="mt-8 not-prose">
-                    <h3 className="text-primary font-bold text-sm mb-4">
+                    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">
                       Examples
-                    </h3>
-                    <div className="flex flex-col gap-4">
+                    </div>
+                    <div className="flex flex-col gap-3">
                       {(() => {
                         const nonHidden =
                           activeChallenge.defaultTestCases.filter(
@@ -628,23 +935,19 @@ export function ChallengeWorkspace({
                           .map((tc, idx) => (
                             <div
                               key={tc.id}
-                              className="bg-surface rounded-lg p-4 border border-border"
+                              className="p-3 bg-[#121212] rounded-lg border border-zinc-800"
                             >
-                              <div className="flex flex-col gap-2">
-                                <div className="text-xs font-mono">
-                                  <span className="font-bold text-muted uppercase mr-2">
-                                    Input:
-                                  </span>
+                              <div className="flex flex-col gap-1.5 font-mono text-xs">
+                                <div>
+                                  <span className="text-muted">Input:</span>{" "}
                                   <span className="text-secondary">
                                     {Object.entries(tc.inputs)
                                       .map(([k, v]) => `${k} = ${v}`)
                                       .join(", ")}
                                   </span>
                                 </div>
-                                <div className="text-xs font-mono">
-                                  <span className="font-bold text-muted uppercase mr-2">
-                                    Output:
-                                  </span>
+                                <div>
+                                  <span className="text-muted">Output:</span>{" "}
                                   <span className="text-secondary">
                                     {tc.expected}
                                   </span>
@@ -659,443 +962,683 @@ export function ChallengeWorkspace({
             </div>
           </div>
         ) : (
-          // List View
-          <div className="flex flex-col h-full">
-            <div className="p-4 border-b border-border">
-              <h2 className="font-bold text-lg text-primary flex items-center gap-2">
-                <List className="w-5 h-5" /> Problem List
-              </h2>
-            </div>
-            <div className="flex-1 overflow-y-auto p-2">
-              {challenges.map((c, idx) => (
-                <button
-                  key={c.id}
-                  onClick={() => setActiveChallengeIndex(idx)}
-                  className="w-full text-left p-4 mb-2 rounded-xl border border-border hover:border-zinc-600 hover:bg-surface transition-all group"
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="font-semibold text-primary group-hover:text-secondary">
-                      {idx + 1}. {c.title}
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        c.difficulty === "Easy"
-                          ? "bg-emerald-500/10 text-emerald-400"
-                          : c.difficulty === "Medium"
-                          ? "bg-amber-500/10 text-amber-400"
-                          : "bg-rose-500/10 text-rose-400"
-                      }`}
-                    >
-                      {c.difficulty || "Medium"}
-                    </span>
-                  </div>
-                </button>
-              ))}
+          // List View - Clean, premium list with same gutter as guide
+          <div className="flex flex-col h-full overflow-y-auto py-12">
+            <div className="mx-auto w-full max-w-[85ch] px-6 lg:px-8">
+              <header className="mb-10">
+                <h2 className="font-bold text-2xl text-primary">Challenges</h2>
+                <p className="text-muted mt-2">
+                  {challenges.length} problems to solve
+                </p>
+              </header>
+
+              {/* Negative margin so hover padding doesn't break text alignment */}
+              <div className="-mx-4 divide-y divide-border">
+                {challenges.map((c, idx) => {
+                  const challengeSolved =
+                    typeof window !== "undefined" &&
+                    localStorage.getItem(`sol_${c.id}_status`) === "solved";
+                  return (
+                    <div key={c.id} className="py-1">
+                      <button
+                        onClick={() => setActiveChallengeIndex(idx)}
+                        className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-surface transition-all group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className="text-muted/60 text-sm font-mono w-6">
+                            {String(idx + 1).padStart(2, "0")}
+                          </span>
+                          <span className="text-secondary group-hover:text-primary transition-colors flex items-center gap-2">
+                            {c.title}
+                            {challengeSolved && (
+                              <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            )}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-xs font-medium ${
+                            c.difficulty === "Easy"
+                              ? "text-emerald-400"
+                              : c.difficulty === "Medium"
+                              ? "text-amber-400"
+                              : "text-rose-400"
+                          }`}
+                        >
+                          {c.difficulty || "Medium"}
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Resizer Handle (Left) */}
-      <div
-        className="w-1 bg-border hover:bg-zinc-600 cursor-col-resize transition-colors z-10 flex items-center justify-center"
-        onMouseDown={startResizingLeft}
-      >
-        <div className="w-0.5 h-8 bg-muted rounded-full" />
-      </div>
-
-      {/* Right Panel: Editor */}
-      <div
-        className={`flex-1 flex flex-col bg-background min-w-[300px] border-l transition-colors ${
-          activePane === "editor" ? "border-zinc-600" : "border-border"
-        }`}
-        onClick={() => setActivePane("editor")}
-      >
-        {/* Toolbar */}
-        <div className="h-12 flex items-center justify-between px-4 border-b border-border bg-surface">
-          <div className="flex items-center gap-4 text-muted text-sm">
-            <div className="flex items-center gap-2">
-              <Code2 className="w-4 h-4" />
-              <span>Python 3</span>
-            </div>
-            <button
-              onClick={() => setIsVimMode(!isVimMode)}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded hover:bg-background transition-colors ${
-                isVimMode ? "text-emerald-400" : ""
-              }`}
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">
-                Vim Mode {isVimMode ? "ON" : "OFF"}
-              </span>
-            </button>
-
-            <div
-              className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
-                isConnected ? "text-emerald-400" : "text-rose-400"
-              }`}
-            >
-              {isConnected ? (
-                <Wifi className="w-3.5 h-3.5" />
-              ) : (
-                <WifiOff className="w-3.5 h-3.5" />
-              )}
-              <span className="text-xs font-medium">
-                {isConnected ? "Bridge Connected" : "Bridge Disconnected"}
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={handleRun}
-            title={`Run Code (${shortcutLabel})`}
-            className="flex items-center gap-2 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-md transition-colors"
+      {/* Resizer Handle + Editor Panel - Only show when a challenge is selected */}
+      {activeChallenge && (
+        <>
+          {/* Resizer Handle (Left) */}
+          <div
+            className={`w-1.5 cursor-col-resize z-10 flex items-center justify-center group transition-colors duration-150 ${
+              isDraggingLeft
+                ? "bg-emerald-500/50"
+                : "bg-transparent hover:bg-zinc-700"
+            }`}
+            onMouseDown={startResizingLeft}
           >
-            <Play className="w-3 h-3" />
-            Run Code
-          </button>
-        </div>
-
-        {/* Editor Area */}
-        <div className="flex-1 relative min-h-0">
-          <Editor
-            height="100%"
-            defaultLanguage="python"
-            value={code}
-            onChange={(value) => setCode(value || "")}
-            theme="zinc-dark"
-            onMount={handleEditorDidMount}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              renderLineHighlight: "none",
-            }}
-          />
-          {/* Vim Status Bar */}
-          {isVimMode && (
             <div
-              id="vim-status-bar"
-              className="absolute bottom-0 left-0 right-0 px-4 py-1 bg-surface text-secondary text-xs font-mono z-10"
+              className={`w-0.5 h-12 rounded-full transition-all duration-150 ${
+                isDraggingLeft
+                  ? "bg-emerald-400 h-16"
+                  : "bg-zinc-600 group-hover:bg-zinc-500 group-hover:h-16"
+              }`}
             />
-          )}
-        </div>
-
-        {/* Resizer Handle (Bottom) */}
-        <div
-          className="h-1 bg-background hover:bg-zinc-600 cursor-row-resize transition-colors z-10 flex items-center justify-center border-t border-border"
-          onMouseDown={startResizingBottom}
-        >
-          <div className="h-0.5 w-8 bg-muted rounded-full" />
-        </div>
-
-        {/* Bottom Panel (Console / Test Cases) */}
-        <div
-          className="bg-background flex flex-col relative"
-          style={{ height: `${bottomPanelHeight}%` }}
-        >
-          {/* Tabs */}
-          <div className="flex items-center border-b border-border bg-surface">
-            <button
-              onClick={() => setActiveTab("console")}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
-                activeTab === "console"
-                  ? "text-primary bg-background"
-                  : "text-muted hover:text-secondary"
-              }`}
-            >
-              Console
-            </button>
-            <button
-              onClick={() => setActiveTab("testcases")}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
-                activeTab === "testcases"
-                  ? "text-primary bg-background"
-                  : "text-muted hover:text-secondary"
-              }`}
-            >
-              Test Cases
-            </button>
-            <button
-              onClick={() => setActiveTab("result")}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
-                activeTab === "result"
-                  ? "text-primary bg-background"
-                  : "text-muted hover:text-secondary"
-              }`}
-            >
-              Result
-            </button>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-hidden relative">
-            {activeTab === "console" && (
-              <div
-                ref={consoleRef}
-                className="h-full p-4 font-mono text-sm text-secondary overflow-y-auto whitespace-pre-wrap"
-              >
-                {output || (
-                  <span className="text-muted italic">
-                    Run code to see output...
-                  </span>
-                )}
-              </div>
-            )}
-            {activeTab === "testcases" && (
-              <div className="flex flex-col h-full">
-                {/* Case Tabs */}
-                <div className="flex items-center gap-2 p-2 border-b border-border">
-                  {testCases
-                    .filter((tc) => !tc.hidden)
-                    .map((tc, idx) => (
-                      <button
-                        key={tc.id}
-                        onClick={() => setActiveTestCaseId(tc.id)}
-                        className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 ${
-                          activeTestCaseId === tc.id
-                            ? "bg-surface text-primary"
-                            : "text-muted hover:bg-surface"
-                        }`}
-                      >
-                        Case {idx + 1}
-                        {testCases.filter((t) => !t.hidden).length > 1 && (
-                          <X
-                            className="w-3 h-3 hover:text-rose-400"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setTestCases((prev) =>
-                                prev.filter((c) => c.id !== tc.id)
-                              );
-                              if (activeTestCaseId === tc.id) {
-                                const remaining = testCases.filter(
-                                  (c) => c.id !== tc.id && !c.hidden
-                                );
-                                if (remaining.length > 0) {
-                                  setActiveTestCaseId(remaining[0].id);
-                                }
-                              }
-                            }}
-                          />
-                        )}
-                      </button>
-                    ))}
-                  <button
-                    onClick={() => {
-                      const newId = Math.random().toString(36).substr(2, 9);
-                      const initialInputs: Record<string, string> = {};
-                      if (activeChallenge?.arguments) {
-                        activeChallenge.arguments.forEach((arg) => {
-                          initialInputs[arg.name] = "";
-                        });
-                      }
-                      setTestCases([
-                        ...testCases,
-                        { id: newId, inputs: initialInputs, expected: "" },
-                      ]);
-                      setActiveTestCaseId(newId);
-                    }}
-                    className="p-1 text-muted hover:text-primary"
+          {/* Right Panel: Editor */}
+          <div
+            ref={rightPanelRef}
+            className={`flex-1 flex flex-col bg-background min-w-[300px] border-l transition-colors ${
+              activePane === "editor" ? "border-zinc-600" : "border-border"
+            }`}
+            onClick={() => setActivePane("editor")}
+          >
+            {/* Toolbar */}
+            <div className="h-11 flex items-center justify-between px-3 border-b border-border bg-surface">
+              <div className="flex items-center gap-1 text-muted text-sm">
+                {/* Language Badge */}
+                <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-secondary">
+                  <Code2 className="w-3.5 h-3.5" />
+                  <span>Python</span>
+                </div>
+
+                <div className="w-px h-4 bg-border mx-1" />
+
+                {/* Status Indicator - Show appropriate mode */}
+                {executionMode === "browser" ? (
+                  <div
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                      pyodideStatus === "ready"
+                        ? "text-emerald-400 bg-emerald-400/10"
+                        : pyodideStatus === "loading"
+                        ? "text-amber-400"
+                        : "text-muted"
+                    }`}
+                    title="This challenge runs in your browser. Click Run to test."
                   >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Case Editors */}
-                <div className="flex-1 flex flex-col gap-6 p-4 overflow-y-auto">
-                  {testCases.map((tc) => {
-                    if (tc.id !== activeTestCaseId || tc.hidden) return null;
-                    return (
-                      <div key={tc.id} className="flex flex-col gap-6">
-                        {activeChallenge?.arguments?.map((arg) => (
-                          <div key={arg.name} className="flex flex-col gap-2">
-                            <label className="text-xs font-medium text-muted">
-                              {arg.name}{" "}
-                              <span className="text-muted/60">
-                                ({arg.type})
-                              </span>
-                            </label>
-                            <AutoResizingEditor
-                              value={tc.inputs[arg.name] || ""}
-                              onChange={(val) => {
-                                setTestCases((prev) =>
-                                  prev.map((c) =>
-                                    c.id === tc.id
-                                      ? {
-                                          ...c,
-                                          inputs: {
-                                            ...c.inputs,
-                                            [arg.name]: val || "",
-                                          },
-                                        }
-                                      : c
-                                  )
-                                );
-                              }}
-                            />
-                          </div>
-                        ))}
-                        <div className="flex flex-col gap-2">
-                          <label className="text-xs font-medium text-muted">
-                            Expected Output
-                          </label>
-                          <AutoResizingEditor
-                            value={tc.expected}
-                            onChange={(val) => {
-                              setTestCases((prev) =>
-                                prev.map((c) =>
-                                  c.id === tc.id
-                                    ? { ...c, expected: val || "" }
-                                    : c
-                                )
-                              );
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {activeTab === "result" && (
-              <div className="flex flex-col h-full">
-                {!testResults ? (
-                  <div className="flex-1 flex items-center justify-center text-muted text-sm italic">
-                    Run code to see results...
+                    {pyodideStatus === "loading" ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                    )}
+                    <span>
+                      {pyodideStatus === "loading" ? "Loading..." : "Browser"}
+                    </span>
                   </div>
                 ) : (
-                  <>
-                    {/* Overall Status */}
-                    <div className="p-4 pb-2">
-                      {testResults.every((r) => r.status === "Accepted") ? (
-                        <h3 className="text-emerald-400 font-bold text-lg flex items-center gap-2">
-                          <CheckCircle2 className="w-5 h-5" /> Accepted
-                        </h3>
-                      ) : (
-                        <h3 className="text-rose-400 font-bold text-lg flex items-center gap-2">
-                          <AlertCircle className="w-5 h-5" /> Wrong Answer
-                        </h3>
-                      )}
-
-                      {/* Hidden Tests Summary */}
-                      {(() => {
-                        const hiddenResults = testResults.filter(
-                          (r) => r.hidden
-                        );
-                        const hiddenPassed = hiddenResults.filter(
-                          (r) => r.status === "Accepted"
-                        ).length;
-                        const hiddenTotal = hiddenResults.length;
-
-                        if (hiddenTotal > 0) {
-                          return (
-                            <div className="mt-2 text-xs font-medium text-muted">
-                              {hiddenPassed}/{hiddenTotal} hidden tests passed
-                            </div>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </div>
-
-                    {/* Result Tabs */}
-                    <div className="flex items-center gap-2 px-4 border-b border-border overflow-x-auto">
-                      {testResults.map((r, idx) => {
-                        // Only show hidden tests if they failed or if they are the active one (unlikely but safe)
-                        if (
-                          r.hidden &&
-                          r.status === "Accepted" &&
-                          activeTestCaseId !== r.id
-                        )
-                          return null;
-
-                        return (
-                          <button
-                            key={r.id}
-                            onClick={() => setActiveTestCaseId(r.id)}
-                            className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 whitespace-nowrap ${
-                              activeTestCaseId === r.id
-                                ? "bg-surface text-primary"
-                                : "text-muted hover:bg-surface"
-                            }`}
-                          >
-                            <span
-                              className={`w-2 h-2 rounded-full ${
-                                r.status === "Accepted"
-                                  ? "bg-emerald-500"
-                                  : "bg-rose-500"
-                              }`}
-                            />
-                            {r.hidden ? "Hidden Case" : `Case ${idx + 1}`}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Result Details */}
-                    <div className="flex-1 p-4 overflow-y-auto">
-                      {testResults.map((r) => {
-                        if (r.id !== activeTestCaseId) return null;
-                        return (
-                          <div key={r.id} className="flex flex-col gap-4">
-                            {r.status === "Runtime Error" && (
-                              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-md text-rose-400 text-xs font-mono whitespace-pre-wrap">
-                                {r.stderr}
-                              </div>
-                            )}
-
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted">
-                                Input
-                              </label>
-                              <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                {r.input}
-                              </div>
-                            </div>
-
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted">
-                                Stdout
-                              </label>
-                              <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                {r.stdout || (
-                                  <span className="text-muted italic">
-                                    No output
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted">
-                                Output
-                              </label>
-                              <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                {r.output}
-                              </div>
-                            </div>
-
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted">
-                                Expected
-                              </label>
-                              <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                {r.expected}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
+                  <div
+                    className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium text-amber-400 bg-amber-400/10"
+                    title="This challenge requires PyTorch. Implement locally and test with: ai-deep-dive test"
+                  >
+                    <Terminal className="w-3 h-3" />
+                    <span>Local</span>
+                  </div>
                 )}
+
+                <div className="w-px h-4 bg-border mx-1" />
+
+                {/* Vim Toggle - More subtle */}
+                <button
+                  onClick={() => setIsVimMode(!isVimMode)}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                    isVimMode
+                      ? "text-emerald-400 bg-emerald-400/10"
+                      : "text-muted hover:text-secondary hover:bg-zinc-800"
+                  }`}
+                  title="Toggle Vim keybindings"
+                >
+                  <Settings className="w-3 h-3" />
+                  <span>Vim</span>
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Reset Button */}
+                <button
+                  onClick={handleReset}
+                  disabled={isRunning}
+                  title="Reset to initial code"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-muted hover:text-secondary hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-md transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset
+                </button>
+
+                {/* Run Code Button (visible tests only) */}
+                <button
+                  onClick={() => handleRun("run")}
+                  disabled={
+                    isRunning ||
+                    (executionMode === "browser" &&
+                      pyodideStatus === "error") ||
+                    (executionMode === "bridge" && !isConnected)
+                  }
+                  title={`Run visible tests (${shortcutLabel})`}
+                  className="flex items-center gap-2 px-4 py-1.5 bg-zinc-600 hover:bg-zinc-500 disabled:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors"
+                >
+                  {isRunning ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Play className="w-3 h-3" />
+                  )}
+                  Run
+                </button>
+
+                {/* Submit Button (all tests including hidden) */}
+                <button
+                  onClick={() => handleRun("submit")}
+                  disabled={
+                    isRunning ||
+                    (executionMode === "browser" &&
+                      pyodideStatus === "error") ||
+                    (executionMode === "bridge" && !isConnected)
+                  }
+                  title="Submit and run all tests"
+                  className="flex items-center gap-2 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors"
+                >
+                  {isRunning ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Send className="w-3 h-3" />
+                  )}
+                  Submit
+                </button>
+              </div>
+            </div>
+
+            {/* Editor Area */}
+            <div className="flex-1 relative min-h-0">
+              <Editor
+                height="100%"
+                defaultLanguage="python"
+                value={code}
+                onChange={(value) => setCode(value || "")}
+                theme="zinc-dark"
+                onMount={handleEditorDidMount}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  renderLineHighlight: "none",
+                }}
+              />
+              {/* Vim Status Bar */}
+              {isVimMode && (
+                <div
+                  id="vim-status-bar"
+                  className="absolute bottom-0 left-0 right-0 px-4 py-1 bg-surface text-secondary text-xs font-mono z-10"
+                />
+              )}
+            </div>
+
+            {/* Resizer Handle (Bottom) - only visible when panel is expanded */}
+            {!isBottomPanelCollapsed && (
+              <div
+                className={`h-2 cursor-row-resize z-10 flex items-center justify-center border-t transition-colors duration-150 group ${
+                  isDraggingBottom
+                    ? "bg-emerald-500/20 border-emerald-500/50"
+                    : "bg-background border-border hover:bg-zinc-800/50 hover:border-zinc-600"
+                }`}
+                onMouseDown={startResizingBottom}
+              >
+                <div
+                  className={`h-0.5 rounded-full transition-all duration-150 ${
+                    isDraggingBottom
+                      ? "w-16 bg-emerald-400"
+                      : "w-8 bg-zinc-600 group-hover:w-12 group-hover:bg-zinc-500"
+                  }`}
+                />
               </div>
             )}
+
+            {/* Bottom Panel (Console / Test Cases) */}
+            <div
+              className={`bg-background flex flex-col relative ${
+                isDraggingBottom ? "" : "transition-[height] duration-200"
+              }`}
+              style={{
+                height: isBottomPanelCollapsed
+                  ? "auto"
+                  : `${bottomPanelHeight}%`,
+                minHeight: isBottomPanelCollapsed ? undefined : "100px",
+              }}
+            >
+              {/* Tabs Header */}
+              <div
+                className={`flex items-center bg-surface ${
+                  isBottomPanelCollapsed ? "border-t border-border" : ""
+                }`}
+              >
+                <button
+                  onClick={() => {
+                    setActiveTab("console");
+                    if (isBottomPanelCollapsed)
+                      setIsBottomPanelCollapsed(false);
+                  }}
+                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
+                    activeTab === "console" && !isBottomPanelCollapsed
+                      ? "text-primary bg-background"
+                      : "text-muted hover:text-secondary"
+                  }`}
+                >
+                  Console
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab("testcases");
+                    if (isBottomPanelCollapsed)
+                      setIsBottomPanelCollapsed(false);
+                  }}
+                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
+                    activeTab === "testcases" && !isBottomPanelCollapsed
+                      ? "text-primary bg-background"
+                      : "text-muted hover:text-secondary"
+                  }`}
+                >
+                  Test Cases
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab("result");
+                    if (isBottomPanelCollapsed)
+                      setIsBottomPanelCollapsed(false);
+                  }}
+                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
+                    activeTab === "result" && !isBottomPanelCollapsed
+                      ? "text-primary bg-background"
+                      : "text-muted hover:text-secondary"
+                  }`}
+                >
+                  Result
+                </button>
+
+                {/* Spacer */}
+                <div className="flex-1" />
+
+                {/* Collapse/Expand Toggle Button */}
+                <button
+                  onClick={() => {
+                    if (isBottomPanelCollapsed) {
+                      // Reset to initial height when expanding via button
+                      setBottomPanelHeight(45);
+                    }
+                    setIsBottomPanelCollapsed(!isBottomPanelCollapsed);
+                  }}
+                  className="px-3 py-2 text-muted hover:text-secondary transition-colors flex items-center gap-1.5"
+                  title={
+                    isBottomPanelCollapsed ? "Expand panel" : "Collapse panel"
+                  }
+                >
+                  {isBottomPanelCollapsed ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+
+              {/* Content - only show when not collapsed */}
+              {!isBottomPanelCollapsed && (
+                <div className="flex-1 overflow-hidden relative">
+                  {activeTab === "console" && (
+                    <div
+                      ref={consoleRef}
+                      className="h-full p-4 font-mono text-sm text-secondary overflow-y-auto whitespace-pre-wrap"
+                    >
+                      {output || (
+                        <span className="text-muted italic">
+                          Run code to see output...
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {activeTab === "testcases" && (
+                    <div className="flex flex-col h-full">
+                      {/* Case Tabs */}
+                      <div className="flex items-center gap-2 p-2 border-b border-border">
+                        {testCases
+                          .filter((tc) => !tc.hidden)
+                          .map((tc, idx) => (
+                            <button
+                              key={tc.id}
+                              onClick={() => setActiveTestCaseId(tc.id)}
+                              className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 ${
+                                activeTestCaseId === tc.id
+                                  ? "bg-surface text-primary"
+                                  : "text-muted hover:bg-surface"
+                              }`}
+                            >
+                              Case {idx + 1}
+                              {testCases.filter((t) => !t.hidden).length >
+                                1 && (
+                                <X
+                                  className="w-3 h-3 hover:text-rose-400"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTestCases((prev) =>
+                                      prev.filter((c) => c.id !== tc.id)
+                                    );
+                                    if (activeTestCaseId === tc.id) {
+                                      const remaining = testCases.filter(
+                                        (c) => c.id !== tc.id && !c.hidden
+                                      );
+                                      if (remaining.length > 0) {
+                                        setActiveTestCaseId(remaining[0].id);
+                                      }
+                                    }
+                                  }}
+                                />
+                              )}
+                            </button>
+                          ))}
+                        <button
+                          onClick={() => {
+                            const newId = Math.random()
+                              .toString(36)
+                              .substr(2, 9);
+                            const initialInputs: Record<string, string> = {};
+                            if (activeChallenge?.arguments) {
+                              activeChallenge.arguments.forEach((arg) => {
+                                initialInputs[arg.name] = "";
+                              });
+                            }
+                            setTestCases([
+                              ...testCases,
+                              {
+                                id: newId,
+                                inputs: initialInputs,
+                                expected: "",
+                              },
+                            ]);
+                            setActiveTestCaseId(newId);
+                          }}
+                          className="p-1 text-muted hover:text-primary"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Case Editors */}
+                      <div className="flex-1 flex flex-col gap-6 p-4 overflow-y-auto">
+                        {testCases.map((tc) => {
+                          if (tc.id !== activeTestCaseId || tc.hidden)
+                            return null;
+                          return (
+                            <div key={tc.id} className="flex flex-col gap-6">
+                              {activeChallenge?.arguments?.map((arg) => (
+                                <div
+                                  key={arg.name}
+                                  className="flex flex-col gap-2"
+                                >
+                                  <label className="text-xs font-medium text-muted">
+                                    {arg.name}{" "}
+                                    <span className="text-muted/60">
+                                      ({arg.type})
+                                    </span>
+                                  </label>
+                                  <AutoResizingEditor
+                                    value={tc.inputs[arg.name] || ""}
+                                    onChange={(val) => {
+                                      setTestCases((prev) =>
+                                        prev.map((c) =>
+                                          c.id === tc.id
+                                            ? {
+                                                ...c,
+                                                inputs: {
+                                                  ...c.inputs,
+                                                  [arg.name]: val || "",
+                                                },
+                                              }
+                                            : c
+                                        )
+                                      );
+                                    }}
+                                  />
+                                </div>
+                              ))}
+                              <div className="flex flex-col gap-2">
+                                <label className="text-xs font-medium text-muted">
+                                  Expected Output
+                                </label>
+                                <AutoResizingEditor
+                                  value={tc.expected}
+                                  onChange={(val) => {
+                                    setTestCases((prev) =>
+                                      prev.map((c) =>
+                                        c.id === tc.id
+                                          ? { ...c, expected: val || "" }
+                                          : c
+                                      )
+                                    );
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "result" && (
+                    <div className="flex flex-col h-full">
+                      {!testResults ? (
+                        <div className="flex-1 flex items-center justify-center text-muted text-sm italic">
+                          Run code to see results...
+                        </div>
+                      ) : (
+                        <>
+                          {/* Overall Status */}
+                          <div className="p-4 pb-2">
+                            {(() => {
+                              const totalTests = testResults.length;
+                              const passedTests = testResults.filter(
+                                (r) => r.status === "Accepted"
+                              ).length;
+                              const allPassed = passedTests === totalTests;
+
+                              if (allPassed) {
+                                // All tests passed
+                                if (lastRunMode === "submit" && isSolved) {
+                                  // Submit mode success - Challenge Complete
+                                  return (
+                                    <div className="flex flex-col gap-3">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                                          </div>
+                                          <div>
+                                            <h3 className="text-primary font-semibold">
+                                              Challenge Complete
+                                            </h3>
+                                            <p className="text-sm text-muted">
+                                              {passedTests} / {totalTests} tests
+                                              passed
+                                            </p>
+                                          </div>
+                                        </div>
+                                        {/* Next Challenge Link */}
+                                        {activeChallengeIndex !== null &&
+                                          activeChallengeIndex <
+                                            challenges.length - 1 && (
+                                            <button
+                                              onClick={() =>
+                                                setActiveChallengeIndex(
+                                                  activeChallengeIndex + 1
+                                                )
+                                              }
+                                              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 text-secondary hover:text-primary rounded-md transition-colors group"
+                                            >
+                                              <span>Next Challenge</span>
+                                              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                            </button>
+                                          )}
+                                      </div>
+                                    </div>
+                                  );
+                                } else {
+                                  // Run mode success - visible tests only
+                                  return (
+                                    <div className="flex items-center justify-between">
+                                      <h3 className="text-emerald-400 font-medium flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        {passedTests} / {totalTests} tests
+                                        passed
+                                      </h3>
+                                      {!isSolved && (
+                                        <span className="text-xs text-muted">
+                                          Submit to run all tests
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                }
+                              } else {
+                                // Some tests failed
+                                return (
+                                  <div className="flex items-center justify-between">
+                                    <h3 className="text-rose-400 font-medium flex items-center gap-2">
+                                      <AlertCircle className="w-4 h-4" />
+                                      {passedTests} / {totalTests} tests passed
+                                    </h3>
+                                  </div>
+                                );
+                              }
+                            })()}
+                          </div>
+
+                          {/* Result Tabs */}
+                          <div className="flex items-center gap-2 px-4 border-b border-border overflow-x-auto">
+                            {(() => {
+                              // Determine which test results to show as tabs
+                              const visibleResults = testResults.filter(
+                                (r) => !r.hidden
+                              );
+                              const hiddenResults = testResults.filter(
+                                (r) => r.hidden
+                              );
+                              const allVisiblePassed = visibleResults.every(
+                                (r) => r.status === "Accepted"
+                              );
+                              const firstFailedHidden = hiddenResults.find(
+                                (r) => r.status !== "Accepted"
+                              );
+
+                              // Build the list of results to display
+                              let resultsToShow: typeof testResults = [];
+
+                              if (lastRunMode === "submit") {
+                                // Submit mode: show visible tests + first failed hidden (if all visible passed)
+                                resultsToShow = [...visibleResults];
+                                if (allVisiblePassed && firstFailedHidden) {
+                                  resultsToShow.push(firstFailedHidden);
+                                }
+                              } else {
+                                // Run mode: only visible tests were run
+                                resultsToShow = visibleResults;
+                              }
+
+                              return resultsToShow.map((r, idx) => (
+                                <button
+                                  key={r.id}
+                                  onClick={() => setActiveTestCaseId(r.id)}
+                                  className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 whitespace-nowrap ${
+                                    activeTestCaseId === r.id
+                                      ? "bg-surface text-primary"
+                                      : "text-muted hover:bg-surface"
+                                  }`}
+                                >
+                                  <span
+                                    className={`w-2 h-2 rounded-full ${
+                                      r.status === "Accepted"
+                                        ? "bg-emerald-500"
+                                        : "bg-rose-500"
+                                    }`}
+                                  />
+                                  {r.hidden ? "Hidden Test" : `Case ${idx + 1}`}
+                                </button>
+                              ));
+                            })()}
+                          </div>
+
+                          {/* Result Details */}
+                          <div className="flex-1 p-4 overflow-y-auto">
+                            {testResults.map((r) => {
+                              if (r.id !== activeTestCaseId) return null;
+                              return (
+                                <div key={r.id} className="flex flex-col gap-4">
+                                  {r.status === "Runtime Error" && (
+                                    <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-md text-rose-400 text-xs font-mono whitespace-pre-wrap">
+                                      {r.stderr}
+                                    </div>
+                                  )}
+
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted">
+                                      Input
+                                    </label>
+                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
+                                      {r.input}
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted">
+                                      Stdout
+                                    </label>
+                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
+                                      {r.stdout || (
+                                        <span className="text-muted italic">
+                                          No output
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted">
+                                      Output
+                                    </label>
+                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
+                                      {r.output}
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted">
+                                      Expected
+                                    </label>
+                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
+                                      {r.expected}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

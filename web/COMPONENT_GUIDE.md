@@ -9,12 +9,12 @@
 
 Always use CSS variables for consistent spacing. Never use random values.
 
-| Tier                | Variable              | Value | Tailwind  | Purpose                                  |
-| ------------------- | --------------------- | ----- | --------- | ---------------------------------------- |
-| **Atomic**    | `--space-atomic`    | 8px   | `mb-2`  | Label → Component (single visual unit)  |
-| **Connected** | `--space-connected` | 16px  | `mt-4`  | Intro paragraph → Example it introduces |
-| **Flow**      | `--space-flow`      | 24px  | `my-6`  | Between paragraphs, standard rhythm      |
-| **Section**   | `--space-section`   | 48px  | `my-12` | Topic changes, major breaks              |
+| Tier          | Variable            | Value | Tailwind | Purpose                                 |
+| ------------- | ------------------- | ----- | -------- | --------------------------------------- |
+| **Atomic**    | `--space-atomic`    | 8px   | `mb-2`   | Label → Component (single visual unit)  |
+| **Connected** | `--space-connected` | 16px  | `mt-4`   | Intro paragraph → Example it introduces |
+| **Flow**      | `--space-flow`      | 24px  | `my-6`   | Between paragraphs, standard rhythm     |
+| **Section**   | `--space-section`   | 48px  | `my-12`  | Topic changes, major breaks             |
 
 ### Usage in JSX
 
@@ -34,7 +34,8 @@ The primary structural component. Creates section breaks with borders.
 <Step title="1. Section Title">
   <Description>Introductory paragraph...</Description>
 
-  {/* Content: containers, visualizations, etc. */}
+{/* Content: containers, visualizations, etc. */}
+
 </Step>
 ```
 
@@ -50,6 +51,11 @@ Use for all body text. Handles typography styling automatically.
 <Description>
   Body text with **bold** and `code` formatting. Links work too.
 </Description>
+```
+
+**Behavior**:
+- Links are automatically styled as `text-primary` with a subtle underline (`decoration-zinc-700`).
+- Hover states brighten the decoration.
 ```
 
 **Props**:
@@ -129,7 +135,7 @@ For raw data display, code output, algorithm visualizations.
 
 ---
 
-### Pattern 2: Labeled Container 
+### Pattern 2: Labeled Container
 
 **Labels go OUTSIDE the container.** The container only holds data.
 
@@ -345,7 +351,125 @@ Tables automatically styled by prose. Just write markdown:
 
 ---
 
+## List Patterns
+
+### Pattern 1: Lightweight Data List (Borderless)
+
+For simple lists showing title + metadata (like challenge lists, file lists). Minimal visual weight. **No outer border** - let the void be the container.
+
+```jsx
+<div>
+  {items.map((item, idx) => (
+    <button
+      key={item.id}
+      className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-surface rounded-lg transition-colors group"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-muted text-sm font-mono w-6">
+          {String(idx + 1).padStart(2, "0")}
+        </span>
+        <span className="text-secondary group-hover:text-primary transition-colors">
+          {item.title}
+        </span>
+      </div>
+      <span className="text-xs font-medium text-emerald-400">
+        {item.status}
+      </span>
+    </button>
+  ))}
+</div>
+```
+
+**When to use:**
+
+- Challenge/problem lists
+- Navigation menus
+- Any list where items are clickable and lead somewhere
+- Lists inside panels/tabs (already contained)
+
+**Key elements:**
+
+- **No outer border** - void provides visual containment
+- No dividers between items - hover state shows boundaries
+- Monospace numbering for ordered lists
+- Rounded hover state (`hover:bg-surface rounded-lg`)
+- Text-only status colors (no background pills)
+
+**Why borderless?**
+
+- Follows void-based design philosophy
+- Less visual noise = faster scanning
+- Context (panel/tab) already provides containment
+- Consistent with guide content style
+
+---
+
+### Pattern 2: Card List
+
+For lists where each item needs more visual separation or contains multiple pieces of information.
+
+```jsx
+<div className="space-y-3">
+  {items.map((item) => (
+    <div
+      key={item.id}
+      className="p-4 rounded-lg bg-surface border border-border hover:border-zinc-600 transition-colors"
+    >
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="font-semibold text-primary">{item.title}</h3>
+        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
+          {item.status}
+        </span>
+      </div>
+      <p className="text-sm text-muted">{item.description}</p>
+    </div>
+  ))}
+</div>
+```
+
+**When to use:**
+
+- Course cards on landing pages
+- Project showcases
+- Items with descriptions or previews
+- Dashboard widgets
+
+**Key elements:**
+
+- Individual card borders
+- Background on cards (`bg-surface`)
+- Badge pills for status
+- More padding and visual hierarchy
+
+---
+
 ## Anti-Patterns
+
+### DON'T: Heavy Cards for Simple Lists
+
+```jsx
+{
+  /* ❌ WRONG - too heavy for just title + status */
+}
+<div className="p-4 mb-2 rounded-xl border border-border hover:border-zinc-600 hover:bg-surface">
+  <span className="font-semibold">Item Title</span>
+  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10">Easy</span>
+</div>;
+```
+
+### DO: Lightweight Row for Simple Lists
+
+```jsx
+{
+  /* ✅ CORRECT - minimal visual weight */
+}
+<button className="w-full px-4 py-3 flex items-center justify-between border-b border-border hover:bg-surface">
+  <span className="text-secondary">Item Title</span>
+  <span className="text-xs text-emerald-400">Easy</span>
+</button>;
+```
+
+---
 
 ### DON'T: Boxed Feature Cards
 
