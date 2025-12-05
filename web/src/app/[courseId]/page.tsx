@@ -109,13 +109,13 @@ export default async function RoadmapPage({
             <h3 className="font-semibold text-primary mb-3 text-lg">
               Prerequisites
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {metadata.prerequisites.map((prereq, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2 text-sm text-muted leading-relaxed"
+                  className="flex items-start gap-2.5 text-base text-muted leading-relaxed"
                 >
-                  <span className="text-zinc-600 shrink-0 mt-[5px] text-[5px]">
+                  <span className="text-zinc-600 shrink-0 mt-[7px] text-[5px]">
                     ●
                   </span>
                   <span>{prereq}</span>
@@ -130,13 +130,13 @@ export default async function RoadmapPage({
               What You'll Build
             </h3>
             {Array.isArray(metadata.outcome) ? (
-              <ul className="space-y-2">
+              <ul className="space-y-2.5">
                 {metadata.outcome.map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 text-sm text-muted leading-relaxed"
+                    className="flex items-start gap-2.5 text-base text-muted leading-relaxed"
                   >
-                    <span className="text-zinc-600 shrink-0 mt-[5px] text-[5px]">
+                    <span className="text-zinc-600 shrink-0 mt-[7px] text-[5px]">
                       ●
                     </span>
                     <span>{item}</span>
@@ -144,7 +144,7 @@ export default async function RoadmapPage({
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-secondary leading-relaxed">
+              <p className="text-base text-secondary leading-relaxed">
                 {metadata.outcome}
               </p>
             )}
