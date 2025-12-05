@@ -222,42 +222,103 @@ For success/summary variant:
 
 ---
 
-## Vertical Timeline
+## Timeline Patterns
 
-For step-by-step processes, journeys, sequential data.
+We use **two** timeline patterns across the site. Choose based on purpose.
+
+### Pattern 1: Navigation Timeline (Interactive)
+
+For clickable lists that users navigate through — course homepage, project roadmaps.
 
 ```jsx
-<div className="my-4 relative">
-  {/* The vertical line */}
-  <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
-
-  <div className="space-y-6">
-    {/* Step 1 */}
-    <div className="relative flex gap-4">
-      <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">
-        1
+{/* Container with continuous vertical line */}
+<div className="relative ml-4 pl-4 border-l border-zinc-800">
+  {items.map((item) => (
+    <Link
+      key={item.id}
+      href={item.href}
+      className="group block relative border-b border-border last:border-0"
+    >
+      {/* Circular node on the line - Centered perfectly */}
+      <div className="absolute -left-[24.5px] top-1/2 -translate-y-1/2 z-10 bg-background ring-4 ring-background">
+        <ChapterCheckbox
+          courseId={courseId}
+          step={item.step}
+          size="sm"
+        />
       </div>
-      <div className="flex-1 pt-2">
-        <div className="font-semibold text-primary">Step Title</div>
-        <div className="font-mono text-sm text-secondary mt-1">
-          Optional code/data preview
+
+      {/* Content - Inset hover box */}
+      <div className="relative my-1 py-2 px-4 rounded-lg hover:bg-zinc-900/50 transition-all group-hover:translate-x-0.5">
+        <div className="flex items-center gap-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-medium text-primary group-hover:text-white">
+              {item.title}
+            </h3>
+            <p className="text-muted text-xs line-clamp-1 mt-0.5">
+              {item.description}
+            </p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-zinc-700 group-hover:text-primary" />
         </div>
-        <p className="text-sm text-muted mt-2">Description of this step.</p>
       </div>
-    </div>
-
-    {/* Step 2, 3, etc... */}
-  </div>
+    </Link>
+  ))}
 </div>
 ```
 
-**Key Elements**:
+**Key Elements:**
+- Continuous vertical line: `border-l border-zinc-800`
+- Circular nodes: `rounded-full` positioned on the line
+- Horizontal dividers: `border-b border-border`
+- Inset hover: `my-1 py-2 rounded-lg hover:bg-zinc-900/50`
+- Arrow on right for navigation affordance
 
-- Vertical line: `absolute left-6 w-0.5 bg-zinc-800`
-- Number circle: `w-12 h-12 rounded-full bg-surface border-2 border-border`
-- Title: `font-semibold text-primary`
-- Code preview: `font-mono text-sm text-secondary`
-- Description: `text-sm text-muted`
+**Used in:** Course Homepage, ProjectRoadmap component
+
+---
+
+### Pattern 2: Conceptual Timeline (Read-only) — `<ProcessTimeline>`
+
+For educational content explaining a process or journey — NOT clickable. Use the reusable component.
+
+```jsx
+import { ProcessTimeline } from "@/components/mdx/ProcessTimeline";
+
+<ProcessTimeline steps={[
+  {
+    title: "Text → Bytes",
+    data: '"Hello" → [72, 101, 108, 108, 111]',
+    description: "Computers only understand numbers. Every character must be converted to a numerical representation."
+  },
+  {
+    title: "Step Without Data",
+    description: "Not all steps need a data example. Description handles the explanation."
+  }
+]} />
+```
+
+**Props:**
+- `steps`: Array of step objects
+  - `title`: Step heading (required)
+  - `data?`: Optional monospace code/data example  
+  - `description`: Explanation text (required)
+
+**Key Elements:**
+- **Nodes**: `w-8 h-8` with `text-xs font-mono text-secondary`
+- **Vertical line**: `w-px bg-zinc-800` positioned at `left-4`
+- **Spacing**: `space-y-6` between steps
+- **Text Hierarchy**: 
+  - Title: `font-semibold text-primary`
+  - Data: `text-sm font-mono text-secondary`
+  - Description: `text-sm text-secondary`
+
+**Used in:** In-content explanations (e.g., "The End-to-End Journey")
+
+> [!IMPORTANT]
+> **Choose the right pattern:**
+> - User clicks to navigate? → **Navigation Timeline**
+> - User reads to understand? → **Conceptual Timeline**
 
 ---
 
@@ -392,8 +453,11 @@ For simple lists showing title + metadata (like challenge lists, file lists). Mi
 - **No outer border** - void provides visual containment
 - No dividers between items - hover state shows boundaries
 - Monospace numbering for ordered lists
-- Rounded hover state (`hover:bg-surface rounded-lg`)
+- **Rounded hover state** (`hover:bg-surface rounded-lg`) - ALWAYS use `rounded-lg` with hover backgrounds
 - Text-only status colors (no background pills)
+
+> [!IMPORTANT]
+> **Hover Background Rule**: Any element with `hover:bg-*` MUST also have `rounded-lg` for visual consistency. Rectangular hover states are an anti-pattern.
 
 **Why borderless?**
 
