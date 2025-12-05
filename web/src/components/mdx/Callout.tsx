@@ -65,24 +65,23 @@ export function Callout({ type = "note", title, children }: CalloutProps) {
   if (isSummary) {
     return (
       <div
-        className="pl-6 border-l-2 border-emerald-400/50"
         style={{
           marginTop: "var(--space-section)",
           marginBottom: "var(--space-flow)",
         }}
       >
-        {/* Header floats on void */}
+        {/* Header - no border, aligned with content */}
         <div
-          className="flex items-center gap-2.5"
+          className="flex items-center gap-2 pl-6"
           style={{ marginBottom: "var(--space-connected)" }}
         >
-          <div className="w-5 h-5 rounded-full border border-emerald-400/50 flex items-center justify-center">
-            <Check className="w-3 h-3 text-emerald-400" strokeWidth={3} />
-          </div>
-          <h4 className="font-semibold text-primary text-lg">{title}</h4>
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2.5} />
+          <span className="font-semibold text-primary text-base leading-none">{title}</span>
         </div>
-        {/* Content with emerald bullets */}
-        <div className="text-secondary text-base leading-relaxed [&>ul]:list-none [&>ul]:p-0 [&>ul]:m-0 [&>ul]:space-y-3 [&>ul>li]:relative [&>ul>li]:pl-5 [&>ul>li]:before:content-[''] [&>ul>li]:before:absolute [&>ul>li]:before:left-0 [&>ul>li]:before:top-[0.6em] [&>ul>li]:before:w-1.5 [&>ul>li]:before:h-1.5 [&>ul>li]:before:rounded-full [&>ul>li]:before:bg-emerald-400 [&>ul>li>strong]:text-primary [&>ul>li>strong]:font-medium [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
+        {/* Content with emerald bullets - use pseudo-element for precise line positioning */}
+        <div className="relative pl-6 text-secondary text-base leading-relaxed [&>ul]:list-none [&>ul]:p-0 [&>ul]:m-0 [&>ul]:space-y-3 [&>ul>li]:relative [&>ul>li]:pl-5 [&>ul>li]:before:content-[''] [&>ul>li]:before:absolute [&>ul>li]:before:left-0 [&>ul>li]:before:top-[0.6em] [&>ul>li]:before:w-1.5 [&>ul>li]:before:h-1.5 [&>ul>li]:before:rounded-full [&>ul>li]:before:bg-emerald-400 [&>ul>li>strong]:text-primary [&>ul>li>strong]:font-medium [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
+          {/* Vertical line - starts at first bullet center, ends at last bullet center */}
+          <div className="absolute left-0 top-[0.6em] bottom-[0.6em] w-0.5 bg-emerald-400/50"></div>
           {children}
         </div>
       </div>
