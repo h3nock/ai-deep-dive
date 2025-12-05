@@ -372,43 +372,27 @@ description: "How to represent tokens as vectors to capture semantic meaning and
     When the model tries to predict the next word and makes a mistake, the "correction signal" (gradients) flows backwards through the entire network, updating the transformer blocks and finally the embedding vectors themselves. That reshaping teaches which coordinates should pull related tokens closer and push unrelated ones apart. It's how meaning gets baked into those embedding vectors *at the same time* the model learns how to use the words in context.
   </Description>
 
-  <div style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-connected)" }} className="relative">
-    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
-    
-    <div className="space-y-4">
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">1</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Model sees a sentence with a gap:</div>
-          <div className="font-mono text-sm text-secondary mt-1">"The King sat on the ___"</div>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">2</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">It makes a guess:</div>
-          <div className="font-mono text-sm text-secondary mt-1">"Banana" (totally wrong, but it's early in training!)</div>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">3</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">We reveal the correct answer:</div>
-          <div className="font-mono text-sm text-secondary mt-1">"The King sat on the <span className="text-emerald-400 font-bold">Throne</span>"</div>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">4</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">The model adjusts its internal map:</div>
-          <div className="text-sm text-secondary mt-1">"King" appeared near "Throne," so the model nudges "King" a little closer to "Throne" in its coordinate space, and a little further from "Banana."</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <ProcessTimeline steps={[
+    {
+      title: "Model sees a sentence with a gap:",
+      data: '"The King sat on the ___"',
+      description: "The training sentence."
+    },
+    {
+      title: "It makes a guess:",
+      data: '"Banana" (totally wrong, but it\'s early in training!)',
+      description: "Random prediction early in training."
+    },
+    {
+      title: "We reveal the correct answer:",
+      data: '"The King sat on the Throne"',
+      description: "The correct word is compared against the prediction."
+    },
+    {
+      title: "The model adjusts its internal map:",
+      description: '"King" appeared near "Throne," so the model nudges "King" a little closer to "Throne" in its coordinate space, and a little further from "Banana."'
+    }
+  ]} />
 
   <Description>
     This process repeats many times with different sentences. Every time "King" appears near "Queen," "Crown," or "Palace," the model nudges their coordinates closer. Every time "Apple" appears near "Orange" and "Banana," those fruit words cluster together.

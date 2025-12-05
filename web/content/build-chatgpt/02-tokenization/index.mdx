@@ -298,35 +298,20 @@ description: "How BPE compresses text into the atoms of language models."
     Looking back at our BPE walkthrough, the algorithm repeats three operations: **count** pairs, **pick** the most frequent one, and **merge** it. To implement this, we need three functions that work together:
   </Description>
 
-  <div className="content-attached relative">
-    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
-    
-    <div className="space-y-5">
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">1</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary font-mono">get_stats</div>
-          <p className="text-sm text-secondary mt-1">Counts how often each adjacent pair appears</p>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">2</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary font-mono">merge</div>
-          <p className="text-sm text-secondary mt-1">Replaces all occurrences of a pair with a new token</p>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">3</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary font-mono">train_bpe</div>
-          <p className="text-sm text-secondary mt-1">The main loop that calls the above until we reach target vocab size</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  <ProcessTimeline steps={[
+    {
+      title: "get_stats",
+      description: "Counts how often each adjacent pair appears"
+    },
+    {
+      title: "merge",
+      description: "Replaces all occurrences of a pair with a new token"
+    },
+    {
+      title: "train_bpe",
+      description: "The main loop that calls the above until we reach target vocab size"
+    }
+  ]} />
 
   <Description>
     Let's implement each one.
@@ -705,52 +690,32 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
     Let's step back and see the entire journey of text before it reaches the neural network.
   </Description>
 
-  <div style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-connected)" }} className="relative">
-    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
-    
-    <div className="space-y-6">
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">1</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Raw Text</div>
-          <div className="font-mono text-sm text-secondary mt-1">"Hello World"</div>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">2</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Regex Split</div>
-          <div className="font-mono text-sm text-secondary mt-1">["Hello", " World"]</div>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">3</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">UTF-8 Encoding</div>
-          <div className="font-mono text-sm text-secondary mt-1">[72, 101, 108, 108, 111], [32, 87, 111, 114, 108, 100]</div>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">4</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">BPE Merging</div>
-          <div className="text-sm text-secondary mt-1">Apply learned merge rules to compress bytes into tokens</div>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">5</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Token IDs</div>
-          <div className="font-mono text-sm text-secondary mt-1">[15496, 995]</div>
-          <div className="text-sm text-secondary mt-1">This is what the neural network actually sees</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <ProcessTimeline steps={[
+    {
+      title: "Raw Text",
+      data: '"Hello World"',
+      description: "The original input string."
+    },
+    {
+      title: "Regex Split",
+      data: '["Hello", " World"]',
+      description: "Pre-split into meaningful chunks."
+    },
+    {
+      title: "UTF-8 Encoding",
+      data: "[72, 101, 108, 108, 111], [32, 87, 111, 114, 108, 100]",
+      description: "Convert text to raw bytes."
+    },
+    {
+      title: "BPE Merging",
+      description: "Apply learned merge rules to compress bytes into tokens."
+    },
+    {
+      title: "Token IDs",
+      data: "[15496, 995]",
+      description: "This is what the neural network actually sees."
+    }
+  ]} />
 
   <Callout type="success" title="Summary">
     * **Tokenization** compresses text into efficient chunks called tokens

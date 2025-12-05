@@ -84,56 +84,31 @@ description: "The big picture: how Large Language Models actually work."
     When you send a message to an LLM and receive a response, your text goes through a series of transformations. Each step solves a specific problem.
   </Description>
 
-  <div style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-connected)" }} className="relative">
-    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
-    
-    <div className="space-y-6">
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">1</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Text → Bytes</div>
-          <div className="font-mono text-sm text-secondary mt-1">"Hello" → [72, 101, 108, 108, 111]</div>
-          <p className="text-sm text-muted mt-2">Computers only understand numbers. Every character must be converted to a numerical representation.</p>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">2</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Bytes → Tokens</div>
-          <div className="font-mono text-sm text-secondary mt-1">[72, 101, 108, 108, 111] → [15496]</div>
-          <p className="text-sm text-muted mt-2">Processing individual bytes is inefficient. Common patterns like "the" or "ing" become single tokens, making sequences shorter.</p>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">3</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Tokens → Vectors</div>
-          <div className="font-mono text-sm text-secondary mt-1">[15496] → [0.12, -0.48, 0.91, ...]</div>
-          <p className="text-sm text-muted mt-2">Token IDs are arbitrary labels. Vectors let the model learn semantic meaning, like understanding that "king" and "queen" are related.</p>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">4</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Vectors → Transformer → Next Token</div>
-          <p className="text-sm text-secondary mt-1">A Transformer is the architecture behind modern LLMs. It processes the vectors and predicts which token comes next.</p>
-          <p className="text-sm text-muted mt-2">It scans the sentence for context and uses it to pick the next word that keeps the meaning and flow on track.</p>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">5</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Token → Text</div>
-          <p className="text-sm text-secondary mt-1">The predicted token is converted back to text and shown to you. This loops until the response is complete.</p>
-          <p className="text-sm text-muted mt-2">This is why you see the response appear word by word.</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  <ProcessTimeline steps={[
+    {
+      title: "Text → Bytes",
+      data: '"Hello" → [72, 101, 108, 108, 111]',
+      description: "Computers only understand numbers. Every character must be converted to a numerical representation."
+    },
+    {
+      title: "Bytes → Tokens",
+      data: "[72, 101, 108, 108, 111] → [15496]",
+      description: "Processing individual bytes is inefficient. Common patterns like \"the\" or \"ing\" become single tokens, making sequences shorter."
+    },
+    {
+      title: "Tokens → Vectors",
+      data: "[15496] → [0.12, -0.48, 0.91, ...]",
+      description: "Token IDs are arbitrary labels. Vectors let the model learn semantic meaning, like understanding that \"king\" and \"queen\" are related."
+    },
+    {
+      title: "Vectors → Transformer → Next Token",
+      description: "A Transformer is the architecture behind modern LLMs. It processes the vectors and predicts which token comes next. It scans the sentence for context and uses it to pick the next word that keeps the meaning and flow on track."
+    },
+    {
+      title: "Token → Text",
+      description: "The predicted token is converted back to text and shown to you. This loops until the response is complete. This is why you see the response appear word by word."
+    }
+  ]} />
 </Step>
 
 
@@ -146,43 +121,25 @@ description: "The big picture: how Large Language Models actually work."
     The magic happens through training. We show the model enormous amounts of text and let it learn from its mistakes, over and over, until patterns emerge.
   </Description>
 
-  <div className="my-6 relative">
-    <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
-    
-    <div className="space-y-6">
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">1</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Input</div>
-          <div className="font-mono text-sm text-secondary mt-1">"The king sat on the"</div>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">2</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Prediction</div>
-          <p className="text-sm text-secondary mt-1">The model guesses the next word. At first, it's random (e.g., "banana").</p>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">3</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Comparison</div>
-          <p className="text-sm text-secondary mt-1">The actual next word is "throne". We measure the error.</p>
-        </div>
-      </div>
-
-      <div className="relative flex gap-4">
-        <div className="w-12 h-12 rounded-full bg-surface border-2 border-border flex items-center justify-center text-primary font-bold z-0">4</div>
-        <div className="flex-1 pt-2">
-          <div className="font-semibold text-primary">Update</div>
-          <p className="text-sm text-secondary mt-1">The model adjusts its internal numbers to make "throne" more likely next time.</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  <ProcessTimeline steps={[
+    {
+      title: "Input",
+      data: '"The king sat on the"',
+      description: "A training example from text data."
+    },
+    {
+      title: "Prediction",
+      description: 'The model guesses the next word. At first, it\'s random (e.g., "banana").'
+    },
+    {
+      title: "Comparison",
+      description: 'The actual next word is "throne". We measure the error.'
+    },
+    {
+      title: "Update",
+      description: 'The model adjusts its internal numbers to make "throne" more likely next time.'
+    }
+  ]} />
 
   <Description>
     By repeating this process billions of times on massive datasets, the model's parameters gradually tune themselves. Words with similar meanings align in the vector space, and the model learns to recognize complex patterns, grammar, and facts.
