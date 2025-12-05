@@ -97,7 +97,16 @@ bg-zinc-800 text-secondary
 <span className="text-muted">   {/* #71717A */}
 <div className="text-xs font-medium text-muted uppercase tracking-wider">
 ```
+### Interactive Elements
 
+| State | Color | Class |
+|-------|-------|-------|
+| **Hover (List Items)** | Zinc 900 (50% Opacity) | `hover:bg-zinc-900/50` |
+| **Hover (Buttons)** | Surface (Solid) | `hover:bg-surface` |
+| **Active/Selected** | Zinc 800 | `bg-zinc-800` |
+
+> [!NOTE]
+> Use `hover:bg-zinc-900/50` for list items (timeline, challenges) to maintain a subtle, premium feel. Use solid `hover:bg-surface` for distinct buttons.
 ### Code
 
 ```jsx
