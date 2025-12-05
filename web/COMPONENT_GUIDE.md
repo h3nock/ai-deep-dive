@@ -98,6 +98,39 @@ Collapsible hint + answer reveal. Use for "pause and think" moments.
 </ThinkingProcess>
 ```
 
+**Props**:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `title` | string | "Think About It" | Header text |
+| `hint` | ReactNode | - | Optional expandable hint content |
+| `children` | ReactNode | - | Answer content (revealed on click) |
+| `withSectionBreak` | boolean | false | Adds 48px margins for standalone usage |
+| `className` | string | - | Custom class (e.g., `content-attached`) |
+
+**Spacing Patterns**:
+
+```mdx
+<!-- Pattern 1: Inside Step (default - respects parent gap) -->
+<ThinkingProcess title="Why does this matter?">
+  {/* content */}
+</ThinkingProcess>
+
+<!-- Pattern 2: Tight coupling with intro text -->
+<Description attached>Could we train on raw bytes? Let's think:</Description>
+
+<ThinkingProcess className="content-attached" title="Consider the Trade-offs">
+  {/* content */}
+</ThinkingProcess>
+
+<!-- Pattern 3: Standalone with section breaks -->
+<ThinkingProcess withSectionBreak title="Deep Dive">
+  {/* content */}
+</ThinkingProcess>
+```
+
+**Answer Zone Styling**: The revealed answer uses a subtle left border accent (`border-l-2 border-zinc-800 pl-5`) to visually mark the answer zone while maintaining the premium void aesthetic.
+
 ---
 
 ### `<ByteStream>` - Byte Array Visualization
@@ -204,7 +237,7 @@ For concept comparisons, feature lists. Cards on void, not boxed sections.
 
 ### Pattern 5: Left-Border Emphasis
 
-For important statements, quotes, key insights. No box needed.
+For important statements, quotes, key insights, and revealed content zones. No box needed.
 
 ```jsx
 <div className="pl-6 border-l-2 border-zinc-600">
@@ -214,11 +247,20 @@ For important statements, quotes, key insights. No box needed.
 </div>
 ```
 
-For success/summary variant:
+**Variants**:
 
 ```jsx
+{/* Standard (zinc-600) */}
+<div className="pl-6 border-l-2 border-zinc-600">...</div>
+
+{/* Subtle (zinc-800) - for answer zones, revealed content */}
+<div className="pl-5 border-l-2 border-zinc-800">...</div>
+
+{/* Success/Summary (emerald) */}
 <div className="pl-6 border-l-2 border-emerald-400/50">...</div>
 ```
+
+**Used in**: ThinkingProcess answer zone, blockquotes, key insights
 
 ---
 

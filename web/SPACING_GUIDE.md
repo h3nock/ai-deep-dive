@@ -160,6 +160,16 @@ Use this pattern for subsections within a Step:
 </ThinkingProcess>
 ```
 
+**With `className="content-attached"`**: Use when the component directly follows an intro question to create tight coupling:
+
+```mdx
+<Description attached>Could we train on raw bytes? Let's think:</Description>
+
+<ThinkingProcess className="content-attached" title="Consider the Trade-offs">
+  {/* Expandable content */}
+</ThinkingProcess>
+```
+
 **With `withSectionBreak`**: Use when the component is standalone (outside of Step) and needs section-level breaks:
 
 ```mdx
