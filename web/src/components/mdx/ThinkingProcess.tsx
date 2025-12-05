@@ -7,14 +7,19 @@ interface ThinkingProcessProps {
   title?: string;
   hint?: React.ReactNode;
   children: React.ReactNode; // The answer/explanation
+  /** When true, adds section-level margins (48px). Use for standalone usage outside of Step. */
+  withSectionBreak?: boolean;
+  /** Optional className for custom spacing (e.g., 'content-attached' when following an intro) */
+  className?: string;
 }
 
 /**
  * ThinkingProcess Component - Interactive Learning Block
  *
  * SPACING STRATEGY:
- * - Top margin: Tier 4 (Section) - this is a major interactive element
- * - Bottom margin: Tier 4 (Section) - provides significant break after engagement
+ * - Default: NO outer margins - respects parent's gap-based spacing (e.g., inside Step)
+ * - With `withSectionBreak`: Adds Tier 4 (Section) margins for standalone usage
+ * - With `className="content-attached"`: Tight coupling to preceding intro text
  * - Internal spacing uses Tier 2 (Connected) for related elements
  * - This component signals a "pause and think" moment in the narrative
  */
@@ -22,24 +27,33 @@ export function ThinkingProcess({
   title = "Think About It",
   hint,
   children,
+  withSectionBreak = false,
+  className,
 }: ThinkingProcessProps) {
   const [isHintOpen, setIsHintOpen] = useState(false);
   const [isAnswerOpen, setIsAnswerOpen] = useState(false);
 
   return (
     <div
-      style={{
-        marginTop: "var(--space-section)",
-        marginBottom: "var(--space-section)",
-      }}
+      className={className}
+      style={
+        withSectionBreak
+          ? {
+              marginTop: "var(--space-section)",
+              marginBottom: "var(--space-section)",
+            }
+          : undefined
+      }
     >
-      {/* Header - floats on the void */}
+      {/* Header - icon and title vertically centered */}
       <div
-        className="flex items-center gap-3"
+        className="flex items-center gap-2"
         style={{ marginBottom: "var(--space-atomic)" }}
       >
-        <BrainCircuit className="w-6 h-6 text-amber-400" />
-        <h3 className="text-xl font-semibold text-primary">{title}</h3>
+        <div className="flex items-center justify-center w-5 h-5">
+          <BrainCircuit className="w-[18px] h-[18px] text-amber-400" />
+        </div>
+        <span className="text-lg font-semibold text-primary">{title}</span>
       </div>
 
       {/* Subtext */}

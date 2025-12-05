@@ -151,10 +151,20 @@ Use this pattern for subsections within a Step:
 
 ### 6. ThinkingProcess Component
 
-Major interactive element - gets full section spacing (48px) on both sides.
+**Default behavior**: When inside a `Step`, respects parent's gap spacing (no extra margins).
 
 ```mdx
+<!-- Inside Step (default - uses parent gap) -->
 <ThinkingProcess title="Why does this matter?">
+  {/* Expandable content */}
+</ThinkingProcess>
+```
+
+**With `withSectionBreak`**: Use when the component is standalone (outside of Step) and needs section-level breaks:
+
+```mdx
+<!-- Standalone with section breaks (48px top/bottom) -->
+<ThinkingProcess title="Why does this matter?" withSectionBreak>
   {/* Expandable content */}
 </ThinkingProcess>
 ```

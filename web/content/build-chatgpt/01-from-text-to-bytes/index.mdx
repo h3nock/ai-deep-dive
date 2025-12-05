@@ -377,18 +377,19 @@ description: "How computers represent language (Unicode & UTF-8)."
   </Description>
 
   <Description>
-    A very natural question arises: **Why don't we just feed these raw bytes directly into the AI?**
+    A very natural question arises: **Why don't we just feed these raw bytes directly into the model?**
   </Description>
 
   <Description>
     It seems like the perfect solution. It's **Universal**: you would never need to update your model for new languages since Spanish, Chinese, and Python code are all just bytes. It's also **Tiny**: the model would only need a vocabulary of 256 items, which is incredibly memory efficient compared to storing hundreds of thousands of words.
   </Description>
 
-  <Description>
-    So why doesn't GPT-4 do this?
+  <Description attached>
+    Given how elegant this solution seems, **could we just train a model on raw bytes?** Let's think through the trade-offs:
   </Description>
 
   <ThinkingProcess 
+    className="content-attached"
     title="Think About the Trade-off"
     hint={
       <div>
