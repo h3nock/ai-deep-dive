@@ -37,11 +37,10 @@ export const courseConfig: Record<string, CourseConfig> = {
       "A decoder-only GPT that generates text, trained on FineWeb-Edu",
     ],
     prerequisites: [
-      "Python proficiency (classes, lists, dictionaries)",
-      "Linear algebra fundamentals (matrix multiplication, vectors)",
-      "Basic PyTorch (tensors)",
-      "Basic understanding of neural networks (Gradient Descent, Loss and Activation functions)",
-
+      "Python proficiency",
+      "Linear algebra fundamentals",
+      "Basic PyTorch",
+      "Neural network basics",
     ],
     phases: [
       {
