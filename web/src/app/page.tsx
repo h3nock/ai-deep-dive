@@ -31,23 +31,22 @@ export default async function Home() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative pt-20 pb-16">
+        <section className="relative pt-20 pb-24">
           <div className="container mx-auto px-4 text-center max-w-3xl">
             <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 text-primary">
               Learn AI by Building It
             </h1>
 
             <p className="text-base md:text-lg text-secondary max-w-xl mx-auto leading-relaxed mb-10">
-              Go beyond API calls. Build real AI systems from scratch and
-              understand how they actually work.
+              The only way to truly understand AI is to build it.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="#courses"
-                className="px-6 py-3 rounded-lg bg-primary hover:bg-zinc-200 text-background font-medium transition-colors"
+                className="px-6 py-3 rounded-lg bg-primary hover:bg-zinc-200 text-background font-medium transition-all hover:shadow-lg hover:shadow-zinc-500/10"
               >
-                Browse Courses
+                Explore Courses
               </Link>
               <a
                 href="https://github.com/h3nock/ai-deep-dive"
@@ -70,7 +69,7 @@ export default async function Home() {
             <div className="mb-10">
               <h2 className="text-2xl font-bold text-primary mb-2">Courses</h2>
               <p className="text-secondary">
-                Each course takes you from zero to a working system.
+                Guided paths from first principles to working code.
               </p>
             </div>
 
@@ -105,7 +104,7 @@ export default async function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-2">
-                <div className="text-2xl font-bold text-muted">01</div>
+                <div className="text-4xl font-bold text-zinc-700">01</div>
                 <h3 className="font-semibold text-primary">Theory First</h3>
                 <p className="text-sm text-secondary leading-relaxed">
                   Understand the why before the how.
@@ -113,7 +112,7 @@ export default async function Home() {
               </div>
 
               <div className="space-y-2">
-                <div className="text-2xl font-bold text-muted">02</div>
+                <div className="text-4xl font-bold text-zinc-700">02</div>
                 <h3 className="font-semibold text-primary">
                   Build It Yourself
                 </h3>
@@ -123,7 +122,7 @@ export default async function Home() {
               </div>
 
               <div className="space-y-2">
-                <div className="text-2xl font-bold text-muted">03</div>
+                <div className="text-4xl font-bold text-zinc-700">03</div>
                 <h3 className="font-semibold text-primary">Make It Work</h3>
                 <p className="text-sm text-secondary leading-relaxed">
                   Train on real data. End with something you can use.

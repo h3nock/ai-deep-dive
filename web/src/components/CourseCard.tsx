@@ -38,9 +38,11 @@ export function CourseCard({
     <Component
       href={href || "#"}
       className={cn(
-        "group relative flex flex-col h-full bg-background rounded-xl border border-border p-5 md:p-6",
+        "group relative flex flex-col h-full bg-background rounded-xl border p-5 md:p-6",
         "card-glow",
-        isAvailable ? "card-glow-interactive" : "card-glow-disabled opacity-60"
+        isAvailable 
+          ? "card-glow-interactive border-border" 
+          : "card-glow-disabled border-zinc-800/50 grayscale-[30%]"
       )}
     >
       <div className="flex items-start justify-between mb-4">
