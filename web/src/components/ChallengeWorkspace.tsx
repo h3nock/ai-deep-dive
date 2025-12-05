@@ -832,7 +832,7 @@ export function ChallengeWorkspace({
                     <div key={c.id} className="py-1">
                       <button
                         onClick={() => setActiveChallengeIndex(idx)}
-                        className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-surface transition-all group"
+                        className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-zinc-900/50 rounded-lg transition-all group"
                       >
                         <div className="flex items-center gap-4">
                           <span className="text-muted/60 text-sm font-mono w-6">
