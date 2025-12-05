@@ -34,7 +34,7 @@ export function ProjectRoadmap({ courseId, prefix }: ProjectRoadmapProps) {
           return (
             <Link
               key={post.slug}
-              href={`/${courseId}/step/${post.slug}`}
+              href={`/${courseId}/${post.slug}`}
               className="group block relative"
             >
               <div className="relative flex items-center gap-4 py-3 px-4 -mx-4 rounded-lg hover:bg-zinc-800/50 transition-colors">

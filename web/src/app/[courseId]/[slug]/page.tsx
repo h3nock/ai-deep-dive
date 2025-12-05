@@ -149,4 +149,3 @@ export default async function StepPage({
     </StepContainer>
   );
 }
-

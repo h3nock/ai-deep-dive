@@ -167,7 +167,7 @@ export default async function RoadmapPage({
                   {phaseChapters.map((post) => (
                     <Link
                       key={post.slug}
-                      href={`/${courseId}/step/${post.slug}`}
+                      href={`/${courseId}/${post.slug}`}
                       className="group block"
                     >
                       <div className="relative bg-surface rounded-lg border border-border p-4 hover:border-zinc-600 hover:bg-zinc-800/50 transition-all duration-200">

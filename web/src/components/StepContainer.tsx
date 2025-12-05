@@ -124,13 +124,13 @@ export function StepContainer({
   const getBackLink = () => {
     if (post.slug.startsWith("p1-")) {
       return {
-        href: `/${collection}/step/09-project-translator`,
+        href: `/${collection}/09-project-translator`,
         label: "Back to Project 1",
       };
     }
     if (post.slug.startsWith("p2-")) {
       return {
-        href: `/${collection}/step/11-project-gpt`,
+        href: `/${collection}/11-project-gpt`,
         label: "Back to Project 2",
       };
     }
@@ -237,7 +237,7 @@ export function StepContainer({
                       step={post.step || 0}
                       nextHref={
                         nextPost
-                          ? `/${collection}/step/${nextPost.slug}`
+                          ? `/${collection}/${nextPost.slug}`
                           : undefined
                       }
                     />
@@ -247,7 +247,7 @@ export function StepContainer({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {prevPost ? (
                       <Link
-                        href={`/${collection}/step/${prevPost.slug}`}
+                        href={`/${collection}/${prevPost.slug}`}
                         className="group flex flex-col p-5 rounded-xl border border-border hover:border-zinc-600 hover:bg-surface transition-all"
                       >
                         <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">
@@ -263,7 +263,7 @@ export function StepContainer({
 
                     {nextPost ? (
                       <Link
-                        href={`/${collection}/step/${nextPost.slug}`}
+                        href={`/${collection}/${nextPost.slug}`}
                         className="group flex flex-col items-end text-right p-5 rounded-xl border border-border hover:border-zinc-600 hover:bg-surface transition-all"
                       >
                         <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">

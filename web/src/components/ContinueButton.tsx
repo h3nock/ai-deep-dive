@@ -53,7 +53,7 @@ export function ContinueButton({
           <span className="font-medium">Course completed</span>
         </div>
         <Link
-          href={`/${courseId}/step/${slugMap[allSteps[0]]}`}
+          href={`/${courseId}/${slugMap[allSteps[0]]}`}
           className={cn(
             "inline-flex items-center px-5 py-2.5 rounded-lg border border-border text-secondary hover:bg-surface text-sm font-medium transition-colors",
             className
@@ -71,7 +71,7 @@ export function ContinueButton({
 
   return (
     <Link
-      href={`/${courseId}/step/${slug}`}
+      href={`/${courseId}/${slug}`}
       className={cn(
         "inline-flex items-center px-6 py-3 rounded-lg bg-primary hover:bg-zinc-200 text-background font-medium transition-colors",
         className
