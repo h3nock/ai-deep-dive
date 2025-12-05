@@ -40,7 +40,8 @@ export const courseConfig: Record<string, CourseConfig> = {
       "Python proficiency (classes, lists, dictionaries)",
       "Linear algebra fundamentals (matrix multiplication, vectors)",
       "Basic PyTorch (tensors)",
-      "Basic understanding of neural networks (Loss functions, Gradient Descent, Activation functions)",
+      "Basic understanding of neural networks (Gradient Descent, Loss and Activation functions)",
+
     ],
     phases: [
       {
