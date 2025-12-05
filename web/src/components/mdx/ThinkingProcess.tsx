@@ -111,9 +111,9 @@ export function ThinkingProcess({
         </button>
       </div>
 
-      {/* Answer content - no box wrapper, just flows */}
+      {/* Answer content - subtle left accent to mark the answer zone */}
       {isAnswerOpen && (
-        <div className="animate-in fade-in slide-in-from-top-3 duration-300 prose prose-invert max-w-none [&>hr]:border-zinc-800 [&>hr]:my-8">
+        <div className="border-l-2 border-zinc-800 pl-5 animate-in fade-in slide-in-from-top-3 duration-300 prose prose-invert max-w-none [&>hr]:border-zinc-800 [&>hr]:my-8">
           {children}
         </div>
       )}
