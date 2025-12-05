@@ -96,10 +96,16 @@ export default async function RoadmapPage({
           </div>
         </div>
 
-        {/* Prerequisites & What You'll Build */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+        {/* Prerequisites & What You'll Build - Inverted T Layout */}
+        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 pb-6 mb-12">
+          {/* Center vertical line (hidden on mobile) - connects to horizontal line */}
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-zinc-800" />
+
+          {/* Horizontal bottom line (the T's crossbar) */}
+          <div className="absolute left-0 right-0 bottom-0 h-px bg-zinc-800" />
+
           {/* Prerequisites */}
-          <div>
+          <div className="md:pr-8">
             <h3 className="font-semibold text-primary mb-3 text-lg">
               Prerequisites
             </h3>
@@ -119,7 +125,7 @@ export default async function RoadmapPage({
           </div>
 
           {/* What You'll Build */}
-          <div>
+          <div className="md:pl-8">
             <h3 className="font-semibold text-primary mb-3 text-lg">
               What You'll Build
             </h3>
