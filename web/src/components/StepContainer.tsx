@@ -149,7 +149,7 @@ export function StepContainer({
         <div className="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto">
           {/* Tab Header (Only if challenges exist) */}
           {hasChallenges && (
-            <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-6">
+            <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-6">
               <div className="max-w-5xl mx-auto flex gap-6">
                 <button
                   onClick={() => handleTabChange("guide")}

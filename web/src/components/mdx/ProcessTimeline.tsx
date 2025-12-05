@@ -40,7 +40,7 @@ export function ProcessTimeline({ steps }: ProcessTimelineProps) {
       <div className="space-y-6">
         {steps.map((step, index) => (
           <div key={index} className="relative flex gap-4">
-            <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-secondary font-mono text-xs z-10 shrink-0">
+            <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-secondary font-mono text-xs shrink-0">
               {index + 1}
             </div>
             <div className="flex-1 pt-0.5">
