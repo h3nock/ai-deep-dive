@@ -25,7 +25,7 @@ export function ChapterCheckbox({
     return (
       <div
         className={cn(
-          "rounded border border-border",
+          "rounded-full border border-border bg-background",
           size === "sm" ? "w-4 h-4" : "w-5 h-5"
         )}
       />
@@ -41,7 +41,7 @@ export function ChapterCheckbox({
     return (
       <div
         className={cn(
-          "rounded border border-border",
+          "rounded-full border border-border bg-background",
           size === "sm" ? "w-4 h-4" : "w-5 h-5"
         )}
       />

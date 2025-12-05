@@ -96,10 +96,31 @@ export default async function RoadmapPage({
           </div>
         </div>
 
-        {/* What You'll Build & Prerequisites */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          <div className="bg-surface rounded-xl border border-border p-5">
-            <h3 className="font-semibold text-primary mb-3 text-sm">
+        {/* Prerequisites & What You'll Build */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+          {/* Prerequisites */}
+          <div>
+            <h3 className="font-semibold text-primary mb-3 text-lg">
+              Prerequisites
+            </h3>
+            <ul className="space-y-2">
+              {metadata.prerequisites.map((prereq, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-sm text-muted leading-relaxed"
+                >
+                  <span className="text-zinc-600 shrink-0 mt-[5px] text-[5px]">
+                    ●
+                  </span>
+                  <span>{prereq}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* What You'll Build */}
+          <div>
+            <h3 className="font-semibold text-primary mb-3 text-lg">
               What You'll Build
             </h3>
             {Array.isArray(metadata.outcome) ? (
@@ -107,34 +128,20 @@ export default async function RoadmapPage({
                 {metadata.outcome.map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-baseline gap-2 text-sm text-muted"
+                    className="flex items-start gap-2 text-sm text-muted leading-relaxed"
                   >
-                    <span className="text-zinc-600">•</span>
-                    {item}
+                    <span className="text-zinc-600 shrink-0 mt-[5px] text-[5px]">
+                      ●
+                    </span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted leading-relaxed">
+              <p className="text-sm text-secondary leading-relaxed">
                 {metadata.outcome}
               </p>
             )}
-          </div>
-          <div className="bg-surface rounded-xl border border-border p-5">
-            <h3 className="font-semibold text-primary mb-3 text-sm">
-              Prerequisites
-            </h3>
-            <ul className="space-y-2">
-              {metadata.prerequisites.map((prereq, i) => (
-                <li
-                  key={i}
-                  className="flex items-baseline gap-2 text-sm text-muted"
-                >
-                  <span className="text-zinc-600">•</span>
-                  {prereq}
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
 
@@ -162,40 +169,43 @@ export default async function RoadmapPage({
                   </div>
                 </div>
 
-                {/* Chapter Cards */}
-                <div className="space-y-2 ml-4 pl-7 border-l-2 border-border">
+                {/* Chapter Timeline */}
+                <div className="relative ml-4 pl-4 border-l border-zinc-800">
                   {phaseChapters.map((post) => (
                     <Link
                       key={post.slug}
                       href={`/${courseId}/${post.slug}`}
-                      className="group block"
+                      className="group block relative border-b border-border last:border-0"
                     >
-                      <div className="relative bg-surface rounded-lg border border-border p-4 hover:border-zinc-600 hover:bg-zinc-800/50 transition-all duration-200">
-                        <div className="flex items-center gap-4">
-                          {/* Completion Checkbox */}
-                          <ChapterCheckbox
-                            courseId={courseId}
-                            step={post.step}
-                            size="sm"
-                          />
+                      {/* Timeline Node (Checkbox) */}
+                      <div className="absolute -left-[24.5px] top-1/2 -translate-y-1/2 z-10 bg-background ring-4 ring-background">
+                        <ChapterCheckbox
+                          courseId={courseId}
+                          step={post.step}
+                          size="sm"
+                        />
+                      </div>
 
-                          {/* Step Number */}
-                          <div className="shrink-0 w-8 h-8 rounded-md bg-background flex items-center justify-center text-muted font-medium text-sm group-hover:bg-zinc-800 transition-colors">
-                            {post.step}
+                      {/* Content Floating on Void - Inset from borders */}
+                      <div className="relative my-1 py-2 px-4 rounded-lg transition-all duration-200 hover:bg-zinc-900/50 group-hover:translate-x-0.5">
+                        <div className="flex items-center gap-4">
+                          {/* Step Number - Subtle */}
+                          <div className="shrink-0 w-8 h-8 flex items-center justify-center text-muted/50 font-mono text-sm group-hover:text-primary transition-colors">
+                            {String(post.step).padStart(2, "0")}
                           </div>
 
-                          {/* Content */}
+                          {/* Text Content (Stacked) */}
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm md:text-base font-medium text-primary group-hover:text-secondary transition-colors">
+                            <h3 className="text-sm md:text-base font-medium text-primary group-hover:text-white transition-colors">
                               {post.title}
                             </h3>
-                            <p className="text-muted text-xs md:text-sm line-clamp-1 mt-0.5">
+                            <p className="text-muted text-xs md:text-sm line-clamp-1 mt-0.5 group-hover:text-zinc-400 transition-colors">
                               {post.description}
                             </p>
                           </div>
 
-                          {/* Arrow */}
-                          <div className="shrink-0 text-muted group-hover:text-secondary group-hover:translate-x-0.5 transition-all duration-200">
+                          {/* Arrow - Always visible for balance */}
+                          <div className="shrink-0 text-zinc-700 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 ml-auto">
                             <ArrowRight className="w-4 h-4" />
                           </div>
                         </div>
