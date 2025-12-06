@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://learning.h3nok.dev"),
   title: "Learn AI by Building It",
   description: "The only way to truly understand AI is to build it.",
   openGraph: {
@@ -23,9 +24,10 @@ export const metadata: Metadata = {
     description: "The only way to truly understand AI is to build it.",
     siteName: "Learn AI by Building It",
     type: "website",
+    url: "https://learning.h3nok.dev",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Learn AI by Building It",
     description: "The only way to truly understand AI is to build it.",
   },
