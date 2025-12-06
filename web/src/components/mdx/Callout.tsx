@@ -6,6 +6,8 @@ type CalloutType = "note" | "warning" | "tip" | "success" | "info";
 interface CalloutProps {
   type?: CalloutType;
   title?: string;
+  /** When true, uses a more muted text color to de-emphasize the content */
+  muted?: boolean;
   children: React.ReactNode;
 }
 
@@ -55,7 +57,7 @@ const isSummaryTitle = (title?: string) => {
  * - This asymmetry connects the callout to what introduces it while giving
  *   breathing room before continuing
  */
-export function Callout({ type = "note", title, children }: CalloutProps) {
+export function Callout({ type = "note", title, muted = false, children }: CalloutProps) {
   const style = styles[type];
   const Icon = style.Icon;
   const isSummary = type === "success" && isSummaryTitle(title);
@@ -88,11 +90,14 @@ export function Callout({ type = "note", title, children }: CalloutProps) {
     );
   }
 
+  // Text color: muted callouts use lighter text to de-emphasize
+  const textColorClass = muted ? "text-muted" : "text-secondary";
+
   // Default callout: Left-border pattern
   // Connected to preceding content, provides reset after
   return (
     <div
-      className={`pl-6 border-l-2 ${style.border}`}
+      className={`not-prose pl-6 border-l-2 ${style.border}`}
       style={{
         marginTop: "var(--space-connected)",
         marginBottom: "var(--space-section)",
@@ -109,7 +114,9 @@ export function Callout({ type = "note", title, children }: CalloutProps) {
           </span>
         </div>
       )}
-      <div className="text-secondary text-base leading-relaxed [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
+      <div 
+        className={`${textColorClass} leading-relaxed [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&_p]:!text-base [&_strong]:!text-base`}
+      >
         {children}
       </div>
     </div>
