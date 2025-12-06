@@ -153,7 +153,7 @@ export function StepContainer({
               <div className="max-w-5xl mx-auto flex gap-6">
                 <button
                   onClick={() => handleTabChange("guide")}
-                  className={`py-4 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
+                  className={`py-4 text-sm font-bold tracking-wide border-b-2 transition-colors flex items-center gap-2 ${
                     activeTab === "guide"
                       ? "border-primary text-primary"
                       : "border-transparent text-muted hover:text-secondary"
@@ -164,7 +164,7 @@ export function StepContainer({
                 </button>
                 <button
                   onClick={() => handleTabChange("challenges")}
-                  className={`py-4 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
+                  className={`py-4 text-sm font-bold tracking-wide border-b-2 transition-colors flex items-center gap-2 ${
                     activeTab === "challenges"
                       ? "border-primary text-primary"
                       : "border-transparent text-muted hover:text-secondary"
