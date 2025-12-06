@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "katex/dist/katex.min.css";
@@ -18,7 +18,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Learn AI by Building It",
   description: "Build real AI systems from scratch. Understand every layer.",
-  themeColor: "#09090B", // Matches --color-background
+};
+
+export const viewport: Viewport = {
+  themeColor: "#09090B",
 };
 
 export default function RootLayout({
