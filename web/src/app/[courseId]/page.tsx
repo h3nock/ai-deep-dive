@@ -71,7 +71,7 @@ export default async function RoadmapPage({
           <h1 className="text-3xl md:text-4xl font-bold text-primary mb-3">
             {metadata.title}
           </h1>
-          <p className="text-base text-muted max-w-2xl leading-relaxed">
+          <p className="text-base text-muted max-w-2xl leading-relaxed tracking-wide">
             {metadata.description}
           </p>
 
@@ -113,7 +113,7 @@ export default async function RoadmapPage({
               {metadata.prerequisites.map((prereq, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2.5 text-base text-muted leading-relaxed"
+                  className="flex items-start gap-2.5 text-base text-muted leading-relaxed tracking-wide"
                 >
                   <span className="text-zinc-600 shrink-0 mt-[7px] text-[5px]">
                     ●
@@ -134,7 +134,7 @@ export default async function RoadmapPage({
                 {metadata.outcome.map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2.5 text-base text-muted leading-relaxed"
+                    className="flex items-start gap-2.5 text-base text-muted leading-relaxed tracking-wide"
                   >
                     <span className="text-zinc-600 shrink-0 mt-[7px] text-[5px]">
                       ●
@@ -171,7 +171,7 @@ export default async function RoadmapPage({
                     <h2 className="font-semibold text-primary">
                       {phase.title}
                     </h2>
-                    <p className="text-sm text-muted">{phase.description}</p>
+                    <p className="text-sm text-muted leading-relaxed tracking-wide">{phase.description}</p>
                   </div>
                 </div>
 

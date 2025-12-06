@@ -24,7 +24,6 @@ interface ProcessTimelineProps {
  * - Small nodes (w-8 h-8) with monospace numbers
  * - Vertical line on left
  * - Consistent text hierarchy (title → data → description)
- * - Flexible step structure via props
  */
 export function ProcessTimeline({ steps }: ProcessTimelineProps) {
   return (
@@ -50,7 +49,9 @@ export function ProcessTimeline({ steps }: ProcessTimelineProps) {
                   {step.data}
                 </div>
               )}
-              <p className="text-sm text-secondary mt-1">{step.description}</p>
+              <p className="text-sm text-secondary leading-relaxed tracking-wide mt-1">
+                {step.description}
+              </p>
             </div>
           </div>
         ))}
