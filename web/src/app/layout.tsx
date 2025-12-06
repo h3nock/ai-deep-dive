@@ -17,7 +17,18 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Learn AI by Building It",
-  description: "Build real AI systems from scratch. Understand every layer.",
+  description: "The only way to truly understand AI is to build it.",
+  openGraph: {
+    title: "Learn AI by Building It",
+    description: "The only way to truly understand AI is to build it.",
+    siteName: "Learn AI by Building It",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Learn AI by Building It",
+    description: "The only way to truly understand AI is to build it.",
+  },
 };
 
 export const viewport: Viewport = {
