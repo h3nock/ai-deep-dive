@@ -71,7 +71,7 @@ export default async function RoadmapPage({
           <h1 className="text-3xl md:text-4xl font-bold text-primary mb-3">
             {metadata.title}
           </h1>
-          <p className="text-base text-muted max-w-2xl leading-relaxed tracking-wide">
+          <p className="text-lg text-muted max-w-2xl leading-relaxed">
             {metadata.description}
           </p>
 
@@ -106,16 +106,16 @@ export default async function RoadmapPage({
 
           {/* Prerequisites */}
           <div className="md:pr-8">
-            <h3 className="font-semibold text-primary mb-3 text-lg">
+            <h3 className="text-sm font-medium text-secondary uppercase tracking-wider mb-4">
               Prerequisites
             </h3>
             <ul className="space-y-2.5">
               {metadata.prerequisites.map((prereq, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2.5 text-base text-muted leading-relaxed tracking-wide"
+                  className="flex items-start gap-3 text-base text-muted leading-relaxed"
                 >
-                  <span className="text-zinc-600 shrink-0 mt-[7px] text-[5px]">
+                  <span className="text-zinc-500 shrink-0 mt-[6px] text-[6px]">
                     ●
                   </span>
                   <span>{prereq}</span>
@@ -126,7 +126,7 @@ export default async function RoadmapPage({
 
           {/* What You'll Build */}
           <div className="md:pl-8">
-            <h3 className="font-semibold text-primary mb-3 text-lg">
+            <h3 className="text-sm font-medium text-secondary uppercase tracking-wider mb-4">
               What You'll Build
             </h3>
             {Array.isArray(metadata.outcome) ? (
@@ -134,9 +134,9 @@ export default async function RoadmapPage({
                 {metadata.outcome.map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2.5 text-base text-muted leading-relaxed tracking-wide"
+                    className="flex items-start gap-3 text-base text-muted leading-relaxed"
                   >
-                    <span className="text-zinc-600 shrink-0 mt-[7px] text-[5px]">
+                    <span className="text-zinc-500 shrink-0 mt-[6px] text-[6px]">
                       ●
                     </span>
                     <span>{item}</span>
@@ -144,7 +144,7 @@ export default async function RoadmapPage({
                 ))}
               </ul>
             ) : (
-              <p className="text-base text-secondary leading-relaxed">
+              <p className="text-base text-muted leading-relaxed">
                 {metadata.outcome}
               </p>
             )}
@@ -171,7 +171,7 @@ export default async function RoadmapPage({
                     <h2 className="font-semibold text-primary">
                       {phase.title}
                     </h2>
-                    <p className="text-sm text-muted leading-relaxed tracking-wide">{phase.description}</p>
+                    <p className="text-sm font-medium text-muted">{phase.description}</p>
                   </div>
                 </div>
 
