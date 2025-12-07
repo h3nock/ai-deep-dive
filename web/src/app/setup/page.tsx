@@ -101,8 +101,8 @@ export default function SetupPage() {
             </h1>
             <p className="text-lg text-muted leading-relaxed">
               Some challenges require dependencies that can&apos;t run in the
-              browser. The CLI tool sets up a local workspace and runs the same
-              test suite you see on the website.
+              browser. The CLI tool sets up a local workspace and runs the
+              test suite for each challenge.
             </p>
           </header>
 
@@ -129,8 +129,7 @@ export default function SetupPage() {
             <CodeBlock>{`ai-deep-dive init build-chatgpt`}</CodeBlock>
             <p className="text-lg text-secondary leading-relaxed">
               Creates a workspace folder with starter files for every challenge,
-              organized by chapter. Each file contains a function stub with
-              instructions in the comments.
+              organized by chapter.
             </p>
 
             {/* Folder structure */}
@@ -179,7 +178,7 @@ export default function SetupPage() {
               3. Work on a challenge
             </h2>
             <CodeBlock>{`cd build-chatgpt
-code .`}</CodeBlock>
+nvim .  # or your preferred editor`}</CodeBlock>
             <p className="text-lg text-secondary leading-relaxed">
               Open the folder in your editor and find the challenge file. Each
               filename starts with the challenge ID, for example{" "}
@@ -197,9 +196,10 @@ code .`}</CodeBlock>
             </h2>
             <CodeBlock>{`ai-deep-dive test 01-02`}</CodeBlock>
             <p className="text-lg text-secondary leading-relaxed">
-              Runs the exact same test cases you see on the website. The CLI
-              automatically finds your file by matching the ID in the filename,
-              so you can organize your folders however you prefer.
+              Runs the test suite for that challenge. The CLI expects the
+              filename to follow the naming convention and searches the current
+              directory recursively, so you can organize your folders however
+              you prefer.
             </p>
           </section>
 
@@ -211,8 +211,7 @@ code .`}</CodeBlock>
             <CodeBlock>{`ai-deep-dive sync`}</CodeBlock>
             <p className="text-lg text-secondary leading-relaxed">
               Opens your browser to import locally completed challenges to the
-              website. Run this command on each device to keep your progress
-              synchronized across machines.
+              website. Progress is stored in your browser on this machine.
             </p>
           </section>
 
@@ -255,7 +254,7 @@ code .`}</CodeBlock>
 
               <FAQItem question="I'm getting import errors">
                 <p className="mb-3">
-                  Install the required packages with pip:
+                  Install the required packages. For example:
                 </p>
                 <code className="block px-3 py-2 bg-[#121212] border border-zinc-800 rounded text-sm font-mono">
                   pip install torch numpy
