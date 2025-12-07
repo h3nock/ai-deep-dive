@@ -32,6 +32,7 @@ import {
   canRunInBrowser,
   type TestConfig,
 } from "@/lib/pyodide";
+import { ConfirmModal } from "./ConfirmModal";
 
 // Custom Monaco Theme - Eye-Safe Zinc Dark
 const ZINC_DARK_THEME = {
@@ -161,6 +162,7 @@ export function ChallengeWorkspace({
   const [code, setCode] = useState("");
   const [isSolved, setIsSolved] = useState(false);
   const [lastRunMode, setLastRunMode] = useState<"run" | "submit" | null>(null);
+  const [showResetModal, setShowResetModal] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Active Pane Tracking - for focus ring styling
@@ -448,14 +450,13 @@ export function ChallengeWorkspace({
   // Reset handler
   const handleReset = useCallback(() => {
     if (!activeChallenge) return;
+    setShowResetModal(true);
+  }, [activeChallenge]);
 
-    const confirmed = window.confirm(
-      "Are you sure you want to reset your code to the initial template? This cannot be undone."
-    );
-    if (confirmed) {
-      setCode(activeChallenge.initialCode);
-      localStorage.removeItem(`sol_${activeChallenge.id}_code`);
-    }
+  const confirmReset = useCallback(() => {
+    if (!activeChallenge) return;
+    setCode(activeChallenge.initialCode);
+    localStorage.removeItem(`sol_${activeChallenge.id}_code`);
   }, [activeChallenge]);
 
   const handleRun = useCallback(
@@ -1515,6 +1516,18 @@ export function ChallengeWorkspace({
           </div>
         </>
       )}
+
+      {/* Reset Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        onConfirm={confirmReset}
+        title="Reset Code"
+        message="This will replace your code with the initial template. Any changes you've made will be lost."
+        confirmText="Reset Code"
+        cancelText="Keep Editing"
+        variant="danger"
+      />
     </div>
   );
 }
