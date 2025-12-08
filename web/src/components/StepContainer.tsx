@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, BookOpen, Code2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Map } from "lucide-react";
 import { PostData } from "@/lib/posts";
 import { ChallengeWorkspace } from "./ChallengeWorkspace";
 import { MarkCompleteButton } from "./MarkCompleteButton";
@@ -153,27 +153,25 @@ export function StepContainer({
               <div className="max-w-5xl mx-auto flex gap-6">
                 <button
                   onClick={() => handleTabChange("guide")}
-                  className={`py-4 text-sm font-bold tracking-wide border-b-2 transition-colors flex items-center gap-2 ${
+                  className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
                     activeTab === "guide"
                       ? "border-primary text-primary"
                       : "border-transparent text-muted hover:text-secondary"
                   }`}
                 >
-                  <BookOpen className="w-4 h-4" />
                   Guide
                 </button>
                 <button
                   onClick={() => handleTabChange("challenges")}
-                  className={`py-4 text-sm font-bold tracking-wide border-b-2 transition-colors flex items-center gap-2 ${
+                  className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
                     activeTab === "challenges"
                       ? "border-primary text-primary"
                       : "border-transparent text-muted hover:text-secondary"
                   }`}
                 >
-                  <Code2 className="w-4 h-4" />
                   Challenges
-                  <span className="px-2 py-0.5 rounded-full bg-surface text-xs">
-                    {post.challenges?.length}
+                  <span className="ml-1.5 text-muted">
+                    ({post.challenges?.length})
                   </span>
                 </button>
               </div>
@@ -214,7 +212,7 @@ export function StepContainer({
                       className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg border border-border text-muted hover:text-primary hover:border-zinc-600 transition-colors shrink-0"
                       title={backLink.label}
                     >
-                      <BookOpen className="w-5 h-5" />
+                      <Map className="w-5 h-5" />
                     </Link>
                   </div>
                 </header>
