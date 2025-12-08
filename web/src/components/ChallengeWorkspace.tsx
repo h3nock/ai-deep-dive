@@ -816,10 +816,22 @@ export function ChallengeWorkspace({
           // List View - Clean, premium list with same gutter as guide
           <div className="flex flex-col h-full overflow-y-auto py-12">
             <div className="mx-auto w-full max-w-[85ch] px-6 lg:px-8">
-              <header className="mb-10">
-                <h2 className="font-bold text-2xl text-primary">Challenges</h2>
-                <p className="text-muted mt-2">
-                  {challenges.length} problems to solve
+              <header className="mb-8">
+                <p className="text-muted text-sm">
+                  {(() => {
+                    const solvedCount = challenges.filter(c => 
+                      typeof window !== "undefined" && 
+                      localStorage.getItem(`sol_${c.id}_status`) === "solved"
+                    ).length;
+                    
+                    if (solvedCount === 0) {
+                      return `${challenges.length} ${challenges.length === 1 ? 'problem' : 'problems'} to solve`;
+                    } else if (solvedCount === challenges.length) {
+                      return "All challenges completed!";
+                    } else {
+                      return `${solvedCount} of ${challenges.length} completed`;
+                    }
+                  })()}
                 </p>
               </header>
 
