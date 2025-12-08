@@ -900,7 +900,7 @@ export function ChallengeWorkspace({
             <div className="h-11 flex items-center justify-between px-3 border-b border-border bg-surface">
               <div className="flex items-center gap-1 text-muted text-sm">
                 {/* Language Badge */}
-                <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-secondary">
+                <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted">
                   <Code2 className="w-3.5 h-3.5" />
                   <span>Python</span>
                 </div>
@@ -910,19 +910,15 @@ export function ChallengeWorkspace({
                 {/* Status Indicator - Show appropriate mode */}
                 {executionMode === "browser" ? (
                   <div
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                      pyodideStatus === "ready"
-                        ? "text-emerald-400 bg-emerald-400/10"
-                        : pyodideStatus === "loading"
-                        ? "text-amber-400"
-                        : "text-muted"
-                    }`}
+                    className={`flex items-center gap-1.5 px-2 py-1 text-xs font-medium transition-colors text-muted`}
                     title="This challenge runs in your browser. Click Run to test."
                   >
                     {pyodideStatus === "loading" ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
                     ) : (
-                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        pyodideStatus === "ready" ? "bg-emerald-400" : "bg-zinc-600"
+                      }`} />
                     )}
                     <span>
                       {pyodideStatus === "loading" ? "Loading..." : "Browser"}
@@ -930,10 +926,10 @@ export function ChallengeWorkspace({
                   </div>
                 ) : (
                   <div
-                    className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium text-amber-400 bg-amber-400/10"
+                    className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted"
                     title="This challenge requires PyTorch. Implement locally and test with: ai-deep-dive test"
                   >
-                    <Terminal className="w-3 h-3" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                     <span>Local</span>
                   </div>
                 )}
@@ -945,7 +941,7 @@ export function ChallengeWorkspace({
                   onClick={() => setIsVimMode(!isVimMode)}
                   className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
                     isVimMode
-                      ? "text-emerald-400 bg-emerald-400/10"
+                      ? "text-secondary bg-zinc-800"
                       : "text-muted hover:text-secondary hover:bg-zinc-800"
                   }`}
                   title="Toggle Vim keybindings"
@@ -960,11 +956,13 @@ export function ChallengeWorkspace({
                   onClick={handleReset}
                   disabled={isRunning}
                   title="Reset to initial code"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-muted hover:text-secondary hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-md transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-secondary hover:text-primary hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   Reset
                 </button>
+
+                <div className="w-px h-4 bg-border" />
 
                 {/* Run Code Button (visible tests only) */}
                 <button
@@ -974,7 +972,7 @@ export function ChallengeWorkspace({
                     (executionMode === "browser" && pyodideStatus === "error")
                   }
                   title={`Run visible tests (${shortcutLabel})`}
-                  className="flex items-center gap-2 px-4 py-1.5 bg-zinc-600 hover:bg-zinc-500 disabled:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors"
+                  className="flex items-center gap-2 px-4 py-1.5 hover:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-secondary hover:text-primary text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -984,6 +982,8 @@ export function ChallengeWorkspace({
                   Run
                 </button>
 
+                <div className="w-px h-4 bg-border" />
+
                 {/* Submit Button (all tests including hidden) */}
                 <button
                   onClick={() => handleRun("submit")}
@@ -992,7 +992,7 @@ export function ChallengeWorkspace({
                     (executionMode === "browser" && pyodideStatus === "error")
                   }
                   title="Submit and run all tests"
-                  className="flex items-center gap-2 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors"
+                  className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/15 disabled:bg-transparent disabled:text-muted disabled:cursor-not-allowed text-emerald-400 text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -1441,8 +1441,8 @@ export function ChallengeWorkspace({
                                   <span
                                     className={`w-2 h-2 rounded-full ${
                                       r.status === "Accepted"
-                                        ? "bg-emerald-500"
-                                        : "bg-rose-500"
+                                        ? "bg-emerald-400"
+                                        : "bg-rose-400"
                                     }`}
                                   />
                                   {r.hidden ? "Hidden Test" : `Case ${idx + 1}`}
