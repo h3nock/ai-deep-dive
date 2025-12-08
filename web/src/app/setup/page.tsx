@@ -210,8 +210,8 @@ nvim .  # or your preferred editor`}</CodeBlock>
             </h2>
             <CodeBlock>{`ai-deep-dive sync`}</CodeBlock>
             <p className="text-lg text-secondary leading-relaxed">
-              Opens your browser to import locally completed challenges to the
-              website. Progress is stored in your browser on this machine.
+              Automatically imports locally completed challenges to the website.
+              Progress is stored in your browser on this machine.
             </p>
           </section>
 
