@@ -1,7 +1,17 @@
 # Component & Layout Guide
 
 > **Philosophy**: Typography-driven, void-based layout. The void (#09090B) is the canvas.
-> Components float on void. No marketing-style boxed cards. Whitespace creates hierarchy.
+> Components float on void. Whitespace creates hierarchy.
+
+> [!IMPORTANT]
+> **Consistency Rule**: Before changing, improving, or adding any component style, you MUST:
+>
+> 1. **Audit all usages:** Search the codebase for every place the component or pattern is used
+> 2. **Consider the collection:** A button style, icon pattern, or spacing choice is part of a family; changing one in isolation breaks visual consistency
+> 3. **Update globally or not at all:**
+> 4. **Check the guides first**: Ensure the change aligns with COLOR_GUIDE.md and this document
+>
+> Never fix a "local" problem with a "local" solution if it creates inconsistency elsewhere.
 
 ---
 
@@ -9,12 +19,12 @@
 
 Always use CSS variables for consistent spacing. Never use random values.
 
-| Tier          | Variable            | Value | Tailwind | Purpose                                 |
-| ------------- | ------------------- | ----- | -------- | --------------------------------------- |
-| **Atomic**    | `--space-atomic`    | 8px   | `mb-2`   | Label → Component (single visual unit)  |
-| **Connected** | `--space-connected` | 16px  | `mt-4`   | Intro paragraph → Example it introduces |
-| **Flow**      | `--space-flow`      | 24px  | `my-6`   | Between paragraphs, standard rhythm     |
-| **Section**   | `--space-section`   | 48px  | `my-12`  | Topic changes, major breaks             |
+| Tier                | Variable              | Value | Tailwind  | Purpose                                  |
+| ------------------- | --------------------- | ----- | --------- | ---------------------------------------- |
+| **Atomic**    | `--space-atomic`    | 8px   | `mb-2`  | Label → Component (single visual unit)  |
+| **Connected** | `--space-connected` | 16px  | `mt-4`  | Intro paragraph → Example it introduces |
+| **Flow**      | `--space-flow`      | 24px  | `my-6`  | Between paragraphs, standard rhythm      |
+| **Section**   | `--space-section`   | 48px  | `my-12` | Topic changes, major breaks              |
 
 ### Usage in JSX
 
@@ -54,8 +64,10 @@ Use for all body text. Handles typography styling automatically.
 ```
 
 **Behavior**:
+
 - Links are automatically styled as `text-primary` with a subtle underline (`decoration-zinc-700`).
 - Hover states brighten the decoration.
+
 ```
 
 **Props**:
@@ -100,13 +112,13 @@ Collapsible hint + answer reveal. Use for "pause and think" moments.
 
 **Props**:
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `title` | string | "Think About It" | Header text |
-| `hint` | ReactNode | - | Optional expandable hint content |
-| `children` | ReactNode | - | Answer content (revealed on click) |
-| `withSectionBreak` | boolean | false | Adds 48px margins for standalone usage |
-| `className` | string | - | Custom class (e.g., `content-attached`) |
+| Prop                 | Type      | Default          | Description                              |
+| -------------------- | --------- | ---------------- | ---------------------------------------- |
+| `title`            | string    | "Think About It" | Header text                              |
+| `hint`             | ReactNode | -                | Optional expandable hint content         |
+| `children`         | ReactNode | -                | Answer content (revealed on click)       |
+| `withSectionBreak` | boolean   | false            | Adds 48px margins for standalone usage   |
+| `className`        | string    | -                | Custom class (e.g.,`content-attached`) |
 
 **Spacing Patterns**:
 
@@ -310,6 +322,7 @@ For clickable lists that users navigate through — course homepage, project roa
 ```
 
 **Key Elements:**
+
 - Continuous vertical line: `border-l border-zinc-800`
 - Circular nodes: `rounded-full` positioned on the line
 - Horizontal dividers: `border-b border-border`
@@ -341,16 +354,18 @@ import { ProcessTimeline } from "@/components/mdx/ProcessTimeline";
 ```
 
 **Props:**
+
 - `steps`: Array of step objects
   - `title`: Step heading (required)
-  - `data?`: Optional monospace code/data example  
+  - `data?`: Optional monospace code/data example
   - `description`: Explanation text (required)
 
 **Key Elements:**
+
 - **Nodes**: `w-8 h-8` with `text-xs font-mono text-secondary`
 - **Vertical line**: `w-px bg-zinc-800` positioned at `left-4`
 - **Spacing**: `space-y-6` between steps
-- **Text Hierarchy**: 
+- **Text Hierarchy**:
   - Title: `font-semibold text-primary`
   - Data: `text-sm font-mono text-secondary`
   - Description: `text-sm text-secondary`
@@ -359,6 +374,7 @@ import { ProcessTimeline } from "@/components/mdx/ProcessTimeline";
 
 > [!IMPORTANT]
 > **Choose the right pattern:**
+>
 > - User clicks to navigate? → **Navigation Timeline**
 > - User reads to understand? → **Conceptual Timeline**
 
