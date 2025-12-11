@@ -67,6 +67,10 @@ description: "How computers represent language (Unicode & UTF-8)."
   | **o** | `U+006F` | `00 00 00 6F` |
   </div>
 
+  <Callout type="note" muted>
+    Hexadecimal is a human‑friendly way to write binary numbers. Unicode code points are shown in hex (`U+XXXX`), and we’ll also show encoded byte streams in hex. The reason is: 1 hex digit represents 4 bits, so 2 hex digits represent exactly 1 byte. That makes long byte sequences compact, byte‑aligned, and easy to scan or debug.
+  </Callout>
+
   <Description>
     For code points that don't require 4 bytes, the computer has to pad the remaining space with zeros. So, five characters require 20 bytes, but 15 of those bytes are zeros. That's 75% waste.
   </Description>
@@ -521,4 +525,3 @@ description: "How computers represent language (Unicode & UTF-8)."
     In the next chapter, we'll build BPE from scratch and see exactly how models like GPT-4 convert text into the units they actually process.
   </Description>
 </Step>
-
