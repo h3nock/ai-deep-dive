@@ -308,14 +308,14 @@ description: "How computers represent language (Unicode & UTF-8)."
     <div>
       <h5 className="text-sm font-medium text-primary mb-2">Step 3: Insert into UTF-8 template</h5>
       <div className="font-mono text-sm bg-[#121212] p-4 rounded-lg border border-zinc-800">
-        <div>Byte 1: <span className="text-muted">110</span><span className="text-emerald-400">00011</span> = 11000011 = <span className="font-semibold">195</span></div>
-        <div>Byte 2: <span className="text-muted">10</span><span className="text-emerald-400">101001</span> = 10101001 = <span className="font-semibold">169</span></div>
+        <div>Byte 1: <span className="text-muted">110</span><span className="text-emerald-400">00011</span> = 11000011 = <span className="font-semibold">195 (0xC3)</span></div>
+        <div>Byte 2: <span className="text-muted">10</span><span className="text-emerald-400">101001</span> = 10101001 = <span className="font-semibold">169 (0xA9)</span></div>
       </div>
     </div>
     <div>
       <h5 className="text-sm font-medium text-primary mb-2">Result</h5>
       <div className="font-mono text-sm bg-[#121212] p-4 rounded-lg border border-zinc-800">
-        "é" → <span className="font-semibold">[195, 169]</span>
+        "é" → <span className="font-semibold">[195 (0xC3), 169 (0xA9)]</span>
       </div>
     </div>
   </div>
@@ -360,7 +360,7 @@ description: "How computers represent language (Unicode & UTF-8)."
       <h4 className="font-semibold text-primary mb-3">Step 2: Encode each code point to bytes</h4>
       <div className="text-sm text-secondary space-y-3">
         <p>The first three characters have code points below 128, so they map directly to single bytes: 72, 105, 32.</p>
-        <p>The emoji's code point (128,075) requires 4-byte encoding. Using the same process we showed for "é", the bits get distributed across four bytes following the `11110xxx 10xxxxxx 10xxxxxx 10xxxxxx` template, producing: 240, 159, 145, 139.</p>
+        <p>The emoji's code point (128,075) requires 4-byte encoding. Using the same process we showed for "é", the bits get distributed across four bytes following the `11110xxx 10xxxxxx 10xxxxxx 10xxxxxx` template, producing: 240 (0xF0), 159 (0x9F), 145 (0x91), 139 (0x8B).</p>
       </div>
     </div>
 
