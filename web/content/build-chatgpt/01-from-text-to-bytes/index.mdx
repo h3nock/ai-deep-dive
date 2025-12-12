@@ -250,34 +250,71 @@ description: "How computers represent language (Unicode & UTF-8)."
   </Description>
 
   <div className="my-6 font-mono text-sm bg-[#121212] p-4 rounded-lg border border-zinc-800">
-    <div className="text-muted mb-3">Bytes: 41 C3 A9 E4 B8 AD</div>
-    <div className="space-y-3">
-      <div>
-        <span className="text-secondary">Byte 1:</span> <span className="font-semibold">41</span> = <span className="text-emerald-400">0</span>1000001
-        <span className="text-muted ml-2">→ starts with 0, so it's a 1-byte char</span>
-        <span className="ml-2 px-2 py-0.5 bg-zinc-800 rounded text-xs">= "A"</span>
+    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-4">Bytes: 41 C3 A9 E4 B8 AD</div>
+    
+    <div className="space-y-4">
+      {/* Character 1: A (1 byte) */}
+      <div className="pl-4 border-l-2 border-zinc-600">
+        <div className="text-secondary mb-1">
+          <span className="font-semibold">41</span>
+          <span className="mx-2">=</span>
+          <span className="text-emerald-400">0</span>1000001
+          <span className="text-muted text-xs ml-3">← starts with 0 → single byte</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted">
+          <span>→</span>
+          <span className="text-2xl">A</span>
+        </div>
       </div>
-      <div>
-        <span className="text-secondary">Byte 2:</span> <span className="font-semibold">C3</span> = <span className="text-emerald-400">110</span>00011
-        <span className="text-muted ml-2">→ starts with 110, so read 2 bytes total</span>
+
+      {/* Character 2: é (2 bytes) */}
+      <div className="pl-4 border-l-2 border-zinc-600">
+        <div className="space-y-1 mb-1">
+          <div className="text-secondary">
+            <span className="font-semibold">C3</span>
+            <span className="mx-2">=</span>
+            <span className="text-emerald-400">110</span>00011
+            <span className="text-muted text-xs ml-3">← <span className="text-emerald-400">two</span> 1s → read 2 bytes</span>
+          </div>
+          <div className="text-secondary">
+            <span className="font-semibold">A9</span>
+            <span className="mx-2">=</span>
+            <span className="text-zinc-600">10</span>101001
+            <span className="text-muted text-xs ml-3">← continuation</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted">
+          <span>→</span>
+          <span className="text-2xl">é</span>
+        </div>
       </div>
-      <div className="pl-4">
-        <span className="text-secondary">Byte 3:</span> <span className="font-semibold">A9</span> = <span className="text-muted">10</span>101001
-        <span className="text-muted ml-2">→ continuation byte</span>
-        <span className="ml-2 px-2 py-0.5 bg-zinc-800 rounded text-xs">C3 A9 = "é"</span>
-      </div>
-      <div>
-        <span className="text-secondary">Byte 4:</span> <span className="font-semibold">E4</span> = <span className="text-emerald-400">1110</span>0100
-        <span className="text-muted ml-2">→ starts with 1110, so read 3 bytes total</span>
-      </div>
-      <div className="pl-4">
-        <span className="text-secondary">Byte 5:</span> <span className="font-semibold">B8</span> = <span className="text-muted">10</span>111000
-        <span className="text-muted ml-2">→ continuation byte</span>
-      </div>
-      <div className="pl-4">
-        <span className="text-secondary">Byte 6:</span> <span className="font-semibold">AD</span> = <span className="text-muted">10</span>101101
-        <span className="text-muted ml-2">→ continuation byte</span>
-        <span className="ml-2 px-2 py-0.5 bg-zinc-800 rounded text-xs">E4 B8 AD = "中"</span>
+
+      {/* Character 3: 中 (3 bytes) */}
+      <div className="pl-4 border-l-2 border-zinc-600">
+        <div className="space-y-1 mb-1">
+          <div className="text-secondary">
+            <span className="font-semibold">E4</span>
+            <span className="mx-2">=</span>
+            <span className="text-emerald-400">1110</span>0100
+            <span className="text-muted text-xs ml-3">← <span className="text-emerald-400">three</span> 1s → read 3 bytes</span>
+          </div>
+          <div className="text-secondary">
+            <span className="font-semibold">B8</span>
+            <span className="mx-2">=</span>
+            <span className="text-zinc-600">10</span>111000
+            <span className="text-muted text-xs ml-3">← continuation</span>
+          </div>
+          <div className="text-secondary">
+            <span className="font-semibold">AD</span>
+            <span className="mx-2">=</span>
+            <span className="text-zinc-600">10</span>101101
+            <span className="text-muted text-xs ml-3">← continuation</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted">
+          <span>→</span>
+          <span className="text-2xl">中</span>
+        </div>
       </div>
     </div>
   </div>
