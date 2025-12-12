@@ -22,12 +22,12 @@ description: "How computers represent language (Unicode & UTF-8)."
   </Description>
 
   <Description>
-    This consistency is achieved through character encoding standards. Currently, **Unicode** is the universal standard. It acts as a large lookup table that assigns a unique number, called a **Code Point**, to every character in almost every language.
+    This consistency is achieved through **Unicode**, the universal standard for text. It acts as a large lookup table that assigns a unique number, called a **Code Point**, to every character in almost every language. Today, Unicode defines over 150,000 characters across 161 scripts. We usually represent these code points with the notation `U+XXXX` (where XXXX is a hexadecimal number).
   </Description>
 
-  <Description>
-    Today, Unicode defines over 150,000 characters across 161 scripts. We usually represent these code points with the notation `U+XXXX` (where XXXX is a hexadecimal number).
-  </Description>
+  <Callout type="note" muted>
+    Before Unicode, every region invented its own encoding. Americans used ASCII, Russians used KOI8, Japanese used Shift-JIS. A file written in one encoding looked like garbage when opened with another. Unicode ended this chaos.
+  </Callout>
 
   <div style={{ marginTop: "var(--space-flow)", marginBottom: "var(--space-flow)" }}>
     <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">Examples of Unicode Code Point Mappings</div>
