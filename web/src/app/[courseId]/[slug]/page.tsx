@@ -25,6 +25,8 @@ import { Callout } from "@/components/mdx/Callout";
 import { ByteStream } from "@/components/mdx/ByteStream";
 import { ComingSoon } from "@/components/mdx/ComingSoon";
 import { ProcessTimeline } from "@/components/mdx/ProcessTimeline";
+import { LiveByteInspector } from "@/components/mdx/LiveByteInspector";
+import { EncodingCompare } from "@/components/mdx/EncodingCompare";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import rehypePrettyCode from "rehype-pretty-code";
@@ -48,6 +50,8 @@ const components = {
   td: TableCell,
   ComingSoon,
   ProcessTimeline,
+  LiveByteInspector,
+  EncodingCompare,
 };
 
 function getCollections() {

@@ -126,6 +126,12 @@ description: "How computers represent language (Unicode & UTF-8)."
     With UTF-8, "Hello" takes just 5 bytes instead of 20. English text is as compact as it was with ASCII, while still supporting every character in Unicode.
   </Description>
 
+  <Description>
+    The difference becomes clear when you compare them side by side:
+  </Description>
+
+  <EncodingCompare />
+
   <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.2 Fixed vs Variable Width: The Parsing Challenge</h4>
 
   <Description>
@@ -374,8 +380,11 @@ description: "How computers represent language (Unicode & UTF-8)."
   </div>
 </Step>
 
+<Step title="5. Interactive: Character to Bytes">
+  <LiveByteInspector />
+</Step>
 
-<Step title="5. Why Not Train on Raw Bytes?">
+<Step title="6. Why Not Train on Raw Bytes?">
   <Description>
     We have just spent this entire chapter establishing that UTF-8 is the universal standard for text. It can represent every language, every emoji, and every symbol using just 256 basic units (bytes).
   </Description>
@@ -490,7 +499,7 @@ description: "How computers represent language (Unicode & UTF-8)."
   </ThinkingProcess>
 </Step>
 
-<Step title="6. Next: Tokenization">
+<Step title="7. Next: Tokenization">
   <Description>
     The algorithm that finds this middle ground is called **Byte Pair Encoding (BPE)**. It starts with individual bytes and iteratively merges the most frequent adjacent pairs. After training on a large text corpus, common patterns like "ing", "tion", and "the" become single units called **tokens**, while rare words get split into smaller recognizable pieces.
   </Description>
