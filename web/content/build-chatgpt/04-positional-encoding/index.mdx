@@ -233,5 +233,34 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
     This smooth oscillation keeps what binary gave us: bounded values, unique combinations, and the ability to handle infinitely many positions. But it also adds what binary couldn't: gradual transitions between neighbors, so the model can learn through small weight adjustments. We just need to find a mathematical function that produces this curve.
   </Description>
 </Step>
+
+<Step title="5. Finding the Function">
+  <Description>
+    In Section 4, we visualized what each dimension needs: a function that smoothly oscillates, rising and falling without jumps. If you have taken trigonometry, you might recognize this shape. It looks like a **sine wave**.
+  </Description>
+
+  <Description>
+    Our visualization used a shifted version: (sin(x) + 1) / 2. This kept values between 0 and 1. But the raw sine function naturally oscillates between -1 and +1.
+  </Description>
+
+<Description>
+This raises a design choice: should we artifically shift the wave to keep it positive, or simply use the raw values that dip into negatives?
+</Description>
+
+<Description>
+It turns out the original range -1 to +1 is better. Embedding values are initialized centered around 0, and techniques like **Layer Normalization** (covered later) keep them there throughout the network. A positional encoding around 0 blends naturally with this distribution. Shifting to 0-1 would add a constant positive bias to every dimension for no added benefit.
+</Description>
+
+  <Description>
+    Now we have the function for each dimension. Each dimension gets its own sine wave, cycling at a different frequency. Let's see all the dimensions in action:
+  </Description>
+
+  <FrequencyWaves />
+
+  <Description>
+    The fast waves distinguish nearby positions. The slow waves distinguish distant positions. Together, they create a unique fingerprint for every position, exactly as we designed in Section 4.
+  </Description>
+</Step>
+
   </Description>
 </Step>
