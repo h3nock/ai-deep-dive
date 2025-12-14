@@ -131,3 +131,56 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
     Neither relative positions nor absolute positions are stable. This approach is fundamentally broken.
   </Description>
 </Step>
+
+<Step title="3. Defining the Perfect Encoding">
+  <Description>
+    We've tried two obvious approaches and both failed. Before we try again, let's step back and define exactly what properties a positional encoding must have.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">1. Bounded Values</h4>
+
+  <Description>
+    We learned this from Attempt 1. The position signal must stay small (like -1 to 1). If position values grow unbounded, they drown the semantic embedding. The model should hear "Apple at position 5," not just "POSITION 5."
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">2. Unique and Deterministic</h4>
+
+  <Description>
+    Every position must produce a distinct encoding, and that encoding must be the same every time. Position 5 must always map to the exact same vector, whether during training or at inference. If two positions share an encoding, the model cannot distinguish them. If the same position produces different encodings, the model cannot learn stable patterns.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">3. Consistent Relative Distances</h4>
+
+  <Description>
+    We learned this from Attempt 2. The relationship between any position P and position P+k should work the same regardless of what P is. "Three words ahead" should mean the same mathematical operation whether you're at position 10 or position 1000. This lets the model learn portable attention patterns.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">4. Extrapolation</h4>
+
+  <Description>
+    The encoding should work for sequence lengths the model has never seen. If training uses sequences up to 1000 tokens, the encoding should still produce meaningful values at position 2000. We don't want the model to break just because a user sends a longer prompt.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">5. Smooth and Continuous</h4>
+
+  <Description>
+    Neural networks learn by making small adjustments. If the model's prediction is slightly wrong, it nudges its weights a little bit in the right direction. This only works if small changes in input lead to small changes in output. In mathematical terms, the function must be **differentiable**.
+  </Description>
+
+  <Description>
+    Imagine an encoding where position 5 is [0.12, 0.99] and position 6 is [-0.76, 0.42]. These vectors are wildly different. The model cannot slightly nudge its weights to learn "5 and 6 are adjacent" because their values share no predictable pattern. It would have to memorize every position as a separate case, which does not scale.
+  </Description>
+
+  <Description>
+    Now consider a smooth encoding where nearby positions have similar values. Position 5 might be [0.12, 0.99], position 6 is [0.14, 0.98], and position 7 is [0.16, 0.97]. There are no sudden jumps between neighbors. This gradual change means the model can learn via small weight adjustments rather than memorizing each position separately.
+  </Description>
+
+  <Description>
+    Now we have our requirements: **bounded**, **unique**, **consistent**, **extrapolatable**, and **smooth**. The tension is clear: how do you represent infinitely many positions with bounded values while keeping everything smooth and consistent?
+  </Description>
+
+  <Description>
+    The answer comes from something we use every day.
+  </Description>
+</Step>
+
