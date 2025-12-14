@@ -184,3 +184,52 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </Description>
 </Step>
 
+
+
+<Step title="4. Borrowing from Number Systems">
+  <Description>
+    We already use systems that satisfy most of our requirements every day. Consider how we write the number **459**:
+  </Description>
+
+  <Description>
+    - Each digit is **bounded** (0 to 9)
+    - The combination is **unique** (no other number looks like 459)
+    - Moving by +1 follows a **consistent pattern** (459 → 460 → 461)
+  </Description>
+
+  <Description>
+    The trick is using **multiple columns that cycle at different speeds**. The ones column cycles fastest (0→9, then wraps). The tens column cycles slower. The hundreds column cycles slower still. This multi-speed structure is how you represent infinitely many values with bounded digits.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">What About Decimal?</h4>
+
+  <Description>
+    Each digit is bounded (0-9), the combination is unique, and the multi-column structure handles infinite positions. But decimal has two problems. First, **magnitude**: embedding values are typically -1 to 1, but decimal digits range from 0 to 9. When added together, the digit dominates the embedding information. Second, **smoothness**: digits are discrete. When the ones column wraps from 9 to 0, there is no gradual transition. It jumps suddenly.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">What About Binary?</h4>
+
+  <Description>
+    Binary is closer to embedding scale. Each bit is just 0 or 1, which does not dominate embedding values the way 0-9 does. The multi-column structure still gives us uniqueness and consistency. Position 5 is 101, position 6 is 110, position 7 is 111.
+  </Description>
+
+  <Description>
+    But binary still fails smoothness. Look at the transition from position 3 (011) to position 4 (100). Every single bit flips at once. There is no gradual change, just a sudden jump. If we can fix this one remaining issue, we have our encoding.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Making Binary Smooth</h4>
+
+  <Description>
+    Binary's problem is that 0 and 1 are just two disconnected points. There are no values in between. To go from 0 to 1, you jump. To go from 1 back to 0, you jump again.
+  </Description>
+
+  <Description>
+    What we need is a **continuous function** that cycles through values smoothly. Instead of jumping between two fixed points, we need something that rises from 0 to 1, then falls back to 0, touching every value in between.
+  </Description>
+
+  <BinaryVsSmooth />
+
+  <Description>
+    With this smooth oscillation, we keep everything binary gave us: bounded values, unique combinations, and the ability to represent infinitely many positions using multiple dimensions cycling at different speeds. We just need to find a mathematical function that produces this smooth curve.
+  </Description>
+</Step>
