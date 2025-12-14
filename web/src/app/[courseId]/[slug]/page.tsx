@@ -27,6 +27,9 @@ import { ComingSoon } from "@/components/mdx/ComingSoon";
 import { ProcessTimeline } from "@/components/mdx/ProcessTimeline";
 import { LiveByteInspector } from "@/components/mdx/LiveByteInspector";
 import { EncodingCompare } from "@/components/mdx/EncodingCompare";
+import { FrequencyWaves } from "@/components/mdx/FrequencyWaves";
+import { NormalizedStepSize } from "@/components/mdx/NormalizedStepSize";
+import { BinaryVsSmooth } from "@/components/mdx/BinaryVsSmooth";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import rehypePrettyCode from "rehype-pretty-code";
@@ -52,6 +55,9 @@ const components = {
   ProcessTimeline,
   LiveByteInspector,
   EncodingCompare,
+  FrequencyWaves,
+  NormalizedStepSize,
+  BinaryVsSmooth,
 };
 
 function getCollections() {
