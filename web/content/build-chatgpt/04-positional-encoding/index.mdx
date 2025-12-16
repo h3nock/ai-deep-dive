@@ -47,11 +47,11 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="1. Attempt 1: Counting Up">
   <Description>
-    The most obvious idea: number the positions 1, 2, 3... and add this integer to each embedding dimension.
+    The most naive idea is to number the positions 1, 2, 3... and inject the raw index into the token embedding by adding the number to every dimension. Let's trace through what happens.
   </Description>
 
   <Description attached>
-    Let's see what happens at position 1000:
+    Imagine the word "Apple" appears at position 1000 in a long document:
   </Description>
 
   <div className="content-attached">
@@ -71,13 +71,18 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
     </div>
   </div>
 
-  <Description>
-    Look at the result. The values that encoded "Apple" (0.05, -0.02, 0.11) are now invisible. Whether the original word was "Apple", "Banana", or "King", the output is essentially [1000, 1000, 1000]. The meaning of the word is **drowned** by the position.
-  </Description>
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Problem 1: Drowned Meaning</h4>
 
   <Description>
-    There is a second problem. Recall from Chapter 3 that neural networks learn by finding the right **weights** to multiply inputs. But a single weight cannot work well for both small and large numbers. A weight tuned to work for position 1 will produce wildly different results for position 1000. The model has no way to learn a consistent relationship between position 1 and position 1000 because they live at completely different scales.
+    Look at the result. The values that encoded "Apple" (0.05, -0.02, 0.11) are now invisible. Whether the original word was "Apple", "Banana", or "King", the output is essentially [1000, 1000, 1000]. The semantic meaning is completely **drowned** by the position signal.
   </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Problem 2: Scale Mismatch</h4>
+
+  <Description>
+    Recall from Chapter 3 that neural networks learn by applying **weights** to their inputs. If we used raw position indices like 1, 1000, and 10,000, the model has to handle a huge dynamic range. That makes learning harder becuase the same weight has to work for all scales. A weight tuned for position 1 can behave very differently at position 1000.
+  </Description>
+
 
   <Description>
     Both problems stem from the same root cause: **unbounded values**. As sequences get longer, the position numbers grow without limit.
