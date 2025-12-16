@@ -35,11 +35,11 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 </div>
 
 <Description>
-  The Transformer's core mechanism, **Self-Attention**, determines how words relate by computing a dot product between their vectors. This dot product produces a **single number** (a score) representing how strongly two words are connected. The problem? E(Alice) · E(Bob) returns the exact same score regardless of which sentence they came from.
+  The Transformer's core mechanism, **Self-Attention**, determines how words relate by computing a **compatibility score** for each pair of tokens. Internally, it's a (scaled) dot product between their embedding vectors, producing a **single number** representing connection strength.
 </Description>
 
 <Description>
-  The model sees "Alice" and "Bob" are related. It cannot tell which one is the Subject (giver) and which is the Object (receiver). Order matters for meaning, but there is nothing in these vectors that encodes order. We need to inject position information.
+  The problem: if we only feed word embeddings (no position info), the compatibility between "Alice" and "Bob" depends on *what* they are, not *where* they appear. So "Alice gave Bob..." and "Bob gave Alice..." produce identical scores. The model sees that "Alice" and "Bob" are related, but it cannot tell which one is the Subject (giver) and which is the Object (receiver). Order matters for meaning, but nothing in these vectors encodes order. We need to inject position information.
 </Description>
 </div>
 
