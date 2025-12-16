@@ -138,51 +138,51 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </Description>
 </Step>
 
-<Step title="3. Defining the Perfect Encoding">
+<Step title="3. What Makes a Good Positional Encoding?">
   <Description>
-    We've tried two obvious approaches and both failed. Before we try again, let's step back and define exactly what properties a positional encoding must have.
+    We've tried two simple approaches and saw why they are awkward. Before we try again, let's step back and define exactly what properties a positional encoding should have to make the signal useful and easy for the model to learn from .
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">1. Bounded Values</h4>
 
   <Description>
-    We learned this from Attempt 1. The position signal must stay small (like -1 to 1). If position values grow unbounded, they drown the semantic embedding. The model should hear "Apple at position 5," not just "POSITION 5."
+    We learned this from Attempt 1 that the position signal should live in a reasonable numeric range so it does not overwhelm the token embedding. We want the model to represent "Apple at position 5", not a vector dominated by the position index.
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">2. Unique and Deterministic</h4>
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">2. Unique and Deterministic (within the context window)</h4>
 
   <Description>
-    Every position must produce a distinct encoding, and that encoding must be the same every time. Position 5 must always map to the exact same vector, whether during training or at inference. If two positions share an encoding, the model cannot distinguish them. If the same position produces different encodings, the model cannot learn stable patterns.
+    Every position within the context window should produce a distinct encoding, and that encoding should be the same every time. Position 5 must always map to the exact same vector, whether during training or at inference. If two positions share an encoding, the model has no way to tell them apart. 
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">3. Consistent Relative Distances</h4>
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">3. Consistent Relative Structure</h4>
 
   <Description>
-    We learned this from Attempt 2. The relationship between any position P and position P+k should work the same regardless of what P is. "Three words ahead" should mean the same mathematical operation whether you're at position 10 or position 1000. This lets the model learn portable attention patterns.
+    A good positional encoding makes relative offsets easy for the model to use. Ideally, "three words a head" behaves in a consistent way wheather you are near the start of the sentence or deep into a long sequence.  Precisely, the relationship between any position P and position P+k should behave the same regardless of what P is. This lets the model learn portable attention patterns.
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">4. Extrapolation</h4>
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">4. Generalization to Longer Sequences</h4>
 
   <Description>
-    The encoding should work for sequence lengths the model has never seen. If training uses sequences up to 1000 tokens, the encoding should still produce meaningful values at position 2000. We don't want the model to break just because a user sends a longer prompt.
+    Sometimes we want the model to handle sequences longer than what it saw during training. In that case, the encoding should still behave sensibly at larger positions instead of breaking or becoming meaningless.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">5. Smooth and Continuous</h4>
 
   <Description>
-    Neural networks learn by making small adjustments. If the model's prediction is slightly wrong, it nudges its weights a little bit in the right direction. This only works if small changes in input lead to small changes in output. In mathematical terms, the function must be **differentiable**.
+    Positions are discrete, but it still helps if the positional singal changes in a predictable, structured way as we move from one position to the next. This is because neural networks learn by making small adjustments. If the model's prediction is slightly wrong, it nudges its weights a little bit in the right direction. This only works if small changes in input lead to small changes in output. In mathematical terms, the function should be **differentiable**.
   </Description>
 
   <Description>
-    Imagine an encoding where position 5 is [0.12, 0.99] and position 6 is [-0.76, 0.42]. These vectors are wildly different. The model cannot slightly nudge its weights to learn "5 and 6 are adjacent" because their values share no predictable pattern. It would have to memorize every position as a separate case, which does not scale.
+    Imagine an encoding where position 5 is [0.12, 0.99] and position 6 is [-0.76, 0.42]. These vectors are wildly different. In that situation, it is harder for the model to pick up the idea that "5 and 6 are adjacent", and it may need to rely more on memorizing position-specific behavior.
   </Description>
 
   <Description>
-    Now consider a smooth encoding where nearby positions have similar values. Position 5 might be [0.12, 0.99], position 6 is [0.14, 0.98], and position 7 is [0.16, 0.97]. There are no sudden jumps between neighbors. This gradual change means the model can learn via small weight adjustments rather than memorizing each position separately.
+    Now consider a smooth encoding where nearby positions have similar values. Position 5 might be [0.12, 0.99], position 6 is [0.14, 0.98], and position 7 is [0.16, 0.97]. There are no sudden jumps between neighbors. This gradual change gives the model a simpler signal to learn from, so learning local patterns via small weight adjustments can be more data-efficient and more stable.
   </Description>
 
   <Description>
-    Now we have our requirements: **bounded**, **unique**, **consistent**, **extrapolatable**, and **smooth**. The tension is clear: how do you represent infinitely many positions with bounded values while keeping everything smooth and consistent?
+    Now we have our design goals: **controlled scale**, **distinct positions**, **useful relative structure**, **generalizable to longer sequences**, and **predictable variation across positions**. The tension is clear: how can we represent many positions using bounded values while keeping the signal smooth and consistent?
   </Description>
 
   <Description>
@@ -194,7 +194,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="4. Borrowing from Number Systems">
   <Description>
-    We already use systems that satisfy most of our requirements every day. Consider how we write the number **459**:
+    Now that we know exactly what properties the encoding must have, let's look for inspiration. It turns out we already use systems that satisfy most of these requirements every day. Consider how we write the number **459**:
   </Description>
 
   <Description>
