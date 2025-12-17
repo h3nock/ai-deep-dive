@@ -194,49 +194,50 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="4. Borrowing from Number Systems">
   <Description>
-    Now that we know exactly what properties the encoding must have, let's look for inspiration. It turns out we already use systems that satisfy most of these requirements every day. Consider how we write the number **459**:
+    Now that we know exactly what properties the encoding should have, let's look for inspiration. We already use systems that satisfy most of these requirements every day. Consider how we write the number **459**.
   </Description>
 
   <Description>
+  It has a few useful properties:
     - Each digit is **bounded** (0 to 9)
-    - The combination is **unique** (no other number looks like 459)
+    - The full pattern is **unique** (no other number looks like 459)
     - Moving by +1 follows a **consistent pattern** (459 → 460 → 461)
   </Description>
 
   <Description>
-    The trick is using **multiple columns that cycle at different speeds**. The ones column cycles fastest (0→9, then wraps). The tens column cycles slower. The hundreds column cycles slower still. This multi-speed structure is how you represent infinitely many values with bounded digits.
+    The key idea is that we use multiple columns that change at different speeds. The ones column cycles fastest (0→9, then wraps). The tens column cycles slower. The hundreds column cycles even slower. This multi-speed structure lets us represent very large numbers using only small digits.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">What About Decimal?</h4>
 
   <Description>
-    Each digit is bounded (0-9), the combination is unique, and the multi-column structure handles infinite positions. But decimal has two problems. First, **magnitude**: embedding values are typically -1 to 1, but decimal digits range from 0 to 9. When added together, the digit dominates the embedding information. Second, **smoothness**: digits are discrete. When the ones column wraps from 9 to 0, there is no gradual transition. It jumps suddenly.
+Decimal has the multi-column idea and handles infinite positions, but it is not a great positional signal if we try to inject it directly into embeddings. First, **scale:** digits 0 to 9 are not huge, but if we literally inject them as-is, they can still shift the embedding distribution, which is often kept roughly zero-centered. Second, **discontinuities:** decimal digits are discrete. When the ones digit wraps from 9 to 0, the representation changes abruptly. That makes the signal less structured for learning local relationships.  
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">What About Binary?</h4>
 
   <Description>
-    Binary is closer to embedding scale. Each bit is just 0 or 1, which does not dominate embedding values the way 0-9 does. The multi-column structure still gives us uniqueness and consistency. Position 5 is 101, position 6 is 110, position 7 is 111.
+    Binary brings the scale down further. Each digit is just 0 or 1. It still has the multi-column idea, so it can represent large positions compactly.
   </Description>
 
   <Description>
-    But binary still fails smoothness. Look at the transition from position 3 (011) to position 4 (100). Every single bit flips at once. There is no gradual change, just a sudden jump. If we can fix this one remaining issue, we have our encoding.
+    The limitation is that binary is still discrete. Each dimension can only take two values (0 or 1), so moving from one position to the next always causes abrupt changes. Sometimes a single bit changes, sometimes several bits change, but in all cases the signal is not gradual. This discreteness means nearby positions do not reliably map to nearby vectors, which makes it harder to learn simple "local" rules from the positional signal. What we want instead is the same multi-speed idea to represent large positions, but with values that vary continuously. If we can fix this one remaining issue, we have our encoding.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Making Binary Smooth</h4>
 
   <Description>
-    Binary's problem is that 0 and 1 are just two disconnected points. There are no values in between. To go from 0 to 1, you jump. To go from 1 back to 0, you jump again.
+    Binary's problem is that 0 and 1 are just two disconnected points. There are no values in between. So let's keep the best part of binary number system, which are scale and the multi-speed structure, but we replace discrete digits with a smooth signal.  
   </Description>
 
   <Description>
-    What we need is a **continuous function** that cycles through values smoothly. Instead of jumping between two fixed points, we need something that rises from 0 to 1, then falls back to 0, touching every value in between.
+    What we want in each dimension (digit) is a value that changes continuously and repeats over time, like a dial. As we move through positions, the values should rise and fall smoothly instead of jumping between few fixed states.
   </Description>
 
   <BinaryVsSmooth />
 
   <Description>
-    This smooth oscillation keeps what binary gave us: bounded values, unique combinations, and the ability to handle infinitely many positions. But it also adds what binary couldn't: gradual transitions between neighbors, so the model can learn through small weight adjustments. We just need to find a mathematical function that produces this curve.
+    This smooth oscillation keeps the best idea from binary number system: multiple dimensions changing at different speeds, all staying in a controlled (bounded) range and give each position a distinctive signature. Unlike binary, the values change gradually from one position to the next, which gives the model a cleaner signal for learning local patterns. Now, all that's left is to choose the function that produces this kind of smooth cycle. 
   </Description>
 </Step>
 
