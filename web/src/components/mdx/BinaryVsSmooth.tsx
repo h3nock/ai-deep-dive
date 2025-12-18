@@ -237,14 +237,6 @@ export function BinaryVsSmooth() {
             );
           })}
         </div>
-
-        {/* Footer */}
-        <div className="mt-3 pt-2 border-t border-zinc-800">
-          <p className="text-[11px] text-zinc-500">
-            <span className="text-rose-400">Binary</span> jumps between 0 and 1 ·{" "}
-            <span className="text-emerald-400">Smooth</span> oscillates continuously
-          </p>
-        </div>
       </div>
     </div>
   );
