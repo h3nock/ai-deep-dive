@@ -269,6 +269,136 @@ In practice, the centered range -1 to +1 is usually the better default. Embeddin
   </Description>
 </Step>
 
+<Step title="6. Why We Need Cosine: The Rotation Trick">
+  <Description>
+    We now have a working positional signal using sine waves at different frequencies. Each position gets a unique fingerprint. However, the original Transformer paper actually pairs every sine with a **cosine** at the same frequency. Why is the cosine needed?
+  </Description>
+
+  <Description>
+    The answer lies in how positions **relate to each other**. Language understanding often depends on relative positions: "the word immediately before" or "three tokens ahead." We want the encoding to make these relationships easy for the model to learn. Ideally, going from position `pos` to position `pos + k` should follow a simple, predictable pattern.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Limitation of Sine Alone</h4>
+
+  <Description>
+    Suppose we only store the sine value for a given frequency ω. At position `pos`, our encoding is sin(ω · pos). Now, what happens when we shift to position `pos + k`?
+  </Description>
+
+  <Description>
+    From high school trigonometry, we can expand sin(ω(pos + k)) using the angle addition formula:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
+    <div className="font-mono text-sm text-center text-primary">
+      sin(ω · (pos + k)) = sin(ω · pos) · cos(ω · k) + cos(ω · pos) · sin(ω · k)
+    </div>
+  </div>
+
+  <Description>
+    Look at what's needed on the right side:
+  </Description>
+
+  <div className="my-4 space-y-2 text-sm">
+    <div className="flex items-start gap-3">
+      <span className="text-primary font-mono shrink-0">sin(ω · pos)</span>
+      <span className="text-secondary">– we have this (it's our current encoding)</span>
+    </div>
+    <div className="flex items-start gap-3">
+      <span className="text-primary font-mono shrink-0">cos(ω · pos)</span>
+      <span className="text-secondary">– we <strong>don't</strong> have this</span>
+    </div>
+  </div>
+
+  <Description>
+    With only the sine term, calculating the shifted value `sin(ω · (pos + k))` is mathematically messy. The standard formula for angle addition requires both `sin` and `cos` components. Without the cosine, we lose the direct linear relationship between positions, forcing the model to learn a more complex, non-linear approximation instead of a simple rotation.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Pairing Sine with Cosine</h4>
+
+  <Description>
+    The fix is simple: **store both**. For each frequency ω, we keep both sin(ω · pos) and cos(ω · pos) in our encoding. This gives us a 2D pair for each frequency:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 text-center">
+    <span className="font-mono text-primary">PE(pos) = [ sin(ω · pos), cos(ω · pos) ]</span>
+  </div>
+
+  <Description>
+    Now we have everything we need. When we want to express the encoding at a shifted position `pos + k`, we can use both angle addition formulas:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 space-y-1">
+    <div className="font-mono text-sm text-center text-primary">
+      sin(ω(pos + k)) = cos(ω·k) · sin(ω·pos) + sin(ω·k) · cos(ω·pos)
+    </div>
+    <div className="font-mono text-sm text-center text-primary">
+      cos(ω(pos + k)) = cos(ω·k) · cos(ω·pos) - sin(ω·k) · sin(ω·pos)
+    </div>
+  </div>
+
+  <Description>
+    Notice something important: the right side only uses sin(ω·pos) and cos(ω·pos), which we already have stored, multiplied by constants that depend only on the offset `k`. This means we can write the shifted encoding as a **matrix multiplication**:
+  </Description>
+
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border overflow-x-auto">
+    <div className="flex items-center justify-center gap-3 font-mono text-sm">
+      {/* Target Vector */}
+      <div className="flex flex-col gap-1 p-2 border-l-2 border-r-2 border-amber-500/50 rounded shrink-0">
+        <span className="text-amber-400 whitespace-nowrap">sin(ω(pos+k))</span>
+        <span className="text-amber-400 whitespace-nowrap">cos(ω(pos+k))</span>
+      </div>
+      
+      <span className="text-muted shrink-0">=</span>
+
+      {/* Rotation Matrix */}
+      <div className="flex flex-col gap-1 p-2 border-l-2 border-r-2 border-blue-500/50 rounded bg-[#121212] shrink-0">
+        <div className="flex gap-4">
+          <span className="min-w-[70px] text-center text-blue-400 whitespace-nowrap">cos(ω·k)</span>
+          <span className="min-w-[70px] text-center text-blue-400 whitespace-nowrap">sin(ω·k)</span>
+        </div>
+        <div className="flex gap-4">
+          <span className="min-w-[70px] text-center text-blue-400 whitespace-nowrap">-sin(ω·k)</span>
+          <span className="min-w-[70px] text-center text-blue-400 whitespace-nowrap">cos(ω·k)</span>
+        </div>
+      </div>
+
+      <span className="text-muted shrink-0">×</span>
+
+      {/* Current Vector */}
+      <div className="flex flex-col gap-1 p-2 border-l-2 border-r-2 border-emerald-500/50 rounded shrink-0">
+        <span className="text-emerald-400 whitespace-nowrap">sin(ω·pos)</span>
+        <span className="text-emerald-400 whitespace-nowrap">cos(ω·pos)</span>
+      </div>
+    </div>
+  </div>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Rotation Matrix</h4>
+
+  <Description>
+    The 2×2 matrix in the middle is a **rotation matrix**. This is the standard matrix that rotates any 2D point by a fixed angle. In our case, that angle is ω · k.
+  </Description>
+
+  <Description>
+    This has a beautiful geometric interpretation: the (sin, cos) pair traces out a circle as position increases. Shifting by k positions corresponds to rotating this point around the circle by angle ω · k. The interactive visualization below lets you explore this:
+  </Description>
+
+  <RotationVisualization />
+
+
+  <Description>
+    Look at the rotation matrix again. It depends **only on k** (the offset), not on the starting position. Whether you start at position 5, 50, or 500, shifting by k positions always applies the same transformation.
+  </Description>
+
+  <Description>
+    This is exactly what we wanted at the start of this section: a simple, predictable pattern for relative positions. The relationship between any position and "k steps ahead" is always the same rotation, regardless of where you are in the sequence.
+  </Description>
+
+  <Description>
+    And because rotation is a **linear operation** (just matrix multiplication), it fits naturally into the Transformer's architecture. The model can learn weights that capture patterns like "attend to the previous word" or "look 3 tokens ahead" and apply them uniformly across the entire sequence.
+  </Description>
+</Step>
+
+
   </Description>
 </Step>
 
