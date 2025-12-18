@@ -193,7 +193,7 @@ export default async function RoadmapPage({
                       </div>
 
                       {/* Content Floating on Void - Inset from borders */}
-                      <div className="relative my-1 py-2 px-4 rounded-lg transition-all duration-200 hover:bg-zinc-900/50 group-hover:translate-x-0.5">
+                      <div className="relative my-1 py-2 px-4 rounded-lg transition-all duration-150 hover:bg-zinc-900/50 group-hover:translate-x-0.5">
                         <div className="flex items-center gap-4">
                           {/* Step Number - Subtle */}
                           <div className="shrink-0 w-8 h-8 flex items-center justify-center text-muted/50 font-mono text-sm group-hover:text-primary transition-colors">
@@ -211,7 +211,7 @@ export default async function RoadmapPage({
                           </div>
 
                           {/* Arrow - Always visible for balance */}
-                          <div className="shrink-0 text-zinc-700 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 ml-auto">
+                          <div className="shrink-0 text-zinc-700 group-hover:text-primary group-hover:translate-x-1 transition-all duration-150 ml-auto">
                             <ArrowRight className="w-4 h-4" />
                           </div>
                         </div>

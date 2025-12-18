@@ -4,7 +4,7 @@ export function Navbar() {
   return (
     <nav className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 group">
+        <Link href="/" prefetch={true} className="flex items-center gap-2.5 group">
           <div className="w-7 h-7 bg-primary rounded-md flex items-center justify-center text-background text-xs font-bold">
             AI
           </div>

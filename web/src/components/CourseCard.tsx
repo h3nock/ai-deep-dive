@@ -37,6 +37,7 @@ export function CourseCard({
   return (
     <Component
       href={href || "#"}
+      prefetch={true}
       className={cn(
         "group relative flex flex-col h-full bg-background rounded-xl border p-5 md:p-6",
         "card-glow",

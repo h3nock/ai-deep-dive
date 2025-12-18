@@ -11,7 +11,6 @@ import { Action } from "@/components/mdx/Action";
 import { Command } from "@/components/mdx/Command";
 import { ProjectRoadmap } from "@/components/mdx/ProjectRoadmap";
 import { ThinkingProcess } from "@/components/mdx/ThinkingProcess";
-import { EmbeddingSpace } from "@/components/mdx/EmbeddingSpace";
 import remarkMath from "remark-math";
 import {
   Table,
@@ -25,15 +24,39 @@ import { Callout } from "@/components/mdx/Callout";
 import { ByteStream } from "@/components/mdx/ByteStream";
 import { ComingSoon } from "@/components/mdx/ComingSoon";
 import { ProcessTimeline } from "@/components/mdx/ProcessTimeline";
-import { LiveByteInspector } from "@/components/mdx/LiveByteInspector";
-import { EncodingCompare } from "@/components/mdx/EncodingCompare";
-import { FrequencyWaves } from "@/components/mdx/FrequencyWaves";
-import { NormalizedStepSize } from "@/components/mdx/NormalizedStepSize";
-import { BinaryVsSmooth } from "@/components/mdx/BinaryVsSmooth";
-import { RotationVisualization } from "@/components/mdx/RotationVisualization";
+import dynamic from "next/dynamic";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import rehypePrettyCode from "rehype-pretty-code";
+
+// Lazy load heavy interactive components
+const FrequencyWaves = dynamic(() =>
+  import("@/components/mdx/FrequencyWaves").then((mod) => mod.FrequencyWaves)
+);
+const BinaryVsSmooth = dynamic(() =>
+  import("@/components/mdx/BinaryVsSmooth").then((mod) => mod.BinaryVsSmooth)
+);
+const RotationVisualization = dynamic(() =>
+  import("@/components/mdx/RotationVisualization").then(
+    (mod) => mod.RotationVisualization
+  )
+);
+const EmbeddingSpace = dynamic(() =>
+  import("@/components/mdx/EmbeddingSpace").then((mod) => mod.EmbeddingSpace)
+);
+const LiveByteInspector = dynamic(() =>
+  import("@/components/mdx/LiveByteInspector").then(
+    (mod) => mod.LiveByteInspector
+  )
+);
+const EncodingCompare = dynamic(() =>
+  import("@/components/mdx/EncodingCompare").then((mod) => mod.EncodingCompare)
+);
+const NormalizedStepSize = dynamic(() =>
+  import("@/components/mdx/NormalizedStepSize").then(
+    (mod) => mod.NormalizedStepSize
+  )
+);
 
 const components = {
   SplitLayout,

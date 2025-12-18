@@ -72,6 +72,7 @@ export function ContinueButton({
   return (
     <Link
       href={`/${courseId}/${slug}`}
+      prefetch={true}
       className={cn(
         "inline-flex items-center px-6 py-3 rounded-lg bg-primary hover:bg-zinc-200 text-background font-medium transition-colors",
         className
