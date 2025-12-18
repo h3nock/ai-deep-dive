@@ -95,14 +95,14 @@ export function BinaryVsSmooth() {
     const stepWidth = GRAPH_WIDTH / (cycles * 2);
     
     let x = 0;
-    let isHigh = false;
+    let isHigh: boolean = false;
     
     segments.push(`M 0 ${valueToY(0)}`);
     
     for (let i = 0; i < cycles * 2; i++) {
       const nextX = Math.min((i + 1) * stepWidth, GRAPH_WIDTH);
       const currentY = valueToY(isHigh ? 1 : 0);
-      const nextIsHigh = !isHigh;
+      const nextIsHigh: boolean = !isHigh;
       const nextY = valueToY(nextIsHigh ? 1 : 0);
       
       // Horizontal line at current level
