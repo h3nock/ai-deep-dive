@@ -202,13 +202,7 @@ export function FrequencyWaves() {
           })}
         </div>
 
-        {/* Footer */}
-        <div className="mt-4 pt-3 border-t border-zinc-800">
-          <p className="text-xs text-secondary">
-            <strong className="text-primary">Faster dimensions</strong> cycle rapidly to distinguish nearby positions.{" "}
-            <strong className="text-primary">Slower dimensions</strong> cycle slowly for global uniqueness.
-          </p>
-        </div>
+
       </div>
     </div>
   );
