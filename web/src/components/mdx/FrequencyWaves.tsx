@@ -101,39 +101,67 @@ export function FrequencyWaves() {
       </div>
 
       <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
-        {/* Controls */}
-        <div className="flex items-center gap-4 mb-4">
-          {/* Play/Pause Button */}
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors border border-zinc-700"
-            aria-label={isPlaying ? "Pause" : "Play"}
-          >
-            {isPlaying ? (
-              <svg className="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
-                <rect x="6" y="4" width="4" height="16" />
-                <rect x="14" y="4" width="4" height="16" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
-                <polygon points="5,3 19,12 5,21" />
-              </svg>
-            )}
-          </button>
+        {/* Controls - aligned with wave rows below */}
+        <div className="flex items-center gap-3 mb-4">
+          {/* Play/Pause Button - same size as clock container */}
+          <div className="shrink-0">
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors border border-zinc-700"
+              aria-label={isPlaying ? "Pause" : "Play"}
+            >
+              {isPlaying ? (
+                <svg className="w-3.5 h-3.5 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
+                  <rect x="6" y="4" width="4" height="16" />
+                  <rect x="14" y="4" width="4" height="16" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
+                  <polygon points="5,3 19,12 5,21" />
+                </svg>
+              )}
+            </button>
+          </div>
           
-          <span className="text-sm text-muted w-16">Pos:</span>
-          <input
-            type="range"
-            min="0"
-            max={MAX_POSITION}
-            step="0.5"
-            value={position}
-            onChange={(e) => {
-              setIsPlaying(false);
-              setPosition(parseFloat(e.target.value));
-            }}
-            className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-          />
+          {/* Label - same width as wave label div (w-20) */}
+          <div className="w-20 shrink-0">
+            <span className="text-sm text-muted">Pos:</span>
+          </div>
+          
+          {/* Slider - same structure as wave visualization div */}
+          <div className="flex-1 h-10 relative">
+            <input
+              type="range"
+              min="0"
+              max={MAX_POSITION}
+              step="0.5"
+              value={position}
+              onChange={(e) => {
+                setIsPlaying(false);
+                setPosition(parseFloat(e.target.value));
+              }}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            />
+            {/* Visual track that matches wave SVG dimensions exactly */}
+            <svg
+              className="w-full h-full"
+              viewBox="0 0 200 40"
+              preserveAspectRatio="none"
+            >
+              {/* Track line */}
+              <line x1="0" y1="20" x2="200" y2="20" stroke="#3f3f46" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+            {/* Thumb marker - same positioning logic as wave dots */}
+            <div
+              className="absolute w-3 h-3 rounded-full bg-emerald-500"
+              style={{
+                left: `${(position / MAX_POSITION) * 100}%`,
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+              }}
+            />
+          </div>
+
           <span className="text-lg font-mono text-emerald-400 w-14 text-right">
             {Math.round(position)}
           </span>
@@ -184,13 +212,17 @@ export function FrequencyWaves() {
                       stroke="#3f3f46"
                       strokeWidth="1.5"
                     />
-                    <circle
-                      cx={markerX}
-                      cy={20 - wave.value * 16}
-                      r="4"
-                      fill={color}
-                    />
                   </svg>
+                  {/* Marker as absolute div to maintain perfect circle shape */}
+                  <div
+                    className="absolute w-2.5 h-2.5 rounded-full"
+                    style={{
+                      left: `${(position / MAX_POSITION) * 100}%`,
+                      top: `${50 - wave.value * 40}%`,
+                      transform: 'translate(-50%, -50%)',
+                      backgroundColor: color,
+                    }}
+                  />
                 </div>
 
                 {/* Value */}
