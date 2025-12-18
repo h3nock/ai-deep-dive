@@ -399,6 +399,29 @@ In practice, the centered range -1 to +1 is usually the better default. Embeddin
 </Step>
 
 
+<Step title="7. Decoding the Formula">
+  <Description>
+    Here's the formula from the original Transformer paper:
+  </Description>
+
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border">
+    <div className="text-center mb-4">
+      <span className="text-sm font-medium text-muted">The Sinusoidal Positional Encoding</span>
+    </div>
+    <div className="text-center space-y-2">
+      <div className="font-mono text-lg text-primary">
+        PE(pos, 2i) = sin(pos / 10000<sup>2i/d<sub>model</sub></sup>)
+      </div>
+      <div className="font-mono text-lg text-primary">
+        PE(pos, 2i+1) = cos(pos / 10000<sup>2i/d<sub>model</sub></sup>)
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    Let's decode this piece by piece.
+  </Description>
+</Step>
   </Description>
 </Step>
 
