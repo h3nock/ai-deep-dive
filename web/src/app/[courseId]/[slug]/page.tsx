@@ -30,6 +30,7 @@ import { EncodingCompare } from "@/components/mdx/EncodingCompare";
 import { FrequencyWaves } from "@/components/mdx/FrequencyWaves";
 import { NormalizedStepSize } from "@/components/mdx/NormalizedStepSize";
 import { BinaryVsSmooth } from "@/components/mdx/BinaryVsSmooth";
+import { RotationVisualization } from "@/components/mdx/RotationVisualization";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import rehypePrettyCode from "rehype-pretty-code";
@@ -58,6 +59,7 @@ const components = {
   FrequencyWaves,
   NormalizedStepSize,
   BinaryVsSmooth,
+  RotationVisualization,
 };
 
 function getCollections() {
