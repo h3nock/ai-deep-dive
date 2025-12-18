@@ -189,7 +189,7 @@ export function BinaryVsSmooth() {
                 </div>
 
                 {/* Binary graph */}
-                <div className="bg-zinc-900/50 rounded border border-zinc-800 p-1">
+                <div className="bg-zinc-900/50 rounded border border-zinc-800 p-1 relative">
                   <svg
                     className="w-full"
                     viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
@@ -202,17 +202,20 @@ export function BinaryVsSmooth() {
                       stroke="#3f3f46"
                       strokeWidth="1.5"
                     />
-                    <circle
-                      cx={markerX}
-                      cy={binaryY}
-                      r="4"
-                      fill="#fb7185"
-                    />
                   </svg>
+                  {/* Marker as absolute div to maintain perfect circle shape */}
+                  <div
+                    className="absolute w-2.5 h-2.5 rounded-full bg-rose-400"
+                    style={{
+                      left: `calc(4px + ${(markerX / GRAPH_WIDTH) * 100}% * (1 - 8px / 100%))`,
+                      top: `calc(4px + ${(binaryY / GRAPH_HEIGHT) * 100}% * (1 - 8px / 100%))`,
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  />
                 </div>
 
                 {/* Smooth graph */}
-                <div className="bg-zinc-900/50 rounded border border-zinc-800 p-1">
+                <div className="bg-zinc-900/50 rounded border border-zinc-800 p-1 relative">
                   <svg
                     className="w-full"
                     viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
@@ -225,13 +228,16 @@ export function BinaryVsSmooth() {
                       stroke="#3f3f46"
                       strokeWidth="1.5"
                     />
-                    <circle
-                      cx={markerX}
-                      cy={smoothY}
-                      r="4"
-                      fill="#34d399"
-                    />
                   </svg>
+                  {/* Marker as absolute div to maintain perfect circle shape */}
+                  <div
+                    className="absolute w-2.5 h-2.5 rounded-full bg-emerald-400"
+                    style={{
+                      left: `calc(4px + ${(markerX / GRAPH_WIDTH) * 100}% * (1 - 8px / 100%))`,
+                      top: `calc(4px + ${(smoothY / GRAPH_HEIGHT) * 100}% * (1 - 8px / 100%))`,
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  />
                 </div>
               </div>
             );
