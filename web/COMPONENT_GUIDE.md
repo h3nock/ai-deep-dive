@@ -161,7 +161,7 @@ Collapsible hint + answer reveal. Use for "pause and think" moments.
 Auto-generates from posts with matching prefix.
 
 ```mdx
-<ProjectRoadmap courseId="build-chatgpt" prefix="p1-" />
+<ProjectRoadmap courseId="build-gpt" prefix="p1-" />
 ```
 
 ---

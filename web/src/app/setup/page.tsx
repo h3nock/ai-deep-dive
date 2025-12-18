@@ -88,7 +88,7 @@ export default function SetupPage() {
           <header className="mb-12 border-b border-border pb-8">
             <div className="flex items-center gap-3 mb-6 text-sm text-muted">
               <Link
-                href="/build-chatgpt"
+                href="/build-gpt"
                 className="hover:text-primary transition-colors flex items-center gap-1"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -126,7 +126,7 @@ export default function SetupPage() {
             <h2 className="text-xl font-semibold text-primary mb-1">
               2. Initialize the course
             </h2>
-            <CodeBlock>{`ai-deep-dive init build-chatgpt`}</CodeBlock>
+            <CodeBlock>{`ai-deep-dive init build-gpt`}</CodeBlock>
             <p className="text-lg text-secondary leading-relaxed">
               Creates a workspace folder with starter files for every challenge,
               organized by chapter.
@@ -136,7 +136,7 @@ export default function SetupPage() {
             <div className="mt-6 p-4 bg-[#121212] rounded-lg border border-zinc-800">
               <div className="flex items-center gap-2 text-secondary font-mono text-sm mb-3">
                 <Folder className="w-4 h-4 text-amber-400" />
-                <span>build-chatgpt/</span>
+                <span>build-gpt/</span>
               </div>
               <div className="ml-6 space-y-2 font-mono text-sm">
                 <div className="flex items-center gap-2 text-muted">
@@ -177,7 +177,7 @@ export default function SetupPage() {
             <h2 className="text-xl font-semibold text-primary mb-1">
               3. Work on a challenge
             </h2>
-            <CodeBlock>{`cd build-chatgpt
+            <CodeBlock>{`cd build-gpt
 nvim .  # or your preferred editor`}</CodeBlock>
             <p className="text-lg text-secondary leading-relaxed">
               Open the folder in your editor and find the challenge file. Each
@@ -277,7 +277,7 @@ nvim .  # or your preferred editor`}</CodeBlock>
           {/* Back link */}
           <section className="pt-10">
             <Link
-              href="/build-chatgpt"
+              href="/build-gpt"
               className="text-muted hover:text-primary transition-colors inline-flex items-center gap-1"
             >
               <ChevronLeft className="w-4 h-4" />

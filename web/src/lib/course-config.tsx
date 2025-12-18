@@ -27,9 +27,9 @@ export type CourseConfig = {
 };
 
 export const courseConfig: Record<string, CourseConfig> = {
-  "build-chatgpt": {
-    id: "build-chatgpt",
-    title: "Build ChatGPT from Scratch",
+  "build-gpt": {
+    id: "build-gpt",
+    title: "Build GPT from Scratch",
     description:
       "From raw text to a working GPT. You'll implement every component of a transformer-based language model from the ground up.",
     outcome: [
