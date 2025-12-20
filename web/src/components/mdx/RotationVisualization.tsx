@@ -100,7 +100,7 @@ export function RotationVisualization() {
         </div>
 
         {/* Main visualization */}
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="flex flex-col lg:flex-row gap-6 items-center">
           {/* Circle Diagram */}
           <div className="shrink-0 flex flex-col items-center gap-2">
             <svg width="210" height="230" viewBox="0 0 210 230">
@@ -161,8 +161,8 @@ export function RotationVisualization() {
             </div>
           </div>
 
-          {/* Matrix Equation - no extra container */}
-          <div className="flex items-center gap-2 font-mono text-sm flex-wrap flex-1">
+          {/* Matrix Equation - margin-bottom aligns with circle's horizontal centerline */}
+          <div className="flex items-center gap-2 font-mono text-sm flex-wrap flex-1" style={{ marginBottom: '55px' }}>
             {/* Output vector */}
             <div className="flex flex-col p-2 border-l-2 border-r-2 border-amber-500 rounded bg-amber-500/10 shrink-0">
               <span className="text-amber-400 font-bold text-center px-2">{fmt(sinOutput)}</span>
