@@ -101,7 +101,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Problem 1: Variable Step Size</h4>
 
   <Description>
-    The model often benefits from learning relative patterns, like "pay attention to the word immediately before me." But what does "one position back" mean in this scheme? Because we divide by the sequence length, the numeric step size changes with length. In a 10-word sentence, one step back is -0.10. In a 50-word sentence, the same step is only -0.02. So the same relative idea ("one token away") corresponds to different numeric values depending on sentence length. Play the animation or drag the slider to explore:
+    The model often benefits from learning relative patterns, like "pay attention to the word immediately before me." But what does "one position back" mean in this scheme? Because we divide by the sequence length, the numeric step size changes with length. In a 10-word sentence, one step back is -0.10. In a 50-word sentence, the same step is only -0.02. So the same relative idea ("one token away") corresponds to different numeric values depending on sentence length. If you want to explore, play the animation or drag the slider:
   </Description>
 
   <NormalizedStepSize />
