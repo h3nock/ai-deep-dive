@@ -14,7 +14,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 </Description>
 
 <Description>
-  Consider two sentences: **"Alice gave Bob a book"** and **"Bob gave Alice a book"**. They contain the exact same words. If we look up their embeddings, both sentences produce the same set of vectors. The only difference is the order.
+  To see why this matters, consider two sentences: **"Alice gave Bob a book"** and **"Bob gave Alice a book"**. They contain the exact same words, so if we look up their embeddings, both sentences produce the same set of vectors. The only difference is the order.
 </Description>
 
 <div className="my-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -39,7 +39,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 </Description>
 
 <Description>
-  The problem: if we only feed word embeddings (no position info), the compatibility between "Alice" and "Bob" depends on *what* they are, not *where* they appear. So "Alice gave Bob..." and "Bob gave Alice..." produce identical scores. The model sees that "Alice" and "Bob" are related, but it cannot tell which one is the Subject (giver) and which is the Object (receiver). Order matters for meaning, but nothing in these vectors encodes order. We need to inject position information.
+  Here is the problem: if we only feed word embeddings (no position info), the compatibility between "Alice" and "Bob" depends on *what* they are, not *where* they appear. Both sentences would produce identical scores. The model can see that "Alice" and "Bob" are related, but it cannot tell which one is the Subject (giver) and which is the Object (receiver). Order is essential for meaning, yet nothing in these vectors encodes it. We need to find a way to inject position information.
 </Description>
 </div>
 
@@ -47,14 +47,10 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="1. Attempt 1: Counting Up">
   <Description>
-    The most naive idea is to number the positions 1, 2, 3... and inject the raw index into the token embedding by adding the number to every dimension. Let's trace through what happens.
+    The most naive idea is to number the positions 1, 2, 3... and inject the raw index into the token embedding by adding that number to every dimension. Let's trace through what happens when the word "Apple" appears at position 1000 in a long document:
   </Description>
 
-  <Description attached>
-    Imagine the word "Apple" appears at position 1000 in a long document:
-  </Description>
-
-  <div className="content-attached">
+  <div className="my-4">
     <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm">
       <div className="flex items-center gap-4">
         <span className="text-muted w-28 shrink-0">E("Apple")</span>
@@ -74,7 +70,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Problem 1: Drowned Meaning</h4>
 
   <Description>
-    Look at the result. The values that encoded "Apple" (0.05, -0.02, 0.11) are now invisible. Whether the original word was "Apple", "Banana", or "King", the output is essentially [1000, 1000, 1000]. The semantic meaning is completely **drowned** by the position signal.
+    Look at the result. The values that encoded "Apple" (0.05, -0.02, 0.11) have become invisible, completely swamped by the position signal. Whether the original word was "Apple", "Banana", or "King", the output is essentially [1000, 1000, 1000]. The semantic meaning has been **drowned**.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Problem 2: Scale Mismatch</h4>
@@ -91,7 +87,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="2. Attempt 2: Scaling to [0, 1]">
   <Description>
-    Okay, let's fix the magnitude problem. We can divide by the total sequence length so every position stays between 0 and 1.
+    Let's fix the magnitude problem by dividing by the total sequence length, keeping every position between 0 and 1:
   </Description>
 
   <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm">
@@ -99,94 +95,65 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </div>
 
   <Description>
-    This keeps values bounded. But it introduces **two new problems**.
+    This keeps values bounded, but introduces two new problems.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Problem 1: Variable Step Size</h4>
 
   <Description>
-    The model often benefits from learning relative patterns, like "pay attention to the word immediately before me." But what does "one position back" mean in this scheme?
-  </Description>
-
-  <Description>
-    Because we divide by the sequence length, the numeric step size changes with length. In a 10-word sentence, one step back is -0.10. In a 50-word sentence, the same step is only -0.02. So the same relative idea ("one token away") corresponds to different numeric values depending on how long the sentence is. Play the animation or drag the slider to explore:
+    The model often benefits from learning relative patterns, like "pay attention to the word immediately before me." But what does "one position back" mean in this scheme? Because we divide by the sequence length, the numeric step size changes with length. In a 10-word sentence, one step back is -0.10. In a 50-word sentence, the same step is only -0.02. So the same relative idea ("one token away") corresponds to different numeric values depending on sentence length. Play the animation or drag the slider to explore:
   </Description>
 
   <NormalizedStepSize />
 
   <Description>
-    That makes it harder for the model to learn a single, length-independent rule for "neighbor" or relative patterns in general.   
+    This inconsistency makes it harder for the model to learn a single, length-independent rule for "neighbor" or any relative pattern.
   </Description>
-
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Problem 2: Length-Dependent Absolute Positions</h4>
 
   <Description>
-    Consider the sentence **"The cat sat."** The word "cat" is at index 1. With normalization, its position value is 1/3 ≈ 0.33.
-  </Description>
-
-  <Description>
-    Now consider **"The cat sat on the mat."** The word "cat" is still at index 1. But now its position value is 1/6 ≈ 0.17.
-  </Description>
-
-  <Description>
-    Same word, same index, completely different encoding. This means "second word" does not correspond to a consistent numeric value across examples, which weakens any attempt to learn stable absolute position patterns.
-  </Description>
-
-  <Description>
-  So while this normalization trick keeps magnitudes small, neither relative positions nor absolute positions are stable, which makes generalization less clean.
+    Consider the sentence **"The cat sat."** where "cat" is at index 1, giving it a position value of 1/3 ≈ 0.33. Now consider **"The cat sat on the mat."** The word "cat" is still at index 1, but now its position value is 1/6 ≈ 0.17. Same word, same index, completely different encoding. This means "second word" does not map to a consistent numeric value across examples, undermining any attempt to learn stable absolute position patterns. While normalization keeps magnitudes small, neither relative nor absolute positions are stable, making generalization messy.
   </Description>
 </Step>
 
 <Step title="3. What Makes a Good Positional Encoding?">
   <Description>
-    We've tried two simple approaches and saw why they are awkward. Before we try again, let's step back and define exactly what properties a positional encoding should have to make the signal useful and easy for the model to learn from .
+    We've tried two simple approaches and saw why they are awkward. Before we try again, let's step back and define exactly what properties a positional encoding should have to make the signal useful and easy for the model to learn from.
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">1. Bounded Values</h4>
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">1. Scale Compatibility</h4>
 
   <Description>
-    We learned this from Attempt 1 that the position signal should live in a reasonable numeric range so it does not overwhelm the token embedding. We want the model to represent "Apple at position 5", not a vector dominated by the position index.
+    As we learned from Attempt 1, the position signal should live in a reasonable numeric range so it doesn't overwhelm the token embedding. We want the model to represent "Apple at position 5", not a vector dominated by the position index.
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">2. Unique and Deterministic (within the context window)</h4>
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">2. Unique and Deterministic</h4>
 
   <Description>
-    Every position within the context window should produce a distinct encoding, and that encoding should be the same every time. Position 5 must always map to the exact same vector, whether during training or at inference. If two positions share an encoding, the model has no way to tell them apart. 
+    Every position within the context window should produce a distinct encoding, and that encoding should be identical every time. Position 5 must always map to the exact same vector, whether during training or inference. If two positions share an encoding, the model has no way to tell them apart.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">3. Consistent Relative Structure</h4>
 
   <Description>
-    A good positional encoding makes relative offsets easy for the model to use. Ideally, "three words ahead" behaves in a consistent way whether you are near the start of the sentence or deep into a long sequence.  Precisely, the relationship between any position P and position P+k should behave the same regardless of what P is. This lets the model learn portable attention patterns.
+    A good positional encoding makes relative offsets easy for the model to use. Ideally, "three words ahead" should behave consistently whether you're near the start of a sentence or deep into a long sequence. The relationship between any position P and position P+k should behave consistently regardless of P, allowing the model to learn portable attention patterns.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">4. Generalization to Longer Sequences</h4>
 
   <Description>
-    Sometimes we want the model to handle sequences longer than what it saw during training. In that case, the encoding should still behave sensibly at larger positions instead of breaking or becoming meaningless.
+    Sometimes we want the model to handle sequences longer than what it saw during training. The encoding should still behave sensibly at larger positions instead of breaking or becoming meaningless.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">5. Smooth and Continuous</h4>
 
   <Description>
-    Positions are discrete, but it still helps if the positional signal changes in a predictable, structured way as we move from one position to the next. This is because neural networks learn by making small adjustments. If the model's prediction is slightly wrong, it nudges its weights a little bit in the right direction. This only works if small changes in input lead to small changes in output. In mathematical terms, the function should be **differentiable**.
+    Positions are discrete, but it still helps if the positional signal changes in a predictable, structured way as we move from one position to the next. This is because neural networks learn by making small adjustments. If the model's prediction is slightly wrong, it nudges its weights a little bit in the right direction. This works better when small changes in input lead to small changes in output. 
   </Description>
 
   <Description>
-    Imagine an encoding where position 5 is [0.12, 0.99] and position 6 is [-0.76, 0.42]. These vectors are wildly different. In that situation, it is harder for the model to pick up the idea that "5 and 6 are adjacent", and it may need to rely more on memorizing position-specific behavior.
-  </Description>
-
-  <Description>
-    Now consider a smooth encoding where nearby positions have similar values. Position 5 might be [0.12, 0.99], position 6 is [0.14, 0.98], and position 7 is [0.16, 0.97]. There are no sudden jumps between neighbors. This gradual change gives the model a simpler signal to learn from, so learning local patterns via small weight adjustments can be more data-efficient and more stable.
-  </Description>
-
-  <Description>
-    Now we have our design goals: **controlled scale**, **distinct positions**, **useful relative structure**, **generalizable to longer sequences**, and **predictable variation across positions**. The tension is clear: how can we represent many positions using bounded values while keeping the signal smooth and consistent?
-  </Description>
-
-  <Description>
-    The answer comes from something we use every day.
+    Now we have our design goals. The puzzle is how can we represent many positions using only small, bounded values while keeping the signal smooth and consistent?
   </Description>
 </Step>
 
@@ -194,18 +161,11 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="4. Borrowing from Number Systems">
   <Description>
-    Now that we know exactly what properties the encoding should have, let's look for inspiration. We already use systems that satisfy most of these requirements every day. Consider how we write the number **459**.
+    Now that we know what properties the encoding needs, let's look for inspiration. We already use systems that satisfy most of these requirements every day. Consider how we write the number **459**: each digit is **bounded** (0 to 9), the full pattern is **unique** (no other number looks like 459), and moving by +1 follows a **consistent pattern** (459 → 460 → 461).
   </Description>
 
   <Description>
-  It has a few useful properties:
-    - Each digit is **bounded** (0 to 9)
-    - The full pattern is **unique** (no other number looks like 459)
-    - Moving by +1 follows a **consistent pattern** (459 → 460 → 461)
-  </Description>
-
-  <Description>
-    The key idea is that we use multiple columns that change at different speeds. The ones column cycles fastest (0→9, then wraps). The tens column cycles slower. The hundreds column cycles even slower. This multi-speed structure lets us represent very large numbers using only small digits.
+    The key insight is that we use multiple columns changing at different speeds. The ones column cycles fastest (0→9, then wraps). The tens column cycles slower. The hundreds column slower still. This multi-speed structure lets us represent arbitrarily large numbers using only small, bounded digits.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">What About Decimal?</h4>
@@ -227,36 +187,24 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Making Binary Smooth</h4>
 
   <Description>
-    Binary's problem is that 0 and 1 are just two disconnected points. There are no values in between. So let's keep the best part of binary number system, which are scale and the multi-speed structure, but we replace discrete digits with a smooth signal.  
-  </Description>
-
-  <Description>
-    What we want in each dimension (digit) is a value that changes continuously and repeats over time, like a dial. As we move through positions, the values should rise and fall smoothly instead of jumping between few fixed states.
+    Binary's problem is that 0 and 1 are just two disconnected points with no values in between. So let's keep the best parts (scale and multi-speed structure) but replace discrete digits with a smooth signal. What we want in each dimension is a value that changes continuously and repeats over time, like a dial. As we move through positions, the values should rise and fall smoothly instead of jumping between fixed states.
   </Description>
 
   <BinaryVsSmooth />
 
   <Description>
-    This smooth oscillation keeps the best idea from binary number system: multiple dimensions changing at different speeds, all staying in a controlled (bounded) range and give each position a distinctive signature. Unlike binary, the values change gradually from one position to the next, which gives the model a cleaner signal for learning local patterns. Now, all that's left is to choose the function that produces this kind of smooth cycle. 
+    This smooth oscillation preserves the core insight from our number system analogy: multiple dimensions changing at different speeds, all staying in a bounded range, giving each position a distinctive signature. Unlike binary, the values change gradually from one position to the next, providing the model with a cleaner signal for learning local patterns. All that remains is choosing the function that produces this kind of smooth cycle.
   </Description>
 </Step>
 
 <Step title="5. Finding the Function">
   <Description>
-    In Section 4, we visualized what each dimension needs: a function that smoothly oscillates, rising and falling without jumps. If you have taken trigonometry, you might recognize this shape. It looks like a **sine wave**.
+    If you have taken trigonometry, you might recognize the shape of our smooth oscillation. It looks like a **sine wave**. Our visualization matches a shifted version (sin(x) + 1) / 2 to keep values between 0 and 1. But the raw sine function naturally oscillates between -1 and +1, which raises a design choice: should we shift the wave to stay positive, or use the raw centered values?
   </Description>
 
   <Description>
-    Our visualization used a shifted version: (sin(x) + 1) / 2, so the values stayed between 0 and 1. But the raw sine function naturally oscillates between -1 and +1.
+    In practice, the centered range -1 to +1 is the better default. Embedding values are typically initialized around 0, and techniques like **Layer Normalization** (covered later) keep them there throughout the network. A positional signal centered around 0 blends naturally with this distribution, while a 0 to 1 shift would add an unnecessary constant bias to every dimension.
   </Description>
-
-<Description>
-This raises a design choice: Should we shift the wave to keep it always positive, or should we use the raw values that include negatives?
-</Description>
-
-<Description>
-In practice, the centered range -1 to +1 is usually the better default. Embedding values are often initialized centered around 0, and techniques like **Layer Normalization** (covered later) keep them there throughout the network. A positional signal centered around 0 blends naturally with this distribution. A 0 to 1 shift adds a constant positive bias to every dimension for no added benefit.
-</Description>
 
   <Description>
     Now we have the final function, each dimension gets its own sine wave, cycling at a different frequency. Play the animation to see how each dimension evolves across positions:
@@ -265,13 +213,13 @@ In practice, the centered range -1 to +1 is usually the better default. Embeddin
   <FrequencyWaves />
 
   <Description>
-    The fast waves change quickly, so they help separate nearby positions. The slow waves change gradually, so they help distinguish distant positions. Together, they create a unique fingerprint for every position within the context window, exactly as we designed in Section 4.
+    Fast waves change quickly, helping separate nearby positions. Slow waves change gradually, helping distinguish distant positions. Together, they create a unique fingerprint for every position within the context window
   </Description>
 </Step>
 
 <Step title="6. Making Relative Positions Easy">
   <Description>
-    We now have a working positional signal using sine waves at different frequencies. Each position gets a unique fingerprint. However, the original Transformer paper actually pairs every sine with a **cosine** at the same frequency. Why is the cosine needed?
+    We now have a working positional signal using sine waves at different frequencies, giving each position a unique fingerprint. However, the original Transformer paper actually pairs every sine with a **cosine** at the same frequency. Why?
   </Description>
 
   <Description>
@@ -281,11 +229,7 @@ In practice, the centered range -1 to +1 is usually the better default. Embeddin
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Limitation of Sine Alone</h4>
 
   <Description>
-    Suppose we only store the sine value for a given frequency ω. At position `pos`, our encoding is sin(ω · pos). Now, what happens when we shift to position `pos + k`?
-  </Description>
-
-  <Description>
-    From high school trigonometry, we can expand sin(ω(pos + k)) using the angle addition formula:
+    Suppose we only store the sine value for a given frequency ω. At position `pos`, our encoding is sin(ω · pos). What happens when we shift to position `pos + k`? From high school trigonometry, we can expand sin(ω(pos + k)) using the angle addition formula:
   </Description>
 
   <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
@@ -295,22 +239,7 @@ In practice, the centered range -1 to +1 is usually the better default. Embeddin
   </div>
 
   <Description>
-    Look at what's needed on the right side:
-  </Description>
-
-  <div className="my-4 space-y-2 text-sm">
-    <div className="flex items-start gap-3">
-      <span className="text-primary font-mono shrink-0">sin(ω · pos)</span>
-      <span className="text-secondary">– we have this (it's our current encoding)</span>
-    </div>
-    <div className="flex items-start gap-3">
-      <span className="text-primary font-mono shrink-0">cos(ω · pos)</span>
-      <span className="text-secondary">– we <strong>don't</strong> have this</span>
-    </div>
-  </div>
-
-  <Description>
-    With only the sine term, calculating the shifted value `sin(ω · (pos + k))` is mathematically messy. The standard formula for angle addition requires both `sin` and `cos` components. Without the cosine, we lose the direct linear relationship between positions, forcing the model to learn a more complex, non-linear approximation instead of a simple rotation.
+    Look at what's needed on the right side: sin(ω · pos), which we have (it's our current encoding), and cos(ω · pos), which we **don't** have. Without the cosine, calculating the shifted value is mathematically messy. The angle addition formula requires both components. Without it, we lose the direct linear relationship between positions, forcing the model to learn a more complex non-linear approximation instead of a simple linear transformation.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Pairing Sine with Cosine</h4>
@@ -375,33 +304,20 @@ In practice, the centered range -1 to +1 is usually the better default. Embeddin
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Rotation Matrix</h4>
 
   <Description>
-    The 2×2 matrix in the middle is a **rotation matrix**. This is the standard matrix that rotates any 2D point by a fixed angle. In our case, that angle is ω · k.
-  </Description>
-
-  <Description>
-    This has a beautiful geometric interpretation: the (sin, cos) pair traces out a circle as position increases. Shifting by k positions corresponds to rotating this point around the circle by angle ω · k. The interactive visualization below lets you explore this:
+    The 2×2 matrix in the middle is a **rotation matrix**, the standard matrix that rotates any 2D point by a fixed angle. In our case, that angle is ω · k. This has a beautiful geometric interpretation: the (sin, cos) pair traces out a circle as position increases, and shifting by k positions corresponds to rotating this point around the circle by angle ω · k. Explore this in the interactive visualization below:
   </Description>
 
   <RotationVisualization />
 
-
   <Description>
-    Look at the rotation matrix again. It depends **only on k** (the offset), not on the starting position. Whether you start at position 5, 50, or 500, shifting by k positions always applies the same transformation.
-  </Description>
-
-  <Description>
-    This is exactly what we wanted at the start of this section: a simple, predictable pattern for relative positions. The relationship between any position and "k steps ahead" is always the same rotation, regardless of where you are in the sequence.
-  </Description>
-
-  <Description>
-    And because rotation is a **linear operation** (just matrix multiplication), it fits naturally into the Transformer's architecture. The model can learn weights that capture patterns like "attend to the previous word" or "look 3 tokens ahead" and apply them uniformly across the entire sequence.
+    Notice that the rotation matrix depends **only on k** (the offset), not on the starting position. Whether you start at position 5, 50, or 500, shifting by k positions always applies the same transformation. This is exactly what we wanted: a simple, predictable pattern for relative positions. The relationship between any position and "k steps ahead" is always the same rotation, regardless of where you are in the sequence. And because rotation is a **linear operation** (just matrix multiplication), it fits naturally into the Transformer's architecture. The model can learn weights that capture patterns like "attend to the previous word" or "look 3 tokens ahead" and apply them uniformly across the entire sequence.
   </Description>
 </Step>
 
 
 <Step title="7. Decoding the Formula">
   <Description>
-    Here's the formula from the original Transformer paper:
+    At this point, you already understand *why* we need multiple frequencies and why sine/cosine pairs matter. The original Transformer formula is just a compact way to express these ideas. Let's decode each piece.
   </Description>
 
   <div className="my-6 p-5 bg-surface rounded-lg border border-border">
