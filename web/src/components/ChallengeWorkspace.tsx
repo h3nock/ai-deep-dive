@@ -33,6 +33,14 @@ import {
   type TestConfig,
 } from "@/lib/pyodide";
 import { ConfirmModal } from "./ConfirmModal";
+import {
+  getChallengeCode,
+  isChallengeSolved,
+  markChallengeSolved,
+  removeChallengeCode,
+  setChallengeCode,
+} from "@/lib/challenge-storage";
+import { useChallengeProgress } from "@/lib/use-challenge-progress";
 
 // Custom Monaco Theme - Eye-Safe Zinc Dark
 const ZINC_DARK_THEME = {
@@ -94,6 +102,7 @@ interface TestResult {
 }
 
 interface ChallengeWorkspaceProps {
+  courseId: string;
   challenges: Challenge[];
   activeChallengeIndex?: number | null;
   setActiveChallengeIndex?: (index: number | null) => void;
@@ -152,6 +161,7 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
 }
 
 export function ChallengeWorkspace({
+  courseId,
   challenges,
   activeChallengeIndex: externalActiveIndex,
   setActiveChallengeIndex: externalSetActiveIndex,
@@ -238,6 +248,9 @@ export function ChallengeWorkspace({
 
   const activeChallenge =
     activeChallengeIndex !== null ? challenges[activeChallengeIndex] : null;
+  const challengeIds = useMemo(() => challenges.map((c) => c.id), [challenges]);
+  const { solvedCount, total: totalChallenges, isLoaded: isProgressLoaded } =
+    useChallengeProgress(courseId, challengeIds);
 
   // Preload Pyodide once on component mount (not per challenge)
   // This ensures the Python runtime is ready before user needs it
@@ -283,7 +296,7 @@ export function ChallengeWorkspace({
       // Update ref for race condition detection
       currentChallengeIdRef.current = activeChallenge.id;
 
-      const storedCode = localStorage.getItem(`sol_${activeChallenge.id}_code`);
+      const storedCode = getChallengeCode(courseId, activeChallenge.id);
       if (storedCode !== null) {
         setCode(storedCode);
       } else {
@@ -291,10 +304,7 @@ export function ChallengeWorkspace({
       }
 
       // Load solved status
-      const storedStatus = localStorage.getItem(
-        `sol_${activeChallenge.id}_status`
-      );
-      setIsSolved(storedStatus === "solved");
+      setIsSolved(isChallengeSolved(courseId, activeChallenge.id));
       if (
         activeChallenge.defaultTestCases &&
         activeChallenge.defaultTestCases.length > 0
@@ -360,7 +370,7 @@ export function ChallengeWorkspace({
 
     // Debounce save operation (1000ms)
     saveTimeoutRef.current = setTimeout(() => {
-      localStorage.setItem(`sol_${activeChallenge.id}_code`, code);
+      setChallengeCode(courseId, activeChallenge.id, code);
     }, 1000);
 
     return () => {
@@ -474,8 +484,8 @@ export function ChallengeWorkspace({
   const confirmReset = useCallback(() => {
     if (!activeChallenge) return;
     setCode(activeChallenge.initialCode);
-    localStorage.removeItem(`sol_${activeChallenge.id}_code`);
-  }, [activeChallenge]);
+    removeChallengeCode(courseId, activeChallenge.id);
+  }, [activeChallenge, courseId]);
 
   const handleRun = useCallback(
     async (mode: "run" | "submit" = "run") => {
@@ -581,7 +591,7 @@ export function ChallengeWorkspace({
 
           // Update solved status only in submit mode
           if (mode === "submit" && allPassed && activeChallenge) {
-            localStorage.setItem(`sol_${activeChallenge.id}_status`, "solved");
+            markChallengeSolved(courseId, activeChallenge.id);
             setIsSolved(true);
           }
         } catch (err: any) {
@@ -870,20 +880,17 @@ export function ChallengeWorkspace({
             <div className="mx-auto w-full max-w-[85ch] px-6 lg:px-8">
               <header className="mb-8">
                 <p className="text-muted text-sm">
-                  {(() => {
-                    const solvedCount = challenges.filter(c => 
-                      typeof window !== "undefined" && 
-                      localStorage.getItem(`sol_${c.id}_status`) === "solved"
-                    ).length;
-                    
-                    if (solvedCount === 0) {
-                      return `${challenges.length} ${challenges.length === 1 ? 'problem' : 'problems'} to solve`;
-                    } else if (solvedCount === challenges.length) {
-                      return "All challenges completed!";
-                    } else {
-                      return `${solvedCount} of ${challenges.length} completed`;
-                    }
-                  })()}
+                  {!isProgressLoaded
+                    ? `${totalChallenges} ${
+                        totalChallenges === 1 ? "problem" : "problems"
+                      }`
+                    : solvedCount === 0
+                      ? `${totalChallenges} ${
+                          totalChallenges === 1 ? "problem" : "problems"
+                        } to solve`
+                      : solvedCount === totalChallenges
+                        ? "All challenges completed!"
+                        : `${solvedCount} of ${totalChallenges} completed`}
                 </p>
               </header>
 
@@ -891,8 +898,7 @@ export function ChallengeWorkspace({
               <div className="-mx-4 divide-y divide-border">
                 {challenges.map((c, idx) => {
                   const challengeSolved =
-                    typeof window !== "undefined" &&
-                    localStorage.getItem(`sol_${c.id}_status`) === "solved";
+                    isProgressLoaded && isChallengeSolved(courseId, c.id);
                   return (
                     <div key={c.id} className="py-1">
                       <button

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Map } from "lucide-react";
@@ -9,6 +9,7 @@ import { ChallengeWorkspace } from "./ChallengeWorkspace";
 import { MarkCompleteButton } from "./MarkCompleteButton";
 import { useProgress } from "@/lib/progress-context";
 import { preloadMonaco } from "@/lib/monaco-preload";
+import { useChallengeProgress } from "@/lib/use-challenge-progress";
 
 interface StepContainerProps {
   post: PostData;
@@ -38,6 +39,15 @@ export function StepContainer({
   );
 
   const hasChallenges = post.challenges && post.challenges.length > 0;
+  const challengeIds = useMemo(
+    () => post.challenges?.map((c) => c.id) ?? [],
+    [post.challenges]
+  );
+  const {
+    solvedCount: solvedChallenges,
+    total: totalChallenges,
+    isLoaded: isChallengesLoaded,
+  } = useChallengeProgress(collection, challengeIds);
   const { setCurrentStep } = useProgress();
 
   // Track if we should sync state to URL (skip initial mount)
@@ -171,7 +181,11 @@ export function StepContainer({
                 >
                   Challenges
                   <span className="ml-1.5 text-muted">
-                    ({post.challenges?.length})
+                    (
+                    {isChallengesLoaded
+                      ? `${solvedChallenges}/${totalChallenges}`
+                      : `0/${totalChallenges}`}
+                    )
                   </span>
                 </button>
               </div>
@@ -280,6 +294,7 @@ export function StepContainer({
             </main>
           ) : (
             <ChallengeWorkspace
+              courseId={collection}
               challenges={post.challenges || []}
               activeChallengeIndex={activeChallengeIndex}
               setActiveChallengeIndex={handleChallengeIndexChange}

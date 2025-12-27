@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { getCourseConfig } from "@/lib/course-config";
+import { isChallengeSolved, markChallengesSolved } from "@/lib/challenge-storage";
 
 type Status = "loading" | "success" | "error";
 
@@ -42,20 +43,20 @@ export default function SyncPage() {
 
     // Sync challenges to localStorage
     const challenges = challengesStr.split(",").filter(Boolean);
-    let newCount = 0;
+    const newlySolved: string[] = [];
     let existingCount = 0;
 
     for (const id of challenges) {
-      const key = `sol_${id}_status`;
-      if (localStorage.getItem(key) === "solved") {
+      if (isChallengeSolved(cId, id)) {
         existingCount++;
       } else {
-        localStorage.setItem(key, "solved");
-        newCount++;
+        newlySolved.push(id);
       }
     }
 
-    setNewlySynced(newCount);
+    markChallengesSolved(cId, newlySolved);
+
+    setNewlySynced(newlySolved.length);
     setAlreadySynced(existingCount);
     setStatus("success");
   }, []);
