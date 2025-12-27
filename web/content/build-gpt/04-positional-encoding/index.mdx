@@ -384,12 +384,12 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
 
 <Step title="8. Summary">
   <Callout type="success" title="What We Learned">
-    * **Raw position indices** have unbounded magnitude that can overwhelm embeddings
-    * **Number systems** offer inspiration: multiple columns cycling at different speeds
-    * **Sinusoidal waves** smooth discrete cycling into continuous, bounded values
-    * **Sine/cosine pairs** make position shifts a simple linear operation
-    * **Frequency spread** from fast to slow distinguishes both nearby and distant positions
-    * **Addition** combines position and meaning without increasing dimensionality
+    * **Raw position indices** cannot be injected directly because their unbounded magnitude (1, 1000, 10000...) drowns out the semantic signal in the embedding
+    * **Multiple dimensions cycling at different speeds** allow large positions to be encoded with small, bounded values—similar to how decimal uses ones, tens, and hundreds columns
+    * **Sinusoidal waves** provide smooth, continuous values that change gradually from one position to the next while staying bounded between -1 and +1
+    * **Sine/cosine pairs** at each frequency enable position shifts to be computed as a simple rotation matrix, making relative positions ("3 words ahead") consistent regardless of absolute position
+    * **Frequency spread** from fast to slow gives each position a unique fingerprint: fast frequencies separate nearby positions, while slow frequencies distinguish distant ones
+    * **Addition** combines position and meaning into a single vector without increasing dimensionality, letting the model learn from both signals together
   </Callout>
 
   <Description>
