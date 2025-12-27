@@ -376,7 +376,23 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
   </div>
 
   <Description>
-    Let's decode this piece by piece.
+    Each piece maps directly to a choice we already made: interleaved sin/cos pairs, geometric frequency progression, and a base large enough to avoid repetition within the context window. The formula is just compact notation for these ideas.
   </Description>
 
+</Step>
+
+
+<Step title="8. Summary">
+  <Callout type="success" title="What We Learned">
+    * **Raw position indices** have unbounded magnitude that can overwhelm embeddings
+    * **Number systems** offer inspiration: multiple columns cycling at different speeds
+    * **Sinusoidal waves** smooth discrete cycling into continuous, bounded values
+    * **Sine/cosine pairs** make position shifts a simple linear operation
+    * **Frequency spread** from fast to slow distinguishes both nearby and distant positions
+    * **Addition** combines position and meaning without increasing dimensionality
+  </Callout>
+
+  <Description>
+    This isn't the only solution. Learned positional embeddings work well, and modern architectures take different approaches. With both meaning and position now encoded, we have the complete input to the Transformer. In the next chapter, we'll see how it uses these vectors to let words **attend** to each other.
+  </Description>
 </Step>
