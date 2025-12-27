@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { getAllPosts } from "@/lib/posts";
-import { Navbar } from "@/components/Navbar";
-import { ArrowRight, ArrowLeft, Clock, BookOpen } from "lucide-react";
+import { ArrowRight, ArrowLeft, Clock, BookOpen, Code2 } from "lucide-react";
 import { ProgressBar } from "@/components/ProgressBar";
+import { ChallengeProgressBar } from "@/components/ChallengeProgressBar";
+import { ChallengeProgressPill } from "@/components/ChallengeProgressPill";
 import { ChapterCheckbox } from "@/components/ChapterCheckbox";
 import { ContinueButton } from "@/components/ContinueButton";
 import { getCourseConfig } from "@/lib/course-config";
+import fs from "fs";
+import path from "path";
 
 export default async function RoadmapPage({
   params,
@@ -28,7 +31,32 @@ export default async function RoadmapPage({
   };
 
   const visiblePosts = posts.filter((post) => !post.hidden);
-  const totalSteps = visiblePosts.length;
+
+  const contentDir = path.join(process.cwd(), "content");
+  const getChallengeIdsForSlug = (slug: string): string[] => {
+    const chapterMatch = slug.match(/^(\d+)/);
+    const chapterNumber = chapterMatch ? chapterMatch[1] : undefined;
+
+    const coLocatedChallenges = path.join(contentDir, courseId, slug, "challenges");
+    const legacyChallenges = path.join(contentDir, "challenges", courseId, slug);
+    const challengesDir = fs.existsSync(coLocatedChallenges)
+      ? coLocatedChallenges
+      : legacyChallenges;
+
+    if (!fs.existsSync(challengesDir)) return [];
+
+    const challengeBundles = fs
+      .readdirSync(challengesDir, { withFileTypes: true })
+      .filter((dirent) => dirent.isDirectory())
+      .map((dirent) => dirent.name)
+      .sort();
+
+    return challengeBundles.map((bundleName) => {
+      const problemMatch = bundleName.match(/^(\d+)/);
+      const problemNumber = problemMatch ? problemMatch[1] : undefined;
+      return chapterNumber && problemNumber ? `${chapterNumber}-${problemNumber}` : bundleName;
+    });
+  };
 
   // Only count main chapters (whole numbers) for progress tracking
   // Sub-steps like 9.1, 9.2 are part of projects and tracked separately
@@ -44,16 +72,16 @@ export default async function RoadmapPage({
       slugMap[p.step] = p.slug;
     });
 
-  // Check if step falls within a phase range (handles decimal steps like 9.1, 9.2)
-  const getPhaseForStep = (step: number) => {
-    for (let i = 0; i < metadata.phases.length; i++) {
-      const [min, max] = metadata.phases[i].stepRange;
-      if (step >= min && step < max + 1) {
-        return i;
-      }
+  const challengeIdsBySlug: Record<string, string[]> = {};
+  const allChallengeIdSet = new Set<string>();
+  for (const post of visiblePosts) {
+    const ids = getChallengeIdsForSlug(post.slug);
+    if (ids.length > 0) {
+      challengeIdsBySlug[post.slug] = ids;
+      ids.forEach((id) => allChallengeIdSet.add(id));
     }
-    return -1;
-  };
+  }
+  const allChallengeIds = Array.from(allChallengeIdSet);
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,6 +109,12 @@ export default async function RoadmapPage({
               <BookOpen className="w-4 h-4" />
               <span>{mainChapterSteps.length} chapters</span>
             </div>
+            {allChallengeIds.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Code2 className="w-4 h-4" />
+                <span>{allChallengeIds.length} problems</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span>~120 hours</span>
@@ -93,6 +127,14 @@ export default async function RoadmapPage({
               courseId={courseId}
               totalSteps={mainChapterSteps.length}
             />
+            {allChallengeIds.length > 0 && (
+              <div className="mt-3">
+                <ChallengeProgressBar
+                  courseId={courseId}
+                  challengeIds={allChallengeIds}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -177,12 +219,14 @@ export default async function RoadmapPage({
 
                 {/* Chapter Timeline */}
                 <div className="relative ml-4 pl-4 border-l border-zinc-800">
-                  {phaseChapters.map((post) => (
-                    <Link
-                      key={post.slug}
-                      href={`/${courseId}/${post.slug}`}
-                      className="group block relative border-b border-border last:border-0"
-                    >
+                  {phaseChapters.map((post) => {
+                    const chapterChallengeIds = challengeIdsBySlug[post.slug] ?? [];
+                    return (
+                      <Link
+                        key={post.slug}
+                        href={`/${courseId}/${post.slug}`}
+                        className="group block relative border-b border-border last:border-0"
+                      >
                       {/* Timeline Node (Checkbox) */}
                       <div className="absolute -left-[24.5px] top-1/2 -translate-y-1/2 z-10 bg-background ring-4 ring-background">
                         <ChapterCheckbox
@@ -211,13 +255,22 @@ export default async function RoadmapPage({
                           </div>
 
                           {/* Arrow - Always visible for balance */}
-                          <div className="shrink-0 text-zinc-700 group-hover:text-primary group-hover:translate-x-1 transition-all duration-150 ml-auto">
-                            <ArrowRight className="w-4 h-4" />
+                          <div className="shrink-0 flex items-center gap-2 ml-auto">
+                            {chapterChallengeIds.length > 0 && (
+                              <ChallengeProgressPill
+                                courseId={courseId}
+                                challengeIds={chapterChallengeIds}
+                              />
+                            )}
+                            <div className="text-zinc-700 group-hover:text-primary group-hover:translate-x-1 transition-all duration-150">
+                              <ArrowRight className="w-4 h-4" />
+                            </div>
                           </div>
                         </div>
                       </div>
                     </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
