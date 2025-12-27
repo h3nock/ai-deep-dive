@@ -235,6 +235,7 @@ export function StepContainer({
                   <div className="flex items-center gap-3 mb-6 text-sm text-muted">
                     <Link
                       href={backLink.href}
+                      prefetch={true}
                       className="hover:text-primary transition-colors flex items-center gap-1"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -257,6 +258,7 @@ export function StepContainer({
                     </div>
                     <Link
                       href={backLink.href}
+                      prefetch={true}
                       className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg border border-border text-muted hover:text-primary hover:border-zinc-600 transition-colors shrink-0"
                       title={backLink.label}
                     >
@@ -294,6 +296,7 @@ export function StepContainer({
                     {prevPost ? (
                       <Link
                         href={`/${collection}/${prevPost.slug}`}
+                        prefetch={true}
                         className="group flex flex-col p-5 rounded-xl border border-border hover:border-zinc-600 hover:bg-surface transition-all"
                       >
                         <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">
@@ -310,6 +313,7 @@ export function StepContainer({
                     {nextPost ? (
                       <Link
                         href={`/${collection}/${nextPost.slug}`}
+                        prefetch={true}
                         className="group flex flex-col items-end text-right p-5 rounded-xl border border-border hover:border-zinc-600 hover:bg-surface transition-all"
                       >
                         <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">

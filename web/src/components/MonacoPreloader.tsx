@@ -5,16 +5,22 @@ import { preloadMonaco } from "@/lib/monaco-preload";
 
 /**
  * App-level Monaco preloader component.
- * Triggers Monaco preload immediately on app mount, before user navigates to challenges.
- * This ensures the editor is ready instantly when needed.
+ * Preloads Monaco during browser idle time to avoid blocking initial render.
+ * This ensures the editor is ready by the time a user navigates to challenges.
  */
 export function MonacoPreloader() {
   useEffect(() => {
-    // Start preloading Monaco immediately
-    // This runs on first page load regardless of which page
-    preloadMonaco();
+    // Use requestIdleCallback to avoid blocking initial page render
+    const ric = window.requestIdleCallback;
+    if (ric) {
+      const handle = ric(() => preloadMonaco(), { timeout: 3000 });
+      return () => window.cancelIdleCallback(handle);
+    }
+
+    // Fallback for Safari: delay slightly to let initial render complete
+    const timer = setTimeout(preloadMonaco, 100);
+    return () => clearTimeout(timer);
   }, []);
 
-  // This component renders nothing
   return null;
 }
