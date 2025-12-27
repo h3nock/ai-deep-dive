@@ -676,7 +676,7 @@ export function ChallengeWorkspace({
 
   return (
     <div
-      className={`flex h-[calc(100vh-4rem)] bg-background border-t border-border overflow-hidden select-none ${
+      className={`flex h-[calc(100vh-4rem)] bg-background border-t border-border overflow-hidden ${
         isDragging ? "cursor-grabbing" : ""
       }`}
       style={{

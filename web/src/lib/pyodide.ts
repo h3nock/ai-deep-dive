@@ -91,31 +91,72 @@ export async function runTestsWithPyodide(
   let currentStdout = "";
   let currentStderr = "";
 
+  // Note: Pyodide's batched handler strips newlines from complete lines
+  // We add them back to preserve print() formatting
   pyodide.setStdout({
     batched: (text: string) => {
-      currentStdout += text;
-      onStdout?.(text);
+      const textWithNewline = text + "\n";
+      currentStdout += textWithNewline;
+      onStdout?.(textWithNewline);
     },
   });
 
   pyodide.setStderr({
     batched: (text: string) => {
-      currentStderr += text;
-      onStderr?.(text);
+      const textWithNewline = text + "\n";
+      currentStderr += textWithNewline;
+      onStderr?.(textWithNewline);
     },
   });
 
   // First, try to execute user code to define functions/classes
   // We wrap this in a fresh namespace that persists across test cases
+  // Error handling is done in Python for clean, user-friendly messages
   const setupCode = `
+import traceback as __tb__
+import sys as __sys__
+
+def __format_user_error__(user_filename='solution.py'):
+    """Format exception showing only frames from the user's code file."""
+    exc_type, exc_value, exc_tb = __sys__.exc_info()
+
+    # SyntaxError has file/line info in the exception itself, not in traceback
+    if isinstance(exc_value, SyntaxError) and exc_value.filename == user_filename:
+        lines = [f'Line {exc_value.lineno}:']
+        if exc_value.text:
+            lines.append(f'    {exc_value.text.rstrip()}')
+        lines.append(f'{exc_type.__name__}: {exc_value.msg}')
+        return '\\n'.join(lines)
+
+    # Runtime errors: filter traceback to only show user's code
+    frames = __tb__.extract_tb(exc_tb)
+    user_frames = [f for f in frames if f.filename == user_filename]
+
+    lines = []
+    for frame in user_frames:
+        if frame.name == '<module>':
+            lines.append(f'Line {frame.lineno}:')
+        else:
+            lines.append(f'Line {frame.lineno}, in {frame.name}:')
+        if frame.line:
+            lines.append(f'    {frame.line}')
+    lines.append(f'{exc_type.__name__}: {exc_value}')
+    return '\\n'.join(lines)
+
 __user_globals__ = {}
-exec(${JSON.stringify(userCode)}, __user_globals__)
+__user_error__ = None
+try:
+    __user_code__ = compile(${JSON.stringify(userCode)}, 'solution.py', 'exec')
+    exec(__user_code__, __user_globals__)
+except Exception:
+    __user_error__ = __format_user_error__()
 `;
 
-  try {
-    await pyodide.runPythonAsync(setupCode);
-  } catch (error: any) {
-    // If user code fails, all tests fail
+  await pyodide.runPythonAsync(setupCode);
+
+  // Check if user code had an error
+  const userError = await pyodide.runPythonAsync("__user_error__");
+  if (userError) {
     return [
       {
         id: "error",
@@ -124,7 +165,7 @@ exec(${JSON.stringify(userCode)}, __user_globals__)
         stdout: currentStdout,
         output: "",
         expected: "",
-        stderr: error.message || String(error),
+        stderr: userError,
       },
     ];
   }
@@ -138,14 +179,14 @@ exec(${JSON.stringify(userCode)}, __user_globals__)
     let output = "";
     let stderr = "";
 
-    try {
-      // Create a fresh case-specific namespace that inherits user functions
-      // This prevents variable pollution between test cases
-      const testCode = `
+    // Create a fresh case-specific namespace that inherits user functions
+    // This prevents variable pollution between test cases
+    // Error handling is done in Python for clean, user-friendly messages
+    const testCode = `
 import json as __json__
 __case_globals__ = __user_globals__.copy()
-exec(${JSON.stringify(testCase.input)}, __case_globals__)
-__result__ = eval(${JSON.stringify(config.runner)}, __case_globals__)
+__test_error__ = None
+__result_json__ = None
 
 # Custom serializer for Python objects
 def __serialize__(obj):
@@ -159,11 +200,24 @@ def __serialize__(obj):
     else:
         return obj
 
-__result_json__ = __json__.dumps(__serialize__(__result__))
+try:
+    # Compile test setup with different filename so it's filtered out of tracebacks
+    __test_setup__ = compile(${JSON.stringify(testCase.input)}, '<test>', 'exec')
+    exec(__test_setup__, __case_globals__)
+    __result__ = eval(${JSON.stringify(config.runner)}, __case_globals__)
+    __result_json__ = __json__.dumps(__serialize__(__result__))
+except Exception:
+    __test_error__ = __format_user_error__()
 `;
 
-      await pyodide.runPythonAsync(testCode);
+    await pyodide.runPythonAsync(testCode);
 
+    // Check for test error
+    const testError = await pyodide.runPythonAsync("__test_error__");
+    if (testError) {
+      status = "Runtime Error";
+      stderr = testError;
+    } else {
       // Get the JSON result directly from Python
       const resultJson = await pyodide.runPythonAsync("__result_json__");
       output = resultJson;
@@ -186,9 +240,6 @@ __result_json__ = __json__.dumps(__serialize__(__result__))
       if (JSON.stringify(actualValue) !== JSON.stringify(normalizedExpected)) {
         status = "Wrong Answer";
       }
-    } catch (error: any) {
-      status = "Runtime Error";
-      stderr = currentStderr + (error.message || String(error));
     }
 
     results.push({
