@@ -13,6 +13,9 @@ type PyodideInterface = {
 let pyodideInstance: PyodideInterface | null = null;
 let loadPromise: Promise<PyodideInterface> | null = null;
 
+// Execution limit to prevent infinite loops (number of Python operations)
+const EXECUTION_LIMIT = 1_000_000;
+
 // Load Pyodide from CDN
 export async function loadPyodide(): Promise<PyodideInterface> {
   if (pyodideInstance) {
@@ -24,24 +27,31 @@ export async function loadPyodide(): Promise<PyodideInterface> {
   }
 
   loadPromise = (async () => {
-    // Dynamically load Pyodide script if not already loaded
-    if (typeof window !== "undefined" && !(window as any).loadPyodide) {
-      await new Promise<void>((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/pyodide/v0.27.6/full/pyodide.js";
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error("Failed to load Pyodide"));
-        document.head.appendChild(script);
+    try {
+      // Dynamically load Pyodide script if not already loaded
+      if (typeof window !== "undefined" && !(window as any).loadPyodide) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src =
+            "https://cdn.jsdelivr.net/pyodide/v0.27.6/full/pyodide.js";
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load Pyodide"));
+          document.head.appendChild(script);
+        });
+      }
+
+      // Initialize Pyodide
+      const pyodide = await (window as any).loadPyodide({
+        indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.6/full/",
       });
+
+      pyodideInstance = pyodide;
+      return pyodide;
+    } catch (error) {
+      // Reset loadPromise on failure so retry works
+      loadPromise = null;
+      throw error;
     }
-
-    // Initialize Pyodide
-    const pyodide = await (window as any).loadPyodide({
-      indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.6/full/",
-    });
-
-    pyodideInstance = pyodide;
-    return pyodide;
   })();
 
   return loadPromise;
@@ -116,9 +126,33 @@ export async function runTestsWithPyodide(
 import traceback as __tb__
 import sys as __sys__
 
+class __ExecutionLimitExceeded__(Exception):
+    """Raised when code exceeds the execution limit."""
+    pass
+
+# Operation counter for timeout detection
+__op_count__ = 0
+__op_limit__ = ${EXECUTION_LIMIT}
+
+def __trace_calls__(frame, event, arg):
+    """Trace function that counts operations and raises on limit."""
+    global __op_count__
+    __op_count__ += 1
+    if __op_count__ > __op_limit__:
+        raise __ExecutionLimitExceeded__("Execution limit exceeded (possible infinite loop)")
+    return __trace_calls__
+
+def __reset_op_count__():
+    global __op_count__
+    __op_count__ = 0
+
 def __format_user_error__(user_filename='solution.py'):
     """Format exception showing only frames from the user's code file."""
     exc_type, exc_value, exc_tb = __sys__.exc_info()
+
+    # Handle execution limit exceeded with a clean message
+    if exc_type is __ExecutionLimitExceeded__:
+        return 'ExecutionLimitExceeded: Code took too long to run (possible infinite loop)'
 
     # SyntaxError has file/line info in the exception itself, not in traceback
     if isinstance(exc_value, SyntaxError) and exc_value.filename == user_filename:
@@ -147,8 +181,14 @@ __user_globals__ = {}
 __user_error__ = None
 try:
     __user_code__ = compile(${JSON.stringify(userCode)}, 'solution.py', 'exec')
-    exec(__user_code__, __user_globals__)
+    __reset_op_count__()
+    __sys__.settrace(__trace_calls__)
+    try:
+        exec(__user_code__, __user_globals__)
+    finally:
+        __sys__.settrace(None)
 except Exception:
+    __sys__.settrace(None)
     __user_error__ = __format_user_error__()
 `;
 
@@ -184,7 +224,8 @@ except Exception:
     // Error handling is done in Python for clean, user-friendly messages
     const testCode = `
 import json as __json__
-__case_globals__ = __user_globals__.copy()
+import copy as __copy__
+__case_globals__ = __copy__.deepcopy(__user_globals__)
 __test_error__ = None
 __result_json__ = None
 
@@ -203,10 +244,16 @@ def __serialize__(obj):
 try:
     # Compile test setup with different filename so it's filtered out of tracebacks
     __test_setup__ = compile(${JSON.stringify(testCase.input)}, '<test>', 'exec')
-    exec(__test_setup__, __case_globals__)
-    __result__ = eval(${JSON.stringify(config.runner)}, __case_globals__)
+    __reset_op_count__()
+    __sys__.settrace(__trace_calls__)
+    try:
+        exec(__test_setup__, __case_globals__)
+        __result__ = eval(${JSON.stringify(config.runner)}, __case_globals__)
+    finally:
+        __sys__.settrace(None)
     __result_json__ = __json__.dumps(__serialize__(__result__))
 except Exception:
+    __sys__.settrace(None)
     __test_error__ = __format_user_error__()
 `;
 
