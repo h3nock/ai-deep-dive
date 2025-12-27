@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getAllPosts } from "@/lib/posts";
+import { notFound } from "next/navigation";
+import { getAllPosts, listCollections } from "@/lib/posts";
 import { ArrowRight, ArrowLeft, Clock, BookOpen, Code2 } from "lucide-react";
 import { ProgressBar } from "@/components/ProgressBar";
 import { ChallengeProgressBar } from "@/components/ChallengeProgressBar";
@@ -7,8 +8,15 @@ import { ChallengeProgressPill } from "@/components/ChallengeProgressPill";
 import { ChapterCheckbox } from "@/components/ChapterCheckbox";
 import { ContinueButton } from "@/components/ContinueButton";
 import { getCourseConfig } from "@/lib/course-config";
+import { isSafePathSegment } from "@/lib/path-safety";
 import fs from "fs";
 import path from "path";
+
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  return listCollections().map((courseId) => ({ courseId }));
+}
 
 export default async function RoadmapPage({
   params,
@@ -16,6 +24,9 @@ export default async function RoadmapPage({
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
+  if (!isSafePathSegment(courseId)) {
+    notFound();
+  }
   const posts = getAllPosts(courseId);
 
   const metadata = getCourseConfig(courseId) || {
@@ -34,6 +45,8 @@ export default async function RoadmapPage({
 
   const contentDir = path.join(process.cwd(), "content");
   const getChallengeIdsForSlug = (slug: string): string[] => {
+    if (!isSafePathSegment(slug)) return [];
+
     const chapterMatch = slug.match(/^(\d+)/);
     const chapterNumber = chapterMatch ? chapterMatch[1] : undefined;
 
@@ -47,7 +60,7 @@ export default async function RoadmapPage({
 
     const challengeBundles = fs
       .readdirSync(challengesDir, { withFileTypes: true })
-      .filter((dirent) => dirent.isDirectory())
+      .filter((dirent) => dirent.isDirectory() && isSafePathSegment(dirent.name))
       .map((dirent) => dirent.name)
       .sort();
 

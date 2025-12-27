@@ -101,7 +101,7 @@ interface TestResult {
   hidden?: boolean;
 }
 
-interface ChallengeWorkspaceProps {
+export interface ChallengeWorkspaceProps {
   courseId: string;
   challenges: Challenge[];
   activeChallengeIndex?: number | null;

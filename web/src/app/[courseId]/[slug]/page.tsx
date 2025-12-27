@@ -1,6 +1,4 @@
-import fs from "fs";
-import path from "path";
-import { getPostBySlug, getAllPosts } from "@/lib/posts";
+import { getPostBySlug, getAllPosts, listCollections } from "@/lib/posts";
 import { notFound } from "next/navigation";
 import { StepContainer } from "@/components/StepContainer";
 import { MDXRemote } from "next-mdx-remote/rsc";
@@ -28,6 +26,9 @@ import dynamic from "next/dynamic";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import rehypePrettyCode from "rehype-pretty-code";
+import { isSafePathSegment } from "@/lib/path-safety";
+
+export const revalidate = 300;
 
 // Lazy load heavy interactive components
 const FrequencyWaves = dynamic(() =>
@@ -85,25 +86,8 @@ const components = {
   RotationVisualization,
 };
 
-function getCollections() {
-  const contentDir = path.join(process.cwd(), "content");
-  if (!fs.existsSync(contentDir)) {
-    return [];
-  }
-
-  return fs
-    .readdirSync(contentDir, { withFileTypes: true })
-    .filter(
-      (entry) =>
-        entry.isDirectory() &&
-        entry.name !== "challenges" &&
-        !entry.name.startsWith(".")
-    )
-    .map((entry) => entry.name);
-}
-
 export async function generateStaticParams() {
-  const collections = getCollections();
+  const collections = listCollections();
 
   let params: { courseId: string; slug: string }[] = [];
 
@@ -125,10 +109,13 @@ export default async function StepPage({
   searchParams,
 }: {
   params: Promise<{ courseId: string; slug: string }>;
-  searchParams: Promise<{ view?: string; c?: string }>;
+  searchParams?: Promise<{ view?: string; c?: string }>;
 }) {
   const { courseId, slug } = await params;
-  const { view, c } = await searchParams;
+  const { view, c } = (await searchParams) ?? {};
+  if (!isSafePathSegment(courseId) || !isSafePathSegment(slug)) {
+    notFound();
+  }
   const post = await getPostBySlug(courseId, slug);
   const allPosts = getAllPosts(courseId);
 

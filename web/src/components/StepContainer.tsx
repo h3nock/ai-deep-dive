@@ -1,15 +1,27 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Map } from "lucide-react";
 import { PostData } from "@/lib/posts";
-import { ChallengeWorkspace } from "./ChallengeWorkspace";
 import { MarkCompleteButton } from "./MarkCompleteButton";
 import { useProgress } from "@/lib/progress-context";
-import { preloadMonaco } from "@/lib/monaco-preload";
 import { useChallengeProgress } from "@/lib/use-challenge-progress";
+import type { ChallengeWorkspaceProps } from "./ChallengeWorkspace";
+
+const ChallengeWorkspace = dynamic<ChallengeWorkspaceProps>(
+  () => import("./ChallengeWorkspace").then((mod) => mod.ChallengeWorkspace),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-1 items-center justify-center text-muted">
+        Loading workspace...
+      </div>
+    ),
+  }
+);
 
 interface StepContainerProps {
   post: PostData;
@@ -122,12 +134,34 @@ export function StepContainer({
     }
   }, [collection, post.step, setCurrentStep]);
 
-  // Preload Monaco editor - run immediately for faster load
-  // When starting on challenges tab, Monaco will already be loading
+  // Preload the ChallengeWorkspace chunk in the background during idle time.
+  // Monaco is already preloaded globally via MonacoPreloader in layout.tsx.
   useEffect(() => {
-    if (hasChallenges) {
-      preloadMonaco();
+    if (!hasChallenges) return;
+
+    let cancelled = false;
+
+    const preloadChunk = () => {
+      if (!cancelled) {
+        import("./ChallengeWorkspace");
+      }
+    };
+
+    // Use requestIdleCallback if available, otherwise fall back to setTimeout
+    const ric = window.requestIdleCallback;
+    if (ric) {
+      const idleHandle = ric(preloadChunk, { timeout: 2000 });
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback(idleHandle);
+      };
     }
+
+    const timerHandle = setTimeout(preloadChunk, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timerHandle);
+    };
   }, [hasChallenges]);
 
   // Smart Back Link Logic

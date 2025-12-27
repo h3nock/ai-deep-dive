@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
+import { cache } from "react";
+import { isSafePathSegment, sanitizePathSegment } from "./path-safety";
 
 const contentDirectory = path.join(process.cwd(), "content");
 
@@ -55,8 +57,28 @@ function deriveStepFromSlug(slug: string): number | undefined {
   return match ? parseFloat(match[1]) : undefined;
 }
 
-function getCourseManifest(collection: string): CourseManifest | null {
-  const manifestPath = path.join(contentDirectory, collection, "meta.json");
+export const listCollections = cache((): string[] => {
+  if (!fs.existsSync(contentDirectory)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(contentDirectory, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isDirectory() &&
+        entry.name !== "challenges" &&
+        !entry.name.startsWith(".") &&
+        isSafePathSegment(entry.name)
+    )
+    .map((entry) => entry.name);
+});
+
+const getCourseManifest = cache((collection: string): CourseManifest | null => {
+  const safeCollection = sanitizePathSegment(collection);
+  if (!safeCollection) return null;
+
+  const manifestPath = path.join(contentDirectory, safeCollection, "meta.json");
   if (!fs.existsSync(manifestPath)) return null;
 
   try {
@@ -66,7 +88,7 @@ function getCourseManifest(collection: string): CourseManifest | null {
     console.error(`Failed to read manifest for ${collection}:`, e);
     return null;
   }
-}
+});
 
 function loadPostFrontmatter(
   filePath: string,
@@ -99,7 +121,10 @@ function loadPostFrontmatter(
 }
 
 function findPostFile(collectionPath: string, slug: string): string | null {
-  const dirPath = path.join(collectionPath, slug);
+  const safeSlug = sanitizePathSegment(slug);
+  if (!safeSlug) return null;
+
+  const dirPath = path.join(collectionPath, safeSlug);
   const dirCandidates = [
     path.join(dirPath, "index.mdx"),
     path.join(dirPath, "index.md"),
@@ -112,8 +137,8 @@ function findPostFile(collectionPath: string, slug: string): string | null {
   }
 
   const fileCandidates = [
-    path.join(collectionPath, `${slug}.mdx`),
-    path.join(collectionPath, `${slug}.md`),
+    path.join(collectionPath, `${safeSlug}.mdx`),
+    path.join(collectionPath, `${safeSlug}.md`),
   ];
 
   for (const candidate of fileCandidates) {
@@ -155,11 +180,18 @@ function sortPosts(
   });
 }
 
-export function getAllPosts(collection: string): Omit<PostData, "content">[] {
-  const collectionPath = path.join(contentDirectory, collection);
-  const manifest = getCourseManifest(collection);
+const getAllPostsUncached = (
+  collection: string
+): Omit<PostData, "content">[] => {
+  const safeCollection = sanitizePathSegment(collection);
+  if (!safeCollection) {
+    console.warn(`Invalid collection name: ${collection}`);
+    return [];
+  }
 
-  // Ensure directory exists
+  const collectionPath = path.join(contentDirectory, safeCollection);
+  const manifest = getCourseManifest(safeCollection);
+
   if (!fs.existsSync(collectionPath)) {
     console.warn(`Collection directory not found: ${collectionPath}`);
     return [];
@@ -171,9 +203,8 @@ export function getAllPosts(collection: string): Omit<PostData, "content">[] {
   );
   const uniquePosts = new Map<string, Omit<PostData, "content">>();
 
-  // Prefer directory-based content with index.mdx/index.md
   entries
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() && isSafePathSegment(entry.name))
     .forEach((entry) => {
       const slug = entry.name;
       const postPath = findPostFile(collectionPath, slug);
@@ -183,18 +214,18 @@ export function getAllPosts(collection: string): Omit<PostData, "content">[] {
       const post = loadPostFrontmatter(
         postPath,
         slug,
-        collection,
+        safeCollection,
         manifestStep
       );
       uniquePosts.set(slug, post);
     });
 
-  // Backward compatibility: loose files in the course root
   entries
     .filter(
       (entry) =>
         entry.isFile() &&
-        (entry.name.endsWith(".md") || entry.name.endsWith(".mdx"))
+        (entry.name.endsWith(".md") || entry.name.endsWith(".mdx")) &&
+        isSafePathSegment(entry.name.replace(/\.mdx?$/, ""))
     )
     .forEach((entry) => {
       const slug = entry.name.replace(/\.mdx?$/, "");
@@ -205,123 +236,135 @@ export function getAllPosts(collection: string): Omit<PostData, "content">[] {
       const post = loadPostFrontmatter(
         postPath,
         slug,
-        collection,
+        safeCollection,
         manifestStep
       );
       uniquePosts.set(slug, post);
     });
 
   return sortPosts(Array.from(uniquePosts.values()), manifest);
-}
+};
 
-export async function getPostBySlug(
-  collection: string,
-  slug: string
-): Promise<PostData | null> {
-  try {
-    const collectionPath = path.join(contentDirectory, collection);
+export const getAllPosts = cache(getAllPostsUncached);
 
-    const manifest = getCourseManifest(collection);
-    const manifestStep = manifest?.steps?.find((step) => step.slug === slug);
-    const postPath = findPostFile(collectionPath, slug);
+export const getPostBySlug = cache(
+  async (collection: string, slug: string): Promise<PostData | null> => {
+    const safeCollection = sanitizePathSegment(collection);
+    const safeSlug = sanitizePathSegment(slug);
 
-    if (!postPath) {
+    if (!safeCollection || !safeSlug) {
+      console.warn(
+        `Invalid collection/slug combination: ${collection}/${slug}`
+      );
       return null;
     }
 
-    const fileContents = fs.readFileSync(postPath, "utf8");
-    const { data, content } = matter(fileContents);
+    try {
+      const collectionPath = path.join(contentDirectory, safeCollection);
 
-    const postMeta = loadPostFrontmatter(
-      postPath,
-      slug,
-      collection,
-      manifestStep,
-      data
-    );
+      const manifest = getCourseManifest(safeCollection);
+      const manifestStep = manifest?.steps?.find(
+        (step) => step.slug === safeSlug
+      );
+      const postPath = findPostFile(collectionPath, safeSlug);
 
-    // Load challenges from co-located folder, else fallback to legacy path
-    const coLocatedChallenges = path.join(path.dirname(postPath), "challenges");
-    const legacyChallenges = path.join(
-      contentDirectory,
-      "challenges",
-      collection,
-      slug
-    );
-    const challengesDir = fs.existsSync(coLocatedChallenges)
-      ? coLocatedChallenges
-      : legacyChallenges;
+      if (!postPath) {
+        return null;
+      }
 
-    if (fs.existsSync(challengesDir)) {
-      // Extract chapter number from slug (e.g., "02-tokenization" -> "02")
-      const chapterMatch = slug.match(/^(\d+)/);
-      const chapterNumber = chapterMatch ? chapterMatch[1] : undefined;
+      const fileContents = fs.readFileSync(postPath, "utf8");
+      const { data, content } = matter(fileContents);
 
-      const challengeBundles = fs
-        .readdirSync(challengesDir, { withFileTypes: true })
-        .filter((dirent) => dirent.isDirectory())
-        .map((dirent) => dirent.name)
-        .sort(); // Sort by folder name (e.g., 01-encoder, 02-byte-inspector)
+      const postMeta = loadPostFrontmatter(
+        postPath,
+        safeSlug,
+        safeCollection,
+        manifestStep,
+        data
+      );
 
-      data.challenges = challengeBundles
-        .map((bundleName) => {
-          const bundlePath = path.join(challengesDir, bundleName);
+      const coLocatedChallenges = path.join(
+        path.dirname(postPath),
+        "challenges"
+      );
+      const legacyChallenges = path.join(
+        contentDirectory,
+        "challenges",
+        safeCollection,
+        safeSlug
+      );
+      const challengesDir = fs.existsSync(coLocatedChallenges)
+        ? coLocatedChallenges
+        : legacyChallenges;
 
-          // Extract problem number from bundle name (e.g., "01-pair-counter" -> "01")
-          const problemMatch = bundleName.match(/^(\d+)/);
-          const problemNumber = problemMatch ? problemMatch[1] : undefined;
+      if (fs.existsSync(challengesDir)) {
+        const chapterMatch = safeSlug.match(/^(\d+)/);
+        const chapterNumber = chapterMatch ? chapterMatch[1] : undefined;
 
-          // Auto-generate unique ID from chapter and problem numbers
-          // Format: "02-03" for chapter 02, problem 03
-          const autoId =
-            chapterNumber && problemNumber
-              ? `${chapterNumber}-${problemNumber}`
-              : bundleName;
+        const challengeBundles = fs
+          .readdirSync(challengesDir, { withFileTypes: true })
+          .filter(
+            (dirent) => dirent.isDirectory() && isSafePathSegment(dirent.name)
+          )
+          .map((dirent) => dirent.name)
+          .sort();
 
-          // Load description.md
-          const descriptionPath = path.join(bundlePath, "description.md");
-          if (!fs.existsSync(descriptionPath)) {
-            console.warn(`Missing description.md in bundle: ${bundleName}`);
-            return null;
-          }
-          const descriptionContent = fs.readFileSync(descriptionPath, "utf8");
-          const { data: challengeData, content: challengeBody } =
-            matter(descriptionContent);
+        data.challenges = challengeBundles
+          .map((bundleName) => {
+            const bundlePath = path.join(challengesDir, bundleName);
 
-          // Load tests.json
-          let defaultTestCases = [];
-          const testsPath = path.join(bundlePath, "tests.json");
-          if (fs.existsSync(testsPath)) {
-            try {
-              defaultTestCases = JSON.parse(fs.readFileSync(testsPath, "utf8"));
-            } catch (e) {
-              console.error(
-                `Failed to load tests for bundle ${bundleName}:`,
-                e
-              );
+            const problemMatch = bundleName.match(/^(\d+)/);
+            const problemNumber = problemMatch ? problemMatch[1] : undefined;
+
+            const autoId =
+              chapterNumber && problemNumber
+                ? `${chapterNumber}-${problemNumber}`
+                : bundleName;
+
+            const descriptionPath = path.join(bundlePath, "description.md");
+            if (!fs.existsSync(descriptionPath)) {
+              console.warn(`Missing description.md in bundle: ${bundleName}`);
+              return null;
             }
-          }
+            const descriptionContent = fs.readFileSync(descriptionPath, "utf8");
+            const { data: challengeData, content: challengeBody } =
+              matter(descriptionContent);
 
-          return {
-            ...challengeData,
-            id: autoId, // Override with auto-generated ID (always unique)
-            description: challengeBody,
-            defaultTestCases,
-            chapterNumber,
-            problemNumber,
-          } as Challenge;
-        })
-        .filter(Boolean) as Challenge[]; // Filter out nulls
+            let defaultTestCases = [];
+            const testsPath = path.join(bundlePath, "tests.json");
+            if (fs.existsSync(testsPath)) {
+              try {
+                defaultTestCases = JSON.parse(
+                  fs.readFileSync(testsPath, "utf8")
+                );
+              } catch (e) {
+                console.error(
+                  `Failed to load tests for bundle ${bundleName}:`,
+                  e
+                );
+              }
+            }
+
+            return {
+              ...challengeData,
+              id: autoId,
+              description: challengeBody,
+              defaultTestCases,
+              chapterNumber,
+              problemNumber,
+            } as Challenge;
+          })
+          .filter(Boolean) as Challenge[];
+      }
+
+      return {
+        ...postMeta,
+        content,
+        challenges: data.challenges,
+      };
+    } catch (e) {
+      console.error(e);
+      return null;
     }
-
-    // Return raw content for RSC rendering
-    return {
-      ...postMeta,
-      content: content, // Raw string
-      challenges: data.challenges,
-    };
-  } catch (e) {
-    console.error(e);
-    return null;
   }
-}
+);
