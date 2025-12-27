@@ -343,11 +343,11 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
   </Description>
 
   <Description>
-    How slow should the slowest frequency be? Think back to number systems: a 2-digit counter wraps from 99 back to 00, making position 100 look identical to position 0. The same happens if our slowest wave completes a full cycle within the context window. To avoid this, we want the slowest wavelength to exceed typical context lengths. With a wavelength of 10,000 × 2π ≈ 62,800 positions, contexts of 2,048 or even 8,192 tokens stay within the first quarter of the cycle (0 to π/2), where sine only increases.
+    How slow should the slowest frequency be? Think of a 2-digit counter that wraps from 99 back to 00. A sinusoid has similar wrap-around: for a given ω, the pair (sin(ω · pos), cos(ω · pos)) repeats every 2π/ω. If that wavelength is shorter than your sequence length, that component might reuse the same values for multiple positions. A practical heuristic is to make the slowest wavelength much longer than the longest sequences you expect. With the paper’s 10000 scale, the longest wavelength is on the order of 2π · 10000 (about 6 × 10<sup>4</sup> positions), so it changes very slowly across typical windows and provides a coarse notion of position.
   </Description>
 
   <Description>
-    So we want frequencies ranging from 1 (fastest) down to 1/10000 (slowest), spread across our d_model/2 slots. We can spread them evenly on a logarithmic scale using:
+    So we want frequencies ranging from 1 (fastest) down to about 1/10000 (slowest), spread across our d_model/2 slots. We can spread them evenly on a logarithmic scale using:
   </Description>
 
   <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
@@ -355,7 +355,7 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
   </div>
 
   <Description>
-    The exponent `2i/d_model` normalizes the frequency index to a 0→1 range. Since i goes from 0 to d_model/2, we multiply by 2 to span the full range. At `i = 0`, the exponent is 0, so ω = 1 (fastest). At `i = d_model/2`, the exponent reaches 1, so ω = 1/10000 (slowest).
+    The exponent `2i/d_model` maps `i` over `[0, d_model/2)` into `[0, 1)`, which spaces the frequencies evenly on a log scale. At `i = 0`, the exponent is 0, so ω = 1 (fastest). At the last sine/cosine pair, the exponent is 1, so ω is 1/10000 (slowest).
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Formula</h4>
