@@ -39,7 +39,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 </Description>
 
 <Description>
-  Here is the problem: if we only feed word embeddings (no position info), the compatibility between "Alice" and "Bob" depends on *what* they are, not *where* they appear. Both sentences would produce identical scores. The model can see that "Alice" and "Bob" are related, but it cannot tell which one is the Subject (giver) and which is the Object (receiver). Order is essential for meaning, yet nothing in these vectors encodes it. We need to find a way to inject position information.
+  At first glance, this seems problematic: if we only feed word embeddings, the compatibility between "Alice" and "Bob" depends on *what* they are, not *where* they appear. Both sentences would produce identical scores. Nothing in these vectors explicitly encodes order, so it's not obvious how the model would distinguish Subject from Object. This motivates us to think about ways to inject position information, and what follows is one line of reasoning that leads to the original Transformer's approach.
 </Description>
 </div>
 
@@ -117,9 +117,9 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </Description>
 </Step>
 
-<Step title="3. What Makes a Good Positional Encoding?">
+<Step title="3. What Might Make a Good Positional Encoding?">
   <Description>
-    We've tried two simple approaches and saw why they are awkward. Before we try again, let's step back and define exactly what properties a positional encoding should have to make the signal useful and easy for the model to learn from.
+    We've tried two simple approaches and saw why they feel awkward. Before we try again, let's step back and think about what properties we *might* want in a positional encoding. These aren't proven requirements, just reasonable hypotheses about what could make the signal useful.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">1. Scale Compatibility</h4>
@@ -143,7 +143,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">4. Generalization to Longer Sequences</h4>
 
   <Description>
-    Sometimes we want the model to handle sequences longer than what it saw during training. The encoding should still behave sensibly at larger positions instead of breaking or becoming meaningless.
+    Ideally, we'd want the model to handle sequences longer than what it saw during training. An encoding that extends naturally to larger positions *seems* appealing. (In practice, this intuition didn't fully pan out. Later research showed models still struggle with lengths far beyond training, regardless of encoding scheme. But it was part of the original reasoning, so we include it here.)
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">5. Smooth and Continuous</h4>
@@ -153,7 +153,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </Description>
 
   <Description>
-    Now we have our design goals. The puzzle is how can we represent many positions using only small, bounded values while keeping the signal smooth and consistent?
+    With these properties in mind, the question becomes: how might we represent many positions using only small, bounded values while keeping the signal smooth and consistent?
   </Description>
 </Step>
 
@@ -161,7 +161,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="4. Borrowing from Number Systems">
   <Description>
-    Now that we know what properties the encoding needs, let's look for inspiration. We already use systems that satisfy most of these requirements every day. Consider how we write the number **459**: each digit is **bounded** (0 to 9), the full pattern is **unique** (no other number looks like 459), and moving by +1 follows a **consistent pattern** (459 → 460 → 461).
+    With those properties in mind, let's look for inspiration. We already use systems that satisfy most of them every day. Consider how we write the number **459**: each digit is **bounded** (0 to 9), the full pattern is **unique** (no other number looks like 459), and moving by +1 follows a **consistent pattern** (459 → 460 → 461).
   </Description>
 
   <Description>
@@ -181,7 +181,7 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
   </Description>
 
   <Description>
-    The limitation is that binary is still discrete. Each dimension can only take two values (0 or 1), so moving from one position to the next always causes abrupt changes. Sometimes a single bit changes, sometimes several bits change, but in all cases the signal is not gradual. This discreteness means nearby positions do not reliably map to nearby vectors, which makes it harder to learn simple "local" rules from the positional signal. What we want instead is the same multi-speed idea to represent large positions, but with values that vary continuously. If we can fix this one remaining issue, we have our encoding.
+    The limitation is that binary is still discrete. Each dimension can only take two values (0 or 1), so moving from one position to the next always causes abrupt changes. Sometimes a single bit changes, sometimes several bits change, but in all cases the signal is not gradual. This discreteness means nearby positions do not reliably map to nearby vectors, which *could* make it harder to learn local patterns. What we want instead is the same multi-speed idea to represent large positions, but with values that vary continuously.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Making Binary Smooth</h4>
@@ -193,7 +193,7 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
   <BinaryVsSmooth />
 
   <Description>
-    This smooth oscillation preserves the core insight from our number system analogy: multiple dimensions changing at different speeds, all staying in a bounded range, giving each position a distinctive signature. Unlike binary, the values change gradually from one position to the next, providing the model with a cleaner signal for learning local patterns. All that remains is choosing the function that produces this kind of smooth cycle.
+    This smooth oscillation preserves the core insight from our number system analogy: multiple dimensions changing at different speeds, all staying in a bounded range, giving each position a distinctive signature. Unlike binary, the values change gradually from one position to the next. All that remains is choosing the function that produces this kind of smooth cycle.
   </Description>
 </Step>
 
@@ -219,11 +219,11 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
 
 <Step title="6. Making Relative Positions Easy">
   <Description>
-    We now have a working positional signal using sine waves at different frequencies, giving each position a unique fingerprint. However, the original Transformer paper actually pairs every sine with a **cosine** at the same frequency. Why?
+    We now have a working positional signal using sine waves at different frequencies, giving each position a unique fingerprint. However, the original Transformer paper actually pairs every sine with a **cosine** at the same frequency. Why might that be?
   </Description>
 
   <Description>
-    The answer lies in how positions **relate to each other**. Language understanding often depends on relative positions: "the word immediately before" or "three tokens ahead." We want the encoding to make these relationships easy for the model to learn. Ideally, going from position `pos` to position `pos + k` should follow a simple, predictable pattern.
+    One motivation involves how positions **relate to each other**. Language understanding often depends on relative positions: "the word immediately before" or "three tokens ahead." If the encoding makes these relationships easy to compute, it *might* help the model learn them. Ideally, going from position `pos` to position `pos + k` would follow a simple, predictable pattern.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Limitation of Sine Alone</h4>
@@ -239,13 +239,13 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
   </div>
 
   <Description>
-    Look at what's needed on the right side: sin(ω · pos), which we have (it's our current encoding), and cos(ω · pos), which we **don't** have. Without the cosine, calculating the shifted value is mathematically messy. The angle addition formula requires both components. Without it, we lose the direct linear relationship between positions, forcing the model to learn a more complex non-linear approximation instead of a simple linear transformation.
+    Look at what's needed on the right side: sin(ω · pos), which we have, and cos(ω · pos), which we don't. The model could learn to approximate the missing cosine, but if we store both values from the start, the entire shift operation becomes a simple matrix multiplication.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Pairing Sine with Cosine</h4>
 
   <Description>
-    The fix is simple: **store both**. For each frequency ω, we keep both sin(ω · pos) and cos(ω · pos) in our encoding. This gives us a 2D pair for each frequency:
+    With that reasoning, we store both values together. For each frequency ω, we keep sin(ω · pos) and cos(ω · pos) as a 2D pair:
   </Description>
 
   <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 text-center">
@@ -266,7 +266,7 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
   </div>
 
   <Description>
-    Notice something important: the right side only uses sin(ω·pos) and cos(ω·pos), which we already have stored, multiplied by constants that depend only on the offset `k`. This means we can write the shifted encoding as a **matrix multiplication**:
+    Notice something important: the right side only uses sin(ω·pos) and cos(ω·pos), which we already have stored, multiplied by constants that depend only on the offset `k`. We can write the shifted encoding as a **matrix multiplication**:
   </Description>
 
   <div className="my-6 p-5 bg-surface rounded-lg border border-border overflow-x-auto">
@@ -304,26 +304,67 @@ Decimal has the multi-column idea and handles infinite positions, but it is not 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Rotation Matrix</h4>
 
   <Description>
-    The 2×2 matrix in the middle is a **rotation matrix**, the standard matrix that rotates any 2D point by a fixed angle. In our case, that angle is ω · k. This has a beautiful geometric interpretation: the (sin, cos) pair traces out a circle as position increases, and shifting by k positions corresponds to rotating this point around the circle by angle ω · k. Explore this in the interactive visualization below:
+    The 2×2 matrix in the middle is a **rotation matrix**, the standard matrix that rotates any 2D point by a fixed angle. In our case, that angle is ω · k. Geometrically, the (sin, cos) pair traces out a circle as position increases, and shifting by k positions corresponds to rotating this point around the circle by angle ω · k:
   </Description>
 
   <RotationVisualization />
 
   <Description>
-    Notice that the rotation matrix depends **only on k** (the offset), not on the starting position. Whether you start at position 5, 50, or 500, shifting by k positions always applies the same transformation. This is exactly what we wanted: a simple, predictable pattern for relative positions. The relationship between any position and "k steps ahead" is always the same rotation, regardless of where you are in the sequence. And because rotation is a **linear operation** (just matrix multiplication), it fits naturally into the Transformer's architecture. The model can learn weights that capture patterns like "attend to the previous word" or "look 3 tokens ahead" and apply them uniformly across the entire sequence.
+    The rotation matrix depends **only on k** (the offset), not on the starting position. Whether you start at position 5, 50, or 500, shifting by k positions applies the same rotation. The relationship between any position and "k steps ahead" is always the same angular shift, regardless of where you are in the sequence.
   </Description>
 </Step>
 
 
-<Step title="7. Decoding the Formula">
+<Step title="7. Building the Formula">
   <Description>
-    At this point, you already understand *why* we need multiple frequencies and why sine/cosine pairs matter. The original Transformer formula is just a compact way to express these ideas. Let's decode each piece.
+    At this point, you already understand *why* we use multiple frequencies and why sine/cosine pairs help. The original Transformer formula is just a compact way to express these ideas. Let's build it up.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Combining Position with Meaning</h4>
+
+  <Description>
+    Each token starts as an embedding vector of size `d_model` (e.g., 512 dimensions). How do we combine this with position information? Concatenation would work, appending a position vector to the embedding, but it increases the dimensionality that all downstream layers must handle. Addition keeps things simple: if the position vector is also `d_model` dimensions, we add them element-wise and the model learns to work with the combined signal.
+  </Description>
+
+  <div className="my-6 p-4 bg-[#121212] rounded-lg border border-zinc-800">
+    <div className="text-center font-mono text-lg text-primary">
+      input = token_embedding + positional_encoding
+    </div>
+  </div>
+
+  <Description>
+    This choice constrains what follows. Our positional encoding must produce exactly `d_model` numbers. With a sine/cosine pair per frequency taking 2 slots, we can fit `d_model / 2` frequencies. With `d_model = 512`, that's 256 frequencies (i = 0 to 255). One way to arrange them is to interleave: for each frequency `i`, put sine at index `2i` and cosine at index `2i+1`. So frequency 0 uses indices 0 and 1, frequency 1 uses indices 2 and 3, and so on.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Choosing the Frequencies</h4>
+
+  <Description>
+    Each sine/cosine needs an argument of the form `ω · pos`, where `ω` is the frequency and `pos` is the position. We want frequencies spanning from fast (to separate nearby positions) to slow (to distinguish distant ones).
+  </Description>
+
+  <Description>
+    How slow should the slowest frequency be? Think back to number systems: a 2-digit counter wraps from 99 back to 00, making position 100 look identical to position 0. The same happens if our slowest wave completes a full cycle within the context window. To avoid this, we want the slowest wavelength to exceed typical context lengths. With a wavelength of 10,000 × 2π ≈ 62,800 positions, contexts of 2,048 or even 8,192 tokens stay within the first quarter of the cycle (0 to π/2), where sine only increases.
+  </Description>
+
+  <Description>
+    So we want frequencies ranging from 1 (fastest) down to 1/10000 (slowest), spread across our d_model/2 slots. We can spread them evenly on a logarithmic scale using:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+    <span className="text-primary">ω<sub>i</sub> = 1 / 10000<sup>2i/d<sub>model</sub></sup></span>
+  </div>
+
+  <Description>
+    The exponent `2i/d_model` normalizes the frequency index to a 0→1 range. Since i goes from 0 to d_model/2, we multiply by 2 to span the full range. At `i = 0`, the exponent is 0, so ω = 1 (fastest). At `i = d_model/2`, the exponent reaches 1, so ω = 1/10000 (slowest).
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Formula</h4>
+
+  <Description>
+    Putting it together: for position `pos` and dimension pair `i`, we compute:
   </Description>
 
   <div className="my-6 p-5 bg-surface rounded-lg border border-border">
-    <div className="text-center mb-4">
-      <span className="text-sm font-medium text-muted">The Sinusoidal Positional Encoding</span>
-    </div>
     <div className="text-center space-y-2">
       <div className="font-mono text-lg text-primary">
         PE(pos, 2i) = sin(pos / 10000<sup>2i/d<sub>model</sub></sup>)
