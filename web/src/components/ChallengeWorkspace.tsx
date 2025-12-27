@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import {
   Play,
@@ -215,7 +215,11 @@ export function ChallengeWorkspace({
   const vimModeRef = useRef<any>(null);
   const consoleRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const resizerRef = useRef<HTMLDivElement>(null);
   const isVimModeInitializedRef = useRef(false); // Track if vim was loaded from localStorage
+  const isRunningRef = useRef(false); // Guard against concurrent executions
+  const currentChallengeIdRef = useRef<string | null>(null); // Track challenge for race condition
 
   // Auto-scroll console
   useEffect(() => {
@@ -276,6 +280,9 @@ export function ChallengeWorkspace({
   // Load code from localStorage or use initial code when challenge changes
   useEffect(() => {
     if (activeChallenge) {
+      // Update ref for race condition detection
+      currentChallengeIdRef.current = activeChallenge.id;
+
       const storedCode = localStorage.getItem(`sol_${activeChallenge.id}_code`);
       if (storedCode !== null) {
         setCode(storedCode);
@@ -407,12 +414,18 @@ export function ChallengeWorkspace({
     handleRunRef.current = handleRun;
   });
 
-  // Global Keyboard Shortcut
+  // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Enter = Submit
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
         e.preventDefault();
-        handleRunRef.current();
+        handleRunRef.current("submit");
+      }
+      // Cmd/Ctrl + , = Run
+      if ((e.metaKey || e.ctrlKey) && e.key === ",") {
+        e.preventDefault();
+        handleRunRef.current("run");
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -426,8 +439,13 @@ export function ChallengeWorkspace({
     // Theme is already defined in beforeMount, just ensure it's applied
     monacoInstance.editor.setTheme("zinc-dark");
 
-    // Add Cmd+Enter / Ctrl+Enter shortcut to editor
+    // Add Cmd+Enter / Ctrl+Enter shortcut to editor for Submit
     editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter, () => {
+      handleRunRef.current("submit");
+    });
+
+    // Add Cmd+, / Ctrl+, shortcut to editor for Run
+    editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Comma, () => {
       handleRunRef.current("run");
     });
 
@@ -461,6 +479,11 @@ export function ChallengeWorkspace({
 
   const handleRun = useCallback(
     async (mode: "run" | "submit" = "run") => {
+      // Guard against concurrent executions
+      if (isRunningRef.current) {
+        return;
+      }
+
       const browserSupported = canRunInBrowser(activeChallenge?.dependencies);
 
       // Determine which execution path to use
@@ -473,8 +496,12 @@ export function ChallengeWorkspace({
       const casesToRun =
         mode === "run" ? testCases.filter((tc) => !tc.hidden) : testCases; // Submit runs ALL test cases including hidden
 
+      // Track which challenge we're running for race condition detection
+      const runChallengeId = activeChallenge?.id;
+
       if (useBrowser) {
         // === BROWSER EXECUTION (Pyodide) ===
+        isRunningRef.current = true;
         setIsRunning(true);
         setOutput("");
         setTestResults(null);
@@ -526,6 +553,11 @@ export function ChallengeWorkspace({
             (text) => setOutput((prev) => (prev || "") + text)
           );
 
+          // Discard results if challenge changed during execution
+          if (currentChallengeIdRef.current !== runChallengeId) {
+            return;
+          }
+
           setTestResults(results);
           setActiveTab("result");
           // Reset to initial height when expanding
@@ -553,8 +585,12 @@ export function ChallengeWorkspace({
             setIsSolved(true);
           }
         } catch (err: any) {
-          setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
+          // Only show error if still on the same challenge
+          if (currentChallengeIdRef.current === runChallengeId) {
+            setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
+          }
         } finally {
+          isRunningRef.current = false;
           setIsRunning(false);
         }
       } else {
@@ -637,6 +673,14 @@ export function ChallengeWorkspace({
       const panelTop = rect.top;
       const panelHeight = rect.height;
 
+      // Measure actual DOM element heights
+      const toolbarHeight = toolbarRef.current?.getBoundingClientRect().height ?? 0;
+      const resizerHeight = resizerRef.current?.getBoundingClientRect().height ?? 0;
+      const minTopSpace = toolbarHeight + resizerHeight;
+
+      // Calculate max allowed height percentage
+      const maxHeightPercent = ((panelHeight - minTopSpace) / panelHeight) * 100;
+
       // Calculate height from bottom of panel
       const mouseYInPanel = e.clientY - panelTop;
       const heightFromBottom = panelHeight - mouseYInPanel;
@@ -645,12 +689,13 @@ export function ChallengeWorkspace({
       // If dragged below 8%, collapse the panel
       if (newHeightPercent < 8) {
         setIsBottomPanelCollapsed(true);
-      } else if (newHeightPercent >= 8 && newHeightPercent <= 85) {
+      } else {
         // Expand if collapsed and set new height
         if (isBottomPanelCollapsed) {
           setIsBottomPanelCollapsed(false);
         }
-        setBottomPanelHeight(newHeightPercent);
+        // Cap at max to leave room for toolbar and resizer
+        setBottomPanelHeight(Math.min(newHeightPercent, maxHeightPercent));
       }
     };
 
@@ -669,14 +714,21 @@ export function ChallengeWorkspace({
   const isMac =
     typeof navigator !== "undefined" &&
     /Mac|iPod|iPhone|iPad/.test(navigator.platform);
-  const shortcutLabel = isMac ? "Cmd + Enter" : "Ctrl + Enter";
+  const runShortcut = isMac ? "Cmd + ," : "Ctrl + ,";
+  const submitShortcut = isMac ? "Cmd + Enter" : "Ctrl + Enter";
+
+  // Memoize visible test cases for performance
+  const visibleTestCases = useMemo(
+    () => testCases.filter((tc) => !tc.hidden),
+    [testCases]
+  );
 
   // Dragging state for premium feel
   const isDragging = isDraggingLeft || isDraggingBottom;
 
   return (
     <div
-      className={`flex h-[calc(100vh-4rem)] bg-background border-t border-border overflow-hidden select-none ${
+      className={`flex h-[calc(100vh-4rem)] bg-background border-t border-border overflow-hidden ${
         isDragging ? "cursor-grabbing" : ""
       }`}
       style={{
@@ -903,13 +955,13 @@ export function ChallengeWorkspace({
           {/* Right Panel: Editor */}
           <div
             ref={rightPanelRef}
-            className={`flex-1 flex flex-col bg-background min-w-[300px] border-l transition-colors ${
+            className={`flex-1 flex flex-col bg-background min-w-[300px] border-l transition-colors overflow-hidden ${
               activePane === "editor" ? "border-zinc-600" : "border-border"
             }`}
             onClick={() => setActivePane("editor")}
           >
             {/* Toolbar */}
-            <div className="h-11 flex items-center justify-between px-3 border-b border-border bg-surface">
+            <div ref={toolbarRef} className="h-11 flex-shrink-0 flex items-center justify-between px-3 border-b border-border bg-surface">
               <div className="flex items-center gap-1 text-muted text-sm">
                 {/* Language Badge */}
                 <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted">
@@ -957,24 +1009,27 @@ export function ChallengeWorkspace({
                       : "text-muted hover:text-secondary hover:bg-zinc-800"
                   }`}
                   title="Toggle Vim keybindings"
+                  aria-label={isVimMode ? "Disable Vim mode" : "Enable Vim mode"}
+                  aria-pressed={isVimMode}
                 >
                   <Settings className="w-3 h-3" />
                   <span>Vim</span>
                 </button>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" role="toolbar" aria-label="Code actions">
                 {/* Reset Button */}
                 <button
                   onClick={handleReset}
                   disabled={isRunning}
                   title="Reset to initial code"
+                  aria-label="Reset code to initial template"
                   className="flex items-center gap-1.5 px-3 py-1.5 text-secondary hover:text-primary hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                   Reset
                 </button>
 
-                <div className="w-px h-4 bg-border" />
+                <div className="w-px h-4 bg-border" aria-hidden="true" />
 
                 {/* Run Code Button (visible tests only) */}
                 <button
@@ -983,18 +1038,19 @@ export function ChallengeWorkspace({
                     isRunning ||
                     (executionMode === "browser" && pyodideStatus === "error")
                   }
-                  title={`Run visible tests (${shortcutLabel})`}
+                  title={`Run visible tests (${runShortcut})`}
+                  aria-label={`Run visible tests, keyboard shortcut ${runShortcut}`}
                   className="flex items-center gap-2 px-4 py-1.5 hover:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-secondary hover:text-primary text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
                   ) : (
-                    <Play className="w-3 h-3" />
+                    <Play className="w-3 h-3" aria-hidden="true" />
                   )}
                   Run
                 </button>
 
-                <div className="w-px h-4 bg-border" />
+                <div className="w-px h-4 bg-border" aria-hidden="true" />
 
                 {/* Submit Button (all tests including hidden) */}
                 <button
@@ -1003,13 +1059,14 @@ export function ChallengeWorkspace({
                     isRunning ||
                     (executionMode === "browser" && pyodideStatus === "error")
                   }
-                  title="Submit and run all tests"
+                  title={`Submit and run all tests (${submitShortcut})`}
+                  aria-label={`Submit and run all tests including hidden tests, keyboard shortcut ${submitShortcut}`}
                   className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/15 disabled:bg-transparent disabled:text-muted disabled:cursor-not-allowed text-emerald-400 text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
                   ) : (
-                    <Send className="w-3 h-3" />
+                    <Send className="w-3 h-3" aria-hidden="true" />
                   )}
                   Submit
                 </button>
@@ -1017,7 +1074,7 @@ export function ChallengeWorkspace({
             </div>
 
             {/* Editor Area */}
-            <div className="flex-1 relative min-h-0 bg-[#09090B]">
+            <div className="flex-1 relative min-h-0 overflow-hidden bg-[#09090B]">
               <Editor
                 height="100%"
                 defaultLanguage="python"
@@ -1075,7 +1132,8 @@ export function ChallengeWorkspace({
             {/* Resizer Handle (Bottom) - only visible when panel is expanded */}
             {!isBottomPanelCollapsed && (
               <div
-                className={`h-2 cursor-row-resize z-10 flex items-center justify-center border-t transition-colors duration-150 group ${
+                ref={resizerRef}
+                className={`h-2 flex-shrink-0 cursor-row-resize z-10 flex items-center justify-center border-t transition-colors duration-150 group ${
                   isDraggingBottom
                     ? "bg-emerald-500/20 border-emerald-500/50"
                     : "bg-background border-border hover:bg-zinc-800/50 hover:border-zinc-600"
@@ -1094,7 +1152,7 @@ export function ChallengeWorkspace({
 
             {/* Bottom Panel (Console / Test Cases) */}
             <div
-              className={`bg-background flex flex-col relative ${
+              className={`bg-background flex flex-col relative flex-shrink-0 ${
                 isDraggingBottom ? "" : "transition-[height] duration-200"
               }`}
               style={{
@@ -1109,6 +1167,8 @@ export function ChallengeWorkspace({
                 className={`flex items-center bg-surface ${
                   isBottomPanelCollapsed ? "border-t border-border" : ""
                 }`}
+                role="tablist"
+                aria-label="Output panels"
               >
                 <button
                   onClick={() => {
@@ -1121,6 +1181,9 @@ export function ChallengeWorkspace({
                       ? "text-primary bg-background"
                       : "text-muted hover:text-secondary"
                   }`}
+                  role="tab"
+                  aria-selected={activeTab === "console" && !isBottomPanelCollapsed}
+                  aria-controls="console-panel"
                 >
                   Console
                 </button>
@@ -1129,12 +1192,19 @@ export function ChallengeWorkspace({
                     setActiveTab("testcases");
                     if (isBottomPanelCollapsed)
                       setIsBottomPanelCollapsed(false);
+                    // Ensure a valid test case is selected
+                    if (visibleTestCases.length > 0 && !visibleTestCases.some((tc) => tc.id === activeTestCaseId)) {
+                      setActiveTestCaseId(visibleTestCases[0].id);
+                    }
                   }}
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
                     activeTab === "testcases" && !isBottomPanelCollapsed
                       ? "text-primary bg-background"
                       : "text-muted hover:text-secondary"
                   }`}
+                  role="tab"
+                  aria-selected={activeTab === "testcases" && !isBottomPanelCollapsed}
+                  aria-controls="testcases-panel"
                 >
                   Test Cases
                 </button>
@@ -1149,6 +1219,9 @@ export function ChallengeWorkspace({
                       ? "text-primary bg-background"
                       : "text-muted hover:text-secondary"
                   }`}
+                  role="tab"
+                  aria-selected={activeTab === "result" && !isBottomPanelCollapsed}
+                  aria-controls="result-panel"
                 >
                   Result
                 </button>
@@ -1169,11 +1242,13 @@ export function ChallengeWorkspace({
                   title={
                     isBottomPanelCollapsed ? "Expand panel" : "Collapse panel"
                   }
+                  aria-label={isBottomPanelCollapsed ? "Expand output panel" : "Collapse output panel"}
+                  aria-expanded={!isBottomPanelCollapsed}
                 >
                   {isBottomPanelCollapsed ? (
-                    <ChevronUp className="w-4 h-4" />
+                    <ChevronUp className="w-4 h-4" aria-hidden="true" />
                   ) : (
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className="w-4 h-4" aria-hidden="true" />
                   )}
                 </button>
               </div>
@@ -1184,22 +1259,23 @@ export function ChallengeWorkspace({
                   {activeTab === "console" && (
                     <div
                       ref={consoleRef}
-                      className="h-full p-4 font-mono text-sm text-secondary overflow-y-auto whitespace-pre-wrap"
+                      id="console-panel"
+                      role="tabpanel"
+                      aria-label="Console output"
+                      className="h-full p-4 font-mono text-[13px] text-secondary overflow-y-auto whitespace-pre-wrap leading-relaxed"
                     >
                       {output || (
-                        <span className="text-muted italic">
+                        <span className="text-muted/60 italic font-sans text-sm">
                           Run code to see output...
                         </span>
                       )}
                     </div>
                   )}
                   {activeTab === "testcases" && (
-                    <div className="flex flex-col h-full">
+                    <div id="testcases-panel" role="tabpanel" aria-label="Test cases editor" className="flex flex-col h-full">
                       {/* Case Tabs */}
                       <div className="flex items-center gap-2 p-2 border-b border-border">
-                        {testCases
-                          .filter((tc) => !tc.hidden)
-                          .map((tc, idx) => (
+                        {visibleTestCases.map((tc, idx) => (
                             <button
                               key={tc.id}
                               onClick={() => setActiveTestCaseId(tc.id)}
@@ -1210,8 +1286,7 @@ export function ChallengeWorkspace({
                               }`}
                             >
                               Case {idx + 1}
-                              {testCases.filter((t) => !t.hidden).length >
-                                1 && (
+                              {visibleTestCases.length > 1 && (
                                 <X
                                   className="w-3 h-3 hover:text-rose-400"
                                   onClick={(e) => {
@@ -1220,8 +1295,8 @@ export function ChallengeWorkspace({
                                       prev.filter((c) => c.id !== tc.id)
                                     );
                                     if (activeTestCaseId === tc.id) {
-                                      const remaining = testCases.filter(
-                                        (c) => c.id !== tc.id && !c.hidden
+                                      const remaining = visibleTestCases.filter(
+                                        (c) => c.id !== tc.id
                                       );
                                       if (remaining.length > 0) {
                                         setActiveTestCaseId(remaining[0].id);
@@ -1322,9 +1397,9 @@ export function ChallengeWorkspace({
                   )}
 
                   {activeTab === "result" && (
-                    <div className="flex flex-col h-full">
+                    <div id="result-panel" role="tabpanel" aria-label="Test results" className="flex flex-col h-full">
                       {!testResults ? (
-                        <div className="flex-1 flex items-center justify-center text-muted text-sm italic">
+                        <div className="flex-1 flex items-center justify-center text-muted/60 text-sm italic">
                           Run code to see results...
                         </div>
                       ) : (
@@ -1384,8 +1459,7 @@ export function ChallengeWorkspace({
                                     <div className="flex items-center justify-between">
                                       <h3 className="text-emerald-400 font-medium flex items-center gap-2">
                                         <CheckCircle2 className="w-4 h-4" />
-                                        {passedTests} / {totalTests} tests
-                                        passed
+                                        {passedTests} / {totalTests} tests passed
                                       </h3>
                                       {!isSolved && (
                                         <span className="text-xs text-muted">
@@ -1398,12 +1472,10 @@ export function ChallengeWorkspace({
                               } else {
                                 // Some tests failed
                                 return (
-                                  <div className="flex items-center justify-between">
-                                    <h3 className="text-rose-400 font-medium flex items-center gap-2">
-                                      <AlertCircle className="w-4 h-4" />
-                                      {passedTests} / {totalTests} tests passed
-                                    </h3>
-                                  </div>
+                                  <h3 className="text-rose-400 font-medium flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {passedTests} / {totalTests} tests passed
+                                  </h3>
                                 );
                               }
                             })()}
@@ -1468,52 +1540,60 @@ export function ChallengeWorkspace({
                             {testResults.map((r) => {
                               if (r.id !== activeTestCaseId) return null;
                               return (
-                                <div key={r.id} className="flex flex-col gap-4">
-                                  {r.status === "Runtime Error" && (
-                                    <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-md text-rose-400 text-xs font-mono whitespace-pre-wrap">
+                                <div key={r.id} className="flex flex-col gap-3">
+                                  {r.status === "Runtime Error" && r.stderr && (
+                                    <div className="p-3 bg-rose-500/5 border border-rose-500/20 rounded-lg text-rose-300 text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
                                       {r.stderr}
                                     </div>
                                   )}
 
-                                  <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted">
-                                      Input
-                                    </label>
-                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                      {r.input}
-                                    </div>
-                                  </div>
+                                  {r.status !== "Runtime Error" && (
+                                    <>
+                                      <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                          Input
+                                        </label>
+                                        <div className="p-3 bg-surface rounded-lg text-secondary text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                          {r.input || <span className="text-muted/60 italic">None</span>}
+                                        </div>
+                                      </div>
 
-                                  <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted">
-                                      Stdout
-                                    </label>
-                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                      {r.stdout || (
-                                        <span className="text-muted italic">
-                                          No output
-                                        </span>
+                                      {r.stdout && (
+                                        <div className="space-y-1.5">
+                                          <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                            Stdout
+                                          </label>
+                                          <div className="p-3 bg-surface rounded-lg text-secondary text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                            {r.stdout}
+                                          </div>
+                                        </div>
                                       )}
-                                    </div>
-                                  </div>
 
-                                  <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted">
-                                      Output
-                                    </label>
-                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                      {r.output}
-                                    </div>
-                                  </div>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5">
+                                          <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                            Output
+                                          </label>
+                                          <div className={`p-3 rounded-lg text-[13px] font-mono whitespace-pre-wrap leading-relaxed ${
+                                            r.status === "Accepted"
+                                              ? "bg-surface text-secondary"
+                                              : "bg-rose-500/5 text-rose-300 border border-rose-500/20"
+                                          }`}>
+                                            {r.output || <span className="text-muted/60 italic">None</span>}
+                                          </div>
+                                        </div>
 
-                                  <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted">
-                                      Expected
-                                    </label>
-                                    <div className="p-4 bg-surface rounded-md text-secondary text-sm font-mono whitespace-pre-wrap">
-                                      {r.expected}
-                                    </div>
-                                  </div>
+                                        <div className="space-y-1.5">
+                                          <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                            Expected
+                                          </label>
+                                          <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg text-emerald-300 text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                            {r.expected}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               );
                             })}
