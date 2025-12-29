@@ -39,7 +39,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 </Description>
 
 <Description>
-  At first glance, this seems problematic: if we only feed word embeddings, the compatibility between "Alice" and "Bob" depends on *what* they are, not *where* they appear. Both sentences would produce identical scores. Nothing in these vectors explicitly encodes order, so it's not obvious how the model would distinguish Subject from Object. This motivates us to think about ways to inject position information, and what follows is one line of reasoning that leads to the original Transformer's approach.
+  This raises a question: if attention only looks at what words mean, how would it know that "Alice" is the subject in one sentence and the object in another? Both cases produce identical scores. It seems like we need some way to encode where each word appears. What follows is one line of reasoning that leads to the original Transformer's solution.
 </Description>
 </div>
 
