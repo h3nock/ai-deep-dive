@@ -301,7 +301,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   <RotationVisualization />
 
   <Description>
-    The rotation matrix depends **only on k** (the offset), not on the starting position. Whether you're at position 5, 50, or 500, shifting by k applies the same transformation. This means "k steps ahead" looks the same from anywhere in the sequence, which could help the model learn position-independent attention patterns.
+    Since the rotation matrix depends only on k (the offset), "k steps ahead" applies the same linear transformation regardless of starting position. This could help the model learn consistent relative position patterns.
   </Description>
 </Step>
 
