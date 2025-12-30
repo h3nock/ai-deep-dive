@@ -92,7 +92,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="2. Attempt 2: Scaling to [0, 1]">
   <Description>
-    Let's fix the magnitude problem by dividing by the total sequence length, keeping every position between 0 and 1:
+    Since raw counts are unbounded and cause instability, a logical next step is to constrain the range. We can normalize the position indices by dividing by the total sequence length to keep every position between 0 and 1:
   </Description>
 
   <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm">
@@ -100,25 +100,21 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </div>
 
   <Description>
-    This keeps values bounded, but introduces two new problems.
+    This keeps values bounded, but it introduces two new problems.
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Problem 1: Variable Step Size</h4>
-
   <Description>
-    The model often benefits from learning relative patterns, like "pay attention to the word immediately before me." But what does "one position back" mean in this scheme? Because we divide by the sequence length, the numeric step size changes with length. In a 10-word sentence, one step back is -0.10. In a 50-word sentence, the same step is only -0.02. So the same relative idea ("one token away") corresponds to different numeric values depending on sentence length. If you want to explore, play the animation or drag the slider:
+    **Variable step size:** Models often benefit from learning relative patterns, such as attending to the immediate neighbor. However, dividing by sequence length creates inconsistent steps. In a 10-word sentence, moving one position back changes the value by 0.10. In a 50-word sentence, it changes by only 0.02. The concept of "one token away" corresponds to different numeric values depending on the length of the text.
   </Description>
 
   <NormalizedStepSize />
 
   <Description>
-    This inconsistency makes it harder for the model to learn a single, length-independent rule for "neighbor" or any relative pattern.
+    This makes it difficult for the model to generalize simple rules like "look at the previous word."
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Problem 2: Length-Dependent Absolute Positions</h4>
-
   <Description>
-    Consider the sentence **"The cat sat."** where "cat" is at index 1, giving it a position value of 1/3 ≈ 0.33. Now consider **"The cat sat on the mat."** The word "cat" is still at index 1, but now its position value is 1/6 ≈ 0.17. Same word, same index, completely different encoding. This means "second word" does not map to a consistent numeric value across examples, undermining any attempt to learn stable absolute position patterns. While normalization keeps magnitudes small, neither relative nor absolute positions are stable, making generalization messy.
+    **Unstable absolute positions:** In the sentence **"The cat sat"** (length 3), the word "cat" at index 1 gets a value of 0.33. In **"The cat sat on the mat"** (length 6), "cat" is still at index 1 but receives a value of 0.17. The same physical position maps to different values depending on the context window, undermining the ability to learn consistent patterns for specific locations.
   </Description>
 </Step>
 
