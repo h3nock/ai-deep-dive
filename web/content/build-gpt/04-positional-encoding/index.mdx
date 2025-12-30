@@ -120,7 +120,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="3. What Might Make a Good Positional Encoding?">
   <Description>
-    We've tried two simple approaches and saw why they feel awkward. Before we try again, let's step back and think about what properties we *might* want in a positional encoding. These aren't proven requirements, just reasonable hypotheses about what could make the signal useful.
+    Both approaches so far have failed. Raw counting causes magnitude issues and instability. Normalization keeps values small, but creates inconsistent steps and unstable absolute positions. Before we try again, let's step back and think about what properties we *might* want in a positional encoding. These aren't hard requirements, just reasonable hypotheses about what could make the signal useful for the model.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">1. Scale Compatibility</h4>
@@ -144,21 +144,19 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">4. Generalization to Longer Sequences</h4>
 
   <Description>
-    Ideally, we'd want the model to handle sequences longer than what it saw during training. An encoding that extends naturally to larger positions *seems* appealing. (In practice, this intuition didn't fully pan out. Later research showed models still struggle with lengths far beyond training, regardless of encoding scheme. But it was part of the original reasoning, so we include it here.)
+    Ideally, we'd want the model to handle sequences longer than what it saw during training. An encoding that extends naturally to larger positions seems appealing.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">5. Smooth and Continuous</h4>
 
   <Description>
-    Positions are discrete, but it still helps if the positional signal changes in a predictable, structured way as we move from one position to the next. This is because neural networks learn by making small adjustments. If the model's prediction is slightly wrong, it nudges its weights a little bit in the right direction. This works better when small changes in input lead to small changes in output. 
+    Positions are discrete, but it still helps if the positional signal changes in a predictable, structured way as we move from one position to the next. This is because neural networks learn by making small adjustments. If the model's prediction is slightly wrong, it nudges its weights a little bit in the right direction. This works better when small changes in input lead to small changes in output.
   </Description>
 
   <Description>
     With these properties in mind, the question becomes: how might we represent many positions using only small, bounded values while keeping the signal smooth and consistent?
   </Description>
 </Step>
-
-
 
 <Step title="4. Borrowing from Number Systems">
   <Description>
