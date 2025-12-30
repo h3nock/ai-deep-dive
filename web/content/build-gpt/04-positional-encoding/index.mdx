@@ -158,41 +158,23 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </Description>
 </Step>
 
-<Step title="4. Borrowing from Number Systems">
+<Step title="4. From Numbers to Waves">
   <Description>
-    With those properties in mind, let's look for inspiration. We already use systems that satisfy most of them every day. Consider how we write the number **459**: each digit is **bounded** (0 to 9), the full pattern is **unique** (no other number looks like 459), and moving by +1 follows a **consistent pattern** (459 → 460 → 461).
+    Number systems offer a key insight: they use multiple columns cycling at different speeds, allowing us to represent arbitrarily large numbers with bounded symbols. For example, in decimal the ones column cycles 0→9, the tens column changes every 10 counts, the hundreds every 100. This multi-rate structure is exactly the kind of bounded, unique encoding we want.
   </Description>
 
   <Description>
-    The key insight is that we use multiple columns changing at different speeds. The ones column cycles fastest (0→9, then wraps). The tens column cycles slower. The hundreds column slower still. This multi-speed structure lets us represent arbitrarily large numbers using only small, bounded digits.
-  </Description>
-
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">What About Decimal?</h4>
-
-  <Description>
-Decimal has the multi-column idea and handles infinite positions, but it is not a great positional signal if we try to inject it directly into embeddings. First, **scale:** digits 0 to 9 are not huge, but if we literally inject them as-is, they can still shift the embedding distribution, which is often kept roughly zero-centered. Second, **discontinuities:** decimal digits are discrete. When the ones digit wraps from 9 to 0, the representation changes abruptly. That makes the signal less structured for learning local relationships.  
-  </Description>
-
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">What About Binary?</h4>
-
-  <Description>
-    Binary brings the scale down further. Each digit is just 0 or 1. It still has the multi-column idea, so it can represent large positions compactly.
+    We already saw scale issues with raw decimal digits in Attempt 1. Even if we use binary, which keeps values at just 0 and 1, we run into the same neighbor problem we saw with 999→1000. In binary, going from 7 (0111) to 8 (1000) flips four bits at once. Adjacent positions can have drastically different representations.
   </Description>
 
   <Description>
-    The limitation is that binary is still discrete. Each dimension can only take two values (0 or 1), so moving from one position to the next always causes abrupt changes. Sometimes a single bit changes, sometimes several bits change, but in all cases the signal is not gradual. This discreteness means nearby positions do not reliably map to nearby vectors, which *could* make it harder to learn local patterns. What we want instead is the same multi-speed idea to represent large positions, but with values that vary continuously.
-  </Description>
-
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Making Binary Smooth</h4>
-
-  <Description>
-    Binary's problem is that 0 and 1 are just two disconnected points with no values in between. So let's keep the best parts (scale and multi-speed structure) but replace discrete digits with a smooth signal. What we want in each dimension is a value that changes continuously and repeats over time, like a dial. As we move through positions, the values should rise and fall smoothly instead of jumping between fixed states.
+    The core issue behind these different representations is the abrupt flipping between discrete states. Looking at binary, as shown on the left side of the visual below, each dimension jumps instantly from 0 to 1 and back, with no values in between. So, what if we kept the multi-frequency structure but replaced these sharp jumps with smooth waves that rise and fall gradually?
   </Description>
 
   <BinaryVsSmooth />
 
   <Description>
-    This smooth oscillation preserves the core insight from our number system analogy: multiple dimensions changing at different speeds, all staying in a bounded range, giving each position a distinctive signature. Unlike binary, the values change gradually from one position to the next. All that remains is choosing the function that produces this kind of smooth cycle.
+    This smooth oscillation preserves the core insight: multiple dimensions changing at different speeds, all staying in a bounded range, giving each position a distinctive signature. Unlike discrete digits, the values change gradually from one position to the next, so nearby positions have similar encodings.
   </Description>
 </Step>
 
