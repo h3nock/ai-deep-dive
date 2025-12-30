@@ -365,15 +365,15 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="8. Summary">
   <Callout type="success" title="What We Learned">
-    * **Raw position indices** cannot be injected directly because their unbounded magnitude (1, 1000, 10000...) drowns out the semantic signal in the embedding
+    * **Raw position indices** don't work well because their unbounded magnitude (1, 1000, 10000...) can overwhelm the semantic signal in the embedding
     * **Multiple dimensions cycling at different speeds** allow large positions to be encoded with small, bounded values—similar to how decimal uses ones, tens, and hundreds columns
     * **Sinusoidal waves** provide smooth, continuous values that change gradually from one position to the next while staying bounded between -1 and +1
-    * **Sine/cosine pairs** at each frequency enable position shifts to be computed as a simple rotation matrix, making relative positions ("3 words ahead") consistent regardless of absolute position
-    * **Frequency spread** from fast to slow gives each position a unique fingerprint: fast frequencies separate nearby positions, while slow frequencies distinguish distant ones
-    * **Addition** combines position and meaning into a single vector without increasing dimensionality, letting the model learn from both signals together
+    *   **Sine/cosine pairs** enable position shifts to be expressed as linear transformations (rotation matrices), playing to the Transformer's strength in matrix operations
+    *   **Frequency spread** from fast (1) to slow (1/10000) gives each position a unique fingerprint across multiple scales
+    *   **Addition** combines position and meaning while preserving `d_model` dimensionality, keeping the architecture efficient and compatible with residual connections
   </Callout>
 
   <Description>
-    This isn't the only solution. Learned positional embeddings work well, and modern architectures take different approaches. With both meaning and position now encoded, we have the complete input to the Transformer. In the next chapter, we'll see how it uses these vectors to let words **attend** to each other.
+    This isn't the only line of reasoning to arrive at positional encoding, nor the only solution. With this in place, we have the complete input representation. In the next chapter, we'll see how the Transformer uses these vectors to let words **attend** to each other.
   </Description>
 </Step>
