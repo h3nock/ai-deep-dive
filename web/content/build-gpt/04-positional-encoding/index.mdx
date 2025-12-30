@@ -180,21 +180,21 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="5. Finding the Function">
   <Description>
-    If you have taken trigonometry, you might recognize the shape of our smooth oscillation. It looks like a **sine wave**. Our visualization matches a shifted version (sin(x) + 1) / 2 to keep values between 0 and 1. But the raw sine function naturally oscillates between -1 and +1, which raises a design choice: should we shift the wave to stay positive, or use the raw centered values?
+    If you have taken trigonometry, the most natural function to model this smooth, bounded oscillation is the **sine wave**. The visualization above uses a shifted version (sin(x) + 1) / 2 to keep values between 0 and 1.
   </Description>
 
   <Description>
-    In practice, the centered range -1 to +1 is the better default. Embedding values are typically initialized around 0, and techniques like **Layer Normalization** (covered later) keep them there throughout the network. A positional signal centered around 0 blends naturally with this distribution, while a 0 to 1 shift would add an unnecessary constant bias to every dimension.
+    In practice, the normal sine with its centered range [-1, +1] is usually preferred. Embedding values are typically initialized around 0, and techniques like **Layer Normalization (covered later)** keep them there throughout the network. A zero-centered positional signal blends naturally with this distribution, whereas a [0, 1] shift would add an unnecessary constant positive bias to every dimension.
   </Description>
 
   <Description>
-    Now we have the final function, each dimension gets its own sine wave, cycling at a different frequency. Play the animation to see how each dimension evolves across positions:
+    Applying this to our multi-frequency idea, each dimension gets its own sine wave cycling at a different frequency. Play the animation to see how each dimension evolves across positions:
   </Description>
 
   <FrequencyWaves />
 
   <Description>
-    Fast waves change quickly, helping separate nearby positions. Slow waves change gradually, helping distinguish distant positions. Together, they create a unique fingerprint for every position within the context window
+    Fast waves change quickly, helping separate nearby positions. Slow waves change gradually, helping distinguish distant positions. Together, they create a unique fingerprint for every position within the context window.
   </Description>
 </Step>
 
