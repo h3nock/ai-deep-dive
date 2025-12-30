@@ -22,13 +22,15 @@ export function RotationVisualization() {
   const cosTheta = Math.cos(rotationRadians);
   const sinTheta = Math.sin(rotationRadians);
   
-  const sinOutput = cosTheta * sinInput + sinTheta * cosInput;
-  const cosOutput = -sinTheta * sinInput + cosTheta * cosInput;
+  const cosOutput = cosTheta * cosInput - sinTheta * sinInput;
+  const sinOutput = sinTheta * cosInput + cosTheta * sinInput;
 
-  const inputX = CENTER + sinInput * CIRCLE_RADIUS;
-  const inputY = CENTER - cosInput * CIRCLE_RADIUS;
-  const outputX = CENTER + sinOutput * CIRCLE_RADIUS;
-  const outputY = CENTER - cosOutput * CIRCLE_RADIUS;
+  // Standard trig: x = cos(theta), y = sin(theta)
+  // SVG y-axis is inverted, so we negate y
+  const inputX = CENTER + cosInput * CIRCLE_RADIUS;
+  const inputY = CENTER - sinInput * CIRCLE_RADIUS;
+  const outputX = CENTER + cosOutput * CIRCLE_RADIUS;
+  const outputY = CENTER - sinOutput * CIRCLE_RADIUS;
 
   const fmt = (n: number) => {
     // Fix negative zero display
@@ -36,11 +38,12 @@ export function RotationVisualization() {
     return val.toFixed(2);
   };
 
+  // Presets: standard unit circle positions (theta measured from positive x-axis)
   const positionPresets = [
-    { name: "Top", angle: 0 },
-    { name: "Right", angle: 90 },
-    { name: "Bottom", angle: 180 },
-    { name: "Left", angle: 270 },
+    { name: "Right", angle: 0 },
+    { name: "Top", angle: 90 },
+    { name: "Left", angle: 180 },
+    { name: "Bottom", angle: 270 },
   ];
 
   const highlightBg = "rgba(63, 63, 70, 0.6)";
@@ -73,7 +76,7 @@ export function RotationVisualization() {
               ))}
             </div>
             <span className="text-emerald-400 font-mono text-xs">
-              [{fmt(sinInput)}, {fmt(cosInput)}]
+              [{fmt(cosInput)}, {fmt(sinInput)}]
             </span>
           </div>
 
@@ -103,7 +106,7 @@ export function RotationVisualization() {
         <div className="flex flex-col lg:flex-row gap-6 items-center">
           {/* Circle Diagram */}
           <div className="shrink-0 flex flex-col items-center gap-2">
-            <svg width="210" height="230" viewBox="0 0 210 230">
+            <svg width="240" height="230" viewBox="0 0 240 230">
               <defs>
                 <marker
                   id="arrowMarker"
@@ -139,8 +142,8 @@ export function RotationVisualization() {
               <circle cx={inputX} cy={inputY} r="7" fill="#10b981" stroke="#0d9668" strokeWidth="1" />
               <circle cx={outputX} cy={outputY} r="7" fill="#f59e0b" stroke="#d97706" strokeWidth="1" />
 
-              <text x="198" y={CENTER - 6} fill="#555" fontSize="10" textAnchor="end">sin</text>
-              <text x={CENTER + 6} y="16" fill="#555" fontSize="10">cos</text>
+              <text x={CENTER + CIRCLE_RADIUS + 14} y={CENTER + 4} fill="#555" fontSize="10" textAnchor="start">x (cos)</text>
+              <text x={CENTER + 8} y={CENTER - CIRCLE_RADIUS - 14} fill="#555" fontSize="10">y (sin)</text>
 
               {rotationDegrees > 0 && (
                 <text x={CENTER} y={220} fill="#3b82f6" fontSize="11" textAnchor="middle" fontWeight="500">
@@ -165,8 +168,8 @@ export function RotationVisualization() {
           <div className="flex items-center gap-2 font-mono text-sm flex-wrap flex-1" style={{ marginBottom: '55px' }}>
             {/* Output vector */}
             <div className="flex flex-col p-2 border-l-2 border-r-2 border-amber-500 rounded bg-amber-500/10 shrink-0">
-              <span className="text-amber-400 font-bold text-center px-2">{fmt(sinOutput)}</span>
               <span className="text-amber-400 font-bold text-center px-2">{fmt(cosOutput)}</span>
+              <span className="text-amber-400 font-bold text-center px-2">{fmt(sinOutput)}</span>
             </div>
             
             <span className="text-muted">=</span>
@@ -178,13 +181,13 @@ export function RotationVisualization() {
                 style={{ backgroundColor: highlightRow === 0 ? highlightBg : 'transparent' }}
               >
                 <span className="w-14 text-center text-blue-400 shrink-0">{fmt(cosTheta)}</span>
-                <span className="w-14 text-center text-blue-400 shrink-0">{fmt(sinTheta)}</span>
+                <span className="w-14 text-center text-blue-400 shrink-0">{fmt(-sinTheta)}</span>
               </div>
               <div 
                 className="flex py-0.5 px-1 rounded transition-colors"
                 style={{ backgroundColor: highlightRow === 1 ? highlightBg : 'transparent' }}
               >
-                <span className="w-14 text-center text-blue-400 shrink-0">{fmt(-sinTheta)}</span>
+                <span className="w-14 text-center text-blue-400 shrink-0">{fmt(sinTheta)}</span>
                 <span className="w-14 text-center text-blue-400 shrink-0">{fmt(cosTheta)}</span>
               </div>
             </div>
@@ -196,8 +199,8 @@ export function RotationVisualization() {
               className="flex flex-col p-2 border-l-2 border-r-2 border-emerald-500 rounded transition-colors shrink-0"
               style={{ backgroundColor: highlightRow !== null ? highlightBg : 'rgba(16, 185, 129, 0.1)' }}
             >
-              <span className="text-emerald-400 font-bold text-center px-2">{fmt(sinInput)}</span>
               <span className="text-emerald-400 font-bold text-center px-2">{fmt(cosInput)}</span>
+              <span className="text-emerald-400 font-bold text-center px-2">{fmt(sinInput)}</span>
             </div>
 
             <span className="text-muted">=</span>
@@ -212,11 +215,11 @@ export function RotationVisualization() {
               >
                 <span className="text-blue-400">{fmt(cosTheta)}</span>
                 <span className="text-zinc-500">×</span>
-                <span className="text-emerald-400">{fmt(sinInput)}</span>
-                <span className="text-zinc-500"> + </span>
-                <span className="text-blue-400">{fmt(sinTheta)}</span>
-                <span className="text-zinc-500">×</span>
                 <span className="text-emerald-400">{fmt(cosInput)}</span>
+                <span className="text-zinc-500"> + </span>
+                <span className="text-blue-400">{fmt(-sinTheta)}</span>
+                <span className="text-zinc-500">×</span>
+                <span className="text-emerald-400">{fmt(sinInput)}</span>
               </div>
               <div 
                 className="py-1 px-2 rounded cursor-pointer transition-colors text-xs whitespace-nowrap"
@@ -224,13 +227,13 @@ export function RotationVisualization() {
                 onMouseEnter={() => setHighlightRow(1)}
                 onMouseLeave={() => setHighlightRow(null)}
               >
-                <span className="text-blue-400">{fmt(-sinTheta)}</span>
+                <span className="text-blue-400">{fmt(sinTheta)}</span>
                 <span className="text-zinc-500">×</span>
-                <span className="text-emerald-400">{fmt(sinInput)}</span>
+                <span className="text-emerald-400">{fmt(cosInput)}</span>
                 <span className="text-zinc-500"> + </span>
                 <span className="text-blue-400">{fmt(cosTheta)}</span>
                 <span className="text-zinc-500">×</span>
-                <span className="text-emerald-400">{fmt(cosInput)}</span>
+                <span className="text-emerald-400">{fmt(sinInput)}</span>
               </div>
             </div>
           </div>
@@ -241,19 +244,23 @@ export function RotationVisualization() {
 }
 
 function createRotationArc(inputAngleDeg: number, rotationDeg: number, radius: number, center: number): string {
-  const startAngle = 90 - inputAngleDeg;
-  const endAngle = 90 - inputAngleDeg - rotationDeg;
+  // Standard trig: 0° at right (positive x-axis), counterclockwise positive
+  // SVG angles: 0° at right, but clockwise positive (y-axis inverted)
+  // So we negate angles for SVG
+  const startAngle = -inputAngleDeg;
+  const endAngle = -(inputAngleDeg + rotationDeg);
   
   const startRad = (startAngle * Math.PI) / 180;
   const endRad = (endAngle * Math.PI) / 180;
   
   const startX = center + radius * Math.cos(startRad);
-  const startY = center - radius * Math.sin(startRad);
+  const startY = center + radius * Math.sin(startRad);
   const endX = center + radius * Math.cos(endRad);
-  const endY = center - radius * Math.sin(endRad);
+  const endY = center + radius * Math.sin(endRad);
   
   const largeArcFlag = Math.abs(rotationDeg) > 180 ? 1 : 0;
-  const sweepFlag = 1;
+  // sweepFlag = 0 for counterclockwise in SVG (which is our positive direction)
+  const sweepFlag = 0;
   
   return `M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${endX} ${endY}`;
 }
