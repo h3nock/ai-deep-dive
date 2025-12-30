@@ -207,10 +207,8 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
     One motivation involves how positions **relate to each other**. Language understanding often depends on relative positions: "the word immediately before" or "three tokens ahead." If the encoding makes these relationships easy to compute, it *might* help the model learn them. Ideally, going from position `pos` to position `pos + k` would follow a simple, predictable pattern.
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Limitation of Sine Alone</h4>
-
   <Description>
-    Suppose we only store the sine value for a given frequency ω. At position `pos`, our encoding is sin(ω · pos). What happens when we shift to position `pos + k`? From high school trigonometry, we can expand sin(ω(pos + k)) using the angle addition formula:
+    **What if we only stored sine?** Suppose our encoding is just sin(ω · pos) for a given frequency. What happens when we shift to position `pos + k`? From high school trigonometry, we can expand sin(ω(pos + k)) using the angle addition formula:
   </Description>
 
   <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
@@ -220,13 +218,11 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </div>
 
   <Description>
-    Look at what's needed on the right side: sin(ω · pos), which we have, and cos(ω · pos), which we don't. The model could learn to approximate the missing cosine, but if we store both values from the start, the entire shift operation becomes a simple matrix multiplication.
+    Look at what's needed on the right side: sin(ω · pos), which we have, and cos(ω · pos), which we don't. The model could learn to approximate the missing cosine internally, but we can make its job easier by storing both values from the start.
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Pairing Sine with Cosine</h4>
-
   <Description>
-    With that reasoning, we store both values together. For each frequency ω, we keep sin(ω · pos) and cos(ω · pos) as a 2D pair:
+    **Pairing sine with cosine** for each frequency ω, we store both sin(ω · pos) and cos(ω · pos) as a 2D pair:
   </Description>
 
   <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 text-center">
@@ -234,7 +230,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </div>
 
   <Description>
-    Now we have everything we need. When we want to express the encoding at a shifted position `pos + k`, we can use both angle addition formulas:
+    With cosine now available, here's how the shift looks for both components:
   </Description>
 
   <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 space-y-1">
@@ -282,16 +278,14 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
     </div>
   </div>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Rotation Matrix</h4>
-
   <Description>
-    The 2×2 matrix in the middle is a **rotation matrix**, the standard matrix that rotates any 2D point by a fixed angle. In our case, that angle is ω · k. Geometrically, the (sin, cos) pair traces out a circle as position increases, and shifting by k positions corresponds to rotating this point around the circle by angle ω · k:
+    **The rotation matrix:** The 2×2 matrix in the middle is a rotation matrix, the standard matrix that rotates any 2D point by a fixed angle. In our case, that angle is ω · k. Geometrically, the (sin, cos) pair traces out a circle as position increases, and shifting by k positions corresponds to rotating this point around the circle by angle ω · k:
   </Description>
 
   <RotationVisualization />
 
   <Description>
-    The rotation matrix depends **only on k** (the offset), not on the starting position. Whether you start at position 5, 50, or 500, shifting by k positions applies the same rotation. The relationship between any position and "k steps ahead" is always the same angular shift, regardless of where you are in the sequence.
+    The rotation matrix depends **only on k** (the offset), not on the starting position. Whether you're at position 5, 50, or 500, shifting by k applies the same transformation. This means "k steps ahead" looks the same from anywhere in the sequence, which could help the model learn position-independent attention patterns.
   </Description>
 </Step>
 
