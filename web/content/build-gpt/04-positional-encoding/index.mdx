@@ -320,7 +320,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </Description>
 
   <Description>
-    Choosing addition means our positional encoding must produce exactly `d_model` numbers per position. Each sine/cosine pair occupies 2 dimensions, so we can fit `d_model / 2` pairs total. With `d_model = 512`, that gives us 256 pairs, indexed from 0 to 255. A simple arrangement is interleaving: the i-th pair puts its sine at dimension 2i and its cosine at dimension 2i+1. For example, pair 0 uses dimensions 0 and 1, pair 1 uses dimensions 2 and 3, all the way up to pair 255 using dimensions 510 and 511.
+    Choosing addition means our positional encoding must produce exactly `d_model` numbers per position. Each sine/cosine pair occupies 2 dimensions, so we can fit `d_model / 2` pairs total. With `d_model = 512`, that gives us 256 pairs, indexed from 0 to 255. A simple arrangement is interleaving: the `i`-th pair puts its sine at dimension `2i` and its cosine at dimension `2i + 1`. For example, pair 0 uses dimensions 0 and 1, pair 1 uses dimensions 2 and 3, all the way up to pair 255 using dimensions 510 and 511.
   </Description>
 
   <Description>
@@ -328,15 +328,15 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </Description>
 
   <Description>
-    For the fastest frequency, ω = 1 cycles quickly, completing a full wave every ~6 positions (wavelength = 2π/ω = 2π/1 ≈ 6.28), giving fine-grained resolution near each position. For the slowest frequency, we want its wavelength to span the entire context window. Just as two decimal digits can only count to 99 before wrapping, our slowest wave should complete less than one full cycle within our target sequence length. Let's call this wavelength parameter **base**.
+    For the fastest frequency, `ω = 1` cycles quickly, completing a full wave every ~6 positions (`wavelength = 2π/ω = 2π/1 ≈ 6.28`), giving fine-grained resolution near each position. For the slowest frequency, we want its wavelength to span the entire context window. Just as two decimal digits can only count to 99 before wrapping, our slowest wave should complete less than one full cycle within our target sequence length. Let's call this wavelength parameter **base**.
   </Description>
 
   <Description>
-    With our endpoints set (ω = 1 at the fast end, ω = 1/base at the slow end), we need to fill the frequencies in between. Number systems do this naturally: in binary, each column cycles 2× slower than the previous; in decimal, 10× slower. We adopt the same approach, computing the ratio that steps us smoothly from 1 down to 1/base across our d_model/2 frequency pairs. This gives us evenly spaced coverage across all scales.
+    With our endpoints set (`ω = 1` at the fast end, `ω = 1/base` at the slow end), we need to fill the frequencies in between. Number systems do this naturally: in binary, each column cycles 2× slower than the previous; in decimal, 10× slower. We adopt the same approach, computing the ratio that steps us smoothly from 1 down to `1/base` across our `d_model / 2` frequency pairs. This gives us evenly spaced coverage across all scales.
   </Description>
 
   <Description>
-    The formula ω_i = 1/base^(2i/d_model) achieves this, with the exponent `2i/d_model` sliding from 0 at the first pair (giving ω = 1) toward 1 at the last pair (giving ω ≈ 1/base), placing all intermediate frequencies on a smooth geometric curve. The original Transformer uses base = 10000, which yields a slowest wavelength of about 63,000 positions, well beyond typical context windows at the time. Any base large enough to cover your target sequence length works. The value 10000 was simply a safe default.
+    The formula `ωᵢ = 1/base^(2i/d_model)` achieves exactly what we need. The exponent `2i/d_model` slides from 0 at the first pair (giving `ω = 1`) toward 1 at the last pair (giving `ω ≈ 1/base`), placing all intermediate frequencies on a smooth geometric curve. The original Transformer uses `base = 10000`, which yields a slowest wavelength of about 63,000 positions, well beyond typical context windows at the time. Any base large enough to cover your target sequence length works. The value 10000 was simply a safe default.
   </Description>
 
   <div className="my-6 p-5 bg-surface rounded-lg border border-border">
