@@ -320,29 +320,23 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </Description>
 
   <Description>
-    Choosing addition means our positional encoding must produce exactly `d_model` numbers per position. Each sine/cosine pair occupies 2 dimensions, so we can fit `d_model / 2` pairs total. With `d_model = 512`, that gives us 256 pairs, indexed from 0 to 255. A simple arrangement is interleaving: pair i places its sine at dimension 2i and its cosine at dimension 2i+1. For example, pair 0 uses dimensions 0 and 1, pair 1 uses dimensions 2 and 3, all the way up to pair 255 using dimensions 510 and 511.
+    Choosing addition means our positional encoding must produce exactly `d_model` numbers per position. Each sine/cosine pair occupies 2 dimensions, so we can fit `d_model / 2` pairs total. With `d_model = 512`, that gives us 256 pairs, indexed from 0 to 255. A simple arrangement is interleaving: the i-th pair puts its sine at dimension 2i and its cosine at dimension 2i+1. For example, pair 0 uses dimensions 0 and 1, pair 1 uses dimensions 2 and 3, all the way up to pair 255 using dimensions 510 and 511.
   </Description>
 
   <Description>
-    How slow should the slowest frequency be? Think of a 2-digit counter that wraps from 99 back to 00. A sinusoid has similar wrap-around: for a given ω, the pair (sin(ω · pos), cos(ω · pos)) repeats every 2π/ω. If that wavelength is shorter than your sequence length, that component might reuse the same values for multiple positions. A practical heuristic is to make the slowest wavelength much longer than the longest sequences you expect. With the paper’s 10000 scale, the longest wavelength is on the order of 2π · 10000 (about 6 × 10<sup>4</sup> positions), so it changes very slowly across typical windows and provides a coarse notion of position.
+    Now we need to choose the actual frequencies. We need a fastest frequency to distinguish neighboring positions (like the ones digit in decimal distinguishes consecutive numbers), and a slowest frequency that doesn't repeat within our context window.
   </Description>
 
   <Description>
-    So we want frequencies ranging from 1 (fastest) down to about 1/10000 (slowest), spread across our d_model/2 slots. We can spread them evenly on a logarithmic scale using:
+    For the fastest frequency, ω = 1 cycles quickly, completing a full wave every ~6 positions (wavelength = 2π/ω = 2π/1 ≈ 6.28), giving fine-grained resolution near each position. For the slowest frequency, we want its wavelength to span the entire context window. Just as two decimal digits can only count to 99 before wrapping, our slowest wave should complete less than one full cycle within our target sequence length. Let's call this wavelength parameter **base**.
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
-    <span className="text-primary">ω<sub>i</sub> = 1 / 10000<sup>2i/d<sub>model</sub></sup></span>
-  </div>
-
   <Description>
-    The exponent `2i/d_model` maps `i` over `[0, d_model/2)` into `[0, 1)`, which spaces the frequencies evenly on a log scale. At `i = 0`, the exponent is 0, so ω = 1 (fastest). At the last sine/cosine pair, the exponent is 1, so ω is 1/10000 (slowest).
+    With our endpoints set (ω = 1 at the fast end, ω = 1/base at the slow end), we need to fill the frequencies in between. Number systems do this naturally: in binary, each column cycles 2× slower than the previous; in decimal, 10× slower. We adopt the same approach, computing the ratio that steps us smoothly from 1 down to 1/base across our d_model/2 frequency pairs. This gives us evenly spaced coverage across all scales.
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Formula</h4>
-
   <Description>
-    Putting it together: for position `pos` and dimension pair `i`, we compute:
+    The formula ω_i = 1/base^(2i/d_model) achieves this, with the exponent `2i/d_model` sliding from 0 at the first pair (giving ω = 1) toward 1 at the last pair (giving ω ≈ 1/base), placing all intermediate frequencies on a smooth geometric curve. The original Transformer uses base = 10000, which yields a slowest wavelength of about 63,000 positions, well beyond typical context windows at the time. Any base large enough to cover your target sequence length works. The value 10000 was simply a safe default.
   </Description>
 
   <div className="my-6 p-5 bg-surface rounded-lg border border-border">
@@ -357,7 +351,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </div>
 
   <Description>
-    Each piece maps directly to a choice we already made: interleaved sin/cos pairs, geometric frequency progression, and a base large enough to avoid repetition within the context window. The formula is just compact notation for these ideas.
+    That's the complete formula. Every piece traces back to a design choice we made along the way: sine/cosine pairs for rotation-friendly relative positions, multiple frequencies for scale separation, and addition to preserve the architecture's dimensionality.
   </Description>
 
 </Step>
