@@ -233,12 +233,28 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
     With cosine now available, here's how the shift looks for both components:
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 space-y-1">
-    <div className="font-mono text-sm text-center text-primary">
-      sin(ω(pos + k)) = cos(ω·k) · sin(ω·pos) + sin(ω·k) · cos(ω·pos)
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 space-y-2">
+    <div className="font-mono text-sm text-center">
+      <span className="text-amber-400">sin(ω(pos + k))</span>
+      <span className="text-muted"> = </span>
+      <span className="text-blue-400">cos(ω·k)</span>
+      <span className="text-muted"> · </span>
+      <span className="text-emerald-400">sin(ω·pos)</span>
+      <span className="text-muted"> + </span>
+      <span className="text-blue-400">sin(ω·k)</span>
+      <span className="text-muted"> · </span>
+      <span className="text-emerald-400">cos(ω·pos)</span>
     </div>
-    <div className="font-mono text-sm text-center text-primary">
-      cos(ω(pos + k)) = cos(ω·k) · cos(ω·pos) - sin(ω·k) · sin(ω·pos)
+    <div className="font-mono text-sm text-center">
+      <span className="text-amber-400">cos(ω(pos + k))</span>
+      <span className="text-muted"> = </span>
+      <span className="text-blue-400">cos(ω·k)</span>
+      <span className="text-muted"> · </span>
+      <span className="text-emerald-400">cos(ω·pos)</span>
+      <span className="text-muted"> - </span>
+      <span className="text-blue-400">sin(ω·k)</span>
+      <span className="text-muted"> · </span>
+      <span className="text-emerald-400">sin(ω·pos)</span>
     </div>
   </div>
 
