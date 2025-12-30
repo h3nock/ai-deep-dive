@@ -308,29 +308,19 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
 
 <Step title="7. Building the Formula">
   <Description>
-    At this point, you already understand *why* we use multiple frequencies and why sine/cosine pairs help. The original Transformer formula is just a compact way to express these ideas. Let's build it up.
+    We now have all the design choices in place. In this section, we derive the final positional encoding formula. First, we need to decide how to combine the position vector with the token embedding (size `d_model`). There are two main approaches:
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Combining Position with Meaning</h4>
-
   <Description>
-    Each token starts as an embedding vector of size `d_model` (e.g., 512 dimensions). How do we combine this with position information? Concatenation would work, appending a position vector to the embedding, but it increases the dimensionality that all downstream layers must handle. Addition keeps things simple: if the position vector is also `d_model` dimensions, we add them element-wise and the model learns to work with the combined signal.
+    **Concatenation** would append the position vector to the embedding. If the embedding is `d_model` and the position vector is `d_pos`, the result would be `d_model + d_pos` dimensions. This keeps signals separate but increases input size, growing parameter counts in all downstream layers and breaking residual connections (covered later) which require matching dimensions.
   </Description>
 
-  <div className="my-6 p-4 bg-[#121212] rounded-lg border border-zinc-800">
-    <div className="text-center font-mono text-lg text-primary">
-      input = token_embedding + positional_encoding
-    </div>
-  </div>
-
   <Description>
-    This choice constrains what follows. Our positional encoding must produce exactly `d_model` numbers. With a sine/cosine pair per frequency taking 2 slots, we can fit `d_model / 2` frequencies. With `d_model = 512`, that's 256 frequencies (i = 0 to 255). One way to arrange them is to interleave: for each frequency `i`, put sine at index `2i` and cosine at index `2i+1`. So frequency 0 uses indices 0 and 1, frequency 1 uses indices 2 and 3, and so on.
+    **Addition** adds them element-wise, requiring both vectors to be the same size. This preserves the original dimensionality, keeping the architecture efficient and compatible with residual connections. Although it mixes position and meaning into one vector, neural networks have sufficient capacity to disentangle these signals during training, which is why this is the standard choice (Vaswani et al., 2017).
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Choosing the Frequencies</h4>
-
   <Description>
-    Each sine/cosine needs an argument of the form `ω · pos`, where `ω` is the frequency and `pos` is the position. We want frequencies spanning from fast (to separate nearby positions) to slow (to distinguish distant ones).
+    Choosing addition means our positional encoding must produce exactly `d_model` numbers per position. Each sine/cosine pair occupies 2 dimensions, so we can fit `d_model / 2` pairs total. With `d_model = 512`, that gives us 256 pairs, indexed from 0 to 255. A simple arrangement is interleaving: pair i places its sine at dimension 2i and its cosine at dimension 2i+1. For example, pair 0 uses dimensions 0 and 1, pair 1 uses dimensions 2 and 3, all the way up to pair 255 using dimensions 510 and 511.
   </Description>
 
   <Description>
