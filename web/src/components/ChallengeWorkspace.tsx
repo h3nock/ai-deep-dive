@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { ChallengeList } from "./ChallengeList";
 import type { Challenge } from "@/lib/challenge-types";
@@ -33,17 +33,16 @@ export function ChallengeWorkspace({
   const [internalActiveIndex, setInternalActiveIndex] = useState<number | null>(
     null
   );
-  // Track if editor has ever been shown - only mount after first selection
-  const hasEverOpenedEditor = useRef(false);
 
   const activeChallengeIndex =
     externalActiveIndex !== undefined ? externalActiveIndex : internalActiveIndex;
   const setActiveChallengeIndex =
     externalSetActiveIndex || setInternalActiveIndex;
 
-  // Track if we've ever opened any challenge (to avoid mounting editor prematurely)
-  if (activeChallengeIndex !== null) {
-    hasEverOpenedEditor.current = true;
+  // Track if editor has ever been mounted (lazy mount optimization)
+  const [editorMounted, setEditorMounted] = useState(false);
+  if (!editorMounted && activeChallengeIndex !== null) {
+    setEditorMounted(true);
   }
 
   const onSelectIndex = useCallback(
@@ -66,9 +65,8 @@ export function ChallengeWorkspace({
         </div>
       )}
 
-      {/* Editor - kept mounted (but hidden) to preserve Monaco workers */}
-      {/* Only mount after user has opened at least one challenge */}
-      {hasEverOpenedEditor.current && (
+      {/* Editor kept mounted but hidden to preserve Monaco workers */}
+      {editorMounted && (
         <div
           className={`flex-1 ${showList ? "hidden" : ""}`}
           aria-hidden={showList}
