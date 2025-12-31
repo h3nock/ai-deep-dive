@@ -3,6 +3,8 @@ import path from "path";
 import matter from "gray-matter";
 import { cache } from "react";
 import { isSafePathSegment, sanitizePathSegment } from "./path-safety";
+import type { Challenge } from "./challenge-types";
+export type { Challenge } from "./challenge-types";
 
 const contentDirectory = path.join(process.cwd(), "content");
 
@@ -17,28 +19,6 @@ type StepMeta = {
 type CourseManifest = {
   steps?: StepMeta[];
 };
-
-export interface Challenge {
-  id: string;
-  title: string;
-  description: string;
-  initialCode: string;
-  hint?: string;
-  difficulty?: "Easy" | "Medium" | "Hard";
-  arguments?: { name: string; type: string }[];
-  defaultTestCases?: {
-    id: string;
-    inputs: Record<string, string>;
-    expected: string;
-    hidden?: boolean;
-    explanation?: string;
-  }[];
-  executionSnippet?: string;
-  dependencies?: string[];
-  visibleTestCases?: number;
-  chapterNumber?: string; // e.g., "02" from "02-tokenization"
-  problemNumber?: string; // e.g., "01" from "01-pair-counter"
-}
 
 export interface PostData {
   slug: string;
