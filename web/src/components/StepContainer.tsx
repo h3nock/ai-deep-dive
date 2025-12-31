@@ -61,6 +61,9 @@ export function StepContainer({
     isLoaded: isChallengesLoaded,
   } = useChallengeProgress(collection, challengeIds);
   const { setCurrentStep } = useProgress();
+  const warmChallengeTabResources = useCallback(() => {
+    void import("./ChallengeWorkspace");
+  }, []);
 
   // Track if we should sync state to URL (skip initial mount)
   const shouldSyncToUrl = useRef(false);
@@ -134,35 +137,10 @@ export function StepContainer({
     }
   }, [collection, post.step, setCurrentStep]);
 
-  // Preload the ChallengeWorkspace chunk in the background during idle time.
-  // Monaco is already preloaded globally via MonacoPreloader in layout.tsx.
   useEffect(() => {
-    if (!hasChallenges) return;
-
-    let cancelled = false;
-
-    const preloadChunk = () => {
-      if (!cancelled) {
-        import("./ChallengeWorkspace");
-      }
-    };
-
-    // Use requestIdleCallback if available, otherwise fall back to setTimeout
-    const ric = window.requestIdleCallback;
-    if (ric) {
-      const idleHandle = ric(preloadChunk, { timeout: 2000 });
-      return () => {
-        cancelled = true;
-        window.cancelIdleCallback(idleHandle);
-      };
-    }
-
-    const timerHandle = setTimeout(preloadChunk, 500);
-    return () => {
-      cancelled = true;
-      clearTimeout(timerHandle);
-    };
-  }, [hasChallenges]);
+    if (activeTab !== "challenges" || !hasChallenges) return;
+    warmChallengeTabResources();
+  }, [activeTab, hasChallenges, warmChallengeTabResources]);
 
   // Smart Back Link Logic
   const getBackLink = () => {
@@ -207,6 +185,9 @@ export function StepContainer({
                 </button>
                 <button
                   onClick={() => handleTabChange("challenges")}
+                  onPointerEnter={() => hasChallenges && warmChallengeTabResources()}
+                  onPointerDown={() => hasChallenges && warmChallengeTabResources()}
+                  onFocus={() => hasChallenges && warmChallengeTabResources()}
                   className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
                     activeTab === "challenges"
                       ? "border-primary text-primary"
