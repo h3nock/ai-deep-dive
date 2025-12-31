@@ -49,6 +49,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Preconnect to CDNs for faster resource loading */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
         {/* Force dark mode - prevent any light mode flash */}
         <script
           dangerouslySetInnerHTML={{

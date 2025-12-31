@@ -62,6 +62,19 @@ export function isPyodideLoaded(): boolean {
   return pyodideInstance !== null;
 }
 
+// Preload Pyodide in the background (safe to call multiple times)
+// Call this on user intent signals (hover, focus) to reduce perceived latency
+export function preloadPyodide(): void {
+  // Skip if already loaded or loading
+  if (pyodideInstance || loadPromise) {
+    return;
+  }
+  // Start loading in background - don't await
+  loadPyodide().catch(() => {
+    // Silently ignore preload errors - will retry on actual use
+  });
+}
+
 // Test result interface matching the existing test harness
 export interface TestResult {
   id: string;
