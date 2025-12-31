@@ -221,25 +221,15 @@ except Exception:
 
     // Create a fresh case-specific namespace that inherits user functions
     // This prevents variable pollution between test cases
-    // Error handling is done in Python for clean, user-friendly messages
+    // Comparison is done entirely in Python to preserve exact semantics
+    // (tuple keys, sets, complex numbers, etc. all work correctly)
     const testCode = `
-import json as __json__
 import copy as __copy__
 __case_globals__ = __copy__.deepcopy(__user_globals__)
 __test_error__ = None
-__result_json__ = None
-
-# Custom serializer for Python objects
-def __serialize__(obj):
-    if isinstance(obj, dict):
-        # Handle tuple keys by converting to string representation
-        return {(str(k) if isinstance(k, tuple) else k): __serialize__(v) for k, v in obj.items()}
-    elif isinstance(obj, (list, tuple)):
-        return [__serialize__(item) for item in obj]
-    elif isinstance(obj, set):
-        return sorted([__serialize__(item) for item in obj])
-    else:
-        return obj
+__result_repr__ = None
+__expected_repr__ = None
+__matched__ = False
 
 try:
     # Compile test setup with different filename so it's filtered out of tracebacks
@@ -251,7 +241,14 @@ try:
         __result__ = eval(${JSON.stringify(config.runner)}, __case_globals__)
     finally:
         __sys__.settrace(None)
-    __result_json__ = __json__.dumps(__serialize__(__result__))
+
+    # Parse expected value and compare in Python (preserves all Python types)
+    __expected__ = eval(${JSON.stringify(testCase.expected)})
+    __matched__ = __result__ == __expected__
+
+    # Use repr() for display - shows exact Python syntax
+    __result_repr__ = repr(__result__)
+    __expected_repr__ = repr(__expected__)
 except Exception:
     __sys__.settrace(None)
     __test_error__ = __format_user_error__()
@@ -265,28 +262,13 @@ except Exception:
       status = "Runtime Error";
       stderr = testError;
     } else {
-      // Get the JSON result directly from Python
-      const resultJson = await pyodide.runPythonAsync("__result_json__");
-      output = resultJson;
+      // Get comparison result from Python (comparison done in Python for exact semantics)
+      const matched = await pyodide.runPythonAsync("__matched__");
+      const resultRepr = await pyodide.runPythonAsync("__result_repr__");
 
-      // Parse and compare
-      const actualValue = JSON.parse(output);
-      let expectedValue: any;
-      try {
-        expectedValue = JSON.parse(testCase.expected);
-      } catch {
-        expectedValue = testCase.expected;
-      }
-
-      // Normalize expected for comparison (handle Python dict string representation)
-      const normalizedExpected = normalizeExpected(
-        expectedValue,
-        testCase.expected
-      );
-
-      if (JSON.stringify(actualValue) !== JSON.stringify(normalizedExpected)) {
-        status = "Wrong Answer";
-      }
+      // Use repr() output for display - shows exact Python syntax
+      output = resultRepr;
+      status = matched ? "Accepted" : "Wrong Answer";
     }
 
     results.push({
@@ -302,31 +284,6 @@ except Exception:
   }
 
   return results;
-}
-
-// Normalize expected values - handles Python dict string representation
-function normalizeExpected(value: any, rawExpected: string): any {
-  // If the raw expected looks like a Python dict with tuple keys, parse it specially
-  if (
-    typeof rawExpected === "string" &&
-    rawExpected.includes("(") &&
-    rawExpected.includes("):")
-  ) {
-    try {
-      // Convert Python tuple key syntax to string keys for comparison
-      // e.g., {(1, 2): 3} -> {"(1, 2)": 3}
-      const normalized = rawExpected
-        .replace(
-          /\((\d+(?:,\s*\d+)*)\):/g,
-          (match, inner) => `"(${inner.replace(/\s+/g, " ")})":`
-        )
-        .replace(/'/g, '"');
-      return JSON.parse(normalized);
-    } catch {
-      return value;
-    }
-  }
-  return value;
 }
 
 // List of packages available in Pyodide that we support
