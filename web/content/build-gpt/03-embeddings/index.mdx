@@ -86,60 +86,29 @@ description: "How to represent tokens as vectors to capture semantic meaning."
 </Step>
 
 
-<Step title="3. Visualizing the Meaning Space">
+<Step title="3. Visualizing Word Vectors">
   <Description>
-    In our simple example we acted as human linguists and hand-picked clear categories like Royalty and Gender, but in real deep learning we do not define these labels beforehand. We instead give the model a fixed number of dimensions, known as the embedding size (often denoted as $d_{model}$), which effectively serves as a list of empty attribute slots waiting to be filled. We let the model figure out what they mean during training by allowing it to discover and assign its own abstract features to these slots, representing complex relationships like plurality, sentiment, or grammatical rules that humans might not even have names for.
-  </Description>
-
-  <Description>
-    But because we stuck to 2 dimensions for our example, we can plot these words on a standard X-Y graph.
+    Since we used only two dimensions in our example, we can plot these words on a standard X-Y coordinates with Royalty on the vertical axis and Gender on the horizontal axis.
   </Description>
 
   <EmbeddingSpace />
 
   <Description>
-    In this 2D space, every word lands at a specific coordinate. We have turned words into **Geometry**.
+    Every word now sits at a specific coordinate in this 2D space. The space organizes words by meaning. Words with similar concepts group into specific regions. You can see King and Queen sit at the top, while King and Man sit on the right. Apple sits at the origin because neither dimension applies to it.
   </Description>
 
-  <div className="my-6 space-y-4">
-    <div>
-      <h5 className="text-base font-semibold text-primary mb-1">Similarity = Closeness</h5>
-      <p className="text-secondary">Words with similar meanings cluster together. King and Queen both sit in the upper region (high Royalty). Man and King share the right side (positive Gender). Meanwhile, Apple sits alone at the origin. It has nothing in common with royalty or gender.</p>
-    </div>
-    <div>
-      <h5 className="text-base font-semibold text-primary mb-1">Region = Topic</h5>
-      <p className="text-secondary">The top half of the graph is the "Royal Region." The right half is the "Male Region." Words naturally organize into neighborhoods of related concepts.</p>
-    </div>
-  </div>
-</Step>
-
-
-<Step title="4. Semantic Arithmetic: The King-Queen Analogy">
   <Description>
-    Because we are now working with geometry, we can do something almost magical. We can perform **arithmetic on meaning itself**.
+    Because each dimension represents an attribute, the direction you travel from one word to another captures their relationship. Notice the arrows in the graph below.
   </Description>
 
   <EmbeddingSpace showArrows />
 
   <Description>
-    Look at the arrows on the map above. The arrow from **King** to **Queen** represents "Flipping Gender" while keeping Royalty constant. The arrow from **Man** to **Woman** represents the exact same transformation.
+    The arrow from King to Queen represents "flip gender while keeping royalty the same." The arrow from Man to Woman represents the same transformation. Both point the same direction because both represent the same concept.
   </Description>
-
-  <Description>
-    In a well-trained model, those two arrows are almost identical. The model has learned that the concept of "Gender" isn't just a label. It is a **specific direction in space**.
-  </Description>
-
-  <div className="my-6 p-5 bg-surface rounded-lg border border-border">
-    <div className="text-center mb-4">
-      <span className="text-sm font-medium text-muted">The Famous Word Puzzle</span>
-    </div>
-    <div className="text-center text-lg font-mono text-primary">
-      King - Man + Woman = <span className="text-emerald-400 font-bold">?</span>
-    </div>
-  </div>
 
   <Description attached>
-    Let's plug in the numbers from Section 2:
+    This geometry allows us to do arithmetic on meaning. If we take the concept of **King**, subtract the **Man** component, and add **Woman**, we should logically discover the female equivalent of royalty. Let's test this with our vectors:
   </Description>
 
   <div className="content-attached p-4 bg-surface rounded-lg border border-border">
@@ -156,13 +125,6 @@ description: "How to represent tokens as vectors to capture semantic meaning."
         <span className="text-muted w-28">Plus Woman:</span>
         <span className="text-emerald-400">+[0.0, -1.0]</span>
       </div>
-      <div className="pt-3 border-t border-border">
-        <div className="text-xs text-muted mb-2">Calculation:</div>
-        <div className="space-y-1">
-          <div className="text-secondary">First dimension (Royalty): $1.0 - 0.0 + 0.0 = $ <span className="text-emerald-400 font-bold">1.0</span></div>
-          <div className="text-secondary">Second dimension (Gender): $1.0 - 1.0 + (-1.0) = $ <span className="text-emerald-400 font-bold">-1.0</span></div>
-        </div>
-      </div>
       <div className="pt-3 border-t border-border flex items-center gap-3">
         <span className="text-muted w-28">Result:</span>
         <span className="text-emerald-400 font-bold text-lg">[1.0, -1.0]</span>
@@ -171,18 +133,7 @@ description: "How to represent tokens as vectors to capture semantic meaning."
   </div>
 
   <Description>
-    Looking back at our definitions in Section 2, the vector `[1.0, -1.0]` belongs to:
-  </Description>
-
-  <div style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-connected)" }} className="pl-5 border-l-2 border-emerald-500/50">
-    <div className="flex items-center gap-3">
-      <span className="text-3xl">👸</span>
-      <span className="text-xl font-semibold text-primary">Queen!</span>
-    </div>
-  </div>
-
-  <Description>
-    By taking the concept of a King, removing the "Man-ness", and adding "Woman-ness", we arrive mechanically at the coordinates for Queen. This demonstrates how the embedding space captures semantic relationships, showing that the model has organized language into a consistent geometric map where meaning can be manipulated mathematically.
+    The result is exactly the vector for **Queen**. By taking King, removing the "maleness," and adding "femaleness," we mechanically arrived at Queen. This confirms that by expanding from a single number to a vector, we have successfully captured two things: the **semantic meaning** of each word, and the **logical relationships** between them, allowing us to manipulate relationships using simple math.
   </Description>
 </Step>
 
