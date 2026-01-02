@@ -15,41 +15,17 @@ description: "How to represent tokens as vectors to capture semantic meaning."
 </div>
 
 
-<Step title="1. The Problem with Raw Token IDs">
-  <Description attached>
-    Suppose we fed raw Token IDs directly into the model. Imagine the tokenizer assigned IDs like this:
-  </Description>
-
-  <div className="content-attached p-4 bg-surface rounded-lg border border-border">
-    <div className="space-y-2 font-mono text-sm">
-      <div className="flex items-center gap-4">
-        <span className="text-muted w-20">ID 100:</span>
-        <span className="text-primary font-semibold">"Apple"</span>
-      </div>
-      <div className="flex items-center gap-4">
-        <span className="text-muted w-20">ID 500:</span>
-        <span className="text-primary font-semibold">"Banana"</span>
-      </div>
-    </div>
-  </div>
-
+<Step title="1. The Limits of Token IDs">
   <Description>
-    If you feed the number 100 and the number 500 into a neuron, the math implicitly assumes that the second input is "5 times greater" than the first.
+    Let's start with the magnitude problem. When a neuron processes input, it multiplies by a weight: `Output = Input × Weight`. If "red" has ID 87 and "yellow" has ID 892, then "yellow" produces about 10× more activation than "red" before the model has learned anything at all. The network is forced to treat certain words as inherently "bigger" than others, purely because of how IDs happened to be assigned. This is called **magnitude bias**, and it corrupts the learning signal from the very first training step.
   </Description>
 
   <Description>
-    This relationship is purely arithmetic. It has nothing to do with the relationship between an Apple and a Banana. These numbers are distinct labels, similar to Employee IDs in a company database. Employee #500 is not "5 times better" than Employee #100; they are just different people.
+    One common workaround is **one-hot encoding**. Instead of using a single integer, each token becomes a long vector of zeros with a single 1 at its index position. If our vocabulary has 50,000 tokens, then each word becomes a vector of 50,000 numbers, with exactly one of them set to 1. This eliminates magnitude bias because every token now has exactly the same "intensity." But it still does not solve the second problem: a one-hot vector gives us no room to encode meaning. "King" and "Queen" are orthogonal vectors, mathematically just as different from each other as "King" is from "Banana." Every word is equally distant from every other word, so we don't have any sense of similarity or semantic meaning.
   </Description>
 
-  <div className="my-8 pl-6 border-l-2 border-zinc-600">
-    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">The Core Problem</div>
-    <p className="text-base text-secondary leading-relaxed">
-      If we force the model to do math on these arbitrary IDs, we are asking it to find patterns in chaos. The model fails because of <strong className="text-primary">Magnitude Bias</strong>. In a neural network, a neuron applies the <strong className="text-primary">same weight</strong> <code className="text-sm bg-zinc-800 px-1.5 py-0.5 rounded">(Output = Input × Weight)</code> to its input, regardless of the value. If the weight is 0.01, an input of 100 (Apple) produces 1.0, but an input of 500 (Banana) produces 5.0. The math forces the model to treat Banana as "5 times more intense" than Apple. There is no single weight that can work for both numbers, so the model cannot learn a consistent rule for "Fruit".
-    </p>
-  </div>
-
   <Description>
-    We need a way to represent words where the numbers themselves actually contain the meaning.
+    What we really need is a way to encode semantic meaning directly into how we represent words. Think about how you naturally make sense of words: you know that "King" and "Queen" are related, that "red" and "blue" belong to the same category, and that "Paris" connects to "France" the way "Tokyo" connects to "Japan." The representation should let us capture these kinds of relationships and operate on them, the way we do. Neither a raw integer nor a sparse one-hot vector can support this. We need something richer.
   </Description>
 </Step>
 
