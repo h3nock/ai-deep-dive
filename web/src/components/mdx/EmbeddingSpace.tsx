@@ -54,7 +54,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
 
   return (
     <div
-      className="p-6 bg-surface rounded-lg border border-border"
+      className="p-4 bg-surface rounded-lg border border-border"
       style={{
         marginTop: "var(--space-connected)",
         marginBottom: "var(--space-flow)",
@@ -74,8 +74,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
       <div className="flex justify-center">
         <svg
           viewBox={`0 0 ${width} ${height}`}
-          className="w-full max-w-md"
-          style={{ aspectRatio: "1/1" }}
+          className="w-full max-w-sm"
         >
           {/* Definitions for arrow markers */}
           <defs>
