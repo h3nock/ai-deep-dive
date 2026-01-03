@@ -138,142 +138,68 @@ description: "How to represent tokens as vectors to capture semantic meaning."
 </Step>
 
 
-<Step title="5. Implementation: The Embedding Matrix">
+<Step title="4. The Embedding Layer">
   <Description>
-    We know the model will learn these coordinates during training (remember those empty attribute slots from Section 3). But how exactly does this work in practice? Let's look at the actual data structure and the learning process.
-  </Description>
-
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: "var(--space-section)", marginBottom: "var(--space-connected)" }}>The Embedding Layer: A Lookup Table</h4>
-
-  <Description>
-    In code, an **Embedding Layer** is a table of numbers. Think of it like a spreadsheet: each row corresponds to a token ID, and each column is one of those attribute slots. When the model sees a token, it simply looks up the corresponding row.
-  </Description>
-
-  <div className="my-6">
-    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">The Embedding Matrix Structure</div>
-    <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="text-left py-2 px-3 text-muted font-medium">Token ID</th>
-            <th className="text-left py-2 px-3 text-muted font-medium">Dim 1</th>
-            <th className="text-left py-2 px-3 text-muted font-medium">Dim 2</th>
-            <th className="text-left py-2 px-3 text-muted font-medium">Dim 3</th>
-            <th className="text-left py-2 px-3 text-muted font-medium">...</th>
-            <th className="text-left py-2 px-3 text-muted font-medium">Dim N</th>
-          </tr>
-        </thead>
-        <tbody className="font-mono text-xs">
-          <tr className="border-b border-border">
-            <td className="py-2 px-3 text-secondary">0 ("the")</td>
-            <td className="py-2 px-3 text-primary">0.12</td>
-            <td className="py-2 px-3 text-primary">-0.45</td>
-            <td className="py-2 px-3 text-primary">0.78</td>
-            <td className="py-2 px-3 text-muted">...</td>
-            <td className="py-2 px-3 text-primary">0.33</td>
-          </tr>
-          <tr className="border-b border-border">
-            <td className="py-2 px-3 text-secondary">1 ("King")</td>
-            <td className="py-2 px-3 text-primary">0.89</td>
-            <td className="py-2 px-3 text-primary">0.56</td>
-            <td className="py-2 px-3 text-primary">-0.21</td>
-            <td className="py-2 px-3 text-muted">...</td>
-            <td className="py-2 px-3 text-primary">0.67</td>
-          </tr>
-          <tr>
-            <td className="py-2 px-3 text-muted">...</td>
-            <td className="py-2 px-3 text-muted">...</td>
-            <td className="py-2 px-3 text-muted">...</td>
-            <td className="py-2 px-3 text-muted">...</td>
-            <td className="py-2 px-3 text-muted">...</td>
-            <td className="py-2 px-3 text-muted">...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    </div>
-  </div>
-
-  <p className="text-sm text-muted mt-3">
-    When the model sees token ID 1, it simply looks up row 1 and grabs that entire row as the vector. Just a table lookup.
-  </p>
-
-  <Description attached>
-    The size of this table depends on two choices you make when designing your model:
-  </Description>
-
-  <div className="content-attached grid grid-cols-1 md:grid-cols-2 gap-8">
-    <div>
-      <h5 className="text-base font-semibold text-primary mb-1">Vocabulary Size</h5>
-      <p className="text-sm text-secondary mb-3">Number of rows (one per token)</p>
-      <ul className="text-sm text-muted space-y-1">
-        <li>GPT-2: ~50,000 tokens</li>
-        <li>GPT-4: ~100,000 tokens</li>
-        <li>Llama 2: ~32,000 tokens</li>
-      </ul>
-    </div>
-    <div>
-      <h5 className="text-base font-semibold text-primary mb-1">Embedding Dimension</h5>
-      <p className="text-sm text-secondary mb-3">Number of columns (attributes per token)</p>
-      <ul className="text-sm text-muted space-y-1">
-        <li>GPT-2 Small: 768 dimensions</li>
-        <li>GPT-3: 12,288 dimensions</li>
-        <li>Llama 2 70B: 8,192 dimensions</li>
-      </ul>
-    </div>
-  </div>
-
-  <Callout type="tip" title="Why Do Models Use Different Sizes?">
-    <div className="space-y-2">
-      <div><strong>Vocabulary size</strong> (rows): More tokens means fewer unknown words, but requires more memory.</div>
-      <div><strong>Embedding dimension</strong> (columns): More dimensions allows richer meaning representation, but increases memory usage and computation time.</div>
-      <div className="pt-2 text-secondary">When designing a model, you balance these based on your constraints: available compute, memory budget, target latency, and how much training data you have.</div>
-    </div>
-  </Callout>
-
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: "var(--space-section)", marginBottom: "var(--space-connected)" }}>The Training Process</h4>
-
-  <Description>
-    When we first initialize the embedding table, every cell is filled with random numbers. "King" might start at coordinates right next to "Sandwich." The map has no structure at all.
+    The vectors we have been building are called **embeddings** in machine learning, and the component that stores and retrieves them is called the **embedding layer**. In the previous sections, we hand-picked two dimensions (Royalty and Gender) and manually assigned values to each word. In practice, we only decide how many dimensions to use and initialize all values randomly. The model then learns both what each dimension represents and the specific values for every word in the vocabulary during training.
   </Description>
 
   <Description>
-    Training is how the model figures out what each dimension should represent, and it happens **end-to-end** with the rest of the model. We don't build embeddings separately; the embedding table is the first learned layer that feeds into the transformer stack.
+    The embedding layer is implemented as a simple 2D array where each row stores the vector for one token. If our vocabulary has $V$ tokens and we choose $d_{model}$ dimensions, the array has shape `[V, d_model]`. To convert a token ID into its embedding, the layer simply looks up that row in the table.
+  </Description>
+
+  <Table>
+    <TableHead>
+      <TableRow>
+        <TableHeader>Token ID</TableHeader>
+        <TableHeader>Dim 1</TableHeader>
+        <TableHeader>Dim 2</TableHeader>
+        <TableHeader>Dim 3</TableHeader>
+        <TableHeader>...</TableHeader>
+        <TableHeader>Dim $d_{model}$</TableHeader>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      <TableRow>
+        <TableCell>0 ("the")</TableCell>
+        <TableCell className="font-mono text-primary">0.12</TableCell>
+        <TableCell className="font-mono text-primary">-0.45</TableCell>
+        <TableCell className="font-mono text-primary">0.78</TableCell>
+        <TableCell className="text-muted">...</TableCell>
+        <TableCell className="font-mono text-primary">0.33</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell>1 ("King")</TableCell>
+        <TableCell className="font-mono text-primary">0.89</TableCell>
+        <TableCell className="font-mono text-primary">0.56</TableCell>
+        <TableCell className="font-mono text-primary">-0.21</TableCell>
+        <TableCell className="text-muted">...</TableCell>
+        <TableCell className="font-mono text-primary">0.67</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell className="text-muted">...</TableCell>
+        <TableCell className="text-muted">...</TableCell>
+        <TableCell className="text-muted">...</TableCell>
+        <TableCell className="text-muted">...</TableCell>
+        <TableCell className="text-muted">...</TableCell>
+        <TableCell className="text-muted">...</TableCell>
+      </TableRow>
+    </TableBody>
+  </Table>
+
+  <Description>
+    The two numbers that define the embedding layer are the **vocabulary size** $V$ (number of rows) and the **embedding dimension** $d_{model}$ (number of columns). A larger vocabulary lets more words exist as single tokens, so sentences become shorter sequences, but it also adds more rows to the table and increases memory. A larger embedding dimension gives the model more attributes to describe each word, but it adds more columns to every row and increases both memory and computation. In practice, vocabulary sizes range from around 32,000 to 100,000 tokens, while embedding dimensions range from a few hundred to several thousand depending on the model's scale.
   </Description>
 
   <Description>
-    When the model tries to predict the next word and makes a mistake, the "correction signal" (gradients) flows backwards through the entire network, updating the transformer blocks and finally the embedding vectors themselves. That reshaping teaches which coordinates should pull related tokens closer and push unrelated ones apart. It's how meaning gets baked into those embedding vectors *at the same time* the model learns how to use the words in context.
-  </Description>
-
-  <ProcessTimeline steps={[
-    {
-      title: "Model sees a sentence with a gap:",
-      data: '"The King sat on the ___"',
-      description: "The training sentence."
-    },
-    {
-      title: "It makes a guess:",
-      data: '"Banana" (totally wrong, but it\'s early in training!)',
-      description: "Random prediction early in training."
-    },
-    {
-      title: "We reveal the correct answer:",
-      data: '"The King sat on the Throne"',
-      description: "The correct word is compared against the prediction."
-    },
-    {
-      title: "The model adjusts its internal map:",
-      description: '"King" appeared near "Throne," so the model nudges "King" a little closer to "Throne" in its coordinate space, and a little further from "Banana."'
-    }
-  ]} />
-
-  <Description>
-    This process repeats many times with different sentences. Every time "King" appears near "Queen," "Crown," or "Palace," the model nudges their coordinates closer. Every time "Apple" appears near "Orange" and "Banana," those fruit words cluster together.
+    When training begins, every value in this table is initialized with small random numbers. "King" might start near "Sandwich" purely by chance. The structure we saw earlier does not exist yet, but it emerges as the model trains.
   </Description>
 
   <Description>
-    After enough examples, the random noise transforms into the structured semantic space we visualized in Section 3. The model has discovered concepts like Royalty and Gender on its own, encoded them into its dimensions, and organized all the words accordingly.
+    During training, the model reads billions of sentences and tries to predict the next word. When it gets a prediction wrong, the error signal flows backward through the network and nudges the embedding values. If "King" often appears near "throne," "crown," and "palace," their vectors gradually move closer together. If "apple" appears near "orange" and "banana," those cluster together instead.
+  </Description>
+
+  <Description>
+    After enough examples, the random numbers transform into the kind of organized space we visualized earlier. Unlike our hand-picked dimensions, the learned dimensions are abstract and often uninterpretable, but they capture whatever structure helps the model predict well.
   </Description>
 </Step>
 
