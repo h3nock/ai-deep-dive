@@ -33,8 +33,8 @@ export const courseConfig: Record<string, CourseConfig> = {
     description:
       "From raw text to a working GPT. You'll implement every component of a transformer-based language model from the ground up.",
     outcome: [
-      "An encoder-decoder Transformer that translates between languages",
-      "A decoder-only GPT that generates text, trained on FineWeb-Edu",
+      "The complete Transformer architecture, built layer by layer",
+      "Your own language model that generates text like ChatGPT",
     ],
     prerequisites: [
       "Python proficiency",
