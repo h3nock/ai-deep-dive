@@ -104,13 +104,7 @@ description: "Why giving AI a sense of order requires re-inventing how we count.
   </Description>
 
   <Description>
-    **Variable step size:** Models often benefit from learning relative patterns, such as attending to the immediate neighbor. However, dividing by sequence length creates inconsistent steps. In a 10-word sentence, moving one position back changes the value by 0.10. In a 50-word sentence, it changes by only 0.02. The concept of "one token away" corresponds to different numeric values depending on the length of the text.
-  </Description>
-
-  <NormalizedStepSize />
-
-  <Description>
-    This makes it difficult for the model to generalize simple rules like "look at the previous word."
+    **Variable step size:** Models often benefit from learning relative patterns, such as attending to the immediate neighbor. However, dividing by sequence length creates inconsistent steps. In a 10-word sentence, moving one position back changes the value by 0.10. In a 50-word sentence, it changes by only 0.02. The concept of "one token away" corresponds to different numeric values depending on the length of the text, making it difficult for the model to generalize simple rules like "look at the previous word."
   </Description>
 
   <Description>
