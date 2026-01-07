@@ -4,24 +4,14 @@ step: 0
 description: "The big picture: how Large Language Models actually work."
 ---
 
-<div className="flex flex-col gap-4">
 <Description>
-  You type a question into ChatGPT. A few seconds later, a thoughtful response appears, word by word. It feels like magic, like the computer is *thinking*. But what's actually happening inside?
+  You send a prompt to ChatGPT and seconds later, a response streams back word by word. What's actually happening inside? In this chapter, we'll see the full picture before diving into technical details. Understanding how the pieces fit together will make each component much easier to grasp as we build them.
 </Description>
-
-<Description>
-  In this chapter, we will see the full picture of how LLMs work before diving into technical details. Understanding how all the pieces fit together will make each chapter that follows much easier to grasp.
-</Description>
-</div>
 
 
 <Step title="The Core Idea">
   <Description>
-    At its heart, a Large Language Model does one thing: **predict the next word**.
-  </Description>
-
-  <Description>
-    When you give it "The cat sat on the", the model looks at those words and outputs a probability for every possible next word in its vocabulary.
+    At its core, a Large Language Model does one thing: **predict the next word**. When you give it "The cat sat on the", the model looks at those words and outputs a probability for every possible next word in its vocabulary.
   </Description>
 
   <div style={{ marginTop: "var(--space-flow)", marginBottom: "var(--space-flow)" }}>
@@ -79,9 +69,9 @@ description: "The big picture: how Large Language Models actually work."
 </Step>
 
 
-<Step title="The End-to-End Journey">
+<Step title="The Full Pipeline">
   <Description>
-    When you send a message to an LLM and receive a response, your text goes through a series of transformations.
+    When you send a prompt to an LLM and receive a response, your text goes through a series of transformations.
   </Description>
 
   <Callout type="note" muted>
@@ -102,7 +92,7 @@ description: "The big picture: how Large Language Models actually work."
     {
       title: "Tokens → Vectors",
       data: "[15496] → [0.12, -0.48, 0.91, ...]",
-      description: "Plain numbers don't capture meaning. This step gives each chunk a position that represents what it means."
+      description: "Plain token IDs don't capture meaning. This step converts each token into a vector that represents what it means."
     },
     {
       title: "Vectors → Transformer → Next Token",
@@ -122,7 +112,7 @@ description: "The big picture: how Large Language Models actually work."
   </Description>
 
   <Description>
-    The magic happens through training. We show the model enormous amounts of text and let it learn from its mistakes, over and over, until patterns emerge.
+    This is where training comes in. We show the model enormous amounts of text and let it learn from its mistakes, over and over, until patterns emerge.
   </Description>
 
   <ProcessTimeline steps={[
@@ -157,7 +147,7 @@ description: "The big picture: how Large Language Models actually work."
   </Description>
 
   <Description>
-    Along the way, you'll implement what you learn through coding challenges at the end of each chapter. Challenges marked <span className="text-emerald-400 font-medium">Browser</span> run right here. Challenges marked <span className="text-amber-400 font-medium">Local</span> need dependencies like PyTorch, so you'll implement them in your editor and test locally with our <a href="/setup" className="underline underline-offset-2 hover:text-primary">CLI tool</a>.
+    Throughout the course, you'll implement what you learn through coding challenges at the end of each chapter. Challenges marked <span className="text-emerald-400 font-medium">Browser</span> run right here. Challenges marked <span className="text-amber-400 font-medium">Local</span> need dependencies like PyTorch, so you'll implement them in your editor and test locally with our <a href="/setup" className="underline underline-offset-2 hover:text-primary">CLI tool</a>.
   </Description>
 
   <Description>
