@@ -107,12 +107,12 @@ export function EncodingCompare() {
         <div className="flex justify-center items-center gap-6 text-sm mb-4">
           <div className="text-center">
             <div className="text-xl font-bold text-muted">{utf32Total}</div>
-            <div className="text-xs text-muted">UTF-32</div>
+            <div className="text-xs text-muted">UTF-32 bytes</div>
           </div>
           <div className="text-muted">vs</div>
           <div className="text-center">
             <div className="text-xl font-bold text-emerald-400">{utf8Total}</div>
-            <div className="text-xs text-muted">UTF-8</div>
+            <div className="text-xs text-muted">UTF-8 bytes</div>
           </div>
           {savings > 0 && (
             <>
