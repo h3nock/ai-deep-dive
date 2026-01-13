@@ -70,12 +70,12 @@ description: "How computers represent language (Unicode & UTF-8)."
   </Description>
 </Step>
 
-<Step title="3. UTF-8: Variable-Width Encoding">
+<Step title="3. UTF-8">
   <Description>
-    **UTF-8** solves the storage problem with a clever idea: use fewer bytes for common characters and more bytes only when needed. Instead of wasting 4 bytes on every character, UTF-8 adapts based on the code point's size.
+    **UTF-8** solves the storage problem by using fewer bytes for common characters and more bytes only when needed, instead of wasting 4 bytes on every character.
   </Description>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.1 Byte Ranges by Character Type</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.1 How UTF-8 Allocates Bytes</h4>
 
   <Description attached>
     In UTF-8, different characters need different amounts of storage. ASCII characters (the basic Latin alphabet, digits, and punctuation) are so common that UTF-8 keeps them as single bytes for maximum efficiency. As characters become less common in English text (accented letters, then Asian scripts, then emoji), they get allocated more bytes. Here's how UTF-8 divides the Unicode space:
@@ -109,19 +109,15 @@ description: "How computers represent language (Unicode & UTF-8)."
   </div>
 
   <Description>
-    With UTF-8, "Hello" takes just 5 bytes instead of 20. English text is as compact as it was with ASCII, while still supporting every character in Unicode.
-  </Description>
-
-  <Description>
-    The difference becomes clear when you compare them side by side:
+    With UTF-8, "Hello" takes just 5 bytes instead of 20. English text is as compact as it was with ASCII, while still supporting every character in Unicode. Try different text in the interactive comparison below to see how the byte counts change:
   </Description>
 
   <EncodingCompare />
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.2 Fixed vs Variable Width: The Parsing Challenge</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.2 Finding Character Boundaries</h4>
 
   <Description>
-    Variable-width encoding creates a problem that fixed-width encodings don't have: how do you know where one character ends and the next begins? With UTF-32, this is trivial: every character is exactly 4 bytes, so you just read bytes in fixed chunks of four. Let's see the difference visually.
+    Variable-width encoding creates a problem that fixed-width encodings don't have. How do you know where one character ends and the next begins? With UTF-32, every character is exactly 4 bytes, so you just read in fixed chunks of four. But with UTF-8, characters vary in length (1 to 4 bytes).
   </Description>
 
   <div style={{ marginTop: "var(--space-flow)", marginBottom: "var(--space-flow)" }}>
@@ -144,12 +140,12 @@ description: "How computers represent language (Unicode & UTF-8)."
         <span className="px-1.5 py-0.5 bg-zinc-800 rounded">4E</span>
         <span className="px-1.5 py-0.5 bg-zinc-800 rounded">2D</span>
       </div>
-      <div className="text-muted">Every 4 bytes = 1 character. Simple.</div>
+      <div className="text-muted">Every 4 bytes = 1 character.</div>
     </div>
   </div>
 
   <Description attached>
-    But with UTF-8, characters have variable lengths (1, 2, or 3 bytes in this example). Looking at the same string encoded in UTF-8, we see fewer bytes total, but no obvious boundaries:
+    With UTF-8, the same string uses fewer bytes, but the boundaries aren't obvious:
   </Description>
 
   <div className="content-attached">
@@ -169,17 +165,17 @@ description: "How computers represent language (Unicode & UTF-8)."
   </div>
 
   <Description>
-    This is the core challenge: when reading a stream of UTF-8 bytes, how does a computer know where one character ends and another begins? UTF-8 solves this with a clever bit pattern system.
+    This is the core challenge with variable-width encoding.
   </Description>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.3 The UTF-8 Bit Patterns</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.3 How UTF-8 Marks Boundaries</h4>
 
   <Description>
-    UTF-8's brilliant solution is to embed the length information directly into each byte. The first few bits of every byte follow a strict pattern that tells you exactly what role that byte plays. Think of it like a prefix code: before the actual character data, each byte announces "I'm the start of a 2-byte character" or "I'm a continuation of the previous character."
+    UTF-8 solves the boundary problem by embedding length information directly into each byte's leading bits. The number of leading `1`s tells you how many bytes the character uses: a leading `0` means one byte, `110` means two, `1110` means three, and `11110` means four. Continuation bytes always start with `10`, so they can never be mistaken for the start of a new character.
   </Description>
 
   <Description attached>
-    Here's the complete pattern. Pay attention to how the leading bits change:
+    Here's the complete pattern:
   </Description>
 
   <div className="content-attached overflow-x-auto">
@@ -221,18 +217,14 @@ description: "How computers represent language (Unicode & UTF-8)."
     </table>
   </div>
 
-  <Description>
-    The rule is elegantly simple: count the leading `1`s in the first byte to know how many bytes the character uses. A leading `0` means a single byte. `110` means two bytes. `1110` means three. `11110` means four. Continuation bytes always start with `10`, so they can never be mistaken for the start of a character.
-  </Description>
-
   <Callout type="tip" title="Key Insight">
-    This pattern ensures you can **never** confuse bytes. If you see a byte starting with `10`, you know it's a continuation. Keep reading backward or forward to find the leading byte. If you see `0`, `110`, `1110`, or `11110`, you're at the start of a character and know exactly how many bytes to read.
+    Any byte in a UTF-8 stream is self-identifying. A `10` prefix means continuation byte. A `0`, `110`, `1110`, or `11110` prefix means start of a character and tells you exactly how many bytes to read. You can jump to any position in a file and find the nearest character boundary.
   </Callout>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.4 Decoding a Byte Stream</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.4 Decoding in Practice</h4>
 
   <Description>
-    Now let's apply these patterns to actually decode the UTF-8 byte stream we saw earlier. We'll go through each byte, check its leading bits to determine its role, and reconstruct the original characters. This is exactly what your computer does every time it reads a text file.
+    Decoding converts bytes back into characters. For the UTF-8 byte stream from earlier, we read each byte's leading bits to determine whether it starts a new character or continues the previous one.
   </Description>
 
   <div className="my-6 font-mono text-sm bg-[#121212] p-4 rounded-lg border border-zinc-800">
@@ -306,17 +298,17 @@ description: "How computers represent language (Unicode & UTF-8)."
   </div>
 
   <Description>
-    And there we have it! The boundaries are now clear: `[41] [C3 A9] [E4 B8 AD]` → "A", "é", "中". Notice how we never had to guess. Each byte's leading bits told us exactly what to do. This self-describing property is what makes UTF-8 so robust: even if data gets corrupted or you start reading from the middle of a file, you can always find the next valid character boundary.
+    The boundaries are now clear: `[41] [C3 A9] [E4 B8 AD]` → "A", "é", "中". Each byte's leading bits told us exactly what to do, with no guessing required.
   </Description>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.5 Encoding a Character to Bytes</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.5 Encoding in Practice</h4>
 
   <Description>
-    We've seen how to decode UTF-8, but how does the encoding process work in reverse? When your computer needs to save a character to a file, it must convert the Unicode code point into the correct sequence of bytes. Let's walk through this process step by step.
+    Encoding works in the opposite direction. Given a Unicode code point, we determine how many bytes it needs, then split its bits into the appropriate UTF-8 template.
   </Description>
 
   <Description>
-    We'll encode **é** (U+00E9, decimal 233). First, we check which byte range it falls into: since 233 is larger than 127 but smaller than 2048, it needs 2 bytes. Now we need to split its bits and insert them into the UTF-8 template.
+    Let's encode **é** (U+00E9, decimal 233). First, we determine how many bytes it needs by checking its value: 233 falls between 128 and 2047, so it requires the 2-byte template.
   </Description>
 
   <div className="my-6 space-y-4">
@@ -327,18 +319,34 @@ description: "How computers represent language (Unicode & UTF-8)."
       </div>
     </div>
     <div>
-      <h5 className="text-sm font-medium text-primary mb-2">Step 2: Split bits according to 2-byte template</h5>
-      <div className="font-mono text-sm bg-[#121212] p-4 rounded-lg border border-zinc-800">
-        <div className="text-muted mb-1">Template: 110xxxxx 10xxxxxx (5 bits + 6 bits = 11 bits)</div>
-        <div className="text-muted mb-1">We need to fit: 11101001 (pad to 11 bits → 00011101001)</div>
-        <div>Split: <span className="text-emerald-400">00011</span> and <span className="text-emerald-400">101001</span></div>
+      <h5 className="text-sm font-medium text-primary mb-2">Step 2: Count the available data slots</h5>
+      <div className="text-sm text-secondary mb-3">
+        Each byte reserves some bits for the prefix, leaving the rest as "slots" for our actual data:
+      </div>
+      <div className="font-mono text-sm bg-[#121212] p-4 rounded-lg border border-zinc-800 space-y-1">
+        <div className="text-muted">Byte 1: <span className="text-emerald-400">110</span>xxxxx → 5 data slots</div>
+        <div className="text-muted">Byte 2: <span className="text-emerald-400">10</span>xxxxxx → 6 data slots</div>
+        <div className="text-muted">Total: 5 + 6 = 11 data slots to fill</div>
       </div>
     </div>
     <div>
-      <h5 className="text-sm font-medium text-primary mb-2">Step 3: Insert into UTF-8 template</h5>
+      <h5 className="text-sm font-medium text-primary mb-2">Step 3: Pad the binary to fill all slots</h5>
+      <div className="text-sm text-secondary mb-3">
+        Our binary <code className="text-primary">11101001</code> has only 8 bits, so we pad it with leading zeros to fill all 11 slots:
+      </div>
       <div className="font-mono text-sm bg-[#121212] p-4 rounded-lg border border-zinc-800">
-        <div>Byte 1: <span className="text-muted">110</span><span className="text-emerald-400">00011</span> = 11000011 = <span className="font-semibold">195 (0xC3)</span></div>
-        <div>Byte 2: <span className="text-muted">10</span><span className="text-emerald-400">101001</span> = 10101001 = <span className="font-semibold">169 (0xA9)</span></div>
+        <div className="text-muted">11101001 (8 bits) → <span className="text-secondary">000</span>11101001 (11 bits)</div>
+      </div>
+    </div>
+    <div>
+      <h5 className="text-sm font-medium text-primary mb-2">Step 4: Split and add prefix bits</h5>
+      <div className="text-sm text-secondary mb-3">
+        We split from the right to fill each byte's slots, then prepend the prefix bits:
+      </div>
+      <div className="font-mono text-sm bg-[#121212] p-4 rounded-lg border border-zinc-800 space-y-1">
+        <div className="text-muted">Split from right: 00011 (5 bits) | 101001 (6 bits)</div>
+        <div className="mt-2">Byte 1: <span className="text-emerald-400">110</span> + 00011 = 11000011 = <span className="font-semibold">195 (0xC3)</span></div>
+        <div>Byte 2: <span className="text-emerald-400">10</span> + 101001 = 10101001 = <span className="font-semibold">169 (0xA9)</span></div>
       </div>
     </div>
     <div>
