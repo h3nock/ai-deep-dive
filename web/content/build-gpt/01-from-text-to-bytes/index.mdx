@@ -5,15 +5,9 @@ description: "How computers represent language (Unicode & UTF-8)."
 
 ---
 
-<div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
-<Description noMargin>
-  Large Language Models are trained on massive datasets of text. Before we can feed this text into a model, we need to understand how computers represent text and how we convert human-readable characters into the numerical format computers use.
+<Description>
+  When you send a prompt to an LLM, the model doesn't see words or letters. It sees a sequence of numbers. Every piece of text, in every language, gets converted to numbers before a language model can process it. This chapter covers how that conversion works.
 </Description>
-
-<Description noMargin>
-  When you type "Hello" into ChatGPT, the model doesn't see the word "Hello". It doesn't see letters at all. It sees a sequence of numbers. Every piece of text, in every language, gets converted to numbers before a language model can process it. This chapter covers how that conversion works.
-</Description>
-</div>
 
 
 <Step title="1. Text Representation">
