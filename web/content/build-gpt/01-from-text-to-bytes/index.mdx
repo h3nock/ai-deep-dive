@@ -61,20 +61,12 @@ description: "How computers represent language (Unicode & UTF-8)."
   | **o** | `U+006F` | `00 00 00 6F` |
   </div>
 
-  <Callout type="note" title="Why Hexadecimal?">
-    A byte can hold values from 0 to 255. We could write these in binary (8 digits per byte), decimal (1-3 digits per byte), or hexadecimal (always 2 digits per byte). Hex wins for representing raw byte streams because the width is consistent. When you see `C3 A9 E4 B8 AD`, you immediately know that's 5 bytes. Each pair of hex digits maps to exactly one byte, so boundaries are always obvious.
-  </Callout>
-
   <Description>
     For code points that don't require 4 bytes, the computer has to pad the remaining space with zeros. So, five characters require 20 bytes, but 15 of those bytes are zeros. That's 75% waste.
   </Description>
 
   <Description>
-    For English text (which dominates the internet), UTF-32 uses four times more storage than necessary. This makes UTF-32 impractical for almost all real-world applications.
-  </Description>
-
-  <Description>
-    To solve this problem, we use a smarter encoding.
+    For English text (which dominates the internet), UTF-32 uses four times more storage than necessary. This makes UTF-32 impractical for almost all real-world applications, so we need a more efficient encoding.
   </Description>
 </Step>
 
