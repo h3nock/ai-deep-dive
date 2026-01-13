@@ -221,7 +221,7 @@ description: "How computers represent language (Unicode & UTF-8)."
     Any byte in a UTF-8 stream is self-identifying. A `10` prefix means continuation byte. A `0`, `110`, `1110`, or `11110` prefix means start of a character and tells you exactly how many bytes to read. You can jump to any position in a file and find the nearest character boundary.
   </Callout>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.4 Decoding in Practice</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.4 Decoding</h4>
 
   <Description>
     Decoding converts bytes back into characters. For the UTF-8 byte stream from earlier, we read each byte's leading bits to determine whether it starts a new character or continues the previous one.
@@ -301,7 +301,7 @@ description: "How computers represent language (Unicode & UTF-8)."
     The boundaries are now clear: `[41] [C3 A9] [E4 B8 AD]` → "A", "é", "中". Each byte's leading bits told us exactly what to do, with no guessing required.
   </Description>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.5 Encoding in Practice</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.5 Encoding</h4>
 
   <Description>
     Encoding works in the opposite direction. Given a Unicode code point, we determine how many bytes it needs, then split its bits into the appropriate UTF-8 template.
