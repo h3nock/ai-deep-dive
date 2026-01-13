@@ -416,117 +416,42 @@ description: "How computers represent language (Unicode & UTF-8)."
 
 <Step title="6. Why Not Train on Raw Bytes?">
   <Description>
-    We have just spent this entire chapter establishing that UTF-8 is the universal standard for text. It can represent every language, every emoji, and every symbol using just 256 basic units (bytes).
+    We've now seen how UTF-8 converts any text into a sequence of bytes. Every language, every emoji, every symbol reduces to just 256 possible byte values. So why not feed these raw bytes directly into an AI model?
+  </Description>
+
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>The Problem with Bytes</h4>
+
+  <Description>
+    The issue isn't what the model can read, but **how much attention it has to spend reading it**. Imagine someone telling you a story by pronouncing every letter:
+  </Description>
+
+  <p style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-connected)" }} className="text-lg italic text-secondary pl-4 border-l-2 border-border">
+    "T... H... E... Q... U... I... C... K... B... R... O... W... N... F... O... X..."
+  </p>
+
+  <Description>
+    By the time they reach "F-O-X," you've forgotten the beginning. Your brain is so busy assembling letters that it has no capacity left for meaning.
   </Description>
 
   <Description>
-    A very natural question arises: **Why don't we just feed these raw bytes directly into the model?**
+    AI models face a similar challenge. They process text sequentially, one unit at a time, and can only hold so many units in memory. This limit is called the **Context Window**. When each byte is a separate unit, sequences become very long. For example, "Artificial Intelligence" is just 2 words to us, but 23 separate bytes for the model. Most of its capacity gets spent on low-level details instead of meaning.
+  </Description>
+
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>What About Words?</h4>
+
+  <Description>
+    The opposite extreme is to give every word its own ID: "Apple" = 101, "Banana" = 102. This keeps sequences short, but creates new problems. First, the **vocabulary becomes huge**. To cover all languages, names, and technical terms, we'd need millions of IDs, consuming massive amounts of memory during training. Second, the **vocabulary is rigid**. When a new term like "GPT-8" is invented, the model has no ID for it and fails to process it.
+  </Description>
+
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>The Solution: Tokens</h4>
+
+  <Description>
+    So bytes give us sequences that are too long, and words give us vocabularies that are too large. The middle ground is to start with bytes and merge adjacent ones based on frequency. For instance, the bytes for 't', 'h', and 'e' appear together so often that it's efficient to merge them into a single unit, called a **token**. Same with common words like "apple", "run", or suffixes like "ing". Rare words like "cryptocurrency" stay as separate pieces like "crypto" + "currency".
   </Description>
 
   <Description>
-    It seems like the perfect solution. It's **Universal**: you would never need to update your model for new languages since Spanish, Chinese, and Python code are all just bytes. It's also **Tiny**: the model would only need a vocabulary of 256 items, which is incredibly memory efficient compared to storing hundreds of thousands of words.
+    This gives us the best of both worlds. Common text stays compact and efficient, while any new or rare word can be built from smaller, known pieces.
   </Description>
-
-  <Description attached>
-    Given how elegant this solution seems, **could we just train a model on raw bytes?** Let's think through the trade-offs:
-  </Description>
-
-  <ThinkingProcess 
-    className="content-attached"
-    title="Think About the Trade-off"
-    hint={
-      <div>
-        <p className="text-secondary mb-4">Compare these two approaches:</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
-            <strong className="text-primary">Byte-Level</strong>
-            <ul className="list-disc pl-4 mt-2 text-sm text-zinc-400">
-              <li>Vocabulary: 256</li>
-              <li>"Hello" = 5 units</li>
-              <li>"人工智能" = 12 units</li>
-            </ul>
-          </div>
-          <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
-            <strong className="text-primary">Word-Level</strong>
-            <ul className="list-disc pl-4 mt-2 text-sm text-zinc-400">
-              <li>Vocabulary: 500,000+</li>
-              <li>"Hello" = 1 unit</li>
-              <li>"人工智能" = 1 unit</li>
-            </ul>
-          </div>
-        </div>
-        <p className="mt-4 text-sm text-muted">What problems does each approach create?</p>
-      </div>
-    }
-  >
-    <div className="space-y-8">
-      <div>
-        <h4 className="text-lg font-bold text-primary">Why Bytes Fail</h4>
-        <p className="mt-3 text-base text-primary">
-          The problem isn't what the model can read; the problem is <strong>how much attention it has to spend reading it</strong>.
-        </p>
-        <p className="mt-4 text-base text-primary">
-          Imagine someone trying to tell you a story, but instead of speaking in words, they pronounced every single letter out loud:
-        </p>
-        <p style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-connected)" }} className="text-lg italic text-secondary pl-4 border-l-2 border-border">
-          "T... H... E... Q... U... I... C... K... B... R... O... W... N... F... O... X..."
-        </p>
-        <p className="text-base text-primary">
-          By the time they get to "F-O-X," you've already forgotten the beginning of the sentence. Your brain is so busy assembling letters into words that it has no capacity left to understand the actual meaning. When you read text on a page, your eyes can scan and group letters instantly. But when information arrives one piece at a time, like listening to someone speak, you must hold each piece in memory while waiting for the rest. This is the bottleneck.
-        </p>
-        <p className="mt-4 text-base text-primary">
-          AI models face the exact same limitation. Large Language Models have a fixed <strong>Context Window</strong>: a hard limit on how many units of information they can hold in working memory at once.
-        </p>
-        <p className="mt-4 text-base text-primary">
-          Consider the phrase "Artificial Intelligence". To a human, this is <strong>2</strong> concepts. To a byte-level model, it's <strong>23</strong> separate units to process. The model burns through its limited context window just to represent a single phrase. Worse, it has to re-learn that <code className="text-sm">t</code> followed by <code className="text-sm">h</code> followed by <code className="text-sm">e</code> usually means "the" over and over again. This is a massive waste of the model's capacity.
-        </p>
-      </div>
-
-      <hr className="border-border" />
-
-      <div>
-        <h4 className="text-lg font-bold text-primary">Why Words Fail</h4>
-        <p className="mt-3 text-base text-primary">
-          So, why not go to the other extreme? Why not just give every word in the English language its own unique ID number?
-        </p>
-        <div style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-connected)" }} className="font-mono text-base bg-[#121212] p-4 rounded-lg border border-zinc-800">
-          <div className="text-primary">"Apple" = 101</div>
-          <div className="text-primary">"Banana" = 102</div>
-          <div className="text-primary">"ChatGPT" = 103</div>
-        </div>
-        <p className="text-base text-primary">
-          This solves the length problem (sequences become very short), but it creates a <strong>Vocabulary Problem</strong>:
-        </p>
-        <ul className="list-disc pl-5 mt-4 space-y-3 text-base text-primary">
-          <li><strong>Size:</strong> English has over 500,000 words. Add medical terms, legal jargon, names, slang, and other languages, and you easily reach millions. The model's "dictionary" (the Embedding Table) becomes impossibly large to store in memory.</li>
-          <li><strong>Fragility:</strong> What happens when the model encounters a word it has never seen? If you train a model today, and tomorrow a new term like "GPT-5" or "metaverse" appears, a word-level model simply breaks. It has no ID for that word and must output an <code className="text-sm">&lt;UNKNOWN&gt;</code> error.</li>
-        </ul>
-      </div>
-
-      <hr className="border-border" />
-
-      <div>
-        <h4 className="text-lg font-bold text-primary">The Solution: Tokens</h4>
-        <p className="mt-3 text-base text-primary">
-          Neither extreme works. Bytes give us universality but waste context. Words give us efficiency but break on anything new. We need to find a balance between these two extremes.
-        </p>
-        <p className="mt-4 text-base text-primary">
-          The insight is this: what if we could <strong>automatically learn</strong> which character sequences should be grouped together? Common patterns like "the", "ing", and "tion" appear so frequently that they deserve to be single units. But rare words like "cryptocurrency" can be broken into recognizable pieces: "crypto" + "currency".
-        </p>
-        <p className="mt-4 text-base text-primary">
-          This is exactly what <strong>Tokenization</strong> does. In modern LLMs, we don't use words or bytes. We use <strong>Tokens</strong>: variable-sized chunks that are learned from data.
-        </p>
-        <ul className="list-disc pl-5 mt-4 space-y-2 text-base text-primary">
-          <li>A common word like "apple" becomes a single token.</li>
-          <li>A complex word like "tokenization" gets split into "token" + "ization".</li>
-          <li>A rare word like "Anthropic" might become "Anthrop" + "ic".</li>
-        </ul>
-        <p className="mt-4 text-base text-primary">
-          This gives us the best of both worlds. The model can process common text quickly (short sequences), but it can also handle any text in the universe by falling back to smaller pieces when needed. No more <code className="text-sm">&lt;UNKNOWN&gt;</code> errors. No more wasted context on individual bytes.
-        </p>
-      </div>
-    </div>
-  </ThinkingProcess>
 </Step>
 
 <Step title="7. Next: Tokenization">
