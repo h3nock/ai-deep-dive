@@ -456,11 +456,11 @@ description: "How computers represent language (Unicode & UTF-8)."
 
 <Step title="7. Next: Tokenization">
   <Description>
-    The algorithm that finds this middle ground is called **Byte Pair Encoding (BPE)**. It starts with individual bytes and iteratively merges the most frequent adjacent pairs. After training on a large text corpus, common patterns like "ing", "tion", and "the" become single units called **tokens**, while rare words get split into smaller recognizable pieces.
+    We now have the right concept: common words should be single units, and rare words should be split. This process of chunking text into pieces is called **Tokenization**, and the resulting pieces are called **tokens**.
   </Description>
 
   <div style={{ marginTop: "var(--space-flow)", marginBottom: "var(--space-flow)" }}>
-    <h5 className="text-sm font-medium text-muted mb-3">Preview: How GPT-4 tokenizes text</h5>
+    <h5 className="text-sm font-medium text-muted mb-3">Preview: Tokenization in action</h5>
     <div className="bg-[#121212] p-4 rounded-lg border border-zinc-800 space-y-2 font-mono text-sm">
       <div className="flex items-center gap-2">
         <span className="text-secondary">"Hello" →</span>
@@ -478,14 +478,14 @@ description: "How computers represent language (Unicode & UTF-8)."
   </div>
 
   <Callout type="success" title="Summary">
-    * **Unicode** assigns a unique code point to every character in every writing system
-    * **UTF-8** encodes those code points as variable-length byte sequences (1-4 bytes)
-    * Raw **bytes** are universal but create sequences that are too long for efficient processing
-    * Full **words** keep sequences short but require impossibly large vocabularies
-    * We need something in between: **tokens**
+    * **Unicode** assigns a unique number (code point) to every character
+    * **UTF-8** encodes those numbers efficiently into bytes
+    * Raw **bytes** are too granular (wasting model attention)
+    * **Words** are too sparse (huge vocabularies)
+    * **Tokens** are the middle ground: frequent patterns merged into single units
   </Callout>
 
   <Description>
-    In the next chapter, we'll build BPE from scratch and see exactly how models like GPT-4 convert text into the units they actually process.
+    In the next chapter, we'll build the algorithm that finds these optimal tokens: **Byte Pair Encoding (BPE)**.
   </Description>
 </Step>
