@@ -283,19 +283,19 @@ description: "How BPE compresses text into efficient tokens."
 </Step>
 
 
-<Step title="3. Implementing BPE in Python">
+<Step title="3. Implementing BPE">
   <Description>
-    Now let's build the actual code. This is the exact logic used inside GPT-2 and GPT-4.
+    Now we translate the walkthrough into code.
   </Description>
 
   <Description>
-    In the walkthrough above, we used letters like `a`, `b`, `c` to make the algorithm easy to follow. But remember what we learned in Chapter 1: text is already a sequence of integers. When you encode `"hello"` as UTF-8, you get `[104, 101, 108, 108, 111]`. These byte values range from 0 to 255, giving us our **base vocabulary of 256 tokens**. When BPE merges a frequent pair, it needs to assign a new ID to that merged token. Since 0-255 are already taken by the raw bytes, new tokens start at **256**, then 257, 258, and so on.
+    In the walkthrough, we used letters like `a`, `b`, `c` for clarity. But recall from Chapter 1: text is already a sequence of integers. When you encode `"hello"` as UTF-8, you get `[104, 101, 108, 108, 111]`. These byte values (0-255) form our **base vocabulary of 256 tokens**. Merged tokens get new IDs starting at **256**, then 257, 258, and so on.
   </Description>
 
   <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Breaking Down the Algorithm</h4>
 
   <Description attached>
-    Looking back at our BPE walkthrough, the algorithm repeats three operations: **count** pairs, **pick** the most frequent one, and **merge** it. To implement this, we need three functions that work together:
+    In the walkthrough, we repeated three operations: **count** pairs, **pick** the most frequent, and **merge** it. We kept going until we decided to stop (after 2 merges). In practice, we continue until we reach a target vocabulary size. To implement the algorithm, we need three functions:
   </Description>
 
   <ProcessTimeline steps={[
@@ -309,18 +309,18 @@ description: "How BPE compresses text into efficient tokens."
     },
     {
       title: "train_bpe",
-      description: "The main loop that calls the above until we reach target vocab size"
+      description: "The main loop: count pairs, pick the most frequent, merge it, repeat until target vocab size"
     }
   ]} />
 
   <Description>
-    Let's implement each one.
+    Here's each function with its signature. You'll implement them in the challenges.
   </Description>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Function 1: Count Pair Statistics</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Counting Pairs</h4>
 
   <Description>
-    The first function scans a list of integers and returns a dictionary counting how often each adjacent pair occurs. For example, `[1, 2, 3, 1, 2]` should return `{(1, 2): 2, (2, 3): 1, (3, 1): 1}`.
+    `get_stats` scans a list of token IDs and counts how often each adjacent pair occurs. For example, `[1, 2, 3, 1, 2]` returns `{(1, 2): 2, (2, 3): 1, (3, 1): 1}`.
   </Description>
 
 ```python
@@ -339,10 +339,10 @@ def get_stats(ids: list[int]) -> dict[tuple, int]:
     Try implementing this yourself! Switch to the **Challenge** tab to test your solution.
   </Callout>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Function 2: Merge a Pair</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Merging a Pair</h4>
 
   <Description>
-    The second function takes the token list and replaces every occurrence of a target pair with a new token ID.
+    `merge` takes the token list and replaces every occurrence of a target pair with a new token ID.
   </Description>
 
 ```python
@@ -365,14 +365,10 @@ def merge(ids: list[int], pair: tuple[int, int], new_id: int) -> list[int]:
     This one requires careful index management. Switch to the **Challenge** tab to try it!
   </Callout>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Function 3: The Training Loop</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>The Training Loop</h4>
 
   <Description>
-    Finally, we combine everything into a training loop. We start with UTF-8 bytes (vocab size 256) and keep merging until we reach a target vocabulary size.
-  </Description>
-
-  <Description>
-    GPT-4, for example, stops at roughly **100,000 tokens**. This is a *hyperparameter*, a number we choose before training to balance efficiency (more tokens = shorter sequences) vs. memory (larger embedding table).
+    `train_bpe` combines everything into a training loop. We start with UTF-8 bytes (vocab size 256) and merge until we reach a target size. Large models use **50,000 to 100,000 tokens**, balancing efficiency (shorter sequences) vs. memory (larger embedding table).
   </Description>
 
 ```python
