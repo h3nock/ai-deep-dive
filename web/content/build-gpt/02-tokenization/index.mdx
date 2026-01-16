@@ -15,9 +15,9 @@ description: "How BPE compresses text into efficient tokens."
 </div>
 
 
-<Step title="1. The Core Intuition: Tokenization is Compression">
+<Step title="1. The Key Insight">
   <Description>
-    While the name "Byte Pair Encoding" sounds technical, the intuition is surprisingly simple: **BPE is a compression algorithm**.
+    BPE is a **compression algorithm**. It finds patterns that appear frequently in the training data and replaces them with shorter symbols.
   </Description>
 
   <Description>
@@ -65,7 +65,7 @@ description: "How BPE compresses text into efficient tokens."
   </div>
 
   <Description>
-    By the end of this process, common words like "apple" become single tokens, while rare words remain as smaller chunks. This allows the model to process text much more efficiently.
+    By the end of this process, common words like "apple" become single tokens, while rare words are split into multiple smaller tokens. This allows the model to process text more efficiently.
   </Description>
 </Step>
 
