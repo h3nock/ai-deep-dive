@@ -6,11 +6,11 @@ description: "How BPE compresses text into efficient tokens."
 
 <div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
 <Description noMargin>
-  In the previous chapter, we learned that computers see text as a stream of raw bytes. We also realized that feeding these bytes directly into the model is inefficient. Sequences become too long, and the model wastes capacity recognizing basic patterns like "the" over and over.
+  In the previous chapter, we've established that raw bytes create sequences that are too long, and word-level tokenization creates vocabularies that are too large. The solution is **subword tokenization**: chunking text into efficient pieces that balance sequence length with vocabulary size.
 </Description>
 
 <Description noMargin>
-  We need a way to group bytes into meaningful chunks. This process is called **Tokenization**, and the industry-standard algorithm, used by GPT-4, Llama, and Claude, is **Byte Pair Encoding (BPE)**.
+  The industry-standard algorithm for this is **Byte Pair Encoding (BPE)**. In this chapter, we'll understand how it works and build it from scratch.
 </Description>
 </div>
 
