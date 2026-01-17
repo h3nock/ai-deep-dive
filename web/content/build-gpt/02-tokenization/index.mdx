@@ -451,13 +451,13 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
 
 <Step title="5. Encoding & Decoding">
   <Description>
-    We've trained a tokenizer and learned merge rules. Now we need two more functions: one to **decode** tokens back into text, and one to **encode** new text into tokens. Let's start with the easier one.
+    After training, we have a set of merge rules, but we still need a way to use them. We need to **encode** new text into tokens (so the model can process it) and **decode** tokens back into text (so we can read the model's output).
   </Description>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>The Vocabulary Table</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Decoding: Tokens → Text</h4>
 
   <Description attached>
-    First, we need a **vocabulary table** that maps each token ID to its byte sequence. Remember from Chapter 1: text is just a sequence of integers (bytes). The letter `"a"` is byte `97`, `"b"` is `98`, and so on. Our vocabulary stores these byte sequences directly:
+    To decode tokens back into text, we need a **vocabulary table** that maps each token ID to its byte sequence. For the base vocabulary (0-255), each token ID equals its byte value, so token 97 maps to `[97]`. For merged tokens, we combine the bytes of the two tokens that were merged: if token 256 represents the merge of `a` (97) and `t` (116), it maps to `[97, 116]`:
   </Description>
 
   <div className="content-attached">
@@ -482,18 +482,13 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
     </div>
   </div>
 
-  <Description>
-    The key insight: each token ID points directly to its byte sequence, no calculation needed at runtime. When we see token `256`, we just grab `[97, 97]` from the dictionary. This is why decoding is so fast.
-  </Description>
 
   <Callout type="tip" title="Building the Vocabulary During Training">
     When you create a new merged token, immediately store its bytes by concatenating the bytes of the first token and the bytes of the second token: `vocab[new_id] = vocab[pair[0]] + vocab[pair[1]]`. After training, every token’s bytes are ready for instant lookup.
   </Callout>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Decoding: Tokens → Text</h4>
-
   <Description attached>
-    With a flattened vocabulary, decoding is just a dictionary lookup:
+    With this vocabulary, decoding becomes a dictionary lookup:
   </Description>
 
 ```python
@@ -504,10 +499,10 @@ def decode(ids: list[int], vocab: dict[int, list[int]]) -> str:
 ```
 
   <Callout type="note" title="Challenge: The Decoder">
-    An easy win! Switch to the **Challenge** tab to implement it.
+    Try implementing this in the **Challenge** tab.
   </Callout>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Visual Example: Decoding</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Decoding Example</h4>
 
   <div className="my-6">
     <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">Decoding [258, 99] back to text</div>
@@ -548,7 +543,7 @@ def decode(ids: list[int], vocab: dict[int, list[int]]) -> str:
   <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Encoding: Text → Tokens</h4>
 
   <Description>
-    Encoding involves a few more steps. To tokenize new text, we apply our learned merge rules **in the exact order we learned them**.
+    To encode new text, we start with raw bytes and apply each merge rule in the order it was learned, since later merge rules may depend on tokens created by earlier ones.
   </Description>
 
 ```python
@@ -561,14 +556,13 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
     pass
 ```
   <Description>
-    Since Python dictionaries preserve insertion order, we can simply iterate through `merges` and apply each rule. But why does order matter? Some merge rules depend on tokens created by earlier merges. If we learned `(97,97)→256` first and `(256,98)→257` second, the second rule can only match after the first rule has created token 256. Applying them out of order means the second rule looks for a token that doesn't exist yet, so it gets skipped. Let's see this with an example.
+    Since Python dictionaries preserve insertion order, we can iterate through `merges` and apply each rule in the order it was learned. To see why order matters, consider: if we learned `(116,104)→256` first and `(256,101)→257` second, the second rule looks for the pair `(256, 101)` in the token sequence, but token 256 doesn't exist yet. The rule finds no match and gets skipped.
   </Description>
 
-  {/* Why Order Matters - Terminal Style Comparison */}
+  {/* Order comparison visual */}
   <div className="my-8">
-    <h4 className="text-base font-semibold text-primary mb-2">Why Order Matters: Encoding "aab" with Two Merges</h4>
     <p className="text-sm text-secondary mb-5">
-      We have two merge rules: <code className="font-mono text-xs bg-zinc-800 px-1.5 py-0.5 rounded">merge #1: (97,97)→256</code> and <code className="font-mono text-xs bg-zinc-800 px-1.5 py-0.5 rounded">merge #2: (256,98)→257</code>. The order we apply them changes the result.
+      For example, encoding "the" with merge rules <code className="font-mono text-xs bg-zinc-800 px-1.5 py-0.5 rounded">(116,104)→256</code> <span className="text-muted text-xs">(t,h→th)</span> and <code className="font-mono text-xs bg-zinc-800 px-1.5 py-0.5 rounded">(256,101)→257</code> <span className="text-muted text-xs">(th,e→the)</span>:
     </p>
     
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -582,24 +576,24 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
         <div className="space-y-4">
           {/* Step 1 */}
           <div className="pb-3 border-b border-border">
-            <div className="text-xs text-emerald-400 mb-1.5 font-medium">Step 1 · Apply merge #1: (97,97)→256</div>
+            <div className="text-xs text-muted mb-1.5 font-medium">Step 1 · Apply merge #1: (116,104)→256</div>
             <div className="font-mono text-sm text-secondary">
-              [97, 97, 98] <span className="text-muted">→</span> [<span className="text-emerald-400 font-bold">256</span>, 98]
+              [116, 104, 101] <span className="text-muted">→</span> [<span className="text-emerald-400 font-bold">256</span>, 101] <span className="text-muted text-xs">th, e</span>
             </div>
           </div>
           
           {/* Step 2 */}
           <div>
-            <div className="text-xs text-emerald-400 mb-1.5 font-medium">Step 2 · Apply merge #2: (256,98)→257</div>
+            <div className="text-xs text-muted mb-1.5 font-medium">Step 2 · Apply merge #2: (256,101)→257</div>
             <div className="font-mono text-sm text-secondary">
-              [256, 98] <span className="text-muted">→</span> [<span className="text-emerald-400 font-bold">257</span>]
+              [256, 101] <span className="text-muted">→</span> [<span className="text-emerald-400 font-bold">257</span>] <span className="text-muted text-xs">the</span>
             </div>
           </div>
         </div>
         
         {/* Result */}
         <div className="mt-4 pt-3 border-t border-border">
-          <span className="text-xs text-emerald-400 font-semibold">Result: [257]</span>
+          <span className="text-xs font-semibold">Result: [257]</span>
           <span className="text-xs text-muted ml-2">(1 token)</span>
         </div>
       </div>
@@ -614,62 +608,62 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
         <div className="space-y-4">
           {/* Step 1 */}
           <div className="pb-3 border-b border-border">
-            <div className="text-xs text-rose-400 mb-1.5 font-medium">Step 1 · Apply merge #2: (256,98)→257</div>
+            <div className="text-xs text-muted mb-1.5 font-medium">Step 1 · Apply merge #2: (256,101)→257</div>
             <div className="font-mono text-sm text-secondary">
-              [97, 97, 98] <span className="text-muted">→</span> [97, 97, 98] <span className="text-muted text-xs">(no 256 yet, skipped!)</span>
+              [116, 104, 101] <span className="text-muted">→</span> [116, 104, 101] <span className="text-muted text-xs">(no 256 yet, skipped!)</span>
             </div>
           </div>
           
           {/* Step 2 */}
           <div>
-            <div className="text-xs text-rose-400 mb-1.5 font-medium">Step 2 · Apply merge #1: (97,97)→256</div>
+            <div className="text-xs text-muted mb-1.5 font-medium">Step 2 · Apply merge #1: (116,104)→256</div>
             <div className="font-mono text-sm text-secondary">
-              [97, 97, 98] <span className="text-muted">→</span> [<span className="text-rose-400 font-bold">256</span>, 98]
+              [116, 104, 101] <span className="text-muted">→</span> [<span className="text-rose-400 font-bold">256</span>, 101] <span className="text-muted text-xs">th, e</span>
             </div>
           </div>
         </div>
         
         {/* Result */}
         <div className="mt-4 pt-3 border-t border-border">
-          <span className="text-xs text-rose-400 font-semibold">Result: [256, 98]</span>
-          <span className="text-xs text-muted ml-2">(2 tokens, missed merge!)</span>
+          <span className="text-xs font-semibold">Result: [256, 101]</span>
+          <span className="text-xs text-muted ml-2">(2 tokens, missed a merge)</span>
         </div>
       </div>
     </div>
   </div>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Visual Example: Encoding</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>Encoding Example</h4>
 
   <div className="my-6">
-    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">Encoding "aaab" with merges: (97,97)→256, (256,97)→257</div>
+    <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">Encoding "the" to tokens</div>
     <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="space-y-3 font-mono text-sm">
       <div className="flex items-center gap-3">
-        <span className="text-muted w-24">Start:</span>
-        <span className="text-primary">[97, 97, 97, 98]</span>
-        <span className="text-muted text-xs">← raw bytes: a, a, a, b</span>
+        <span className="text-muted w-32">Start:</span>
+        <span className="text-primary">[116, 104, 101]</span>
+        <span className="text-muted text-xs">t, h, e</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-muted w-24">Merge (a,a):</span>
-        <span className="text-primary">[<span className="text-emerald-400 font-bold">256</span>, 97, 98]</span>
-        <span className="text-muted text-xs">← (97,97) becomes 256</span>
+        <span className="text-muted w-32">Merge (116,104):</span>
+        <span className="text-primary">[<span className="text-emerald-400 font-bold">256</span>, 101]</span>
+        <span className="text-muted text-xs">th, e</span>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-muted w-24">Merge (256,a):</span>
-        <span className="text-primary">[<span className="text-emerald-400 font-bold">257</span>, 98]</span>
-        <span className="text-muted text-xs">← (256,97) becomes 257</span>
+        <span className="text-muted w-32">Merge (256,101):</span>
+        <span className="text-primary">[<span className="text-emerald-400 font-bold">257</span>]</span>
+        <span className="text-muted text-xs">the</span>
       </div>
       <div className="flex items-center gap-3 pt-2 border-t border-border">
-        <span className="text-muted w-24">Result:</span>
-        <span className="text-emerald-400 font-bold">[257, 98]</span>
-        <span className="text-muted text-xs">← 4 bytes compressed to 2 tokens</span>
+        <span className="text-muted w-32">Result:</span>
+        <span className="text-emerald-400 font-bold">[257]</span>
+        <span className="text-muted text-xs">← 3 bytes compressed to 1 token</span>
       </div>
     </div>
     </div>
   </div>
 
   <Callout type="note" title="Challenge: The Encoder">
-    The final boss! Implement encoding to tokenize new text. Switch to the **Challenge** tab.
+    Try implementing this in the **Challenge** tab.
   </Callout>
 </Step>
 
