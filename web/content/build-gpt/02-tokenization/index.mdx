@@ -667,26 +667,26 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
   </Callout>
 </Step>
 
-<Step title="6. The Complete Pipeline">
+<Step title="6. Recap">
   <Description>
-    Let's step back and see the entire journey of text before it reaches the neural network.
+    Let's step back and see the complete flow from text to token IDs.
   </Description>
 
   <ProcessTimeline steps={[
     {
       title: "Raw Text",
-      data: '"Hello World"',
+      data: '"Hello, World!"',
       description: "The original input string."
     },
     {
       title: "Regex Split",
-      data: '["Hello", " World"]',
-      description: "Pre-split into meaningful chunks."
+      data: '["Hello", ",", " World", "!"]',
+      description: "Pre-split into chunks. Punctuation stays separate."
     },
     {
       title: "UTF-8 Encoding",
-      data: "[72, 101, 108, 108, 111], [32, 87, 111, 114, 108, 100]",
-      description: "Convert text to raw bytes."
+      data: "[72, 101, 108, 108, 111], [44], [32, 87, 111, 114, 108, 100], [33]",
+      description: "Each chunk becomes a list of bytes."
     },
     {
       title: "BPE Merging",
@@ -694,21 +694,20 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
     },
     {
       title: "Token IDs",
-      data: "[15496, 995]",
-      description: "This is what the neural network actually sees."
+      data: "[15496, 11, 2159, 0]",
+      description: "The final sequence of integers."
     }
   ]} />
 
   <Callout type="success" title="Summary">
-    * **Tokenization** compresses text into efficient chunks called tokens
-    * **BPE** learns merge rules by iteratively combining frequent pairs
-    * **Regex pre-splitting** ensures words stay consistent regardless of punctuation
-    * **Decoding** is a simple vocabulary lookup since we store each token's bytes
-    * **Encoding** applies learned merges in order to tokenize new text
-    * The final output is a sequence of **integer IDs**: the atoms of language models
+    * **Tokenization** converts text into a sequence of integer IDs
+    * **BPE** learns merge rules by iteratively combining frequent byte pairs
+    * **Regex pre-splitting** keeps words and punctuation in separate chunks
+    * **Decoding** converts tokens back to text by looking up each token's bytes
+    * **Encoding** converts text to tokens by applying merge rules in order they were learned
   </Callout>
 
   <Description>
-    These integers are the only thing the neural network ever sees. They are the atoms of the Large Language Model universe. In the next chapter, we'll see how the model turns these integers into **Vectors** (Embeddings) to begin understanding their meaning.
+    We now have a sequence of token IDs. But these are just identifiers. They don't tell us anything about what the tokens mean. In the next chapter, we'll see how **Embeddings** turn each token ID into a vector that captures meaning.
   </Description>
 </Step>
