@@ -395,19 +395,11 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
 
 
 <Step title="4. Regex Pre-splitting">
-  <Description>
-    If you ran the code above on English text, you'd have a working tokenizer, but it would have a flaw.
+  <Description attached>
+    BPE merges pairs across the entire text without understanding word boundaries. This means punctuation can merge with words: `dog.` might become one token, while `dog ` (with space) becomes another. The same word gets tokenized differently based on what comes after it:
   </Description>
 
-  <Description>
-    Consider the string: `"dog dog. dog!"`
-  </Description>
-
-  <Description>
-    To a human, the core concept is **"dog"**. But our simple algorithm treats spaces and punctuation as characters to merge. It might see `dog.` as completely different from `dog ` (with a space). It might even merge `g` and `.` into a weird token `g.`.
-  </Description>
-
-  <div className="my-6">
+  <div className="content-attached my-6">
     <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">The Problem</div>
     <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
     <div className="font-mono text-sm space-y-1 text-secondary">
@@ -416,15 +408,15 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
       <div>"dog" + exclamation → yet another pattern</div>
     </div>
     <div className="mt-2 text-sm text-secondary">
-      The model has to learn "dog" three separate times!
+      The word "dog" has no consistent representation. Its tokenization depends on surrounding characters.
     </div>
     </div>
   </div>
 
-  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>The Fix: Regex Splitting</h4>
+  <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>The Fix</h4>
 
-  <Description>
-    Modern tokenizers (like GPT-4's) use **Regular Expressions** to pre-split text into meaningful chunks *before* applying BPE. They force boundaries between words and punctuation.
+  <Description attached>
+    The fix is to split text into chunks *before* BPE runs, forcing boundaries between different character types (words, punctuation, numbers, whitespace). Modern tokenizers use **Regular Expressions** for this:
   </Description>
 
   <div className="my-6">
@@ -446,13 +438,13 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
       </div>
     </div>
     <div className="mt-3 text-sm text-secondary">
-      BPE runs on each chunk independently. "dog" is always tokenized as "dog".
+      Now "dog" and "." are separate chunks, so they can't merge into a single token.
     </div>
     </div>
   </div>
 
   <Description>
-    This semantic separation helps the model learn language patterns much faster because it doesn't waste capacity learning that "dog." and "dog," are the same word.
+    By forcing boundaries before BPE runs, words, punctuation, and numbers stay in separate chunks. BPE then merges only within these chunks, so it can't create tokens that mix different character types.
   </Description>
 </Step>
 
