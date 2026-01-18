@@ -202,7 +202,7 @@ description: "How to represent tokens as vectors to capture semantic meaning."
 
 <Step title="5. What Embeddings Don't Capture">
   <Description>
-    We now have a way to represent what each token means. The embedding layer converts arbitrary token IDs into rich vectors where similar words cluster together and relationships become geometric directions.
+    We now have a way to represent what each token means. The embedding layer converts token IDs into vectors where similar tokens cluster together and relationships become geometric directions.
   </Description>
 
   <Description>
@@ -210,7 +210,7 @@ description: "How to represent tokens as vectors to capture semantic meaning."
   </Description>
 
   <Description>
-    This matters because Transformers process all tokens in parallel, seeing the entire sentence at once rather than reading left to right like older models. This makes them fast, but it also means the model has no built-in sense of order. Without position information, "Alice helped Bob" and "Bob helped Alice" produce the same embeddings with no indication of word order. The next chapter introduces positional encoding to address this.
+    This matters because Transformers process all tokens in parallel, seeing the entire sentence at once. This means that without position information, "Alice helped Bob" and "Bob helped Alice" produce identical embeddings. The next chapter introduces positional encoding to address this.
   </Description>
 
   <Callout type="success" title="Summary">
