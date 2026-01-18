@@ -214,10 +214,10 @@ description: "How to represent tokens as vectors to capture semantic meaning."
   </Description>
 
   <Callout type="success" title="Summary">
-    * **Raw token IDs** fail because a single number cannot encode meaning, and magnitude bias creates false quantitative relationships
+    * **Token IDs** are just labels, a single number can't capture meaning
     * **Embeddings** represent tokens as vectors where each dimension captures an aspect of meaning
-    * **Similar words** cluster together in vector space, and relationships become directions (King − Man + Woman ≈ Queen)
+    * **Similar tokens** cluster together in vector space, and relationships become directions (King − Man + Woman ≈ Queen)
     * **The embedding layer** is a learned lookup table with shape `[V, d_model]` that gets refined during training
-    * **Embeddings do not capture position** since the embedding layer maps each token to the same vector regardless of where it appears
+    * **Embeddings don't capture position**, a token has the same embedding regardless of where it appears
   </Callout>
 </Step>
