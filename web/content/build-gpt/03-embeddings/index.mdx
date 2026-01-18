@@ -24,21 +24,21 @@ description: "How to represent tokens as vectors to capture semantic meaning."
 
 <Step title="2. Representing Meaning with Multiple Numbers">
   <Description>
-    What if instead of one number, we used a list of numbers to represent each word? Each number in the list could capture a different attribute of the word's meaning. Let's see how this would work.
+    What if instead of one number, we used a list of numbers to represent each token? Each number could capture a different aspect of meaning. Here's a simplified way to think about it.
   </Description>
 
   <Description>
-    To make this concrete, let's design a simple system with just two attributes: **Royalty** and **Gender**. We will score each word on both of these dimensions, using a scale from **-1.0** to **+1.0**. For Royalty, +1 means strongly royal, -1 means strongly opposite, and 0 means unrelated. For Gender, +1 means masculine, -1 means feminine, and 0 means neutral.
+    To illustrate how vectors let us express meaning, let's design a simple two-dimensional system, one dimension for **Royalty** and one for **Gender**. We score each token on both, using a scale from **-1.0** to **+1.0**. For Royalty, +1 means strongly royal, -1 means the opposite, and 0 means unrelated. For Gender, +1 means masculine, -1 means feminine, and 0 means neutral.
   </Description>
 
   <Description>
-    With these two dimensions, we can now represent words as pairs of numbers. Let's see how a few example words would look:
+    With these two dimensions, we can represent tokens as pairs of numbers:
   </Description>
 
   <Table>
     <TableHead>
       <TableRow>
-        <TableHeader>Word</TableHeader>
+        <TableHeader>Token</TableHeader>
         <TableHeader>Royalty</TableHeader>
         <TableHeader>Gender</TableHeader>
         <TableHeader>Vector</TableHeader>
@@ -73,7 +73,7 @@ description: "How to represent tokens as vectors to capture semantic meaning."
   </Table>
 
   <Description>
-    By representing each word as a vector, we have encoded meaning directly into the numbers. King and Queen share the same Royalty score. King and Man share the same Gender score. And Apple sits at zero for both, since royalty and gender do not really apply to fruit.
+    Now we can express meaning and relationships through numbers. King and Queen share the same Royalty score. King and Man share the same Gender score. Apple sits at zero for both, since royalty and gender don't apply to fruit.
   </Description>
 </Step>
 
