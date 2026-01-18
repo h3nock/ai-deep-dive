@@ -132,11 +132,11 @@ description: "How to represent tokens as vectors to capture semantic meaning."
 
 <Step title="4. The Embedding Layer">
   <Description>
-    The vectors we have been building are called **embeddings** in machine learning, and the component that stores and retrieves them is called the **embedding layer**. In the previous sections, we hand-picked two dimensions (Royalty and Gender) and manually assigned values to each word. In practice, we only decide how many dimensions to use and initialize all values randomly. The model then learns both what each dimension represents and the specific values for every word in the vocabulary during training.
+    The vectors we have been building are called **embeddings**, and the component that stores them is called the **embedding layer**. In the previous sections, we hand-picked two dimensions and manually assigned values. In practice, we only decide how many dimensions to use and initialize all values randomly. The model learns the rest during training.
   </Description>
 
   <Description>
-    The embedding layer is implemented as a simple 2D array where each row stores the vector for one token. If our vocabulary has $V$ tokens and we choose $d_{model}$ dimensions, the array has shape `[V, d_model]`. To convert a token ID into its embedding, the layer simply looks up that row in the table.
+    The embedding layer is implemented as a 2D array where each row stores the vector for one token. If our vocabulary has $V$ tokens and we choose $d_{model}$ dimensions, the array has shape `[V, d_model]`. To convert a token ID into its embedding, the layer looks up that row:
   </Description>
 
   <Table>
@@ -179,19 +179,23 @@ description: "How to represent tokens as vectors to capture semantic meaning."
   </Table>
 
   <Description>
-    The two numbers that define the embedding layer are the **vocabulary size** $V$ (number of rows) and the **embedding dimension** $d_{model}$ (number of columns). A larger vocabulary lets more words exist as single tokens, so sentences become shorter sequences, but it also adds more rows to the table and increases memory. A larger embedding dimension gives the model more attributes to describe each word, but it adds more columns to every row and increases both memory and computation. In practice, vocabulary sizes range from around 32,000 to 100,000 tokens, while embedding dimensions range from a few hundred to several thousand depending on the model's scale.
+    Two numbers define the embedding layer: the **vocabulary size** $V$ (number of rows) and the **embedding dimension** $d_{model}$ (number of columns). A larger vocabulary means more tokens can exist as single entries, so sentences become shorter sequences, but it adds more rows and increases memory.
   </Description>
 
   <Description>
-    When training begins, every value in this table is initialized with small random numbers. "King" might start near "Sandwich" purely by chance. The structure we saw earlier does not exist yet, but it emerges as the model trains.
+    A larger embedding dimension gives the model more capacity to represent meaning, but it adds more columns to every row and increases both memory and computation. In practice, vocabulary sizes range from around 32,000 to 100,000 tokens, while embedding dimensions range from a few hundred to several thousand depending on the model's scale.
   </Description>
 
   <Description>
-    During training, the model reads billions of sentences and tries to predict the next word. When it gets a prediction wrong, the error signal flows backward through the network and nudges the embedding values. If "King" often appears near "throne," "crown," and "palace," their vectors gradually move closer together. If "apple" appears near "orange" and "banana," those cluster together instead.
+    When training begins, every value in this table is initialized randomly. The meaningful structure emerges during training.
   </Description>
 
   <Description>
-    After enough examples, the random numbers transform into the kind of organized space we visualized earlier. Unlike our hand-picked dimensions, the learned dimensions are abstract and often uninterpretable, but they capture whatever structure helps the model predict well.
+    During training, the model reads billions of sentences and tries to predict the next token. When it gets a prediction wrong, the error signal flows backward through the network and nudges the embedding values.
+  </Description>
+
+  <Description>
+    After enough examples, tokens that appear in similar contexts develop similar vectors, and the organized structure we visualized earlier emerges. Unlike our hand-picked Royalty and Gender dimensions, the learned dimensions are abstract and often uninterpretable, but they capture whatever helps the model predict well.
   </Description>
 </Step>
 
