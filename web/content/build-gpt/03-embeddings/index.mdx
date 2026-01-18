@@ -78,19 +78,19 @@ description: "How to represent tokens as vectors to capture semantic meaning."
 </Step>
 
 
-<Step title="3. Visualizing Word Vectors">
+<Step title="3. Visualizing the Vector Space">
   <Description>
-    Since we used only two dimensions in our example, we can plot these words on a standard X-Y coordinates with Royalty on the vertical axis and Gender on the horizontal axis.
+    Since we used only two dimensions, we can plot these tokens on a 2D graph with Royalty on the vertical axis and Gender on the horizontal.
   </Description>
 
   <EmbeddingSpace />
 
   <Description>
-    Every word now sits at a specific coordinate in this 2D space. The space organizes words by meaning. Words with similar concepts group into specific regions. You can see King and Queen sit at the top, while King and Man sit on the right. Apple sits at the origin because neither dimension applies to it.
+    Each token now sits at a specific coordinate. The space organizes tokens by meaning: King and Queen sit at the top (high royalty), while King and Man sit on the right (masculine). Apple sits at the origin because neither dimension applies to it.
   </Description>
 
   <Description>
-    Because each dimension represents an attribute, the direction you travel from one word to another captures their relationship. Notice the arrows in the graph below.
+    Because each dimension represents an attribute, the direction you travel from one token to another captures their relationship. Notice the arrows in the graph below.
   </Description>
 
   <EmbeddingSpace showArrows />
@@ -100,7 +100,7 @@ description: "How to represent tokens as vectors to capture semantic meaning."
   </Description>
 
   <Description attached>
-    This geometry allows us to do arithmetic on meaning. If we take the concept of **King**, subtract the **Man** component, and add **Woman**, we should logically discover the female equivalent of royalty. Let's test this with our vectors:
+    This geometry allows us to do arithmetic on meaning. If we take the concept of **King**, subtract the **Man** component, and add **Woman**, we should logically discover the female equivalent of royalty.
   </Description>
 
   <div className="content-attached p-4 bg-surface rounded-lg border border-border">
@@ -125,7 +125,7 @@ description: "How to represent tokens as vectors to capture semantic meaning."
   </div>
 
   <Description>
-    The result is exactly the vector for **Queen**. By taking King, removing the "maleness," and adding "femaleness," we mechanically arrived at Queen. This confirms that by expanding from a single number to a vector, we have successfully captured two things: the **semantic meaning** of each word, and the **logical relationships** between them, allowing us to manipulate relationships using simple math.
+    The result is exactly the vector for **Queen**. By expanding from a single number to a vector, we can express both the **meaning** of each token and the **relationships** between them.
   </Description>
 </Step>
 
