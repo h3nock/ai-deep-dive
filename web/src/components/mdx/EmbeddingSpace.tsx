@@ -54,7 +54,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
 
   return (
     <div
-      className="p-4 bg-surface rounded-lg border border-border"
+      className="py-6"
       style={{
         marginTop: "var(--space-connected)",
         marginBottom: "var(--space-flow)",
@@ -62,12 +62,12 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
     >
       <div
         className="text-center"
-        style={{ marginBottom: "var(--space-connected)" }}
+        style={{ marginBottom: "var(--space-atomic)" }}
       >
-        <span className="text-sm font-medium text-muted">
+        <span className="text-xs text-muted">
           {showArrows
-            ? "Vector Arithmetic: The Gender Direction"
-            : "The 2D Meaning Space"}
+            ? "Vector Arithmetic"
+            : "2D Vector Space"}
         </span>
       </div>
 
@@ -119,7 +119,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 y1={paddingTop}
                 x2={toSvgX(v)}
                 y2={height - paddingBottom}
-                className={v === 0 ? "stroke-zinc-500" : "stroke-zinc-700"}
+                className={v === 0 ? "stroke-zinc-600" : "stroke-zinc-800"}
                 strokeWidth={v === 0 ? 2 : 1}
                 strokeDasharray={v === 0 ? "" : "4 4"}
               />
@@ -129,7 +129,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 y1={toSvgY(v)}
                 x2={width - paddingRight}
                 y2={toSvgY(v)}
-                className={v === 0 ? "stroke-zinc-500" : "stroke-zinc-700"}
+                className={v === 0 ? "stroke-zinc-600" : "stroke-zinc-800"}
                 strokeWidth={v === 0 ? 2 : 1}
                 strokeDasharray={v === 0 ? "" : "4 4"}
               />
@@ -140,14 +140,14 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={width - paddingRight + 8}
             y={toSvgY(0) + 4}
-            className="fill-zinc-400 text-[10px] font-medium"
+            className="fill-zinc-500 text-[10px]"
           >
             Gender (+)
           </text>
           <text
             x={paddingLeft - 8}
             y={toSvgY(0) + 4}
-            className="fill-zinc-400 text-[10px] font-medium"
+            className="fill-zinc-500 text-[10px]"
             textAnchor="end"
           >
             Gender (-)
@@ -155,7 +155,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={toSvgX(0)}
             y={paddingTop - 10}
-            className="fill-zinc-400 text-[10px] font-medium"
+            className="fill-zinc-500 text-[10px]"
             textAnchor="middle"
           >
             Royalty (+)
@@ -163,7 +163,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={toSvgX(0)}
             y={height - paddingBottom + 20}
-            className="fill-zinc-400 text-[10px] font-medium"
+            className="fill-zinc-500 text-[10px]"
             textAnchor="middle"
           >
             Royalty (-)
@@ -199,31 +199,21 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                     y1={y1}
                     x2={x2}
                     y2={y2}
-                    className="stroke-amber-400"
-                    strokeWidth="3"
+                    className="stroke-amber-400/70"
+                    strokeWidth="2"
                     markerEnd="url(#arrowhead)"
                     strokeLinecap="round"
                   />
-                  {/* Label background */}
+                  {/* Label - just text, no background */}
                   {i === 0 && (
-                    <>
-                      <rect
-                        x={mx - 40}
-                        y={my - 22}
-                        width="80"
-                        height="18"
-                        rx="4"
-                        className="fill-amber-500/20"
-                      />
-                      <text
-                        x={mx}
-                        y={my - 10}
-                        textAnchor="middle"
-                        className="fill-amber-300 text-[10px] font-semibold"
-                      >
-                        {arrow.label}
-                      </text>
-                    </>
+                    <text
+                      x={mx}
+                      y={my - 12}
+                      textAnchor="middle"
+                      className="fill-zinc-400 text-[10px]"
+                    >
+                      {arrow.label}
+                    </text>
                   )}
                 </g>
               );
@@ -236,9 +226,8 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
               <circle
                 cx={toSvgX(point.x)}
                 cy={toSvgY(point.y)}
-                r="24"
-                className="fill-surface stroke-border"
-                strokeWidth="2"
+                r="22"
+                className="fill-surface"
               />
               {/* Emoji */}
               <text
@@ -255,7 +244,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 x={toSvgX(point.x)}
                 y={toSvgY(point.y) + 42}
                 textAnchor="middle"
-                className="fill-zinc-300 text-[11px] font-semibold"
+                className="fill-zinc-300 text-[11px] font-medium"
               >
                 {point.name}
               </text>
@@ -264,7 +253,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 x={toSvgX(point.x)}
                 y={toSvgY(point.y) + 54}
                 textAnchor="middle"
-                className="fill-zinc-400 text-[11px] font-mono"
+                className="fill-zinc-500 text-[10px] font-mono"
               >
                 [{point.y}, {point.x}]
               </text>
@@ -280,10 +269,10 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           style={{ marginTop: "var(--space-connected)" }}
         >
           <div className="flex items-center gap-2">
-            <div className="w-8 h-1 bg-amber-400 rounded-full relative">
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-l-[6px] border-l-amber-400 border-y-4 border-y-transparent"></div>
+            <div className="w-6 h-0.5 bg-amber-400/70 rounded-full relative">
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-l-4 border-l-amber-400/70 border-y-[3px] border-y-transparent"></div>
             </div>
-            <span className="text-muted">Same direction = Same concept</span>
+            <span className="text-xs text-muted">Same direction = Same concept</span>
           </div>
         </div>
       )}
@@ -295,7 +284,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
       >
         {showArrows
           ? 'Both arrows point in the same direction, showing that "Gender" is a consistent direction in the space.'
-          : "Words are positioned based on their Royalty and Gender attributes."}
+          : "Tokens are positioned based on their Royalty and Gender scores."}
       </p>
     </div>
   );
