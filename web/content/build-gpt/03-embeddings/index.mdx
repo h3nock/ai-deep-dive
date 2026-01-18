@@ -11,17 +11,13 @@ description: "How to represent tokens as vectors to capture semantic meaning."
 </div>
 
 
-<Step title="1. The Limits of Token IDs">
+<Step title="1. Why Token IDs Aren't Enough">
   <Description>
-    Let's start with the magnitude problem. When a neuron processes input, it multiplies by a weight: `Output = Input × Weight`. If "red" has ID 87 and "yellow" has ID 892, then "yellow" produces about 10× more activation than "red" before the model has learned anything at all. The network is forced to treat certain words as inherently "bigger" than others, purely because of how IDs happened to be assigned. This is called **magnitude bias**, and it corrupts the learning signal from the very first training step.
+    Token IDs tell us which token we're looking at, but nothing about what it means. For example, the word "Queen" carries multiple aspects of meaning: royalty, gender, relationships to other words like "King" or "Car." A categorical label like 32466 can't capture any of that. It's just an identifier.
   </Description>
 
   <Description>
-    One common workaround is **one-hot encoding**. Instead of using a single integer, each token becomes a long vector of zeros with a single 1 at its index position. If our vocabulary has 50,000 tokens, then each word becomes a vector of 50,000 numbers, with exactly one of them set to 1. This eliminates magnitude bias because every token now has exactly the same "intensity." But it still does not solve the second problem: a one-hot vector gives us no room to encode meaning. "King" and "Queen" are orthogonal vectors, mathematically just as different from each other as "King" is from "Banana." Every word is equally distant from every other word, so we don't have any sense of similarity or semantic meaning.
-  </Description>
-
-  <Description>
-    What we really need is a way to encode semantic meaning directly into how we represent words. Think about how you naturally make sense of words: you know that "King" and "Queen" are related, that "red" and "blue" belong to the same category, and that "Paris" connects to "France" the way "Tokyo" connects to "Japan." The representation should let us capture these kinds of relationships and operate on them, the way we do. Neither a raw integer nor a sparse one-hot vector can support this. We need something richer.
+    What we need is a representation with enough structure to express how words relate to each other. "King" and "Queen" are related. "Red" and "blue" belong to the same category. "Paris" connects to "France" the way "Tokyo" connects to "Japan." A single number can't express any of these relationships.
   </Description>
 </Step>
 
