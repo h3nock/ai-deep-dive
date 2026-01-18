@@ -6,11 +6,7 @@ description: "How to represent tokens as vectors to capture semantic meaning."
 
 <div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
 <Description noMargin>
-  In the previous chapter, we built a Tokenizer that converts text into integers. A sentence like "I love cats" becomes something like `[40, 1842, 9246]`. Since computers work with numbers, it might seem like we are ready to feed these integers directly into a neural network.
-</Description>
-
-<Description noMargin>
-  But raw token IDs have some fundamental issues. For one, neural networks assume that the size of a number means something. If one word has an ID 10× larger than another, the network will mathematically treat it as "10× more" of something, even though these IDs are just arbitrary labels. Beyond that, a single number cannot capture the complexity of what a word means. Think about the word "Queen": to truly understand it, the model needs to know about gender, status, grammar, and more. There is no way a single integer like 3878 can hold all of that. Let's look at these issues more closely.
+  In the previous chapter, we built a tokenizer that converts text into integers. A sentence like "I love cats" becomes `[40, 1842, 11875]`. These token IDs are just identifiers, they don't capture what words mean or how they relate to each other. This chapter introduces **embeddings**, vectors that can express meaning.
 </Description>
 </div>
 
