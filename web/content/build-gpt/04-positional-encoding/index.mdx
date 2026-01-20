@@ -16,49 +16,22 @@ description: "How to encode sequence order into token embeddings."
 
 
 
-<Step title="1. Attempt 1: Counting Up">
+<Step title="1. Attempt 1: Using the Position Index Directly">
   <Description>
-    The most naive approach is to number the positions (1, 2, 3...) and inject that number into the embedding. There are two ways we might do this:
+    The most straightforward approach is to use the position number itself (0, 1, 2, ...) and add it to each dimension of the token embedding. If "Apple" at position 3 has embedding `[0.1, -0.2, 0.3]`, adding 3 produces `[3.1, 2.8, 3.3]`.
   </Description>
 
   <Description>
-    **Adding the index to every dimension** is the simplest method. If "Apple" appears at position 1000, the addition looks like this:
-  </Description>
-
-  <div className="my-4">
-    <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm">
-      <div className="flex items-center gap-4">
-        <span className="text-muted w-28 shrink-0">E("Apple")</span>
-        <span className="text-primary">[0.05, -0.02, 0.11]</span>
-        <span className="text-zinc-500 text-xs">// initialized small, zero-centered, usually N(0,1)</span>
-      </div>
-      <div className="flex items-center gap-4 mt-1">
-        <span className="text-muted w-28 shrink-0">+ Position 1000</span>
-        <span className="text-secondary">[1000, 1000, 1000]</span>
-      </div>
-      <div className="border-t border-zinc-700 mt-2 pt-2 flex items-center gap-4">
-        <span className="text-muted w-28 shrink-0">= Result</span>
-        <span className="text-amber-400 font-bold">[1000.05, 999.98, 1000.11]</span>
-      </div>
-    </div>
-  </div>
-
-  <Description>
-    Look at the result: the small values that distinguished "Apple" (0.05, -0.02, 0.11) have become invisible. The output is essentially `[1000, 1000, 1000]` regardless of the original word. The semantic information is drowned by the position signal.
+    This has two problems. First, position values grow without bound as sequences get longer. Second, there's a scale mismatch: token embeddings are small values centered near zero, while position indices can be arbitrarily large. For instance, at position 1000, the representation becomes `[1000.1, 999.8, 1000.3]` dominated by position rather than meaning. These large values can also destabilize training by causing extreme activations and gradients.
   </Description>
 
   <Description>
-    This magnitude imbalance also causes training instability and makes it difficult for the model to learn meaningful word representations. The problem only gets worse as sequences get longer, since position values grow without bound.
+    To fix the unbounded growth, we could represent position using its digits. Position 42 becomes `[..., 4, 2]`, with values bounded between 0 and 9 regardless of sequence length, with zeros padding the higher places.
   </Description>
 
   <Description>
-    **Treating dimensions as digit slots** is an alternative. Position 999 becomes `[..., 0, 9, 9, 9]` and position 1000 becomes `[..., 1, 0, 0, 0]`, with leading zeros padding to a fixed width. This is more stable than the first approach since values stay bounded between 0 and 9, but still deviates from the small, zero-centered inputs that weight initialization assumes, risking instability.
+    This solves the unbounded growth, but not the scale mismatch. Embedding values are typically small and centered around zero, while digits range from 0 to 9. The position signal still dominates the dimensions it occupies, and training stability issues may persist, though less severely than with raw indices. Also, most dimensions end up as zeros, wasting capacity.
   </Description>
-
-  <Description>
-    Beyond stability, this encoding is sparse. Most dimensions are zero, wasting vector capacity. And adjacent positions like 999 and 1000 produce completely different vectors, giving the model no hint that they are neighbors.
-  </Description>
-
 </Step>
 
 <Step title="2. Attempt 2: Scaling to [0, 1]">
