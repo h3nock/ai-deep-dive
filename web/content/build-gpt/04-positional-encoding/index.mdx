@@ -36,23 +36,23 @@ description: "How to encode sequence order into token embeddings."
 
 <Step title="2. Attempt 2: Scaling to [0, 1]">
   <Description>
-    Since raw counts are unbounded and cause instability, a logical next step is to constrain the range. We can normalize the position indices by dividing by the total sequence length to keep every position between 0 and 1:
+    Both problems in Attempt 1 stem from unbounded or mismatched scales. A natural fix is to normalize by dividing the position index by the sequence length, keeping every value strictly between 0 and 1.
   </Description>
 
   <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm">
-    Position = index / total_length
+    Position = index / sequence_length
   </div>
 
   <Description>
-    This keeps values bounded, but it introduces two new problems.
+    This fixes the scale issues but introduces new problems.
   </Description>
 
   <Description>
-    **Variable step size:** Models often benefit from learning relative patterns, such as attending to the immediate neighbor. However, dividing by sequence length creates inconsistent steps. In a 10-word sentence, moving one position back changes the value by 0.10. In a 50-word sentence, it changes by only 0.02. The concept of "one token away" corresponds to different numeric values depending on the length of the text, making it difficult for the model to generalize simple rules like "look at the previous word."
+    First, the spacing between adjacent positions now depends on sequence length. In a 10-token sequence, neighbors are 0.1 apart; in a 50-token sequence, only 0.02 apart. The model has no way to learn a consistent notion of "adjacent" when the distance keeps changing.
   </Description>
 
   <Description>
-    **Unstable absolute positions:** In the sentence **"The cat sat"** (length 3), the word "cat" at index 1 gets a value of 0.33. In **"The cat sat on the mat"** (length 6), "cat" is still at index 1 but receives a value of 0.17. The same physical position maps to different values depending on the context window, undermining the ability to learn consistent patterns for specific locations.
+    Second, the same position index maps to different values in different sequences. Index 1 becomes 0.33 in a 3-token sequence but 0.17 in a 6-token sequence. The model cannot associate a stable meaning with any particular position.
   </Description>
 </Step>
 
