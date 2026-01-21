@@ -58,13 +58,13 @@ description: "How to encode sequence order into token embeddings."
 
 <Step title="3. What Might Make a Good Positional Encoding?">
   <Description>
-    Both approaches so far have failed. Raw counting causes magnitude issues and instability. Normalization keeps values small, but creates inconsistent steps and unstable absolute positions. Before we try again, let's step back and think about what properties we *might* want in a positional encoding. These aren't hard requirements, just reasonable hypotheses about what could make the signal useful for the model.
+    None of the approaches so far quite work. Raw indices grow without bound and create scale mismatches. Digit representations stay bounded but still don't match embedding scales. Normalization fixes scale but makes spacing and position values inconsistent across sequences. Before trying again, let's step back and think about what properties we *might* want in a positional encoding. These aren't hard requirements, just reasonable hypotheses about what could help.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">1. Scale Compatibility</h4>
 
   <Description>
-    As we learned from Attempt 1, the position signal should live in a reasonable numeric range so it doesn't overwhelm the token embedding. We want the model to represent "Apple at position 5", not a vector dominated by the position index.
+    The position signal should live in a reasonable numeric range, comparable to typical embedding values, so it doesn't overwhelm the token's meaning. We want the model to represent "Apple at position 5", not a vector dominated by the position.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">2. Unique and Deterministic</h4>
@@ -76,23 +76,23 @@ description: "How to encode sequence order into token embeddings."
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">3. Consistent Relative Structure</h4>
 
   <Description>
-    A good positional encoding makes relative offsets easy for the model to use. Ideally, "three words ahead" should behave consistently whether you're near the start of a sentence or deep into a long sequence. The relationship between any position P and position P+k should behave consistently regardless of P, allowing the model to learn portable attention patterns.
+    Ideally, relative offsets should behave consistently regardless of absolute position. "Three tokens ahead" should look the same whether you're near the start or deep into a sequence. This consistency could help the model learn portable patterns for attending to nearby or distant tokens.
   </Description>
 
-  <h4 className="text-base font-semibold text-primary mt-8 mb-3">4. Generalization to Longer Sequences</h4>
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">4. Extendability</h4>
 
   <Description>
-    Ideally, we'd want the model to handle sequences longer than what it saw during training. An encoding that extends naturally to larger positions seems appealing.
+    It would be convenient if the encoding could extend to positions beyond what the model saw during training.In practice, this doesn't guarantee better generalization, but an encoding that doesn't break at unseen positions is at least preferable to one that does.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">5. Smooth and Continuous</h4>
 
   <Description>
-    Positions are discrete, but it still helps if the positional signal changes in a predictable, structured way as we move from one position to the next. This is because neural networks learn by making small adjustments. If the model's prediction is slightly wrong, it nudges its weights a little bit in the right direction. This works better when small changes in input lead to small changes in output.
+    Positions are discrete, but it helps if the positional encoding changes gradually from one position to the next. Neural networks learn through small weight adjustments, and this works better when small input changes lead to small output changes. An encoding where adjacent positions have similar representations gives the model more structure to work with.
   </Description>
 
   <Description>
-    With these properties in mind, the question becomes: how might we represent many positions using only small, bounded values while keeping the signal smooth and consistent?
+    With these properties in mind, the question becomes: how can we represent many positions using small, bounded values while keeping the signal smooth and consistent?
   </Description>
 </Step>
 
