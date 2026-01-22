@@ -3,7 +3,7 @@ import {
   BookOpen,
   Code2,
   Cpu,
-  Image as ImageIcon,
+  Search,
   Terminal,
 } from "lucide-react";
 
@@ -67,22 +67,22 @@ export const courseConfig: Record<string, CourseConfig> = {
     tags: ["Transformers", "PyTorch", "GPT"],
     heroIcon: <Terminal className="w-5 h-5" />,
   },
-  "diffusion-from-scratch": {
-    id: "diffusion-from-scratch",
-    title: "Diffusion from Scratch",
+  "mech-interp": {
+    id: "mech-interp",
+    title: "Mechanistic Interpretability",
     description:
-      "Build an image generator from pure noise. Understand how Stable Diffusion actually works.",
+      "Reverse-engineer neural networks. Dissect transformers layer by layer, neuron by neuron.",
     outcome:
-      "A functional diffusion pipeline you assembled end-to-end, with intuition for every moving part.",
+      "The tools and intuition to analyze transformer internals and understand how they represent knowledge.",
     prerequisites: [
       "Python proficiency",
-      "Deep learning basics",
-      "Familiarity with convolutions",
+      "Transformer architecture basics",
+      "PyTorch fundamentals",
     ],
     phases: [],
-    status: "planned",
-    tags: ["Generative", "Vision", "U-Net"],
-    heroIcon: <ImageIcon className="w-5 h-5" />,
+    status: "coming-soon",
+    tags: ["Interpretability", "Transformers", "Research"],
+    heroIcon: <Search className="w-5 h-5" />,
   },
 };
 
