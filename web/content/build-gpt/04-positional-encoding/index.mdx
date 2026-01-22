@@ -142,7 +142,7 @@ description: "How to encode sequence order into token embeddings."
   </Description>
 
   <Description>
-    One motivation involves how positions **relate to each other**. Language understanding often depends on relative positions: "the word immediately before" or "three tokens ahead." If the encoding makes these relationships easy to compute, it *might* help the model learn them. Ideally, going from position `pos` to position `pos + k` would follow a simple, predictable pattern.
+    One motivation involves how positions **relate to each other**. Language understanding often depends on relative positions: "the token immediately before" or "three tokens ahead." If the encoding makes these relationships easy to compute, it *might* help the model learn them. Ideally, going from position `pos` to position `pos + k` would follow a simple, predictable pattern.
   </Description>
 
   <Description>
@@ -302,7 +302,7 @@ description: "How to encode sequence order into token embeddings."
   </Callout>
 
   <Description>
-    This isn't the only line of reasoning to arrive at positional encoding, nor the only solution. With this in place, we have the complete input representation. In the next chapter, we'll see how the Transformer uses these vectors to let words **attend** to each other.
+    This isn't the only line of reasoning to arrive at positional encoding, nor the only solution. With this in place, we have the complete input representation. In the next chapter, we'll see how the Transformer uses these vectors to let tokens **attend** to each other.
   </Description>
 
 </Step>
