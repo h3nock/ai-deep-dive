@@ -250,11 +250,7 @@ description: "How to encode sequence order into token embeddings."
   </Description>
 
   <Description>
-    **Concatenation** would append the position vector to the embedding. If the embedding is `d_model` and the position vector is `d_pos`, the result would be `d_model + d_pos` dimensions. This keeps signals separate but increases input size, growing parameter counts in all downstream layers and breaking residual connections (covered later) which require matching dimensions.
-  </Description>
-
-  <Description>
-    **Addition** adds them element-wise, requiring both vectors to be the same size. This preserves the original dimensionality, keeping the architecture efficient and compatible with residual connections. Although it mixes position and meaning into one vector, neural networks have sufficient capacity to disentangle these signals during training, which is why this is the standard choice (Vaswani et al., 2017).
+    We could concatenate the position vector to the embedding, but this increases the input dimension, which means larger weight matrices and more parameters throughout the network. Addition avoids this by adding the vectors element-wise, preserving the original d_model dimensions. Although this mixes position and meaning into one vector, the network can learn to disentangle these signals during training, making addition the standard choice (Vaswani et al., 2017).
   </Description>
 
   <Description>
