@@ -96,23 +96,23 @@ description: "How to encode sequence order into token embeddings."
   </Description>
 </Step>
 
-<Step title="4. From Numbers to Waves">
+<Step title="4. Replacing Digits with Oscillations">
   <Description>
-    Number systems offer a key insight: they use multiple columns cycling at different speeds, allowing us to represent arbitrarily large numbers with bounded symbols. For example, in decimal the ones column cycles 0→9, the tens column changes every 10 counts, the hundreds every 100. This multi-rate structure is exactly the kind of bounded, unique encoding we want.
+    Number systems offer a useful insight. They use multiple columns cycling at different speeds, allowing us to represent arbitrarily large numbers with bounded symbols. In decimal, the ones column cycles 0→9, the tens column changes every 10 counts, the hundreds every 100. This multi-rate structure gives us bounded, unique values for each position.
   </Description>
 
   <Description>
-    We already saw scale issues with raw decimal digits in Attempt 1. Even if we use binary, which keeps values at just 0 and 1, we run into the same neighbor problem we saw with 999→1000. In binary, going from 7 (0111) to 8 (1000) flips four bits at once. Adjacent positions can have drastically different representations.
+    Decimal digits (0-9) have scale issues as we saw in Attempt 1. Binary might seem like a better fit since its values (0 and 1) are closer to typical embedding scales, while still providing the same multi-frequency structure.
   </Description>
 
   <Description>
-    The core issue behind these different representations is the abrupt flipping between discrete states. Looking at binary, as shown on the left side of the visual below, each dimension jumps instantly from 0 to 1 and back, with no values in between. So, what if we kept the multi-frequency structure but replaced these sharp jumps with smooth waves that rise and fall gradually?
+    But both decimal and binary are discrete. Values jump between states rather than changing gradually, as shown on the left side of the visual below. In Section 3, we hypothesized that smoothness could help since neural networks learn better when small input changes lead to small output changes. What if we kept the multi-frequency structure but replaced discrete values with smooth oscillations?
   </Description>
 
   <BinaryVsSmooth />
 
   <Description>
-    This smooth oscillation preserves the core insight: multiple dimensions changing at different speeds, all staying in a bounded range, giving each position a distinctive signature. Unlike discrete digits, the values change gradually from one position to the next, so nearby positions have similar encodings.
+    This gives us the best of both: multiple dimensions changing at different speeds for bounded, unique encodings, and gradual changes between adjacent positions rather than abrupt jumps.
   </Description>
 </Step>
 
