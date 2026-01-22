@@ -289,12 +289,12 @@ description: "How to encode sequence order into token embeddings."
   </Description>
 
   <Callout type="success" title="Summary">
-    * **Raw position indices** don't work well because their unbounded magnitude (1, 1000, 10000...) can overwhelm the semantic signal in the embedding
-    * **Multiple dimensions cycling at different speeds** allow large positions to be encoded with small, bounded values—similar to how decimal uses ones, tens, and hundreds columns
-    * **Sinusoidal waves** provide smooth, continuous values that change gradually from one position to the next while staying bounded between -1 and +1
-    * **Sine/cosine pairs** enable position shifts to be expressed as linear transformations (rotation matrices), playing to the Transformer's strength in matrix operations
+    * **Raw position indices** grow without bound, overwhelming the semantic signal and causing training instability
+    * **Multiple dimensions cycling at different speeds** allow large positions to be encoded with small, bounded values, similar to how decimal uses ones, tens, and hundreds columns
+    * **Sinusoidal waves** change gradually between positions while staying bounded between -1 and +1
+    * **Sine/cosine pairs** enable position shifts to be expressed as linear transformations (rotation matrices), which aligns with the Transformer's matrix-based computations
     * **Frequency spread** from fast (1) to slow (1/10000) gives each position a unique fingerprint across multiple scales
-    * **Addition** combines position and meaning while preserving `d_model` dimensionality, keeping the architecture efficient and compatible with residual connections
+    * **Addition** combines position and meaning while preserving `d_model` dimensionality, avoiding extra parameters
   </Callout>
 
   <Description>
