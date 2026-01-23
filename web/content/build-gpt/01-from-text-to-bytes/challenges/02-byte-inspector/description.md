@@ -1,6 +1,6 @@
 ---
 title: "The Byte Inspector"
-difficulty: "Easy"
+difficulty: "Medium"
 initialCode: |
   def count_characters(byte_list: list[int]) -> int:
       count = 0
@@ -11,10 +11,11 @@ arguments:
     type: list[int]
 executionSnippet: |
   count_characters(byte_list)
+visibleTestCases: 2
 ---
 
 Count the number of characters in a UTF-8 `byte_list` without decoding it.
 
-> **Remember:** A new character always starts with a byte that begins with `0` or `11`. Bytes starting with `10` are just continuations.
-
-Your task is to iterate through the bytes and count how many "start bytes" you find.
+In UTF-8, the first two bits of each byte tell you its role:
+- `0xxxxxxx` or `11xxxxxx` → start of a character
+- `10xxxxxx` → continuation of a previous character
