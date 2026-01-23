@@ -15,8 +15,10 @@ executionSnippet: |
 visibleTestCases: 1
 ---
 
-Train a BPE tokenizer on `text` by performing `num_merges` merge operations. Start with UTF-8 bytes (0-255) as your base vocabulary. Repeatedly find the most frequent adjacent pair, merge it into a new token (starting at 256), and update the sequence.
+You are given a string `text` and an integer `num_merges`. Train a BPE tokenizer by repeatedly merging the most frequent adjacent pair of tokens `num_merges` times.
 
-Return a tuple: the final compressed token IDs, and a dictionary mapping each merged pair to its new token ID.
+Return a tuple of the tokenized text (after all merges) and a dictionary mapping each merged pair to its new token ID.
 
-_Hint: If there are ties, `max()` will pick one. Our test cases avoid ties._
+If multiple pairs have the same frequency, pick the smallest pair.
+
+**Hint:** Start with UTF-8 bytes (0-255) as your base vocabulary. New token IDs start at 256.
