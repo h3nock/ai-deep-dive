@@ -1,6 +1,6 @@
 ---
 title: "The Analogy Solver"
-difficulty: "Hard"
+difficulty: "Medium"
 initialCode: |
   import math
 

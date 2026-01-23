@@ -1,6 +1,6 @@
 ---
 title: "The PE Matrix"
-difficulty: "Medium"
+difficulty: "Easy"
 initialCode: |
   import math
 

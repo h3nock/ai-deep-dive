@@ -1,6 +1,6 @@
 ---
 title: "The Byte Inspector"
-difficulty: "Medium"
+difficulty: "Easy"
 initialCode: |
   def count_characters(byte_list: list[int]) -> int:
       count = 0

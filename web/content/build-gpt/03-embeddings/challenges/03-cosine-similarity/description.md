@@ -1,6 +1,6 @@
 ---
 title: "Cosine Similarity"
-difficulty: "Medium"
+difficulty: "Easy"
 initialCode: |
   import math
 
