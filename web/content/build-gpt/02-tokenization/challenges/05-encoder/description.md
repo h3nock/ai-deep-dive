@@ -15,6 +15,6 @@ executionSnippet: |
 visibleTestCases: 1
 ---
 
-Tokenize `text` using trained merge rules. Convert the text to UTF-8 bytes first, then apply each merge from `merges` in order (Python dicts preserve insertion order). Each merge replaces all occurrences of a pair with its new token ID.
+Given a string `text` and a trained BPE `merges` dictionary, return the list of token IDs representing the encoded text.
 
-_Hint: Reuse your `merge` function from Challenge 2!_
+The `merges` dictionary is ordered by when the rules were learned during training, meaning they should be applied sequentially from first to last.
