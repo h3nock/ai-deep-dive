@@ -257,7 +257,66 @@ try:
 
     # Parse expected value and compare in Python (preserves all Python types)
     __expected__ = eval(${JSON.stringify(testCase.expected)})
-    __matched__ = __result__ == __expected__
+    
+    # approximate for real numbers (incl. numpy), exact for everything else
+    import math as __math__
+    import numbers as __numbers__
+    try:
+        import numpy as __np__
+    except Exception:
+        __np__ = None
+
+    def __is_numpy_array__(x):
+        return __np__ is not None and isinstance(x, __np__.ndarray)
+
+    def __approx_equal__(a, b, rel_tol=1e-9, abs_tol=1e-9):
+        # identity check (handles None, same object, etc.)
+        if a is b:
+            return True
+
+        # handle numpy arrays (and array vs list/tuple)
+        if __is_numpy_array__(a) or __is_numpy_array__(b):
+            if __is_numpy_array__(a) and __is_numpy_array__(b):
+                try:
+                    return bool(__np__.allclose(a, b, rtol=rel_tol, atol=abs_tol, equal_nan=True))
+                except Exception:
+                    return False
+            if __is_numpy_array__(a) and type(b) in (list, tuple):
+                return __approx_equal__(a.tolist(), list(b) if type(b) is tuple else b, rel_tol, abs_tol)
+            if __is_numpy_array__(b) and type(a) in (list, tuple):
+                return __approx_equal__(list(a) if type(a) is tuple else a, b.tolist(), rel_tol, abs_tol)
+            return False
+
+        # exclude bool from approximate comparison (bool is subclass of int)
+        if type(a) is bool or type(b) is bool:
+            return a == b
+
+        # use tolerance for all real numbers (int, float, numpy scalars)
+        # numbers.Real includes numpy.floating and numpy.integer
+        if isinstance(a, __numbers__.Real) and isinstance(b, __numbers__.Real):
+            try:
+                return __math__.isclose(float(a), float(b), rel_tol=rel_tol, abs_tol=abs_tol)
+            except Exception:
+                return False
+
+        # recursive collection comparison (use type() to exclude subclasses)
+        if type(a) is list and type(b) is list:
+            return len(a) == len(b) and all(__approx_equal__(x, y, rel_tol, abs_tol) for x, y in zip(a, b))
+        if type(a) is tuple and type(b) is tuple:
+            return len(a) == len(b) and all(__approx_equal__(x, y, rel_tol, abs_tol) for x, y in zip(a, b))
+        if type(a) is dict and type(b) is dict:
+            return a.keys() == b.keys() and all(__approx_equal__(a[k], b[k], rel_tol, abs_tol) for k in a)
+
+        # fallback: exact equality with safe bool coercion
+        result = a == b
+        if result is NotImplemented:
+            return False
+        try:
+            return bool(result)
+        except Exception:
+            return False
+    
+    __matched__ = __approx_equal__(__result__, __expected__)
 
     # Use repr() for display - shows exact Python syntax
     __result_repr__ = repr(__result__)
