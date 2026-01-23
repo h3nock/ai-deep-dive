@@ -17,6 +17,6 @@ executionSnippet: |
 visibleTestCases: 2
 ---
 
-Given a list of token integers `ids`, a `pair` to find, and a `new_id` to replace it with, return a new list where every consecutive occurrence of the pair is replaced with `new_id`.
+You are given a list of integers `ids` and a tuple `pair`. Replace every occurrence of the consecutive sequence `(pair[0], pair[1])` with a single integer `new_id`.
 
-**Note:** When you replace a pair, both elements are consumed. Think carefully about how this affects overlapping patterns like `[1, 1, 1]` when merging `(1, 1)`.
+Once two elements are merged, they cannot be part of another match.
