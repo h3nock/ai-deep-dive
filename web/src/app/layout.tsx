@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "katex/dist/katex.min.css";
 import { ProgressProvider } from "@/lib/progress-context";
+import UmamiAnalytics from "@/components/analytics/UmamiAnalytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,6 +67,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-secondary`}
       >
         <ProgressProvider>{children}</ProgressProvider>
+        <UmamiAnalytics />
       </body>
     </html>
   );
