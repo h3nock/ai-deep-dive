@@ -50,16 +50,16 @@ export const courseConfig: Record<string, CourseConfig> = {
         icon: <BookOpen className="w-4 h-4" />,
       },
       {
-        title: "The Transformer",
+        title: "The Transformer Core",
         description:
-          "Build the architecture that powers modern LLMs, then use it to build a translator.",
-        stepRange: [5, 10.99],
+          "Build attention, feed-forward networks, and the transformer block.",
+        stepRange: [5, 9.99],
         icon: <Cpu className="w-4 h-4" />,
       },
       {
-        title: "GPT",
-        description: "Go decoder-only and build a text-generating GPT.",
-        stepRange: [11, 12.99],
+        title: "Project GPT",
+        description: "Build, train, and generate text with your own language model.",
+        stepRange: [10, 10.99],
         icon: <Code2 className="w-4 h-4" />,
       },
     ],

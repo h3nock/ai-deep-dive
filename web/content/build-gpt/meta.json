@@ -6,19 +6,14 @@
     { "slug": "03-embeddings", "step": 3 },
     { "slug": "04-positional-encoding", "step": 4 },
     { "slug": "05-attention-mechanism", "step": 5 },
-    { "slug": "06-implementing-attention", "step": 6 },
-    { "slug": "07-layer-norm-and-feed-forward", "step": 7 },
-    { "slug": "08-residual-connections", "step": 8 },
-    { "slug": "09-cross-attention", "step": 9 },
-    { "slug": "10-project-translator", "step": 10 },
-    { "slug": "p1-01-setup", "step": 10.1 },
-    { "slug": "p1-02-assembly", "step": 10.2 },
-    { "slug": "p1-03-training", "step": 10.3 },
-    { "slug": "11-decoder-only-shift", "step": 11 },
-    { "slug": "12-project-gpt", "step": 12 },
-    { "slug": "p2-01-setup", "step": 12.1 },
-    { "slug": "p2-02-assembly", "step": 12.2 },
-    { "slug": "p2-03-training", "step": 12.3 },
-    { "slug": "p2-04-inference", "step": 12.4 }
+    { "slug": "06-multi-head-attention", "step": 6 },
+    { "slug": "07-feed-forward-networks", "step": 7 },
+    { "slug": "08-residuals-and-normalization", "step": 8 },
+    { "slug": "09-the-transformer-block", "step": 9 },
+    { "slug": "10-project-gpt", "step": 10 },
+    { "slug": "gpt-01-setup-and-data", "step": 10.1 },
+    { "slug": "gpt-02-architecture", "step": 10.2 },
+    { "slug": "gpt-03-training-mechanics", "step": 10.3 },
+    { "slug": "gpt-04-inference-and-generation", "step": 10.4 }
   ]
 }
