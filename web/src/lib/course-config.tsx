@@ -34,7 +34,7 @@ export const courseConfig: Record<string, CourseConfig> = {
       "From raw text to a working GPT. You'll implement every component of a transformer-based language model from the ground up.",
     outcome: [
       "The complete Transformer architecture, built layer by layer",
-      "Your own language model that generates text like ChatGPT",
+      "Your own GPT model that generates text autoregressively",
     ],
     prerequisites: [
       "Python proficiency",
