@@ -15,3 +15,41 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
 </div>
 
 
+<Step title="Query, Key, Value">
+  <Description>
+    We want each token to gather relevant information from other tokens. The word "bright" should check whether "student" or "light" appears nearby. Some neighbors will be more useful than others, so the mechanism needs to do two things: identify relevant tokens, and retrieve useful content from them.
+  </Description>
+
+  <Description>
+    Attention does this with three vectors per token. The **Query** represents what this token is looking for. The **Key** represents what this token has to offer. When we compare a Query against a Key, we get a relevance score that tells us whether these two tokens should interact. The third vector, **Value**, contains the information that gets passed along based on that score.
+  </Description>
+
+  <Description>
+    Think of it this way. Each token asks "what do I need?" (Query) while also announcing "here's what I contain" (Key). When a token's question matches what another token offers, the interaction is strong. The querying token then receives content from the matching token's Value.
+  </Description>
+
+  <Description>
+    The Query and Key determine the strength of attention between tokens. The Value carries the content that flows through those connections.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Where Do Q, K, V Come From?</h4>
+
+  <Description>
+    Each token's representation (x) produces all three by projection through learned weight matrices:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-1">
+    <div>Q = x × W<sub>Q</sub></div>
+    <div>K = x × W<sub>K</sub></div>
+    <div>V = x × W<sub>V</sub></div>
+  </div>
+
+  <Description>
+    Initially, these weight matrices contain random values, so Q, K, and V are meaningless. But during training, the model adjusts these matrices to produce useful representations. It learns, for example, that pronouns should generate Queries that match Keys from nouns, or that adjectives should attend to the nouns they modify.
+  </Description>
+
+  <Description>
+    No rules are programmed about which tokens should attend to which. We provide the structure, and training discovers what each token should look for and what it should offer.
+  </Description>
+</Step>
+
