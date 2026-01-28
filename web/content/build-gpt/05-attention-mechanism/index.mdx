@@ -1,7 +1,17 @@
 ---
-title: "Attention Mechanism"
+title: "Attention"
 step: 5
 description: "How attention lets tokens communicate using Query, Key, and Value."
 ---
 
-<ComingSoon />
+<div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
+<Description noMargin>
+  The previous chapter gave each token both meaning (from embeddings) and position (from positional encoding). But each token still has a single, fixed representation. The word "bright" produces the same vector whether it appears in "bright student" or "bright light."
+</Description>
+
+<Description>
+  Language depends on context. When we read "bright student," we interpret "bright" as intelligent. When we read "bright light," we interpret it as luminous. For the model to make this distinction, tokens need to look at each other. This chapter introduces that mechanism.
+</Description>
+</div>
+
+
