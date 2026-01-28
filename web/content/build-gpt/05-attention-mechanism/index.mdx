@@ -53,3 +53,22 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
   </Description>
 </Step>
 
+
+<Step title="Measuring Relevance">
+  <Description>
+    Each token has a Query expressing what it looks for and a Key advertising what it contains. To determine how strongly token `i` should attend to token `j`, we compute the **dot product** of `i`'s Query with `j`'s Key. The more closely what `i` is looking for matches what `j` offers, the higher their dot product is.
+  </Description>
+
+  <Description>
+    We compute this for every pair of tokens in the sequence:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+    score<sub>ij</sub> = Q<sub>i</sub> · K<sub>j</sub>
+  </div>
+
+  <Description>
+    The result is a score for each pair, indicating how relevant token `j` is to token `i`.
+  </Description>
+</Step>
+
