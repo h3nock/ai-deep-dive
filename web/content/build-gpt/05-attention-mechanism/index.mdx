@@ -243,5 +243,18 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
     </div>
   </div>
 </Step>
-</Step>
+
+
+<Callout type="success" title="Summary">
+  * Each token produces a **Query** (what it looks for), **Key** (what it offers), and **Value** (content to pass along)
+  * These are **learned projections** that the model discovers during training
+  * The **dot product** of Query and Key measures relevance between token pairs
+  * **Softmax** converts scores to weights that sum to 1; scaling by √d prevents extreme distributions
+  * The **weighted sum** of Values produces a contextualized representation for each token
+  * **Causal masking** hides future positions, ensuring tokens only attend to the past
+</Callout>
+
+<Description>
+  This chapter covered single-head attention, where one set of Q, K, V projections learns to relate tokens. In the next chapter, we'll see how **multi-head attention** runs several of these in parallel, letting the model capture different types of relationships simultaneously.
+</Description>
 
