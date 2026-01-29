@@ -104,5 +104,17 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
   <Description>
     If token `i` gives weight 0.7 to token `j` and weight 0.1 to token `k`, the output is dominated by `j`'s Value. This output is the **contextualized representation** of token `i`, its original meaning now enriched by information gathered from the tokens it attended to.
   </Description>
+
+  <Description>
+    Putting it all together, the complete attention operation is:
+  </Description>
+
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border">
+    <div className="text-center font-mono text-lg text-primary">
+      Attention(Q, K, V) = softmax(QK<sup>T</sup> / √d) × V
+    </div>
+  </div>
+</Step>
+
 </Step>
 
