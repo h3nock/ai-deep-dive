@@ -72,3 +72,37 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
   </Description>
 </Step>
 
+
+<Step title="Combining Values">
+  <Description>
+    We now have a score for how relevant each token is to every other. The next step is to use these scores to gather information from the Value vectors. A natural approach is to combine all Values, giving more influence to tokens with higher scores.
+  </Description>
+
+  <Description>
+    But raw scores are just numbers on an arbitrary scale. To combine Values in a way that makes sense, we want to treat the scores as weights in a weighted average. For a weighted average to work, the weights must sum to 1 so that each weight represents a share of the total influence.
+  </Description>
+
+  <Description>
+    The function that does this is **softmax**. It takes the raw scores, exponentiates them, and normalizes so they sum to 1. Higher scores become larger weights, lower scores become smaller weights, and the relative differences are preserved.
+  </Description>
+  <Description>
+    As the dimension of the Query and Key vectors grows, dot products tend to produce larger numbers because each additional dimension adds to the sum. When softmax receives these larger values, it concentrates nearly all weight on whichever token has the highest score, and the output becomes essentially just that token's Value. The model loses the ability to blend Values from other tokens. Scaling the scores down by √d before softmax keeps the values moderate, allowing weight to spread across several tokens when useful:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+    attention weights = softmax( scores / √d )
+  </div>
+
+  <Description>
+    With weights computed, we take the weighted sum of Values:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+    output = Σ (weight<sub>j</sub> × V<sub>j</sub>)
+  </div>
+
+  <Description>
+    If token `i` gives weight 0.7 to token `j` and weight 0.1 to token `k`, the output is dominated by `j`'s Value. This output is the **contextualized representation** of token `i`, its original meaning now enriched by information gathered from the tokens it attended to.
+  </Description>
+</Step>
+
