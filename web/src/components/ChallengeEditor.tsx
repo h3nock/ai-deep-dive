@@ -89,21 +89,28 @@ export interface ChallengeEditorProps {
 // ExampleCard component for displaying test cases with optional explanations
 function ExampleCard({ testCase }: { testCase: TestCase }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const inputLines = Object.entries(testCase.inputs)
+    .map(([key, value]) => `${key} = ${value}`)
+    .join("\n");
 
   return (
-    <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
-      <div className="flex flex-col gap-2 font-mono text-sm">
+    <div className="p-3 bg-[#121212] rounded-md border border-zinc-800">
+      <div className="flex flex-col gap-2 font-mono text-[13px]">
         <div>
-          <span className="text-muted">Input:</span>{" "}
-          <span className="text-secondary">
-            {Object.entries(testCase.inputs)
-              .map(([k, v]) => `${k} = ${v}`)
-              .join(", ")}
+          <span className="text-muted text-xs uppercase tracking-wide">
+            Input
           </span>
+          <div className="mt-0.5 text-secondary whitespace-pre-wrap break-words leading-snug">
+            {inputLines}
+          </div>
         </div>
         <div>
-          <span className="text-muted">Output:</span>{" "}
-          <span className="text-secondary">{testCase.expected}</span>
+          <span className="text-muted text-xs uppercase tracking-wide">
+            Output
+          </span>
+          <div className="mt-0.5 text-secondary whitespace-pre-wrap break-words leading-snug">
+            {testCase.expected}
+          </div>
         </div>
       </div>
 
