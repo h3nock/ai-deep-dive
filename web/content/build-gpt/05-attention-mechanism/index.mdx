@@ -140,7 +140,7 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
     The function that does this is **softmax**. It takes the raw scores, exponentiates them, and normalizes so they sum to 1. Higher scores become larger weights, lower scores become smaller weights, and the relative differences are preserved.
   </Description>
   <Description>
-    As the dimension of the Query and Key vectors grows, dot products tend to produce larger numbers because each additional dimension adds to the sum. When softmax receives these larger values, it concentrates nearly all weight on whichever token has the highest score, and the output becomes essentially just that token's Value. The model loses the ability to blend Values from other tokens. Scaling the scores down by √d before softmax keeps the values moderate, allowing weight to spread across several tokens when useful:
+    As the dimension of the Query and Key vectors grows, dot products tend to produce larger numbers because each additional dimension adds to the sum. When softmax receives these larger values, it concentrates nearly all weight on whichever token has the highest score, and the output becomes essentially just that token's Value, losing the ability to blend information from multiple source tokens. Scaling the scores down by √d before softmax keeps the values moderate, allowing weight to spread across several tokens when useful:
   </Description>
 
   <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
