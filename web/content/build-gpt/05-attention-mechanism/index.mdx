@@ -116,5 +116,19 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
   </div>
 </Step>
 
+
+<Step title="Causal Masking">
+  <Description>
+    Recall from the introduction chapter that the model learns by predicting the next word. Given "The cat sat on the", it predicts "mat" and adjusts its weights based on the error. During training, however, we feed the model entire sequences at once for efficiency. If position 5 can attend to position 6, it could simply copy the answer instead of learning to predict it. This is information leakage.
+  </Description>
+
+  <Description>
+    To prevent this, we hide future tokens from each position by setting their attention scores to negative infinity before softmax. Softmax converts negative infinity to zero weight, so those positions contribute nothing to the output. As a result, position 3 can attend to positions 1, 2, and 3, but positions 4 and beyond are invisible to it.
+  </Description>
+
+  <Description>
+    This creates a triangular pattern. The first token sees only itself, the second sees the first two, the third sees the first three, and so on. This technique is called **causal masking** because it respects causality: the present can depend on the past, but not on the future.
+  </Description>
+</Step>
 </Step>
 
