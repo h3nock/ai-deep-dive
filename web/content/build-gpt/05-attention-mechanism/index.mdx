@@ -1,7 +1,260 @@
 ---
-title: "Attention Mechanism"
+title: "Attention"
 step: 5
 description: "How attention lets tokens communicate using Query, Key, and Value."
 ---
 
-<ComingSoon />
+<div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
+<Description noMargin>
+  The previous chapter gave each token both meaning (from embeddings) and position (from positional encoding). But each token still has a single, fixed representation. The word "bright" produces the same vector whether it appears in "bright student" or "bright light."
+</Description>
+
+<Description>
+  Language depends on context. When we read "bright student," we interpret "bright" as intelligent. When we read "bright light," we interpret it as luminous. For the model to make this distinction, tokens need to look at each other. This chapter introduces that mechanism.
+</Description>
+</div>
+
+
+<Step title="Query, Key, Value">
+  <Description>
+    We want each token to gather relevant information from other tokens. The word "bright" should check whether "student" or "light" appears nearby. Some neighbors will be more useful than others, so the mechanism needs to do two things: identify relevant tokens, and retrieve useful content from them.
+  </Description>
+
+  <Description>
+    Attention does this with three vectors per token. The **Query** represents what this token is looking for. The **Key** represents what this token has to offer. When we compare a Query against a Key, we get a relevance score that tells us whether these two tokens should interact. The third vector, **Value**, contains the information that gets passed along based on that score.
+  </Description>
+
+  <Description>
+    Think of it this way. Each token asks "what do I need?" (Query) while also announcing "here's what I contain" (Key). When a token's question matches what another token offers, the interaction is strong. The querying token then receives content from the matching token's Value.
+  </Description>
+
+  <Description>
+    The Query and Key determine the strength of attention between tokens. The Value carries the content that flows through those connections.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Where Do Q, K, V Come From?</h4>
+
+  <Description>
+    Each token's representation (x) produces all three by projection through learned weight matrices:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-1">
+    <div>Q = x × W<sub>Q</sub></div>
+    <div>K = x × W<sub>K</sub></div>
+    <div>V = x × W<sub>V</sub></div>
+  </div>
+
+  <Description>
+    Initially, these weight matrices contain random values, so Q, K, and V are meaningless. But during training, the model adjusts these matrices to produce useful representations. It learns, for example, that pronouns should generate Queries that match Keys from nouns, or that adjectives should attend to the nouns they modify.
+  </Description>
+
+  <Description>
+    No rules are programmed about which tokens should attend to which. We provide the structure, and training discovers what each token should look for and what it should offer.
+  </Description>
+</Step>
+
+
+<Step title="Measuring Relevance">
+  <Description>
+    Each token has a Query expressing what it looks for and a Key advertising what it contains. To determine how strongly token `i` should attend to token `j`, we compute the **dot product** of `i`'s Query with `j`'s Key. The more closely what `i` is looking for matches what `j` offers, the higher their dot product is.
+  </Description>
+
+  <Description>
+    We compute this for every pair of tokens in the sequence:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+    score<sub>ij</sub> = Q<sub>i</sub> · K<sub>j</sub>
+  </div>
+
+  <Description>
+    The result is a score for each pair, indicating how relevant token `j` is to token `i`.
+  </Description>
+
+  <div className="my-6 flex justify-center overflow-x-auto">
+    <div className="inline-block">
+      <div className="flex">
+        <div className="w-16"></div>
+        <div className="w-14"></div>
+        <div className="text-xs text-muted mb-2 text-center" style={{ width: '224px' }}>Key</div>
+      </div>
+      <div className="flex">
+        <div className="w-16"></div>
+        <div className="w-14"></div>
+        <div className="flex">
+          {['The', 'bright', 'student', 'reads'].map((token, i) => (
+            <div key={i} className="w-14 h-6 flex items-center justify-center text-xs text-muted font-mono">{token}</div>
+          ))}
+        </div>
+      </div>
+      <div className="flex">
+        <div className="flex flex-col justify-center w-16">
+          <div className="text-xs text-muted text-right pr-2">Query</div>
+        </div>
+        <div className="flex flex-col">
+          {['The', 'bright', 'student', 'reads'].map((token, i) => (
+            <div key={i} className="w-14 h-12 flex items-center justify-end pr-2 text-xs text-muted font-mono">{token}</div>
+          ))}
+        </div>
+        <div className="border border-zinc-700 rounded overflow-hidden">
+          {[
+            [0.2, 0.1, 0.3, 0.1],
+            [0.1, 0.2, 0.8, 0.4],
+            [0.2, 0.7, 0.3, 0.1],
+            [0.1, 0.2, 0.6, 0.2]
+          ].map((row, i) => (
+            <div key={i} className="flex">
+              {row.map((score, j) => (
+                <div
+                  key={j}
+                  className="w-14 h-12 flex items-center justify-center text-sm border-r border-b border-zinc-800 last:border-r-0"
+                  style={{ backgroundColor: `rgba(16, 185, 129, ${score * 0.6})` }}
+                >
+                  <span className={score > 0.5 ? 'text-white' : 'text-zinc-400'}>{score.toFixed(1)}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex">
+        <div className="w-16"></div>
+        <div className="w-14"></div>
+        <div className="text-xs text-muted mt-2 text-center" style={{ width: '224px' }}>Higher scores = stronger relevance</div>
+      </div>
+    </div>
+  </div>
+</Step>
+
+
+<Step title="Combining Values">
+  <Description>
+    We now have a score for how relevant each token is to every other. The next step is to use these scores to gather information from the Value vectors. A natural approach is to combine all Values, giving more influence to tokens with higher scores.
+  </Description>
+
+  <Description>
+    But raw scores are just numbers on an arbitrary scale. To combine Values in a way that makes sense, we want to treat the scores as weights in a weighted average. For a weighted average to work, the weights must sum to 1 so that each weight represents a share of the total influence.
+  </Description>
+
+  <Description>
+    The function that does this is **softmax**. It takes the raw scores, exponentiates them, and normalizes so they sum to 1. Higher scores become larger weights, lower scores become smaller weights, and the relative differences are preserved.
+  </Description>
+  <Description>
+    As the dimension of the Query and Key vectors grows, dot products tend to produce larger numbers because each additional dimension adds to the sum. When softmax receives these larger values, it concentrates nearly all weight on whichever token has the highest score, and the output becomes essentially just that token's Value, losing the ability to blend information from multiple source tokens. Scaling the scores down by √d before softmax keeps the values moderate, allowing weight to spread across several tokens when useful:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+    attention weights = softmax( scores / √d )
+  </div>
+
+  <Description>
+    With weights computed, we take the weighted sum of Values:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+    output = Σ (weight<sub>j</sub> × V<sub>j</sub>)
+  </div>
+
+  <Description>
+    If token `i` gives weight 0.7 to token `j` and weight 0.1 to token `k`, the output is dominated by `j`'s Value. This output is the **contextualized representation** of token `i`, its original meaning now enriched by information gathered from the tokens it attended to.
+  </Description>
+
+  <Description>
+    Putting it all together, the complete attention operation is:
+  </Description>
+
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border">
+    <div className="text-center font-mono text-lg text-primary">
+      Attention(Q, K, V) = softmax(QK<sup>T</sup> / √d) × V
+    </div>
+  </div>
+</Step>
+
+
+<Step title="Causal Masking">
+  <Description>
+    Recall from the introduction chapter that the model learns by predicting the next word. Given "The cat sat on the", it predicts "mat" and adjusts its weights based on the error. During training, however, we feed the model entire sequences at once for efficiency. If position 5 can attend to position 6, it could simply copy the answer instead of learning to predict it. This is information leakage.
+  </Description>
+
+  <Description>
+    To prevent this, we hide future tokens from each position by setting their attention scores to negative infinity before softmax. Softmax converts negative infinity to zero weight, so those positions contribute nothing to the output. As a result, position 3 can attend to positions 1, 2, and 3, but positions 4 and beyond are invisible to it.
+  </Description>
+
+  <Description>
+    This creates a triangular pattern. The first token sees only itself, the second sees the first two, the third sees the first three, and so on. This technique is called **causal masking** because it respects causality: the present can depend on the past, but not on the future.
+  </Description>
+
+  <div className="my-6 flex justify-center overflow-x-auto">
+    <div className="inline-block">
+      <div className="flex">
+        <div className="w-20"></div>
+        <div className="w-6"></div>
+        <div className="text-xs text-muted mb-2 text-center" style={{ width: '200px' }}>Key Position (attending to)</div>
+      </div>
+      <div className="flex">
+        <div className="w-20"></div>
+        <div className="w-6"></div>
+        <div className="flex">
+          {['1', '2', '3', '4', '5'].map((k, i) => (
+            <div key={i} className="w-10 h-6 flex items-center justify-center text-xs text-muted">{k}</div>
+          ))}
+        </div>
+      </div>
+      <div className="flex">
+        <div className="flex flex-col justify-center w-20">
+          <div className="text-xs text-muted text-right pr-3">Query Position<br/><span className="text-[10px]">(attending from)</span></div>
+        </div>
+        <div className="flex flex-col">
+          {['1', '2', '3', '4', '5'].map((q, i) => (
+            <div key={i} className="w-6 h-10 flex items-center justify-center text-xs text-muted">{q}</div>
+          ))}
+        </div>
+        <div className="border border-zinc-700 rounded">
+          {[1, 2, 3, 4, 5].map((q) => (
+            <div key={q} className="flex">
+              {[1, 2, 3, 4, 5].map((k) => (
+                <div
+                  key={k}
+                  className={`w-10 h-10 flex items-center justify-center text-sm border-r border-b border-zinc-800 last:border-r-0 ${
+                    k <= q ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-900/50 text-zinc-600'
+                  }`}
+                >
+                  {k <= q ? '✓' : '✗'}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex">
+        <div className="w-20"></div>
+        <div className="w-6"></div>
+        <div className="flex justify-center gap-6 text-xs mt-3" style={{ width: '200px' }}>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 bg-emerald-500/20 border border-emerald-500/30 rounded"></div>
+            <span className="text-muted">Can attend</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 bg-zinc-900/50 border border-zinc-700 rounded"></div>
+            <span className="text-muted">Masked (−∞)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Step>
+
+
+<Callout type="success" title="Summary">
+  * Each token produces a **Query** (what it looks for), **Key** (what it offers), and **Value** (content to pass along)
+  * These are **learned projections** that the model discovers during training
+  * The **dot product** of Query and Key measures relevance between token pairs
+  * **Softmax** converts scores to weights that sum to 1; scaling by √d prevents extreme distributions
+  * The **weighted sum** of Values produces a contextualized representation for each token
+  * **Causal masking** hides future positions, ensuring tokens only attend to the past
+</Callout>
+
+<Description>
+  This chapter covered single-head attention, where one set of Q, K, V projections learns to relate tokens. In the next chapter, we'll see how **multi-head attention** runs several of these in parallel, letting the model capture different types of relationships simultaneously.
+</Description>
+
