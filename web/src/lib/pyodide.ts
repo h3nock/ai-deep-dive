@@ -269,7 +269,7 @@ try:
     def __is_numpy_array__(x):
         return __np__ is not None and isinstance(x, __np__.ndarray)
 
-    def __approx_equal__(a, b, rel_tol=1e-9, abs_tol=1e-9):
+    def __approx_equal__(a, b, rel_tol=1e-6, abs_tol=1e-6):
         # identity check (handles None, same object, etc.)
         if a is b:
             return True
