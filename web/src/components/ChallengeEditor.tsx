@@ -780,11 +780,20 @@ export function ChallengeEditor({
             return;
           }
 
+          if (result.result.error) {
+            setOutput((prev) => (prev || "") + (result.result.error || "Runner error"));
+            return;
+          }
+
           if (currentChallengeIdRef.current !== runChallengeId) {
             return;
           }
 
           const tests = result.result.tests ?? [];
+          if (tests.length === 0) {
+            setOutput((prev) => (prev || "") + "No tests returned\n");
+            return;
+          }
           setTestResults(tests);
           setActiveTab("result");
 
@@ -793,7 +802,9 @@ export function ChallengeEditor({
           }
           setIsBottomPanelCollapsed(false);
 
-          const allPassed = tests.every((r: TestResult) => r.status === "Accepted");
+          const allPassed =
+            tests.length > 0 &&
+            tests.every((r: TestResult) => r.status === "Accepted");
           if (allPassed) {
             setActiveTestCaseId(tests[0]?.id || "1");
           } else {

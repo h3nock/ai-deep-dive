@@ -63,7 +63,10 @@ def main() -> None:
                 include_hidden=include_hidden,
                 sandbox_cmd=settings.sandbox_cmd or None,
             )
-            results.mark_done(job_id, result)
+            if result.get("error"):
+                results.mark_error(job_id, str(result["error"]), result)
+            else:
+                results.mark_done(job_id, result)
         except Exception as exc:
             results.mark_error(job_id, f"Worker error: {exc}")
         finally:
