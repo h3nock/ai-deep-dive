@@ -65,6 +65,9 @@ Then set in `/etc/judge/judge.env`:
 JUDGE_SANDBOX_CMD_JSON=["nsjail","--config","/etc/judge/nsjail.cfg","--"]
 ```
 
+Edit `/etc/judge/nsjail.cfg` to set the `uidmap`/`gidmap` values for your
+`judge` user (`id -u judge`, `id -g judge`). The rlimit values are in MB/seconds.
+
 ## 6) Install systemd services
 
 ```bash
