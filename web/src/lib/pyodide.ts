@@ -97,6 +97,11 @@ export interface TestCase {
 export interface TestConfig {
   cases: TestCase[];
   runner: string; // Expression to evaluate
+  comparison?: {
+    type?: "exact" | "allclose";
+    rtol?: number;
+    atol?: number;
+  };
 }
 
 // Run tests using Pyodide (browser-based Python execution)
@@ -223,6 +228,10 @@ except Exception:
     ];
   }
 
+  const comparisonType = config.comparison?.type ?? "approx";
+  const comparisonRtol = config.comparison?.rtol ?? 1e-6;
+  const comparisonAtol = config.comparison?.atol ?? 1e-6;
+
   // Run each test case
   for (const testCase of config.cases) {
     currentStdout = "";
@@ -243,6 +252,9 @@ __test_error__ = None
 __result_repr__ = None
 __expected_repr__ = None
 __matched__ = False
+__cmp_type__ = ${JSON.stringify(comparisonType)}
+__rtol__ = ${comparisonRtol}
+__atol__ = ${comparisonAtol}
 
 try:
     # Compile test setup with different filename so it's filtered out of tracebacks
@@ -255,8 +267,9 @@ try:
     finally:
         __sys__.settrace(None)
 
-    # Parse expected value and compare in Python (preserves all Python types)
-    __expected__ = eval(${JSON.stringify(testCase.expected)})
+    # Parse expected value from a Python literal string (safe + supports tuple keys)
+    import ast as __ast__
+    __expected__ = __ast__.literal_eval(${JSON.stringify(testCase.expected)})
     
     # approximate for real numbers (incl. numpy), exact for everything else
     import math as __math__
@@ -316,7 +329,10 @@ try:
         except Exception:
             return False
     
-    __matched__ = __approx_equal__(__result__, __expected__)
+    if __cmp_type__ == "exact":
+        __matched__ = __result__ == __expected__
+    else:
+        __matched__ = __approx_equal__(__result__, __expected__, rel_tol=__rtol__, abs_tol=__atol__)
 
     # Use repr() for display - shows exact Python syntax
     __result_repr__ = repr(__result__)

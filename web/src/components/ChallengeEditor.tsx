@@ -32,6 +32,8 @@ import {
   canRunInBrowser,
   type TestConfig,
 } from "@/lib/pyodide";
+import { bundleToTestConfig, fetchPublicBundle } from "@/lib/judge-public-tests";
+import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
 import type { Challenge } from "@/lib/challenge-types";
 import { ConfirmModal } from "./ConfirmModal";
 import {
@@ -71,10 +73,10 @@ interface TestCase {
 interface TestResult {
   id: string;
   status: "Accepted" | "Wrong Answer" | "Runtime Error";
-  input: string;
-  stdout: string;
-  output: string;
-  expected: string;
+  input?: string;
+  stdout?: string;
+  output?: string;
+  expected?: string;
   stderr?: string;
   hidden?: boolean;
 }
@@ -171,6 +173,7 @@ export function ChallengeEditor({
   ]);
   const [activeTestCaseId, setActiveTestCaseId] = useState<string>("1");
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
+  const [bundleExamples, setBundleExamples] = useState<TestCase[] | null>(null);
 
   const [output, setOutput] = useState<string | null>(null); // Raw console output (fallback)
   const [isVimMode, setIsVimMode] = useState(() => {
@@ -197,7 +200,9 @@ export function ChallengeEditor({
   const [pyodideStatus, setPyodideStatus] = useState<
     "idle" | "loading" | "ready" | "error"
   >("idle");
-  const [executionMode, setExecutionMode] = useState<"browser" | "cli">(
+  const [executionMode, setExecutionMode] = useState<
+    "browser" | "server" | "cli"
+  >(
     "browser"
   );
   // We don't need to debounce test cases for sync anymore, we send them on run
@@ -311,19 +316,32 @@ export function ChallengeEditor({
     const browserSupported = canRunInBrowser(activeChallenge.dependencies);
 
     if (browserSupported) {
-      // Can run in browser with Pyodide
       setExecutionMode("browser");
+    } else if (activeChallenge.judgeId) {
+      setExecutionMode("server");
     } else {
-      // Requires packages not available in Pyodide - must use CLI
       setExecutionMode("cli");
     }
   }, [activeChallenge]);
 
+  // Warm public test bundle for judge-backed challenges
+  useEffect(() => {
+    if (!activeChallenge?.judgeId) return;
+    fetchPublicBundle(activeChallenge.judgeId).catch(() => {
+      // Ignore preload failures; will retry on run
+    });
+  }, [activeChallenge?.judgeId]);
+
   // Load code from localStorage or use initial code when challenge changes
   useEffect(() => {
     if (activeChallenge) {
+      let cancelled = false;
+      let hasAsync = false;
+
       // Update ref for race condition detection
       currentChallengeIdRef.current = activeChallenge.id;
+
+      setBundleExamples(null);
 
       const storedCode = getChallengeCode(courseId, activeChallenge.id);
       if (storedCode !== null) {
@@ -370,6 +388,38 @@ export function ChallengeEditor({
         setActiveTestCaseId(
           firstVisible ? firstVisible.id : processedCases[0].id
         );
+      } else if (activeChallenge.judgeId) {
+        hasAsync = true;
+        (async () => {
+          try {
+            const bundle = await fetchPublicBundle(activeChallenge.judgeId!);
+            const cases = (Array.isArray(bundle.tests)
+              ? bundle.tests
+              : bundle.tests.cases || []
+            ).map((tc) => {
+              const expected =
+                typeof tc.expected === "string"
+                  ? tc.expected
+                  : JSON.stringify(tc.expected);
+              return {
+                id: tc.id,
+                inputs: tc.inputs || {},
+                expected,
+                hidden: tc.hidden,
+              } as TestCase;
+            });
+
+            if (cancelled) return;
+            setBundleExamples(cases);
+            if (cases.length > 0) {
+              setTestCases(cases);
+              const firstVisible = cases.find((tc) => !tc.hidden) || cases[0];
+              setActiveTestCaseId(firstVisible.id);
+            }
+          } catch (err) {
+            console.warn("Failed to load public bundle", err);
+          }
+        })();
       } else {
         // Default empty case if none provided or defaultTestCases is empty
         const initialInputs: Record<string, string> = {};
@@ -385,6 +435,12 @@ export function ChallengeEditor({
       setTestResults(null);
       setOutput("");
       setLastRunMode(null);
+
+      return () => {
+        if (hasAsync) {
+          cancelled = true;
+        }
+      };
     }
   }, [activeChallenge]);
 
@@ -564,10 +620,13 @@ export function ChallengeEditor({
         return;
       }
 
-      const browserSupported = canRunInBrowser(activeChallenge?.dependencies);
+      const hasJudge = Boolean(activeChallenge?.judgeId);
 
-      // Determine which execution path to use
-      const useBrowser = executionMode === "browser" && browserSupported;
+      const useBrowser =
+        executionMode === "browser" && (mode === "run" || !hasJudge);
+      const useServer =
+        executionMode === "server" ||
+        (executionMode === "browser" && hasJudge && mode === "submit");
 
       // Filter test cases based on mode
       const casesToRun =
@@ -591,35 +650,49 @@ export function ChallengeEditor({
           }
           await ensurePyodideLoaded();
 
-          // Build test config
-          const formattedCases = casesToRun.map((tc) => {
-            let inputCode = "";
-            Object.entries(tc.inputs).forEach(([key, value]) => {
-              inputCode += `${key} = ${value}\n`;
+          let config: TestConfig;
+
+          const fallbackConfig = () => {
+            const formattedCases = casesToRun.map((tc) => {
+              let inputCode = "";
+              Object.entries(tc.inputs).forEach(([key, value]) => {
+                inputCode += `${key} = ${value}\n`;
+              });
+              return {
+                id: tc.id,
+                input: inputCode,
+                expected: tc.expected,
+                hidden: tc.hidden,
+              };
             });
+
+            let runnerCode =
+              activeChallenge?.executionSnippet ||
+              "print('No execution snippet defined')";
+            if (
+              runnerCode.trim().startsWith("print(") &&
+              runnerCode.trim().endsWith(")")
+            ) {
+              runnerCode = runnerCode.trim().slice(6, -1);
+            }
+
             return {
-              id: tc.id,
-              input: inputCode,
-              expected: tc.expected,
-              hidden: tc.hidden,
+              cases: formattedCases,
+              runner: runnerCode,
             };
-          });
-
-          let runnerCode =
-            activeChallenge?.executionSnippet ||
-            "print('No execution snippet defined')";
-          // Strip print() wrapper if present
-          if (
-            runnerCode.trim().startsWith("print(") &&
-            runnerCode.trim().endsWith(")")
-          ) {
-            runnerCode = runnerCode.trim().slice(6, -1);
-          }
-
-          const config: TestConfig = {
-            cases: formattedCases,
-            runner: runnerCode,
           };
+
+          if (activeChallenge?.judgeId && mode === "run") {
+            try {
+              const bundle = await fetchPublicBundle(activeChallenge.judgeId);
+              config = bundleToTestConfig(bundle);
+            } catch (err) {
+              console.warn("Failed to load public bundle, falling back", err);
+              config = fallbackConfig();
+            }
+          } else {
+            config = fallbackConfig();
+          }
 
           // Run tests with Pyodide
           const results = await runTestsWithPyodide(
@@ -664,6 +737,78 @@ export function ChallengeEditor({
           // Only show error if still on the same challenge
           if (currentChallengeIdRef.current === runChallengeId) {
             setPyodideStatus("error");
+            setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
+          }
+        } finally {
+          isRunningRef.current = false;
+          setIsRunning(false);
+        }
+      } else if (useServer && activeChallenge?.judgeId) {
+        // === SERVER EXECUTION (Judge VM) ===
+        isRunningRef.current = true;
+        setIsRunning(true);
+        setOutput("Submitting to server...\n");
+        setTestResults(null);
+        setLastRunMode(mode);
+
+        try {
+          const submit = await submitToJudge({
+            problemId: activeChallenge.judgeId,
+            code,
+            kind: mode,
+          });
+
+          const result = await waitForJudgeResult(submit.job_id, {
+            timeoutMs: 15000,
+            intervalMs: 1000,
+            onUpdate: (update) => {
+              if (update.status === "queued") {
+                setOutput("Queued... waiting for worker\n");
+              } else if (update.status === "running") {
+                setOutput("Running on server...\n");
+              }
+            },
+          });
+
+          if (result.status === "error") {
+            setOutput((prev) => (prev || "") + (result.error || "Server error"));
+            return;
+          }
+
+          if (!result.result) {
+            setOutput((prev) => (prev || "") + "No results returned\n");
+            return;
+          }
+
+          if (currentChallengeIdRef.current !== runChallengeId) {
+            return;
+          }
+
+          const tests = result.result.tests ?? [];
+          setTestResults(tests);
+          setActiveTab("result");
+
+          if (isBottomPanelCollapsed) {
+            setBottomPanelHeight(45);
+          }
+          setIsBottomPanelCollapsed(false);
+
+          const allPassed = tests.every((r: TestResult) => r.status === "Accepted");
+          if (allPassed) {
+            setActiveTestCaseId(tests[0]?.id || "1");
+          } else {
+            const firstFailed = tests.find((r: TestResult) => r.status !== "Accepted");
+            if (firstFailed) {
+              setActiveTestCaseId(firstFailed.id);
+            }
+          }
+
+          if (mode === "submit" && allPassed && activeChallenge) {
+            markChallengeSolved(courseId, activeChallenge.id);
+            setIsSolved(true);
+          }
+        } catch (err: any) {
+          if (currentChallengeIdRef.current === runChallengeId) {
             setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
           }
         } finally {
@@ -887,6 +1032,15 @@ export function ChallengeEditor({
               </div>
             )}
 
+            {executionMode !== "cli" && activeChallenge?.judgeId && (
+              <div className="mt-6 pl-4 border-l-2 border-sky-400">
+                <p className="text-sm text-secondary">
+                  Run executes public tests in your browser. Submit runs full
+                  grading on our servers.
+                </p>
+              </div>
+            )}
+
             {activeChallenge.hint && (
               <div className="mt-6 pl-4 border-l-2 border-zinc-600 not-prose">
                 <p className="text-xs font-medium text-muted uppercase tracking-wider mb-1">
@@ -897,18 +1051,23 @@ export function ChallengeEditor({
             )}
 
             {/* Automated Example Test Cases */}
-            {activeChallenge.defaultTestCases &&
-              activeChallenge.defaultTestCases.filter((tc) => !tc.hidden).length >
-                0 && (
+            {(() => {
+              const exampleCases =
+                activeChallenge.defaultTestCases &&
+                activeChallenge.defaultTestCases.length > 0
+                  ? activeChallenge.defaultTestCases
+                  : bundleExamples || [];
+              if (exampleCases.filter((tc) => !tc.hidden).length === 0) {
+                return null;
+              }
+              return (
                 <div className="mt-8 not-prose">
                   <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">
                     Examples
                   </div>
                   <div className="flex flex-col gap-3">
                     {(() => {
-                      const nonHidden = activeChallenge.defaultTestCases.filter(
-                        (tc) => !tc.hidden
-                      );
+                      const nonHidden = exampleCases.filter((tc) => !tc.hidden);
                       const visibleCount =
                         activeChallenge.visibleTestCases !== undefined
                           ? activeChallenge.visibleTestCases
@@ -919,7 +1078,8 @@ export function ChallengeEditor({
                     })()}
                   </div>
                 </div>
-              )}
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -966,7 +1126,16 @@ export function ChallengeEditor({
 
                 {/* Status Indicator - Show appropriate mode */}
                 {/* Note: Pyodide loading is hidden from user - they don't need to know about background preloading */}
-                {executionMode === "browser" ? (
+                {executionMode === "browser" && activeChallenge?.judgeId ? (
+                  <div
+                    className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium transition-colors text-muted"
+                    title="Run tests in browser, submit runs on server."
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                    <span>Hybrid</span>
+                  </div>
+                ) : executionMode === "browser" ? (
                   <div
                     className={`flex items-center gap-1.5 px-2 py-1 text-xs font-medium transition-colors text-muted`}
                     title="This challenge runs in your browser. Click Run to test."
@@ -981,6 +1150,14 @@ export function ChallengeEditor({
                     <span>
                       {pyodideStatus === "error" ? "Error" : "Browser"}
                     </span>
+                  </div>
+                ) : executionMode === "server" ? (
+                  <div
+                    className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted"
+                    title="This challenge runs on the server for PyTorch support."
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                    <span>Server</span>
                   </div>
                 ) : (
                   <div
@@ -1528,6 +1705,12 @@ export function ChallengeEditor({
                               if (r.id !== activeTestCaseId) return null;
                               return (
                                 <div key={r.id} className="flex flex-col gap-3">
+                                  {r.hidden ? (
+                                    <div className="p-3 bg-surface rounded-lg text-secondary text-[13px] font-mono">
+                                      Hidden test details are not available.
+                                    </div>
+                                  ) : (
+                                    <>
                                   {r.status === "Runtime Error" && r.stderr && (
                                     <div className="p-3 bg-rose-500/5 border border-rose-500/20 rounded-lg text-rose-300 text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
                                       {r.stderr}
@@ -1579,6 +1762,8 @@ export function ChallengeEditor({
                                           </div>
                                         </div>
                                       </div>
+                                    </>
+                                  )}
                                     </>
                                   )}
                                 </div>
