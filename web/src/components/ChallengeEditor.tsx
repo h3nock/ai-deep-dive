@@ -205,6 +205,16 @@ export function ChallengeEditor({
   >(
     "browser"
   );
+  const formatServerError = useCallback((message?: string) => {
+    const generic = "Something went wrong on our side. Please retry.";
+    if (!message) return generic;
+    const trimmed = message.trim();
+    const allowlist = ["Time Limit Exceeded", "Memory Limit Exceeded"];
+    if (allowlist.some((prefix) => trimmed.startsWith(prefix))) {
+      return trimmed;
+    }
+    return generic;
+  }, []);
   // We don't need to debounce test cases for sync anymore, we send them on run
 
   const monaco = useMonaco();
@@ -771,17 +781,32 @@ export function ChallengeEditor({
           });
 
           if (result.status === "error") {
-            setOutput((prev) => (prev || "") + (result.error || "Server error"));
+            setOutput((prev) => (prev || "") + formatServerError(result.error));
+            setActiveTab("console");
+            if (isBottomPanelCollapsed) {
+              setBottomPanelHeight(45);
+              setIsBottomPanelCollapsed(false);
+            }
             return;
           }
 
           if (!result.result) {
-            setOutput((prev) => (prev || "") + "No results returned\n");
+            setOutput((prev) => (prev || "") + formatServerError());
+            setActiveTab("console");
+            if (isBottomPanelCollapsed) {
+              setBottomPanelHeight(45);
+              setIsBottomPanelCollapsed(false);
+            }
             return;
           }
 
           if (result.result.error) {
-            setOutput((prev) => (prev || "") + (result.result.error || "Runner error"));
+            setOutput((prev) => (prev || "") + formatServerError(result.result.error));
+            setActiveTab("console");
+            if (isBottomPanelCollapsed) {
+              setBottomPanelHeight(45);
+              setIsBottomPanelCollapsed(false);
+            }
             return;
           }
 
@@ -791,7 +816,12 @@ export function ChallengeEditor({
 
           const tests = result.result.tests ?? [];
           if (tests.length === 0) {
-            setOutput((prev) => (prev || "") + "No tests returned\n");
+            setOutput((prev) => (prev || "") + formatServerError());
+            setActiveTab("console");
+            if (isBottomPanelCollapsed) {
+              setBottomPanelHeight(45);
+              setIsBottomPanelCollapsed(false);
+            }
             return;
           }
           setTestResults(tests);
@@ -1137,7 +1167,7 @@ export function ChallengeEditor({
                   aria-label={`Run visible tests, keyboard shortcut ${runShortcut}`}
                   className="flex items-center gap-2 px-4 py-1.5 hover:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-secondary hover:text-primary text-sm font-medium rounded-lg transition-colors"
                 >
-                  {isRunning ? (
+                  {isRunning && lastRunMode === "run" ? (
                     <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
                   ) : (
                     <Play className="w-3 h-3" aria-hidden="true" />
@@ -1155,7 +1185,7 @@ export function ChallengeEditor({
                   aria-label={`Submit and run all tests including hidden tests, keyboard shortcut ${submitShortcut}`}
                   className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/15 disabled:bg-transparent disabled:text-muted disabled:cursor-not-allowed text-emerald-400 text-sm font-medium rounded-lg transition-colors"
                 >
-                  {isRunning ? (
+                  {isRunning && lastRunMode === "submit" ? (
                     <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
                   ) : (
                     <Send className="w-3 h-3" aria-hidden="true" />
