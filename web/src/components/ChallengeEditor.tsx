@@ -201,6 +201,7 @@ export function ChallengeEditor({
 
   // Execution State
   const [isRunning, setIsRunning] = useState(false);
+  const [runMessage, setRunMessage] = useState("");
 
   // Pyodide State
   const [pyodideStatus, setPyodideStatus] = useState<
@@ -733,11 +734,18 @@ export function ChallengeEditor({
         setOutput("");
         setTestResults(null);
         setLastRunMode(mode);
+        setRunMessage("Running tests...");
+        setActiveTab("result");
+        if (isBottomPanelCollapsed) {
+          setBottomPanelHeight(45);
+          setIsBottomPanelCollapsed(false);
+        }
 
         try {
           // Show loading message if user runs tests before Pyodide is ready
           if (pyodideStatusRef.current !== "ready") {
             setOutput("Preparing runtime...\n");
+            setRunMessage("Preparing runtime...");
           }
           await ensurePyodideLoaded();
 
@@ -806,12 +814,14 @@ export function ChallengeEditor({
               setBottomPanelHeight(45);
               setIsBottomPanelCollapsed(false);
             }
+            setRunMessage("");
             return;
           }
 
           const finalResults = normalized.tests ?? [];
           setTestResults(finalResults);
           setActiveTab("result");
+          setRunMessage("");
           // Reset to initial height when expanding
           if (isBottomPanelCollapsed) {
             setBottomPanelHeight(45);
@@ -841,6 +851,12 @@ export function ChallengeEditor({
           if (currentChallengeIdRef.current === runChallengeId) {
             setPyodideStatus("error");
             setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
+            setActiveTab("console");
+            if (isBottomPanelCollapsed) {
+              setBottomPanelHeight(45);
+              setIsBottomPanelCollapsed(false);
+            }
+            setRunMessage("");
           }
         } finally {
           isRunningRef.current = false;
@@ -853,6 +869,12 @@ export function ChallengeEditor({
         setOutput("Submitting...\n");
         setTestResults(null);
         setLastRunMode(mode);
+        setRunMessage("Submitting...");
+        setActiveTab("result");
+        if (isBottomPanelCollapsed) {
+          setBottomPanelHeight(45);
+          setIsBottomPanelCollapsed(false);
+        }
 
         try {
           const submit = await submitToJudge({
@@ -867,8 +889,10 @@ export function ChallengeEditor({
             onUpdate: (update) => {
               if (update.status === "queued") {
                 setOutput("Preparing to run...\n");
+                setRunMessage("Preparing to run...");
               } else if (update.status === "running") {
                 setOutput("Running tests...\n");
+                setRunMessage("Running tests...");
               }
             },
           });
@@ -881,6 +905,7 @@ export function ChallengeEditor({
               setBottomPanelHeight(45);
               setIsBottomPanelCollapsed(false);
             }
+            setRunMessage("");
             return;
           }
 
@@ -891,6 +916,7 @@ export function ChallengeEditor({
           const tests = normalized.tests ?? [];
           setTestResults(tests);
           setActiveTab("result");
+          setRunMessage("");
 
           if (isBottomPanelCollapsed) {
             setBottomPanelHeight(45);
@@ -916,6 +942,12 @@ export function ChallengeEditor({
         } catch (err: any) {
           if (currentChallengeIdRef.current === runChallengeId) {
             setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
+            setActiveTab("console");
+            if (isBottomPanelCollapsed) {
+              setBottomPanelHeight(45);
+              setIsBottomPanelCollapsed(false);
+            }
+            setRunMessage("");
           }
         } finally {
           isRunningRef.current = false;
@@ -1587,7 +1619,7 @@ export function ChallengeEditor({
                     <div id="result-panel" role="tabpanel" aria-label="Test results" className="flex flex-col h-full">
                       {!testResults ? (
                         <div className="flex-1 flex items-center justify-center text-muted/60 text-sm italic">
-                          Run code to see results...
+                          {isRunning ? runMessage || "Running tests..." : "Run code to see results..."}
                         </div>
                       ) : (
                         <>
