@@ -646,7 +646,7 @@ export function ChallengeEditor({
         try {
           // Show loading message if user runs tests before Pyodide is ready
           if (pyodideStatusRef.current !== "ready") {
-            setOutput("Loading Python runtime...\n");
+            setOutput("Preparing runtime...\n");
           }
           await ensurePyodideLoaded();
 
@@ -747,7 +747,7 @@ export function ChallengeEditor({
         // === SERVER EXECUTION (Judge VM) ===
         isRunningRef.current = true;
         setIsRunning(true);
-        setOutput("Submitting to server...\n");
+        setOutput("Submitting...\n");
         setTestResults(null);
         setLastRunMode(mode);
 
@@ -763,9 +763,9 @@ export function ChallengeEditor({
             intervalMs: 1000,
             onUpdate: (update) => {
               if (update.status === "queued") {
-                setOutput("Queued... waiting for worker\n");
+                setOutput("Preparing to run...\n");
               } else if (update.status === "running") {
-                setOutput("Running on server...\n");
+                setOutput("Running tests...\n");
               }
             },
           });
@@ -1004,43 +1004,6 @@ export function ChallengeEditor({
               {activeChallenge.description}
             </ReactMarkdown>
 
-            {/* CLI Mode Note */}
-            {executionMode === "cli" && (
-              <div className="mt-6 pl-4 border-l-2 border-amber-400">
-                <p className="text-sm text-secondary">
-                  This challenge requires local implementation.{" "}
-                  {activeChallenge?.chapterNumber &&
-                  activeChallenge?.problemNumber ? (
-                    <>
-                      Write your solution in your editor and test with{" "}
-                      <code className="px-1.5 py-0.5 bg-zinc-800 rounded text-xs">
-                        ai-deep-dive test {activeChallenge.chapterNumber}-
-                        {activeChallenge.problemNumber}
-                      </code>
-                    </>
-                  ) : (
-                    <>Write your solution in your editor and test using the CLI</>
-                  )}
-                  .{" "}
-                  <Link
-                    href="/setup"
-                    className="text-muted hover:text-secondary underline underline-offset-2"
-                  >
-                    Setup guide
-                  </Link>
-                </p>
-              </div>
-            )}
-
-            {executionMode !== "cli" && activeChallenge?.judgeId && (
-              <div className="mt-6 pl-4 border-l-2 border-sky-400">
-                <p className="text-sm text-secondary">
-                  Run executes public tests in your browser. Submit runs full
-                  grading on our servers.
-                </p>
-              </div>
-            )}
-
             {activeChallenge.hint && (
               <div className="mt-6 pl-4 border-l-2 border-zinc-600 not-prose">
                 <p className="text-xs font-medium text-muted uppercase tracking-wider mb-1">
@@ -1121,53 +1084,6 @@ export function ChallengeEditor({
                   <Code2 className="w-3.5 h-3.5" />
                   <span>Python</span>
                 </div>
-
-                <div className="w-px h-4 bg-border mx-1" />
-
-                {/* Status Indicator - Show appropriate mode */}
-                {/* Note: Pyodide loading is hidden from user - they don't need to know about background preloading */}
-                {executionMode === "browser" && activeChallenge?.judgeId ? (
-                  <div
-                    className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium transition-colors text-muted"
-                    title="Run tests in browser, submit runs on server."
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-                    <span>Hybrid</span>
-                  </div>
-                ) : executionMode === "browser" ? (
-                  <div
-                    className={`flex items-center gap-1.5 px-2 py-1 text-xs font-medium transition-colors text-muted`}
-                    title="This challenge runs in your browser. Click Run to test."
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        pyodideStatus === "error"
-                          ? "bg-rose-400"
-                          : "bg-emerald-400"
-                      }`}
-                    />
-                    <span>
-                      {pyodideStatus === "error" ? "Error" : "Browser"}
-                    </span>
-                  </div>
-                ) : executionMode === "server" ? (
-                  <div
-                    className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted"
-                    title="This challenge runs on the server for PyTorch support."
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-                    <span>Server</span>
-                  </div>
-                ) : (
-                  <div
-                    className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted"
-                    title="This challenge requires PyTorch. Implement locally and test with: ai-deep-dive test"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                    <span>Local</span>
-                  </div>
-                )}
 
                 <div className="w-px h-4 bg-border mx-1" />
 
