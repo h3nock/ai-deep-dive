@@ -34,6 +34,7 @@ import {
 } from "@/lib/pyodide";
 import { bundleToTestConfig, fetchPublicBundle } from "@/lib/judge-public-tests";
 import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
+import type { JudgeJobResult } from "@/lib/judge-client";
 import type { Challenge } from "@/lib/challenge-types";
 import { ConfirmModal } from "./ConfirmModal";
 import {
@@ -72,7 +73,12 @@ interface TestCase {
 
 interface TestResult {
   id: string;
-  status: "Accepted" | "Wrong Answer" | "Runtime Error";
+  status:
+    | "Accepted"
+    | "Wrong Answer"
+    | "Runtime Error"
+    | "Time Limit Exceeded"
+    | "Memory Limit Exceeded";
   input?: string;
   stdout?: string;
   output?: string;
@@ -215,6 +221,81 @@ export function ChallengeEditor({
     }
     return generic;
   }, []);
+  const normalizeLimitError = useCallback((message?: string) => {
+    if (!message) return null;
+    const trimmed = message.trim();
+    if (trimmed.startsWith("Time Limit Exceeded")) {
+      return { status: "Time Limit Exceeded" as const, message: trimmed };
+    }
+    if (trimmed.startsWith("Memory Limit Exceeded")) {
+      return { status: "Memory Limit Exceeded" as const, message: trimmed };
+    }
+    return null;
+  }, []);
+  const toErrorResult = useCallback(
+    (status: TestResult["status"], message: string): TestResult[] => [
+      {
+        id: "error",
+        status,
+        input: "",
+        stdout: "",
+        output: "",
+        expected: "",
+        stderr: message,
+        hidden: false,
+      },
+    ],
+    []
+  );
+  const normalizeBrowserResults = useCallback(
+    (results: TestResult[] | null): { tests?: TestResult[]; systemError?: string } => {
+      if (!results || results.length === 0) {
+        return { systemError: formatServerError() };
+      }
+
+      if (results.length === 1 && results[0].status === "Runtime Error") {
+        const stderr = results[0].stderr || "";
+        if (stderr.includes("ExecutionLimitExceeded")) {
+          return {
+            tests: toErrorResult(
+              "Time Limit Exceeded",
+              "Time Limit Exceeded"
+            ),
+          };
+        }
+      }
+
+      return { tests: results };
+    },
+    [formatServerError, toErrorResult]
+  );
+  const normalizeServerResult = useCallback(
+    (result: JudgeJobResult): { tests?: TestResult[]; systemError?: string } => {
+      const rawError = result.error || result.result?.error;
+      if (result.status === "error" || rawError) {
+        const limit = normalizeLimitError(rawError);
+        if (limit) {
+          return { tests: toErrorResult(limit.status, limit.message) };
+        }
+        return { systemError: formatServerError(rawError) };
+      }
+
+      const tests = result.result?.tests ?? [];
+      if (!tests.length) {
+        return { systemError: formatServerError() };
+      }
+
+      return { tests };
+    },
+    [formatServerError, normalizeLimitError, toErrorResult]
+  );
+  const isErrorStatus = useCallback(
+    (status: TestResult["status"]) =>
+      status === "Runtime Error" ||
+      status === "Time Limit Exceeded" ||
+      status === "Memory Limit Exceeded",
+    []
+  );
   // We don't need to debounce test cases for sync anymore, we send them on run
 
   const monaco = useMonaco();
@@ -717,7 +798,19 @@ export function ChallengeEditor({
             return;
           }
 
-          setTestResults(results);
+          const normalized = normalizeBrowserResults(results);
+          if (normalized.systemError) {
+            setOutput((prev) => (prev || "") + normalized.systemError);
+            setActiveTab("console");
+            if (isBottomPanelCollapsed) {
+              setBottomPanelHeight(45);
+              setIsBottomPanelCollapsed(false);
+            }
+            return;
+          }
+
+          const finalResults = normalized.tests ?? [];
+          setTestResults(finalResults);
           setActiveTab("result");
           // Reset to initial height when expanding
           if (isBottomPanelCollapsed) {
@@ -726,13 +819,13 @@ export function ChallengeEditor({
           setIsBottomPanelCollapsed(false);
 
           // Auto-select appropriate test case tab
-          const allPassed = results.every((r) => r.status === "Accepted");
+          const allPassed = finalResults.every((r) => r.status === "Accepted");
           if (allPassed) {
             // Select first test case
-            setActiveTestCaseId(results[0]?.id || "1");
+            setActiveTestCaseId(finalResults[0]?.id || "1");
           } else {
             // Select first failed test case
-            const firstFailed = results.find((r) => r.status !== "Accepted");
+            const firstFailed = finalResults.find((r) => r.status !== "Accepted");
             if (firstFailed) {
               setActiveTestCaseId(firstFailed.id);
             }
@@ -780,28 +873,9 @@ export function ChallengeEditor({
             },
           });
 
-          if (result.status === "error") {
-            setOutput((prev) => (prev || "") + formatServerError(result.error));
-            setActiveTab("console");
-            if (isBottomPanelCollapsed) {
-              setBottomPanelHeight(45);
-              setIsBottomPanelCollapsed(false);
-            }
-            return;
-          }
-
-          if (!result.result) {
-            setOutput((prev) => (prev || "") + formatServerError());
-            setActiveTab("console");
-            if (isBottomPanelCollapsed) {
-              setBottomPanelHeight(45);
-              setIsBottomPanelCollapsed(false);
-            }
-            return;
-          }
-
-          if (result.result.error) {
-            setOutput((prev) => (prev || "") + formatServerError(result.result.error));
+          const normalized = normalizeServerResult(result);
+          if (normalized.systemError) {
+            setOutput((prev) => (prev || "") + normalized.systemError);
             setActiveTab("console");
             if (isBottomPanelCollapsed) {
               setBottomPanelHeight(45);
@@ -814,16 +888,7 @@ export function ChallengeEditor({
             return;
           }
 
-          const tests = result.result.tests ?? [];
-          if (tests.length === 0) {
-            setOutput((prev) => (prev || "") + formatServerError());
-            setActiveTab("console");
-            if (isBottomPanelCollapsed) {
-              setBottomPanelHeight(45);
-              setIsBottomPanelCollapsed(false);
-            }
-            return;
-          }
+          const tests = normalized.tests ?? [];
           setTestResults(tests);
           setActiveTab("result");
 
@@ -1668,13 +1733,13 @@ export function ChallengeEditor({
                                     </div>
                                   ) : (
                                     <>
-                                  {r.status === "Runtime Error" && r.stderr && (
+                                  {isErrorStatus(r.status) && r.stderr && (
                                     <div className="p-3 bg-rose-500/5 border border-rose-500/20 rounded-lg text-rose-300 text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
                                       {r.stderr}
                                     </div>
                                   )}
 
-                                  {r.status !== "Runtime Error" && (
+                                  {!isErrorStatus(r.status) && (
                                     <>
                                       <div className="space-y-1.5">
                                         <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
