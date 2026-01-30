@@ -13,6 +13,7 @@ arguments:
 executionSnippet: |
   encode(text, merges)
 visibleTestCases: 1
+judgeId: "build-gpt/02-tokenization/05-encoder"
 ---
 
 Given a string `text` and a trained BPE `merges` dictionary, return the list of token IDs representing the encoded text.

@@ -13,6 +13,7 @@ arguments:
 executionSnippet: |
   train_bpe(text, num_merges)
 visibleTestCases: 1
+judgeId: "build-gpt/02-tokenization/03-bpe-trainer"
 ---
 
 You are given a string `text` and an integer `num_merges`. Train a BPE tokenizer by repeatedly merging the most frequent adjacent pair of tokens `num_merges` times.

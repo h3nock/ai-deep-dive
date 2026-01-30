@@ -17,6 +17,7 @@ arguments:
 executionSnippet: |
   build_pe_matrix(seq_len, d_model)
 visibleTestCases: 2
+judgeId: "build-gpt/04-positional-encoding/03-pe-matrix"
 ---
 
 Build a matrix of shape `(seq_len, d_model)` where row `i` contains the positional encoding for position `i`.

@@ -13,6 +13,7 @@ arguments:
 executionSnippet: |
   decode(ids, merges)
 visibleTestCases: 1
+judgeId: "build-gpt/02-tokenization/04-decoder"
 ---
 
 You are given a list of token `ids` and a dictionary of `merges` trained by a BPE tokenizer. Convert the token IDs back to the original text string.

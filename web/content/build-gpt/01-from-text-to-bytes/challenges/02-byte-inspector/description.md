@@ -12,6 +12,7 @@ arguments:
 executionSnippet: |
   count_characters(byte_list)
 visibleTestCases: 2
+judgeId: "build-gpt/01-from-text-to-bytes/02-byte-inspector"
 ---
 
 Count the number of characters in a UTF-8 `byte_list` without decoding it.
