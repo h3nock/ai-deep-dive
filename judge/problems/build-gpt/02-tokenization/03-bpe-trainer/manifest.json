@@ -1,0 +1,11 @@
+{
+  "id": "build-gpt/02-tokenization/03-bpe-trainer",
+  "version": "v1",
+  "runner": "train_bpe(text, num_merges)",
+  "requires_torch": false,
+  "time_limit_s": 5,
+  "memory_mb": 1024,
+  "comparison": {
+    "type": "exact"
+  }
+}

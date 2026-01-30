@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case2",
+      "inputs": {
+        "text": "\"aaaa\"",
+        "merges": "{(97, 97): 256}"
+      },
+      "expected": [
+        256,
+        256
+      ]
+    },
+    {
+      "id": "case3",
+      "inputs": {
+        "text": "\"abab\"",
+        "merges": "{(97, 98): 256}"
+      },
+      "expected": [
+        256,
+        256
+      ]
+    },
+    {
+      "id": "case4",
+      "inputs": {
+        "text": "\"aaa\"",
+        "merges": "{(97, 97): 256}"
+      },
+      "expected": [
+        256,
+        97
+      ]
+    },
+    {
+      "id": "case5",
+      "inputs": {
+        "text": "\"aabaab\"",
+        "merges": "{(97, 97): 256, (256, 98): 257}"
+      },
+      "expected": [
+        257,
+        257
+      ]
+    },
+    {
+      "id": "case6",
+      "inputs": {
+        "text": "\"hello\"",
+        "merges": "{}"
+      },
+      "expected": [
+        104,
+        101,
+        108,
+        108,
+        111
+      ]
+    }
+  ]
+}

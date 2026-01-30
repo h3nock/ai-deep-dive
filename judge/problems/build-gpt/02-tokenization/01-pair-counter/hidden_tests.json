@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case3",
+      "inputs": {
+        "ids": "[104, 101, 108, 108, 111]"
+      },
+      "expected": "{(104, 101): 1, (101, 108): 1, (108, 108): 1, (108, 111): 1}",
+      "expected_is_code": true
+    },
+    {
+      "id": "case4",
+      "inputs": {
+        "ids": "[1]"
+      },
+      "expected": {}
+    },
+    {
+      "id": "case5",
+      "inputs": {
+        "ids": "[]"
+      },
+      "expected": {}
+    }
+  ]
+}

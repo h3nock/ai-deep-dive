@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case3",
+      "inputs": {
+        "d_model": "2"
+      },
+      "expected": [
+        1.0
+      ]
+    },
+    {
+      "id": "case4",
+      "inputs": {
+        "d_model": "6"
+      },
+      "expected": [
+        1.0,
+        0.0464158883,
+        0.0021544347
+      ]
+    }
+  ]
+}

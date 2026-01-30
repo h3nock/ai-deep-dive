@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case1",
+      "inputs": {
+        "text": "\"aa\"",
+        "merges": "{(97, 97): 256}"
+      },
+      "expected": [
+        256
+      ]
+    }
+  ]
+}
