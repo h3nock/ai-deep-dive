@@ -257,6 +257,13 @@ def _sanitize_results(results: list[dict[str, Any]], max_output_chars: int) -> l
     return sanitized
 
 
+def _with_sandbox_cwd(sandbox_cmd: list[str], cwd: Path) -> list[str]:
+    if "--" not in sandbox_cmd:
+        return sandbox_cmd
+    idx = sandbox_cmd.index("--")
+    return sandbox_cmd[:idx] + ["--cwd", str(cwd)] + sandbox_cmd[idx:]
+
+
 def run_problem(
     problem: Problem,
     user_code: str,
@@ -274,7 +281,7 @@ def run_problem(
 
         command = [sys.executable, "-I", "harness.py"]
         if sandbox_cmd:
-            command = sandbox_cmd + command
+            command = _with_sandbox_cwd(sandbox_cmd, tmpdir_path) + command
 
         try:
             result = subprocess.run(
