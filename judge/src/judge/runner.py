@@ -1,6 +1,7 @@
 """Local runner for executing tests against user code."""
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -274,6 +275,8 @@ def run_problem(
     config = _build_test_config(problem, include_hidden)
 
     with tempfile.TemporaryDirectory() as tmpdir:
+        if sandbox_cmd:
+            os.chmod(tmpdir, 0o777)
         tmpdir_path = Path(tmpdir)
         (tmpdir_path / "main.py").write_text(user_code)
         (tmpdir_path / "harness.py").write_text(HARNESS_CODE)
