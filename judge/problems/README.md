@@ -24,7 +24,7 @@ problems/
   "version": "v1",
   "runner": "encode(text)",
   "requires_torch": false,
-  "time_limit_s": 5,
+  "time_limit_s": 10,
   "memory_mb": 1024,
   "comparison": { "type": "exact" }
 }

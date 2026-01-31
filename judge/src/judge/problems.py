@@ -130,7 +130,7 @@ def load_problem(problem_id: str, root: Path) -> Problem:
         version=str(manifest.get("version", "v1")),
         runner=manifest.get("runner", ""),
         requires_torch=bool(manifest.get("requires_torch", False)),
-        time_limit_s=int(manifest.get("time_limit_s", 5)),
+        time_limit_s=int(manifest.get("time_limit_s", 10)),
         memory_mb=int(manifest.get("memory_mb", 1024)),
         comparison=comparison,
         public_tests=public_tests,
