@@ -1,0 +1,10 @@
+[Unit]
+Description=Run judge backup daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

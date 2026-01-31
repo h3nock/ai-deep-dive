@@ -47,4 +47,14 @@ install -m 644 "$ROOT_DIR/deploy/systemd/worker-override.conf" /etc/systemd/syst
 systemctl daemon-reload
 systemctl restart judge-worker-light judge-worker-torch
 
-echo "Applied nginx rate limits and worker hardening."
+# Cleanup + backup timers
+install -m 644 "$ROOT_DIR/deploy/judge-cleanup.service" /etc/systemd/system/judge-cleanup.service
+install -m 644 "$ROOT_DIR/deploy/judge-cleanup.timer" /etc/systemd/system/judge-cleanup.timer
+install -m 644 "$ROOT_DIR/deploy/judge-backup.service" /etc/systemd/system/judge-backup.service
+install -m 644 "$ROOT_DIR/deploy/judge-backup.timer" /etc/systemd/system/judge-backup.timer
+
+systemctl daemon-reload
+systemctl enable --now judge-cleanup.timer
+systemctl enable --now judge-backup.timer
+
+echo "Applied nginx rate limits, worker hardening, cleanup, and backups."
