@@ -22,8 +22,8 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-If you will run torch problems on this VM, install CPU-only PyTorch in this venv
-using the official PyTorch install selector.
+CPU-only PyTorch is required to run torch problems on the VM. Install it in
+the same venv using the official PyTorch install selector.
 
 ## 3) Configure environment
 
@@ -32,7 +32,7 @@ sudo cp judge/deploy/judge.env.example /etc/judge/judge.env
 sudo chown judge:judge /etc/judge/judge.env
 ```
 
-Set `JUDGE_ALLOWED_ORIGINS` if the web app is hosted on a different origin.
+Set `JUDGE_ALLOWED_ORIGINS` when the web app is hosted on a different origin.
 
 ## 4) Install and start Redis
 
@@ -65,8 +65,8 @@ Then set in `/etc/judge/judge.env`:
 JUDGE_SANDBOX_CMD_JSON=["nsjail","--config","/etc/judge/nsjail.cfg","--"]
 ```
 
-Edit `/etc/judge/nsjail.cfg` to set the `uidmap`/`gidmap` values for your
-`judge` user (`id -u judge`, `id -g judge`). The rlimit values are in MB/seconds.
+Edit `/etc/judge/nsjail.cfg` to set the `uidmap` and `gidmap` values for the
+`judge` user (`id -u judge`, `id -g judge`). The rlimit values are in MB or seconds.
 
 ## 6) Install systemd services
 
@@ -81,7 +81,21 @@ sudo systemctl enable --now judge-worker-light
 sudo systemctl enable --now judge-worker-torch
 ```
 
-## 7) Verify
+## 7) Apply nginx + worker hardening
+
+One command applies nginx rate limits and worker hardening:
+
+```bash
+sudo apt-get install -y nginx
+sudo JUDGE_DOMAIN=judge.example.com judge/deploy/apply.sh
+```
+
+Files used:
+- `judge/deploy/nginx/judge.conf.template`
+- `judge/deploy/nginx/ratelimit.conf`
+- `judge/deploy/systemd/worker-override.conf`
+
+## 8) Verify
 
 ```bash
 curl http://localhost:8000/health

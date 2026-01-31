@@ -1,12 +1,12 @@
 # Problems
 
-Each problem is a directory with:
+Each problem lives in a directory with:
 
 - `manifest.json`
 - `public_tests.json`
 - `hidden_tests.json`
 
-Example structure:
+Example:
 
 ```
 problems/
@@ -30,6 +30,12 @@ problems/
 }
 ```
 
+Fields:
+- `runner`: expression evaluated after input setup.
+- `requires_torch`: routes job to the torch worker.
+- `time_limit_s` and `memory_mb`: per-job limits.
+- `comparison`: `exact` or `allclose` with `rtol` and `atol`.
+
 ## public_tests.json / hidden_tests.json
 
 ```json
@@ -46,18 +52,18 @@ problems/
 ```
 
 Notes:
-- `expected` should be valid JSON (numbers, strings, arrays, objects).
-- If the expected value is a Python literal that is not JSON-friendly (e.g., tuple keys),
-  store it as a string and set `expected_is_code: true`.
-- If you need arbitrary Python setup per test, use `input_code`.
-- Hidden tests stay on the server; public tests can be copied to the frontend.
-- For best browser UX, prefer `inputs` over `input_code` so inputs can be rendered.
+- `expected` should be valid JSON whenever possible.
+- For Python literals (e.g., tuple keys), store as a string and set
+  `expected_is_code: true`.
+- Use `input_code` for arbitrary setup.
+- Prefer `inputs` (object of name to value) for better browser rendering.
+- Hidden tests stay on the server. Public bundles can be cached by the frontend or CDN.
 
 ## Public bundle export
 
 `judge/scripts/export_public_tests.py` writes to `web/public/judge-tests/...`:
 
-- `public_manifest.json` (small file with version + bundle name)
+- `public_manifest.json` (version + bundle name)
 - `public_bundle.<version>.json` (public tests + runner)
 
-Fetch `public_manifest.json` first to learn the bundle file name for cache-friendly URLs.
+Fetch `public_manifest.json` first to learn the bundle filename for cache-friendly URLs.

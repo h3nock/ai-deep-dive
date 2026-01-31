@@ -2,10 +2,10 @@
 
 Backend judge for AI Deep Dive.
 
-- Browser runs public tests (Pyodide).
-- Server runs hidden tests and PyTorch-required problems.
-- Redis Streams queue with light + torch worker pools.
-- SQLite results store (single VM).
+- The browser runs public tests with Pyodide.
+- The server runs hidden tests and torch-required problems.
+- Jobs are queued in Redis Streams and handled by light and torch workers.
+- Results are stored in SQLite on a single VM.
 
 ## Layout
 
@@ -16,10 +16,11 @@ judge/
     queue.py       Redis Streams wrapper
     worker.py      Worker loop
     runner.py      Test harness runner
-    results.py     SQLite result store
+    results.py     SQLite results store
     problems.py    Problem + tests loader
     models.py      Pydantic models
-  problems/        Problem manifests + tests (kept on the server)
+  problems/        Problem manifests + tests (server only)
+  deploy/          VM deploy templates + scripts
 ```
 
 ## Quick start (local)
@@ -31,25 +32,26 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-Run Redis locally:
+Start Redis locally:
 
 ```bash
 redis-server
 ```
 
-Start API:
+Start the API:
 
 ```bash
 uvicorn judge.api:app --reload
 ```
 
-Frontend env:
+Frontend environment variable:
 
 ```
 NEXT_PUBLIC_JUDGE_API_URL=http://localhost:8000
 ```
-If the web app runs on a different origin, set `JUDGE_ALLOWED_ORIGINS`
-in the judge environment (comma-separated list).
+
+Set `JUDGE_ALLOWED_ORIGINS` when the web app runs on a different origin.
+Use a comma-separated list.
 
 Start workers:
 
@@ -58,56 +60,60 @@ python -m judge.worker --stream queue:light --group workers-light --consumer lig
 python -m judge.worker --stream queue:torch --group workers-torch --consumer torch-1
 ```
 
-If you plan to run torch problems on this machine, install CPU-only PyTorch in the
-same venv (use the official PyTorch install selector for the exact command).
+CPU-only PyTorch is required to run torch problems locally. Install it in the
+same venv using the official PyTorch install selector.
 
-Export public tests for the frontend:
+## Export public tests for the frontend
 
 ```bash
 python judge/scripts/export_public_tests.py
 ```
 
-Generated bundles are written to `web/public/judge-tests/` and treated as build artifacts.
+Bundles are written to `web/public/judge-tests/` and treated as build artifacts.
+`web/scripts/export-judge-tests.mjs` runs automatically on `npm run build`.
 
-When building the web app, `web/scripts/export-judge-tests.mjs` runs automatically
-via `npm run build`.
-
-Submit a sample job:
+## Submit a sample job
 
 ```bash
-curl -X POST http://localhost:8000/submit \\
-  -H "Content-Type: application/json" \\
+curl -X POST http://localhost:8000/submit \
+  -H "Content-Type: application/json" \
   -d '{
     "problem_id": "sample/01-basics/01-add",
     "kind": "submit",
-    "code": "def add(a, b):\\n    return a + b\\n"
+    "code": "def add(a, b):\n    return a + b\n"
   }'
 ```
 
-## Problem format (server side)
+## Configuration
 
-Each problem lives under `judge/problems/` with:
+Environment variables:
 
-- `manifest.json`
-- `public_tests.json`
-- `hidden_tests.json`
+- `JUDGE_REDIS_URL` (default: `redis://localhost:6379/0`)
+- `JUDGE_RESULTS_DB` (default: `judge/data/judge.db`)
+- `JUDGE_PROBLEMS_ROOT` (default: `judge/problems`)
+- `JUDGE_MAX_OUTPUT_CHARS` (default: `2000`)
+- `JUDGE_JOB_CLAIM_IDLE_MS` (default: `30000`)
+- `JUDGE_JOB_CLAIM_COUNT` (default: `10`)
+- `JUDGE_ALLOWED_ORIGINS` (comma-separated)
+- `JUDGE_SANDBOX_CMD_JSON` (optional sandbox wrapper)
 
-Public tests are copied to the frontend (static) and cached.
-Hidden tests stay on the server.
-
-## Operational notes
-
-- This runner does not yet apply OS-level sandboxing. Add nsjail/isolate on the VM.
-- Hidden tests are never served to the browser.
-- VM deploy templates live in `judge/deploy/`.
-
-## Sandbox integration
-
-`JUDGE_SANDBOX_CMD_JSON` lets you wrap executions in a sandbox command. The JSON
-array is prepended to the Python harness command.
-
-Example (nsjail):
+Sandbox example (nsjail):
 
 ```bash
 JUDGE_SANDBOX_CMD_JSON='["nsjail","--config","/etc/judge/nsjail.cfg","--"]'
 ```
+
+## Notes
+
+- OS-level sandboxing is optional. Enable it on the VM with `JUDGE_SANDBOX_CMD_JSON`.
+- Hidden tests never reach the browser. Only public bundles are exported.
+- Production setup lives in `judge/deploy/`. See the deploy README for steps.
+
+## Problem format
+
+See `judge/problems/README.md` for manifest and test formats.
+
+## Deploy
+
+VM deploy templates and scripts live in `judge/deploy/`.
+See `judge/deploy/README.md` for the full setup steps.
