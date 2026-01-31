@@ -903,8 +903,13 @@ export function ChallengeEditor({
           });
 
           const result = await waitForJudgeResult(submit.job_id, {
-            timeoutMs: 30000,
-            intervalMs: 800,
+            timeoutMs: 120000,
+            intervalFn: (_attempt, elapsedMs) => {
+              if (elapsedMs < 10000) return 400;
+              if (elapsedMs < 30000) return 1000;
+              if (elapsedMs < 120000) return 2000;
+              return 5000;
+            },
             onUpdate: (update) => {
               if (update.status === "queued") {
                 setOutput("Pending...\n");
@@ -960,7 +965,7 @@ export function ChallengeEditor({
         } catch (err: any) {
           if (currentChallengeIdRef.current === runChallengeId) {
             if (String(err?.message || "").includes("Timed out waiting")) {
-              setRunMessage("Still running. Check results again in a moment.");
+              setRunMessage("Request took too long. Please try again.");
             } else {
               setRunMessage(formatServerError(err?.message));
             }

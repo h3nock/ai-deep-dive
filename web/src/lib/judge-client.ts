@@ -62,11 +62,16 @@ export async function fetchJudgeResult(jobId: string): Promise<JudgeJobResult> {
 
 export async function waitForJudgeResult(
   jobId: string,
-  options?: { timeoutMs?: number; intervalMs?: number; onUpdate?: (r: JudgeJobResult) => void }
+  options?: {
+    timeoutMs?: number;
+    intervalMs?: number;
+    intervalFn?: (attempt: number, elapsedMs: number) => number;
+    onUpdate?: (r: JudgeJobResult) => void;
+  }
 ): Promise<JudgeJobResult> {
   const timeoutMs = options?.timeoutMs ?? 15000;
-  const intervalMs = options?.intervalMs ?? 1000;
   const start = Date.now();
+  let attempt = 0;
 
   while (Date.now() - start < timeoutMs) {
     const result = await fetchJudgeResult(jobId);
@@ -74,7 +79,11 @@ export async function waitForJudgeResult(
     if (result.status === "done" || result.status === "error") {
       return result;
     }
+    const elapsed = Date.now() - start;
+    const intervalMs =
+      options?.intervalFn?.(attempt, elapsed) ?? options?.intervalMs ?? 1000;
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    attempt += 1;
   }
 
   throw new Error("Timed out waiting for judge result");
