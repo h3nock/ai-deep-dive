@@ -54,10 +54,18 @@ maxmemory-policy noeviction
 Install nsjail (Ubuntu):
 
 ```bash
-sudo apt-get install -y nsjail
+sudo apt-get install -y nsjail uidmap
 sudo mkdir -p /etc/judge
 sudo cp judge/deploy/nsjail.cfg /etc/judge/nsjail.cfg
 ```
+
+Nsjail uses user namespaces. Assign a subuid/subgid range to the judge user:
+
+```bash
+sudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 judge
+```
+
+Confirm `/etc/subuid` and `/etc/subgid` contain the same range for `judge`.
 
 Then set in `/etc/judge/judge.env`:
 
@@ -65,8 +73,11 @@ Then set in `/etc/judge/judge.env`:
 JUDGE_SANDBOX_CMD_JSON=["nsjail","--config","/etc/judge/nsjail.cfg","--"]
 ```
 
-Edit `/etc/judge/nsjail.cfg` to set the `uidmap` and `gidmap` values for the
-`judge` user (`id -u judge`, `id -g judge`). The rlimit values are in MB or seconds.
+Edit `/etc/judge/nsjail.cfg` to match the `outside_id` range from `/etc/subuid`
+and `/etc/subgid`. The rlimit values are in MB or seconds.
+
+The worker override installed in step 7 is required so nsjail can create user
+namespaces. Run that step after enabling nsjail.
 
 ## 6) Install systemd services
 
