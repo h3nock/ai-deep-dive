@@ -297,6 +297,25 @@ export function ChallengeEditor({
       status === "Memory Limit Exceeded",
     []
   );
+  const deriveVerdict = useCallback((results: TestResult[]) => {
+    const priority: TestResult["status"][] = [
+      "Time Limit Exceeded",
+      "Memory Limit Exceeded",
+      "Runtime Error",
+    ];
+    for (const status of priority) {
+      if (results.some((r) => r.status === status)) {
+        return { kind: "error" as const, label: status };
+      }
+    }
+    if (results.every((r) => r.status === "Accepted")) {
+      return { kind: "accepted" as const };
+    }
+    if (results.some((r) => r.status === "Wrong Answer")) {
+      return { kind: "wrong" as const, label: "Wrong Answer" };
+    }
+    return { kind: "failed" as const };
+  }, []);
   // We don't need to debounce test cases for sync anymore, we send them on run
 
   const monaco = useMonaco();
@@ -734,7 +753,7 @@ export function ChallengeEditor({
         setOutput("");
         setTestResults(null);
         setLastRunMode(mode);
-        setRunMessage("Running tests...");
+        setRunMessage("Running...");
         setActiveTab("result");
         if (isBottomPanelCollapsed) {
           setBottomPanelHeight(45);
@@ -866,10 +885,10 @@ export function ChallengeEditor({
         // === SERVER EXECUTION (Judge VM) ===
         isRunningRef.current = true;
         setIsRunning(true);
-        setOutput("Submitting...\n");
+        setOutput("Pending...\n");
         setTestResults(null);
         setLastRunMode(mode);
-        setRunMessage("Submitting...");
+        setRunMessage("Pending...");
         setActiveTab("result");
         if (isBottomPanelCollapsed) {
           setBottomPanelHeight(45);
@@ -884,28 +903,27 @@ export function ChallengeEditor({
           });
 
           const result = await waitForJudgeResult(submit.job_id, {
-            timeoutMs: 15000,
-            intervalMs: 1000,
+            timeoutMs: 30000,
+            intervalMs: 800,
             onUpdate: (update) => {
               if (update.status === "queued") {
-                setOutput("Preparing to run...\n");
-                setRunMessage("Preparing to run...");
+                setOutput("Pending...\n");
+                setRunMessage("Pending...");
               } else if (update.status === "running") {
-                setOutput("Running tests...\n");
-                setRunMessage("Running tests...");
+                setOutput("Running...\n");
+                setRunMessage("Running...");
               }
             },
           });
 
           const normalized = normalizeServerResult(result);
           if (normalized.systemError) {
-            setOutput((prev) => (prev || "") + normalized.systemError);
-            setActiveTab("console");
+            setRunMessage(normalized.systemError);
+            setActiveTab("result");
             if (isBottomPanelCollapsed) {
               setBottomPanelHeight(45);
               setIsBottomPanelCollapsed(false);
             }
-            setRunMessage("");
             return;
           }
 
@@ -941,13 +959,16 @@ export function ChallengeEditor({
           }
         } catch (err: any) {
           if (currentChallengeIdRef.current === runChallengeId) {
-            setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
-            setActiveTab("console");
+            if (String(err?.message || "").includes("Timed out waiting")) {
+              setRunMessage("Still running. Check results again in a moment.");
+            } else {
+              setRunMessage(formatServerError(err?.message));
+            }
+            setActiveTab("result");
             if (isBottomPanelCollapsed) {
               setBottomPanelHeight(45);
               setIsBottomPanelCollapsed(false);
             }
-            setRunMessage("");
           }
         } finally {
           isRunningRef.current = false;
@@ -1619,7 +1640,7 @@ export function ChallengeEditor({
                     <div id="result-panel" role="tabpanel" aria-label="Test results" className="flex flex-col h-full">
                       {!testResults ? (
                         <div className="flex-1 flex items-center justify-center text-muted/60 text-sm italic">
-                          {isRunning ? runMessage || "Running tests..." : "Run code to see results..."}
+                          {runMessage || (isRunning ? "Running..." : "Run or submit to see results...")}
                         </div>
                       ) : (
                         <>
@@ -1630,7 +1651,8 @@ export function ChallengeEditor({
                               const passedTests = testResults.filter(
                                 (r) => r.status === "Accepted"
                               ).length;
-                              const allPassed = passedTests === totalTests;
+                              const verdict = deriveVerdict(testResults);
+                              const allPassed = verdict.kind === "accepted";
 
                               if (allPassed) {
                                 // All tests passed
@@ -1688,7 +1710,20 @@ export function ChallengeEditor({
                                   );
                                 }
                               } else {
-                                // Some tests failed
+                                if (verdict.kind === "error" || verdict.kind === "wrong") {
+                                  return (
+                                    <div className="flex flex-col gap-2">
+                                      <h3 className="text-rose-400 font-medium flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4" />
+                                        {verdict.label}
+                                      </h3>
+                                      <p className="text-sm text-muted">
+                                        {passedTests} / {totalTests} tests passed
+                                      </p>
+                                    </div>
+                                  );
+                                }
+
                                 return (
                                   <h3 className="text-rose-400 font-medium flex items-center gap-2">
                                     <AlertCircle className="w-4 h-4" />
