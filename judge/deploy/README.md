@@ -49,7 +49,7 @@ appendfsync everysec
 maxmemory-policy noeviction
 ```
 
-## 5) Optional: nsjail sandbox
+## 5) Nsjail sandbox
 
 Install nsjail (Ubuntu):
 
@@ -110,6 +110,24 @@ Files used:
 - `judge/deploy/nginx/judge.https.conf.template`
 - `judge/deploy/nginx/ratelimit.conf`
 - `judge/deploy/systemd/worker-override.conf`
+- `judge/deploy/judge-cleanup.service`
+- `judge/deploy/judge-cleanup.timer`
+- `judge/deploy/judge-backup.service`
+- `judge/deploy/judge-backup.timer`
+
+Cleanup settings live in `/etc/judge/judge.env`. The timer runs daily by default.
+To trigger a run immediately:
+
+```bash
+sudo systemctl start judge-cleanup.service
+```
+
+Backup settings live in `/etc/judge/judge.env`. The timer runs daily by default.
+To trigger a run immediately:
+
+```bash
+sudo systemctl start judge-backup.service
+```
 
 ## 8) Verify
 

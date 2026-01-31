@@ -94,6 +94,11 @@ Environment variables:
 - `JUDGE_MAX_OUTPUT_CHARS` (default: `2000`)
 - `JUDGE_JOB_CLAIM_IDLE_MS` (default: `30000`)
 - `JUDGE_JOB_CLAIM_COUNT` (default: `10`)
+- `JUDGE_JOB_RETENTION_DAYS` (default: `7`)
+- `JUDGE_QUEUE_MAXLEN` (default: `10000`)
+- `JUDGE_QUEUE_STREAMS` (default: `queue:light,queue:torch`)
+- `JUDGE_BACKUP_DIR` (default: `judge/data/backups`)
+- `JUDGE_BACKUP_RETENTION_DAYS` (default: `7`)
 - `JUDGE_ALLOWED_ORIGINS` (comma-separated)
 - `JUDGE_SANDBOX_CMD_JSON` (optional sandbox wrapper)
 
@@ -108,6 +113,7 @@ JUDGE_SANDBOX_CMD_JSON='["nsjail","--config","/etc/judge/nsjail.cfg","--"]'
 - OS-level sandboxing is optional. Enable it on the VM with `JUDGE_SANDBOX_CMD_JSON`.
 - Hidden tests never reach the browser. Only public bundles are exported.
 - Production setup lives in `judge/deploy/`. See the deploy README for steps.
+- Daily timers run on the VM to prune old jobs and save database backups.
 
 ## Problem format
 
