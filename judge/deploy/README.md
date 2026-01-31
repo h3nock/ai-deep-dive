@@ -83,15 +83,20 @@ sudo systemctl enable --now judge-worker-torch
 
 ## 7) Apply nginx + worker hardening
 
-One command applies nginx rate limits and worker hardening:
+Install nginx, then apply the nginx config and worker hardening:
 
 ```bash
 sudo apt-get install -y nginx
 sudo JUDGE_DOMAIN=judge.example.com judge/deploy/apply.sh
 ```
 
+If TLS is required, issue a certificate first (for example with certbot), then
+re-run the command above. Set `JUDGE_CERT_DIR` if the certificate files live
+somewhere else.
+
 Files used:
-- `judge/deploy/nginx/judge.conf.template`
+- `judge/deploy/nginx/judge.http.conf.template`
+- `judge/deploy/nginx/judge.https.conf.template`
 - `judge/deploy/nginx/ratelimit.conf`
 - `judge/deploy/systemd/worker-override.conf`
 
@@ -99,6 +104,8 @@ Files used:
 
 ```bash
 curl http://localhost:8000/health
+curl http://judge.example.com/health
+curl https://judge.example.com/health
 ```
 
 ## Scaling on a single VM

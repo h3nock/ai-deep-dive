@@ -13,14 +13,24 @@ if [[ -z "$JUDGE_DOMAIN" ]]; then
   exit 1
 fi
 
+JUDGE_CERT_DIR=${JUDGE_CERT_DIR:-/etc/letsencrypt/live/$JUDGE_DOMAIN}
+
 ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 
 # Nginx rate limiting zones
 install -m 644 "$ROOT_DIR/deploy/nginx/ratelimit.conf" /etc/nginx/conf.d/judge-ratelimit.conf
 
 # Nginx site config
-sed "s/\${JUDGE_DOMAIN}/$JUDGE_DOMAIN/g" \
-  "$ROOT_DIR/deploy/nginx/judge.conf.template" \
+NGINX_TEMPLATE="$ROOT_DIR/deploy/nginx/judge.http.conf.template"
+if [[ -f "$JUDGE_CERT_DIR/fullchain.pem" && -f "$JUDGE_CERT_DIR/privkey.pem" ]]; then
+  NGINX_TEMPLATE="$ROOT_DIR/deploy/nginx/judge.https.conf.template"
+else
+  echo "TLS certs not found at $JUDGE_CERT_DIR, using HTTP-only config." >&2
+fi
+
+sed -e "s|\${JUDGE_DOMAIN}|$JUDGE_DOMAIN|g" \
+  -e "s|\${JUDGE_CERT_DIR}|$JUDGE_CERT_DIR|g" \
+  "$NGINX_TEMPLATE" \
   > /etc/nginx/sites-available/judge
 
 ln -sf /etc/nginx/sites-available/judge /etc/nginx/sites-enabled/judge
