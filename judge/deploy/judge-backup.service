@@ -1,0 +1,10 @@
+[Unit]
+Description=AI Deep Dive Judge Backup
+
+[Service]
+Type=oneshot
+User=judge
+Group=judge
+EnvironmentFile=/etc/judge/judge.env
+WorkingDirectory=/opt/ai-deep-dive/judge
+ExecStart=/opt/ai-deep-dive/judge/.venv/bin/python -m judge.backup

@@ -325,6 +325,12 @@ export const getPostBySlug = cache(
               }
             }
 
+            if (!challengeData.problemId) {
+              throw new Error(
+                `Missing problemId in ${path.relative(contentDirectory, descriptionPath)}`
+              );
+            }
+
             return {
               ...challengeData,
               id: autoId,

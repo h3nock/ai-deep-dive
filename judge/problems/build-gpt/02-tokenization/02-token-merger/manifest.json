@@ -1,0 +1,11 @@
+{
+  "id": "build-gpt/02-tokenization/02-token-merger",
+  "version": "v1",
+  "runner": "merge(ids, pair, new_id)",
+  "requires_torch": false,
+  "time_limit_s": 5,
+  "memory_mb": 1024,
+  "comparison": {
+    "type": "exact"
+  }
+}

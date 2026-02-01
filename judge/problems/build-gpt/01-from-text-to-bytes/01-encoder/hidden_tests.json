@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case3",
+      "inputs": {
+        "text": "\"\""
+      },
+      "expected": []
+    }
+  ]
+}

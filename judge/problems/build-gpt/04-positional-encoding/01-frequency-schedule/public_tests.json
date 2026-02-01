@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case1",
+      "inputs": {
+        "d_model": "4"
+      },
+      "expected": [
+        1.0,
+        0.01
+      ]
+    },
+    {
+      "id": "case2",
+      "inputs": {
+        "d_model": "8"
+      },
+      "expected": [
+        1.0,
+        0.1,
+        0.01,
+        0.001
+      ]
+    }
+  ]
+}

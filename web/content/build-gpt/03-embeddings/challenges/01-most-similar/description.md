@@ -17,6 +17,7 @@ arguments:
 executionSnippet: |
   most_similar(query_id, embedding_matrix, k)
 visibleTestCases: 2
+problemId: "build-gpt/03-embeddings/01-most-similar"
 ---
 
 You are given an `embedding_matrix` where row `i` is the embedding vector for token ID `i`, a `query_id`, and an integer `k`. Return the IDs of the `k` tokens most similar to the query token, using cosine similarity.

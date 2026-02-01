@@ -1,0 +1,15 @@
+[Unit]
+Description=AI Deep Dive Judge Worker (light %i)
+After=network.target redis.service
+
+[Service]
+Type=simple
+User=judge
+WorkingDirectory=/opt/ai-deep-dive/judge
+EnvironmentFile=/etc/judge/judge.env
+ExecStart=/opt/ai-deep-dive/judge/.venv/bin/python -m judge.worker --stream queue:light --group workers-light --consumer light-%i
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

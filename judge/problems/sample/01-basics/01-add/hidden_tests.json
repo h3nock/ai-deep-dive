@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "hidden1",
+      "input_code": "a = 123\nb = 456\n",
+      "expected": 579
+    }
+  ]
+}

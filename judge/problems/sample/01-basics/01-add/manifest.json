@@ -1,0 +1,9 @@
+{
+  "id": "sample/01-basics/01-add",
+  "version": "v1",
+  "runner": "add(a, b)",
+  "requires_torch": false,
+  "time_limit_s": 5,
+  "memory_mb": 512,
+  "comparison": { "type": "exact" }
+}

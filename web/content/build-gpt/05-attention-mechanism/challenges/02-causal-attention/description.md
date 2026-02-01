@@ -27,6 +27,7 @@ arguments:
 executionSnippet: |
   causal_attention(Q, K, V)
 visibleTestCases: 2
+problemId: "build-gpt/05-attention-mechanism/02-causal-attention"
 ---
 
 Given Q, K, and V matrices, compute the attention output where each position can only attend to itself and earlier positions.

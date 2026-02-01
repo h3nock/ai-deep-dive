@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case1",
+      "input_code": "a = 1\nb = 2\n",
+      "expected": 3
+    },
+    {
+      "id": "case2",
+      "input_code": "a = -5\nb = 10\n",
+      "expected": 5
+    }
+  ]
+}
