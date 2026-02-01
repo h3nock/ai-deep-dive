@@ -17,7 +17,7 @@ arguments:
 executionSnippet: |
   positional_encoding(pos, d_model)
 visibleTestCases: 2
-judgeId: "build-gpt/04-positional-encoding/02-positional-encoding-vector"
+problemId: "build-gpt/04-positional-encoding/02-positional-encoding-vector"
 ---
 
 Build the positional encoding vector of length `d_model` for a single position.
