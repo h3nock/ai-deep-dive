@@ -855,11 +855,6 @@ export function ChallengeEditor({
             }
           }
 
-          // Update solved status only in submit mode
-          if (mode === "submit" && allPassed && activeChallenge) {
-            markChallengeSolved(courseId, activeChallenge.id);
-            setIsSolved(true);
-          }
         } catch (err: any) {
           // Only show error if still on the same challenge
           if (currentChallengeIdRef.current === runChallengeId) {
