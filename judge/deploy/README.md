@@ -83,13 +83,13 @@ namespaces. Run that step after enabling nsjail.
 
 ```bash
 sudo cp judge/deploy/judge-api.service /etc/systemd/system/
-sudo cp judge/deploy/judge-worker-light.service /etc/systemd/system/
-sudo cp judge/deploy/judge-worker-torch.service /etc/systemd/system/
+sudo cp judge/deploy/judge-worker-light@.service /etc/systemd/system/
+sudo cp judge/deploy/judge-worker-torch@.service /etc/systemd/system/
 
 sudo systemctl daemon-reload
 sudo systemctl enable --now judge-api
-sudo systemctl enable --now judge-worker-light
-sudo systemctl enable --now judge-worker-torch
+sudo systemctl enable --now judge-worker-light@1
+sudo systemctl enable --now judge-worker-torch@1
 ```
 
 ## 7) Apply nginx + worker hardening
@@ -139,5 +139,5 @@ curl https://judge.example.com/health
 
 ## Scaling on a single VM
 
-- Add more workers by cloning the service file with a unique `--consumer` name.
-- Keep torch workers fewer than light workers.
+- Increase `JUDGE_LIGHT_WORKERS` and `JUDGE_TORCH_WORKERS` in `/etc/judge/judge.env`.
+- Re-run `judge/deploy/apply.sh` to start the new instances.

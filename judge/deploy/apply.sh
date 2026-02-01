@@ -38,14 +38,31 @@ ln -sf /etc/nginx/sites-available/judge /etc/nginx/sites-enabled/judge
 nginx -t
 systemctl reload nginx
 
-# Systemd worker hardening
-mkdir -p /etc/systemd/system/judge-worker-light.service.d
-mkdir -p /etc/systemd/system/judge-worker-torch.service.d
-install -m 644 "$ROOT_DIR/deploy/systemd/worker-override.conf" /etc/systemd/system/judge-worker-light.service.d/override.conf
-install -m 644 "$ROOT_DIR/deploy/systemd/worker-override.conf" /etc/systemd/system/judge-worker-torch.service.d/override.conf
+# Systemd worker units + hardening
+install -m 644 "$ROOT_DIR/deploy/judge-worker-light@.service" /etc/systemd/system/judge-worker-light@.service
+install -m 644 "$ROOT_DIR/deploy/judge-worker-torch@.service" /etc/systemd/system/judge-worker-torch@.service
+
+mkdir -p /etc/systemd/system/judge-worker-light@.service.d
+mkdir -p /etc/systemd/system/judge-worker-torch@.service.d
+install -m 644 "$ROOT_DIR/deploy/systemd/worker-override.conf" /etc/systemd/system/judge-worker-light@.service.d/override.conf
+install -m 644 "$ROOT_DIR/deploy/systemd/worker-override.conf" /etc/systemd/system/judge-worker-torch@.service.d/override.conf
+
+LIGHT_COUNT=${JUDGE_LIGHT_WORKERS:-1}
+TORCH_COUNT=${JUDGE_TORCH_WORKERS:-1}
 
 systemctl daemon-reload
-systemctl restart judge-worker-light judge-worker-torch
+
+for i in $(seq 1 "$LIGHT_COUNT"); do
+  systemctl enable --now "judge-worker-light@${i}"
+done
+
+for i in $(seq 1 "$TORCH_COUNT"); do
+  systemctl enable --now "judge-worker-torch@${i}"
+done
+
+# Stop legacy non-template services if they exist
+systemctl disable --now judge-worker-light.service >/dev/null 2>&1 || true
+systemctl disable --now judge-worker-torch.service >/dev/null 2>&1 || true
 
 # Cleanup + backup timers
 install -m 644 "$ROOT_DIR/deploy/judge-cleanup.service" /etc/systemd/system/judge-cleanup.service
@@ -57,4 +74,4 @@ systemctl daemon-reload
 systemctl enable --now judge-cleanup.timer
 systemctl enable --now judge-backup.timer
 
-echo "Applied nginx rate limits, worker hardening, cleanup, and backups."
+echo "Applied nginx rate limits, worker templates, cleanup, and backups."
