@@ -17,6 +17,14 @@ JUDGE_CERT_DIR=${JUDGE_CERT_DIR:-/etc/letsencrypt/live/$JUDGE_DOMAIN}
 
 ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 
+# Load /etc/judge/judge.env if present.
+if [[ -f /etc/judge/judge.env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source /etc/judge/judge.env
+  set +a
+fi
+
 # Nginx rate limiting zones
 install -m 644 "$ROOT_DIR/deploy/nginx/ratelimit.conf" /etc/nginx/conf.d/judge-ratelimit.conf
 
