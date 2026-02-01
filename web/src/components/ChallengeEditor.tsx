@@ -428,20 +428,18 @@ export function ChallengeEditor({
 
     if (browserSupported) {
       setExecutionMode("browser");
-    } else if (activeChallenge.judgeId) {
-      setExecutionMode("server");
     } else {
-      setExecutionMode("cli");
+      setExecutionMode("server");
     }
   }, [activeChallenge]);
 
   // Warm public test bundle for judge-backed challenges
   useEffect(() => {
-    if (!activeChallenge?.judgeId) return;
-    fetchPublicBundle(activeChallenge.judgeId).catch(() => {
+    if (!activeChallenge?.problemId) return;
+    fetchPublicBundle(activeChallenge.problemId).catch(() => {
       // Ignore preload failures; will retry on run
     });
-  }, [activeChallenge?.judgeId]);
+  }, [activeChallenge?.problemId]);
 
   // Load code from localStorage or use initial code when challenge changes
   useEffect(() => {
@@ -499,11 +497,11 @@ export function ChallengeEditor({
         setActiveTestCaseId(
           firstVisible ? firstVisible.id : processedCases[0].id
         );
-      } else if (activeChallenge.judgeId) {
+      } else if (activeChallenge.problemId) {
         hasAsync = true;
         (async () => {
           try {
-            const bundle = await fetchPublicBundle(activeChallenge.judgeId!);
+            const bundle = await fetchPublicBundle(activeChallenge.problemId!);
             const cases = (Array.isArray(bundle.tests)
               ? bundle.tests
               : bundle.tests.cases || []
@@ -640,6 +638,7 @@ export function ChallengeEditor({
 
   const ensurePyodideLoaded = useCallback(async () => {
     if (!activeChallenge) return;
+    if (executionMode !== "browser") return;
     if (!canRunInBrowser(activeChallenge.dependencies)) return;
     if (pyodideStatusRef.current === "ready") return;
 
@@ -657,11 +656,12 @@ export function ChallengeEditor({
     }
 
     return pyodideLoadPromiseRef.current;
-  }, [activeChallenge]);
+  }, [activeChallenge, executionMode]);
 
   const preloadPyodideOnFirstKey = useCallback(() => {
     if (hasTriggeredPyodidePreloadRef.current) return;
     if (!activeChallenge) return;
+    if (executionMode !== "browser") return;
     if (!canRunInBrowser(activeChallenge.dependencies)) return;
     if (pyodideStatusRef.current === "ready") {
       hasTriggeredPyodidePreloadRef.current = true;
@@ -670,7 +670,7 @@ export function ChallengeEditor({
 
     hasTriggeredPyodidePreloadRef.current = true;
     void ensurePyodideLoaded().catch(() => {});
-  }, [activeChallenge, ensurePyodideLoaded]);
+  }, [activeChallenge, executionMode, ensurePyodideLoaded]);
 
   // Editor Command
   const handleEditorDidMount = (editor: any, monacoInstance: any) => {
@@ -731,13 +731,8 @@ export function ChallengeEditor({
         return;
       }
 
-      const hasJudge = Boolean(activeChallenge?.judgeId);
-
-      const useBrowser =
-        executionMode === "browser" && (mode === "run" || !hasJudge);
-      const useServer =
-        executionMode === "server" ||
-        (executionMode === "browser" && hasJudge && mode === "submit");
+      const useBrowser = executionMode === "browser" && mode === "run";
+      const useServer = executionMode === "server" || mode === "submit";
 
       // Filter test cases based on mode
       const casesToRun =
@@ -800,9 +795,9 @@ export function ChallengeEditor({
             };
           };
 
-          if (activeChallenge?.judgeId && mode === "run") {
+          if (activeChallenge?.problemId && mode === "run") {
             try {
-              const bundle = await fetchPublicBundle(activeChallenge.judgeId);
+              const bundle = await fetchPublicBundle(activeChallenge.problemId);
               config = bundleToTestConfig(bundle);
             } catch (err) {
               console.warn("Failed to load public bundle, falling back", err);
@@ -881,7 +876,7 @@ export function ChallengeEditor({
           isRunningRef.current = false;
           setIsRunning(false);
         }
-      } else if (useServer && activeChallenge?.judgeId) {
+      } else if (useServer) {
         // === SERVER EXECUTION (Judge VM) ===
         isRunningRef.current = true;
         setIsRunning(true);
@@ -897,7 +892,7 @@ export function ChallengeEditor({
 
         try {
           const submit = await submitToJudge({
-            problemId: activeChallenge.judgeId,
+            problemId: activeChallenge.problemId,
             code,
             kind: mode,
           });
