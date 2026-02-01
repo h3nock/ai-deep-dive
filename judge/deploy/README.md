@@ -94,7 +94,7 @@ sudo systemctl enable --now judge-worker-torch@1
 
 ## 7) Apply nginx + worker hardening
 
-Install nginx, then apply the nginx config and worker hardening:
+Install nginx, then apply the nginx config, API binding, and worker hardening:
 
 ```bash
 sudo apt-get install -y nginx
@@ -106,6 +106,7 @@ re-run the command above. Set `JUDGE_CERT_DIR` if the certificate files live
 somewhere else.
 
 Files used:
+- `judge/deploy/judge-api.service`
 - `judge/deploy/nginx/judge.http.conf.template`
 - `judge/deploy/nginx/judge.https.conf.template`
 - `judge/deploy/nginx/ratelimit.conf`

@@ -7,7 +7,7 @@ Type=simple
 User=judge
 WorkingDirectory=/opt/ai-deep-dive/judge
 EnvironmentFile=/etc/judge/judge.env
-ExecStart=/opt/ai-deep-dive/judge/.venv/bin/uvicorn judge.api:app --host 0.0.0.0 --port 8000 --workers 1
+ExecStart=/opt/ai-deep-dive/judge/.venv/bin/uvicorn judge.api:app --host 127.0.0.1 --port 8000 --workers 1
 Restart=always
 RestartSec=2
 
