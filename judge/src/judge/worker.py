@@ -64,11 +64,16 @@ def main() -> None:
                 sandbox_cmd=settings.sandbox_cmd or None,
             )
             if result.get("error"):
-                results.mark_error(job_id, str(result["error"]), result)
+                results.mark_error(
+                    job_id,
+                    str(result["error"]),
+                    result,
+                    error_kind=result.get("error_kind", "internal"),
+                )
             else:
                 results.mark_done(job_id, result)
         except Exception as exc:
-            results.mark_error(job_id, f"Worker error: {exc}")
+            results.mark_error(job_id, f"Worker error: {exc}", error_kind="internal")
         finally:
             queue.ack(args.stream, args.group, msg_id)
 

@@ -235,13 +235,6 @@ def _sanitize_results(results: list[dict[str, Any]], max_output_chars: int) -> l
     for item in results:
         hidden = bool(item.get("hidden", False))
         if hidden:
-            sanitized.append(
-                {
-                    "id": item.get("id", ""),
-                    "status": item.get("status", ""),
-                    "hidden": True,
-                }
-            )
             continue
         sanitized.append(
             {
@@ -300,6 +293,7 @@ def run_problem(
                 "summary": {"total": len(config["cases"]), "passed": 0},
                 "tests": [],
                 "error": f"Time Limit Exceeded ({problem.time_limit_s}s)",
+                "error_kind": "user",
             }
 
     if result.returncode != 0:
@@ -308,6 +302,7 @@ def run_problem(
             "summary": {"total": len(config["cases"]), "passed": 0},
             "tests": [],
             "error": result.stderr.strip() or "Runner failed",
+            "error_kind": "internal",
         }
 
     try:
@@ -318,14 +313,16 @@ def run_problem(
             "summary": {"total": len(config["cases"]), "passed": 0},
             "tests": [],
             "error": f"Invalid runner output. Stdout: {result.stdout}\nStderr: {result.stderr}",
+            "error_kind": "internal",
         }
 
+    total_count = len(tests_raw)
+    passed_count = sum(1 for t in tests_raw if t.get("status") == "Accepted")
     tests = _sanitize_results(tests_raw, max_output_chars)
-    passed_count = sum(1 for t in tests if t.get("status") == "Accepted")
 
     return {
-        "passed": passed_count == len(tests),
-        "summary": {"total": len(tests), "passed": passed_count},
+        "passed": passed_count == total_count,
+        "summary": {"total": total_count, "passed": passed_count},
         "tests": tests,
         "error": None,
     }

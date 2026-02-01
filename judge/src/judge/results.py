@@ -16,6 +16,9 @@ class ResultsStore:
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA busy_timeout=5000")
         return conn
 
     def _init_db(self) -> None:
@@ -33,13 +36,20 @@ class ResultsStore:
                     finished_at INTEGER,
                     attempts INTEGER NOT NULL DEFAULT 0,
                     result_json TEXT,
-                    error TEXT
+                    error TEXT,
+                    error_kind TEXT
                 )
                 """
             )
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS jobs_status_idx ON jobs(status)"
             )
+            columns = {
+                row["name"]
+                for row in conn.execute("PRAGMA table_info(jobs)").fetchall()
+            }
+            if "error_kind" not in columns:
+                conn.execute("ALTER TABLE jobs ADD COLUMN error_kind TEXT")
 
     def create_job(self, job_id: str, problem_id: str, profile: str, kind: str) -> None:
         now = int(time.time())
@@ -70,23 +80,29 @@ class ResultsStore:
             conn.execute(
                 """
                 UPDATE jobs
-                SET status = ?, finished_at = ?, result_json = ?, error = NULL
+                SET status = ?, finished_at = ?, result_json = ?, error = NULL, error_kind = NULL
                 WHERE id = ?
                 """,
                 ("done", now, json.dumps(result), job_id),
             )
 
-    def mark_error(self, job_id: str, error: str, result: Optional[dict[str, Any]] = None) -> None:
+    def mark_error(
+        self,
+        job_id: str,
+        error: str,
+        result: Optional[dict[str, Any]] = None,
+        error_kind: Optional[str] = None,
+    ) -> None:
         now = int(time.time())
         result_json = json.dumps(result) if result else None
         with self._connect() as conn:
             conn.execute(
                 """
                 UPDATE jobs
-                SET status = ?, finished_at = ?, result_json = ?, error = ?
+                SET status = ?, finished_at = ?, result_json = ?, error = ?, error_kind = ?
                 WHERE id = ?
                 """,
-                ("error", now, result_json, error, job_id),
+                ("error", now, result_json, error, error_kind, job_id),
             )
 
     def get_job(self, job_id: str) -> Optional[dict[str, Any]]:
@@ -107,4 +123,5 @@ class ResultsStore:
             "attempts": row["attempts"],
             "result": result,
             "error": row["error"],
+            "error_kind": row["error_kind"],
         }

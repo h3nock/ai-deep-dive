@@ -1,6 +1,7 @@
 """FastAPI service for the judge."""
 
 import uuid
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,6 +29,19 @@ if settings.allowed_origins:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+def _sanitize_job(job: dict[str, Any]) -> dict[str, Any]:
+    sanitized = dict(job)
+    error_kind = sanitized.pop("error_kind", None)
+    if error_kind == "internal":
+        if sanitized.get("error"):
+            sanitized["error"] = "Internal judge error. Please retry."
+        result = sanitized.get("result")
+        if isinstance(result, dict) and result.get("error"):
+            result = dict(result)
+            result["error"] = "Internal judge error. Please retry."
+            sanitized["result"] = result
+    return sanitized
 
 
 @app.get("/health")
@@ -80,4 +94,4 @@ async def get_result(job_id: str) -> JobResult:
     job = results.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    return JobResult(**job)
+    return JobResult(**_sanitize_job(job))
