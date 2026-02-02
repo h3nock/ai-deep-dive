@@ -17,11 +17,11 @@ description: "The limitation of single-head attention and how multiple heads ove
 
 <Step title="The Limitation of One Head">
   <Description>
-    Single-head attention uses one set of projection matrices: W_Q, W_K, and W_V. These transform each token's embedding into a Query, a Key, and a Value. The choice of projection determines which aspects of the embedding influence the attention computation.
+    Single-head attention uses one set of projection matrices: `W_Q`, `W_K`, and `W_V`. These transform each token's embedding into a Query, a Key, and a Value. The choice of projection determines which aspects of the embedding influence the attention computation.
   </Description>
 
   <Description>
-    With one W_Q and one W_K, there is one way of measuring similarity between tokens. The dot product between a Query and a Key reflects one learned notion of relevance. Relationships that would require a different similarity measure cannot be captured alongside this one.
+    With one `W_Q` and one `W_K`, there is one way of measuring similarity between tokens. The dot product between a Query and a Key reflects one learned notion of relevance. Relationships that would require a different similarity measure cannot be captured alongside this one.
   </Description>
 
   <Description>
@@ -36,11 +36,11 @@ description: "The limitation of single-head attention and how multiple heads ove
 
 <Step title="Multi-Head Attention">
   <Description>
-    Multi-head attention addresses these limitations by running multiple attention operations in parallel. Each operation is called a head, and each head has its own independent set of projection matrices: its own W_Q, W_K, and W_V.
+    Multi-head attention addresses these limitations by running multiple attention operations in parallel. Each operation is called a head, and each head has its own independent set of projection matrices: its own `W_Q`, `W_K`, and `W_V`.
   </Description>
 
   <Description>
-    With separate projection matrices, each head transforms the embeddings differently and learns its own notion of similarity through its own W_Q and W_K. As a result, what appears relevant in one head may be irrelevant in another, and the heads can capture different patterns of relevance from the same input.
+    With separate projection matrices, each head transforms the embeddings differently and learns its own notion of similarity through its own `W_Q` and `W_K`. As a result, what appears relevant in one head may be irrelevant in another, and the heads can capture different patterns of relevance from the same input.
   </Description>
 
   <Description>
