@@ -14,3 +14,22 @@ description: "The limitation of single-head attention and how multiple heads ove
 </Description>
 </div>
 
+
+<Step title="The Limitation of One Head">
+  <Description>
+    Single-head attention uses one set of projection matrices: W_Q, W_K, and W_V. These transform each token's embedding into a Query, a Key, and a Value. The choice of projection determines which aspects of the embedding influence the attention computation.
+  </Description>
+
+  <Description>
+    With one W_Q and one W_K, there is one way of measuring similarity between tokens. The dot product between a Query and a Key reflects one learned notion of relevance. Relationships that would require a different similarity measure cannot be captured alongside this one.
+  </Description>
+
+  <Description>
+    These similarity scores pass through softmax, producing attention weights that sum to 1. Each token gets one distribution over all positions, and these weights determine how Value vectors combine into the output. Because the weights must sum to 1, every position competes for share in this single distribution.
+  </Description>
+
+  <Description>
+    The result is one weighted sum of Values per token. One projection, one similarity measure, one attention distribution, one output blend. If the data contains multiple patterns of relevance, each requiring different projections, similarity measures, or weightings, a single attention operation cannot capture them all.
+  </Description>
+</Step>
+
