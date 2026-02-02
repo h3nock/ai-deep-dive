@@ -33,3 +33,18 @@ description: "The limitation of single-head attention and how multiple heads ove
   </Description>
 </Step>
 
+
+<Step title="Multi-Head Attention">
+  <Description>
+    Multi-head attention addresses these limitations by running multiple attention operations in parallel. Each operation is called a head, and each head has its own independent set of projection matrices: its own W_Q, W_K, and W_V.
+  </Description>
+
+  <Description>
+    With separate projection matrices, each head transforms the embeddings differently and learns its own notion of similarity through its own W_Q and W_K. As a result, what appears relevant in one head may be irrelevant in another, and the heads can capture different patterns of relevance from the same input.
+  </Description>
+
+  <Description>
+    Each head also computes its own attention distribution and produces its own weighted sum of Values. Within each head, weights still sum to 1 and positions still compete for attention weight. But different heads operate independently of each other. A position that receives weak attention in one head can receive strong attention in another. By having multiple heads, the model is no longer forced to commit to a single attention pattern. Each head can weight the sequence according to its own learned relevance, and their outputs combine to form the final result.
+  </Description>
+</Step>
+
