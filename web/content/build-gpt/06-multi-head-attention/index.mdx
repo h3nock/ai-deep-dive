@@ -1,7 +1,16 @@
 ---
 title: "Multi-Head Attention"
 step: 6
-description: "How multiple attention heads capture different relationships in parallel."
+description: "The limitation of single-head attention and how multiple heads overcome it."
 ---
 
-<ComingSoon />
+<div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
+<Description noMargin>
+  The previous chapter introduced single-head attention, where each token examines the full sequence, measures relevance, and gathers information from other tokens. The representation of each token is now shaped by its context rather than fixed at the start.
+</Description>
+
+<Description>
+  However, there's a limitation to what a single attention head can capture, and understanding this limitation explains why transformers use multiple heads running in parallel rather than just one.
+</Description>
+</div>
+
