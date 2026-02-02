@@ -32,7 +32,14 @@ description: "The limitation of single-head attention and how multiple heads ove
   </Description>
 
   <Description>
-    With separate projection matrices, each head transforms the embeddings differently and learns its own notion of similarity through its own `W_Q` and `W_K`. As a result, what appears relevant in one head may be irrelevant in another, and the heads can capture different patterns of relevance from the same input.
+    With separate projection matrices, each head defines its own way of measuring similarity through its own `W_Q` and `W_K`. As a result, tokens can attend to each other based on multiple notions of similarity at once.
+  </Description>
+
+  <Description>
+    Each head computes its own attention distribution, so within each head, weights still sum to 1 and positions still compete for attention weight. But across heads, a position that receives weak attention in one can receive strong attention in another, and the final result combines outputs from all heads.
+  </Description>
+</Step>
+
   </Description>
 
   <Description>
