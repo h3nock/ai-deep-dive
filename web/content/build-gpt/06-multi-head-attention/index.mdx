@@ -1,7 +1,100 @@
 ---
 title: "Multi-Head Attention"
 step: 6
-description: "How multiple attention heads capture different relationships in parallel."
+description: "The limitation of single-head attention and how multiple heads overcome it."
 ---
 
-<ComingSoon />
+<div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
+<Description noMargin>
+  The previous chapter introduced single-head attention, where each token examines the full sequence, measures relevance, and gathers information from other tokens. The representation of each token is now shaped by its context rather than fixed at the start.
+</Description>
+
+<Description>
+  However, there's a limitation to what a single attention head can capture, and understanding this limitation explains why transformers use multiple heads running in parallel rather than just one.
+</Description>
+</div>
+
+
+<Step title="The Limitation of One Head">
+  <Description>
+    Single-head attention uses one set of projection matrices: `W_Q`, `W_K`, and `W_V`. These transform each token's embedding into a Query, a Key, and a Value. With one `W_Q` and one `W_K`, there is only one way to measure similarity between tokens, through the dot product of their projected Query and Key.
+  </Description>
+
+  <Description>
+    The result is one attention distribution based on this single similarity measure.  If tokens need to attend to each other based on multiple notions of similarity independently, single-head attention has no way to provide that.
+  </Description>
+</Step>
+
+
+<Step title="Multi-Head Attention">
+  <Description>
+    Multi-head attention addresses these limitations by running multiple attention operations in parallel. Each operation is called a head, and each head has its own independent set of projection matrices: its own `W_Q`, `W_K`, and `W_V`.
+  </Description>
+
+  <Description>
+    With separate projection matrices, each head defines its own way of measuring similarity through its own `W_Q` and `W_K`. As a result, tokens can attend to each other based on multiple notions of similarity at once.
+  </Description>
+
+  <Description>
+    Each head computes its own attention distribution, so within each head, weights still sum to 1 and positions still compete for attention weight. But across heads, a position that receives weak attention in one can receive strong attention in another, and the final result combines outputs from all heads.
+  </Description>
+</Step>
+
+
+<Step title="How It Works">
+  <Description>
+    Now that we understand the goal of capturing multiple independent relationships, let's walk through the mechanics of how the model achieves this.
+  </Description>
+
+  <Description>
+    We start by projecting the input `X` into distinct Query, Key, and Value matrices for each head using independent weights (`W_Q^i`, `W_K^i`, `W_V^i`). Since each head has its own unique projection, it maps the input into a different subspace. This allows each head to define "relevance" in its own way, enabling the model to simultaneously attend to information based on completely different criteria.
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-1">
+    <div>Q<sub>i</sub> = X × W<sub>Q</sub><sup>i</sup></div>
+    <div>K<sub>i</sub> = X × W<sub>K</sub><sup>i</sup></div>
+    <div>V<sub>i</sub> = X × W<sub>V</sub><sup>i</sup></div>
+  </div>
+
+  <Description>
+    With these specific projections, each head runs the standard attention function. It computes similarity scores using its own Queries and Keys, producing a unique attention distribution. All `h` heads perform this computation simultaneously.
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+    head<sub>i</sub> = Attention(Q<sub>i</sub>, K<sub>i</sub>, V<sub>i</sub>)
+  </div>
+
+  <Description>
+    Finally, the independent streams are merged. Concatenating the outputs from all heads restores the full dimensionality, yet keeps the information from each head isolated in its own segment. The subsequent multiplication with `W_O` allows these segments to interact. This projection mixes the distinct features discovered by different heads, integrating them into a single, unified representation.
+  </Description>
+
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border">
+    <div className="text-center font-mono text-lg text-primary">
+      MultiHead(X) = Concat(head<sub>1</sub>, ..., head<sub>h</sub>) × W<sub>O</sub>
+    </div>
+  </div>
+
+  <Description>
+    If each head operated on the full model dimension `d_model`, adding more heads would increase the computational cost by a factor of `h`. To prevent this, standard implementations scale the projected size of each head down: `d_k = d_model / h`.
+  </Description>
+
+  <Description>
+    For a model with `d_model = 768` and 12 heads, this means each head projects into just 64 dimensions. Because the heads are narrower, the total number of parameters across all `h` heads matches that of a single full-size head, giving us multiple perspectives without a massive increase in compute.
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+    h × (d_model × d_model/h) = d_model × d_model
+  </div>
+</Step>
+
+
+<Callout type="success" title="Summary">
+  * Single-head attention uses one set of weights, forcing the model to capture only a single type of relationship at a time
+  * Multi-head attention projects the input into **`h` independent subspaces**, allowing it to attend to multiple distinct patterns simultaneously
+  * The independent result vectors from each head are concatenated and projected through **`W_O`** to integrate them into a unified representation
+  * By splitting the model dimension across heads (`d_k = d_model/h`), the layer maintains the same computational cost as a single-head mechanism
+</Callout>
+
+<Description>
+  Each token has now integrated information from the entire input sequence. The next chapter introduces the **feed-forward network**, which processes these enriched vectors independently.
+</Description>
