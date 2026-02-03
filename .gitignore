@@ -61,3 +61,7 @@ judge/data/
 
 # Generated public test bundles
 web/public/judge-tests/
+
+# agents config 
+.agent/
+.claude/
