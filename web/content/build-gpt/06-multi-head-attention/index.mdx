@@ -87,3 +87,10 @@ description: "The limitation of single-head attention and how multiple heads ove
   </div>
 </Step>
 
+
+<Callout type="success" title="Summary">
+  * Single-head attention uses one set of weights, forcing the model to capture only a single type of relationship at a time
+  * Multi-head attention projects the input into **`h` independent subspaces**, allowing it to attend to multiple distinct patterns simultaneously
+  * The independent result vectors from each head are concatenated and projected through **`W_O`** to integrate them into a unified representation
+  * By splitting the model dimension across heads (`d_k = d_model/h`), the layer maintains the same computational cost as a single-head mechanism
+</Callout>
