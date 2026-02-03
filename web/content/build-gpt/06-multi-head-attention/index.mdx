@@ -94,3 +94,7 @@ description: "The limitation of single-head attention and how multiple heads ove
   * The independent result vectors from each head are concatenated and projected through **`W_O`** to integrate them into a unified representation
   * By splitting the model dimension across heads (`d_k = d_model/h`), the layer maintains the same computational cost as a single-head mechanism
 </Callout>
+
+<Description>
+  Each token has now integrated information from the entire input sequence. The next chapter introduces the **feed-forward network**, which processes these enriched vectors independently.
+</Description>
