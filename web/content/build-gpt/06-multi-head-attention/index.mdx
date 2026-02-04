@@ -6,7 +6,7 @@ description: "The limitation of single-head attention and how multiple heads ove
 
 <div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
 <Description noMargin>
-  The previous chapter introduced single-head attention, where each token examines the full sequence, measures relevance, and gathers information from other tokens. The representation of each token is now shaped by its context rather than fixed at the start.
+  The previous chapter introduced single-head attention, where each token examines the available context, measures relevance, and gathers information from other tokens. The representation of each token is now shaped by its context rather than fixed at the start.
 </Description>
 
 <Description>
@@ -21,7 +21,7 @@ description: "The limitation of single-head attention and how multiple heads ove
   </Description>
 
   <Description>
-    The result is one attention distribution based on this single similarity measure.  If tokens need to attend to each other based on multiple notions of similarity independently, single-head attention has no way to provide that.
+    The result is one attention distribution based on this single similarity measure. The core issue is that with one set of projections, multiple notions of similarity are forced into a single attention pattern rather than being represented separately.
   </Description>
 </Step>
 
@@ -92,9 +92,9 @@ description: "The limitation of single-head attention and how multiple heads ove
   * Single-head attention uses one set of weights, forcing the model to capture only a single type of relationship at a time
   * Multi-head attention projects the input into **`h` independent subspaces**, allowing it to attend to multiple distinct patterns simultaneously
   * The independent result vectors from each head are concatenated and projected through **`W_O`** to integrate them into a unified representation
-  * By splitting the model dimension across heads (`d_k = d_model/h`), the layer maintains the same computational cost as a single-head mechanism
+  * By splitting the model dimension across heads (`d_k = d_model/h`), the parameter count and asymptotic compute remain similar to a single full-size head
 </Callout>
 
 <Description>
-  Each token has now integrated information from the entire input sequence. The next chapter introduces the **feed-forward network**, which processes these enriched vectors independently.
+  Each token has now integrated information from its available context. The next chapter introduces the **feed-forward network**, which processes these enriched vectors independently.
 </Description>
