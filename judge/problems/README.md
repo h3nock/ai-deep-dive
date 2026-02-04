@@ -57,8 +57,9 @@ Notes:
   `expected_is_code: true`.
 - Use `input_code` for arbitrary setup.
 - Prefer `inputs` (object of name to value) for better browser rendering.
-- Hidden tests stay on the server. The judge returns the first failing hidden
-  test on submit for debugging. Public bundles can be cached by the frontend or CDN.
+- Hidden tests are served from the judge VM tests endpoint (not the web UI).
+  The judge returns the first failing hidden test on submit for debugging.
+  Public bundles can be cached by the frontend or CDN.
 
 ## Public bundle export
 

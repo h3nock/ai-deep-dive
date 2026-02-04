@@ -11,7 +11,6 @@ from ai_deep_dive.config import (
     DEFAULT_WEBSITE_URL,
     get_tests_url,
     set_tests_url,
-    DEFAULT_TESTS_URL,
 )
 
 console = Console()
@@ -106,8 +105,6 @@ def set_tests_url_command(url: str) -> None:
     console.print(f"[green]✓[/green] Tests URL set to: [cyan]{url}[/cyan]")
 
 
-
-
 @config_command.command("reset-url")
 def reset_url() -> None:
     """Reset website URL to the default.
@@ -137,7 +134,6 @@ def reset_tests_url() -> None:
         del config["tests_url"]
         from ai_deep_dive.config import save_global_config
         save_global_config(config)
-        console.print(f"[green]✓[/green] Tests URL reset to default: [cyan]{DEFAULT_TESTS_URL}[/cyan]")
+        console.print(f"[green]✓[/green] Tests URL reset to: [cyan]{get_tests_url()}[/cyan]")
     else:
         console.print(f"[yellow]Already using default tests URL:[/yellow] [cyan]{get_tests_url()}[/cyan]")
-

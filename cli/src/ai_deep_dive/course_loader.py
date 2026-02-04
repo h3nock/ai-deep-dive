@@ -2,11 +2,13 @@
 
 import ast
 import json
+import sys
 import re
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
 from urllib.request import urlopen
+from urllib.error import URLError
 import yaml
 
 from ai_deep_dive.manifest import (
@@ -104,12 +106,21 @@ def _load_hidden_tests_from_web(problem_id: str, allow_network: bool = True) -> 
     return [_case_from_raw(item, hidden_override=True) for item in cases_raw]
 
 
+def _log_fetch_error(url: str, message: str) -> None:
+    print(f"[ai-deep-dive] Failed to fetch {url}: {message}", file=sys.stderr)
+
+
 def _fetch_json(url: str) -> Optional[dict]:
     try:
         with urlopen(url, timeout=10) as response:
             return json.loads(response.read().decode("utf-8"))
-    except Exception:
-        return None
+    except URLError as exc:
+        _log_fetch_error(url, str(getattr(exc, "reason", exc)))
+    except json.JSONDecodeError as exc:
+        _log_fetch_error(url, f"invalid json ({exc})")
+    except Exception as exc:
+        _log_fetch_error(url, str(exc))
+    return None
 
 
 def _cache_root() -> Path:
