@@ -413,7 +413,6 @@ export function ChallengeEditor({
       setIsSolved(isChallengeSolved(courseId, activeChallenge.id));
       setTestCases([]);
       setActiveTestCaseId("");
-      setLastSubmitPassed(null);
 
       const buildEmptyCase = () => {
         const initialInputs: Record<string, string> = {};
