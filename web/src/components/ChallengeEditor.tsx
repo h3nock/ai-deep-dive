@@ -32,6 +32,7 @@ import {
   canRunInBrowser,
   type TestConfig,
 } from "@/lib/pyodide";
+import type { RunResult, TestStatus, TestSummary } from "@/lib/test-results";
 import { bundleToTestConfig, fetchPublicBundle } from "@/lib/judge-public-tests";
 import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
 import type { JudgeJobResult } from "@/lib/judge-client";
@@ -70,21 +71,6 @@ interface TestCase {
   explanation?: string;
 }
 
-interface TestResult {
-  id: string;
-  status:
-    | "Accepted"
-    | "Wrong Answer"
-    | "Runtime Error"
-    | "Time Limit Exceeded"
-    | "Memory Limit Exceeded";
-  input?: string;
-  stdout?: string;
-  output?: string;
-  expected?: string;
-  stderr?: string;
-  hidden?: boolean;
-}
 
 export interface ChallengeEditorProps {
   courseId: string;
@@ -170,9 +156,8 @@ export function ChallengeEditor({
   // Test Case State
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [activeTestCaseId, setActiveTestCaseId] = useState<string>("");
-  const [testResults, setTestResults] = useState<TestResult[] | null>(null);
+  const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [bundleExamples, setBundleExamples] = useState<TestCase[] | null>(null);
-  const [lastSubmitPassed, setLastSubmitPassed] = useState<boolean | null>(null);
 
   const [output, setOutput] = useState<string | null>(null); // Raw console output (fallback)
   const [isVimMode, setIsVimMode] = useState(() => {
@@ -227,87 +212,60 @@ export function ChallengeEditor({
     return null;
   }, []);
   const toErrorResult = useCallback(
-    (status: TestResult["status"], message: string): TestResult[] => [
-      {
-        id: "error",
-        status,
-        input: "",
-        stdout: "",
-        output: "",
-        expected: "",
-        stderr: message,
-      },
-    ],
+    (status: TestStatus, message: string, summary?: TestSummary): RunResult => ({
+      status,
+      summary: summary ?? { total: 0, passed: 0, failed: 0 },
+      tests: [
+        {
+          id: "error",
+          status,
+          input: "",
+          stdout: "",
+          output: "",
+          expected: "",
+          stderr: message,
+        },
+      ],
+    }),
     []
   );
   const normalizeBrowserResults = useCallback(
-    (results: TestResult[] | null): { tests?: TestResult[]; systemError?: string } => {
-      if (!results || results.length === 0) {
+    (result: RunResult | null): { result?: RunResult; systemError?: string } => {
+      if (!result) {
         return { systemError: formatServerError() };
       }
-
-      if (results.length === 1 && results[0].status === "Runtime Error") {
-        const stderr = results[0].stderr || "";
-        if (stderr.includes("ExecutionLimitExceeded")) {
-          return {
-            tests: toErrorResult(
-              "Time Limit Exceeded",
-              "Time Limit Exceeded"
-            ),
-          };
-        }
-      }
-
-      return { tests: results };
+      return { result };
     },
-    [formatServerError, toErrorResult]
+    [formatServerError]
   );
   const normalizeServerResult = useCallback(
-    (result: JudgeJobResult): { tests?: TestResult[]; systemError?: string } => {
+    (result: JudgeJobResult): { result?: RunResult; systemError?: string } => {
       const rawError = result.error || result.result?.error;
       if (result.status === "error" || rawError) {
         const limit = normalizeLimitError(rawError);
         if (limit) {
-          return { tests: toErrorResult(limit.status, limit.message) };
+          const summary = result.result?.summary;
+          return { result: toErrorResult(limit.status, limit.message, summary) };
         }
         return { systemError: formatServerError(rawError) };
       }
 
-      const tests = result.result?.tests ?? [];
-      if (!tests.length) {
+      const payload = result.result;
+      if (!payload || !payload.summary) {
         return { systemError: formatServerError() };
       }
 
-      return { tests };
+      return { result: payload };
     },
     [formatServerError, normalizeLimitError, toErrorResult]
   );
   const isErrorStatus = useCallback(
-    (status: TestResult["status"]) =>
+    (status: TestStatus) =>
       status === "Runtime Error" ||
       status === "Time Limit Exceeded" ||
       status === "Memory Limit Exceeded",
     []
   );
-  const deriveVerdict = useCallback((results: TestResult[]) => {
-    const priority: TestResult["status"][] = [
-      "Time Limit Exceeded",
-      "Memory Limit Exceeded",
-      "Runtime Error",
-    ];
-    for (const status of priority) {
-      if (results.some((r) => r.status === status)) {
-        return { kind: "error" as const, label: status };
-      }
-    }
-    if (results.every((r) => r.status === "Accepted")) {
-      return { kind: "accepted" as const };
-    }
-    if (results.some((r) => r.status === "Wrong Answer")) {
-      return { kind: "wrong" as const, label: "Wrong Answer" };
-    }
-    return { kind: "failed" as const };
-  }, []);
   // We don't need to debounce test cases for sync anymore, we send them on run
 
   const monaco = useMonaco();
@@ -511,7 +469,7 @@ export function ChallengeEditor({
         setTestCases([emptyCase]);
         setActiveTestCaseId(emptyCase.id);
       }
-      setTestResults(null);
+      setRunResult(null);
       setOutput("");
       setLastRunMode(null);
 
@@ -700,9 +658,6 @@ export function ChallengeEditor({
       if (isRunningRef.current) {
         return;
       }
-      if (mode === "run") {
-        setLastSubmitPassed(null);
-      }
 
       const useBrowser = executionMode === "browser" && mode === "run";
       const useServer = executionMode === "server" || mode === "submit";
@@ -718,7 +673,7 @@ export function ChallengeEditor({
         isRunningRef.current = true;
         setIsRunning(true);
         setOutput("");
-        setTestResults(null);
+        setRunResult(null);
         setLastRunMode(mode);
         setRunMessage("Running...");
         setActiveTab("result");
@@ -803,8 +758,12 @@ export function ChallengeEditor({
             return;
           }
 
-          const finalResults = normalized.tests ?? [];
-          setTestResults(finalResults);
+          const finalResult = normalized.result ?? null;
+          if (!finalResult) {
+            setRunMessage(formatServerError());
+            return;
+          }
+          setRunResult(finalResult);
           setActiveTab("result");
           setRunMessage("");
           // Reset to initial height when expanding
@@ -814,16 +773,16 @@ export function ChallengeEditor({
           setIsBottomPanelCollapsed(false);
 
           // Auto-select appropriate test case tab
-          const allPassed = finalResults.every((r) => r.status === "Accepted");
-          if (allPassed) {
-            // Select first test case
-            setActiveTestCaseId(finalResults[0]?.id ?? "");
-          } else {
-            // Select first failed test case
-            const firstFailed = finalResults.find((r) => r.status !== "Accepted");
-            if (firstFailed) {
-              setActiveTestCaseId(firstFailed.id);
+          const tests = finalResult.tests;
+          if (tests.length > 0) {
+            if (finalResult.summary.failed === 0) {
+              setActiveTestCaseId(tests[0]?.id ?? "");
+            } else {
+              const firstFailed = tests.find((r) => r.status !== "Accepted") ?? tests[0];
+              setActiveTestCaseId(firstFailed?.id ?? "");
             }
+          } else {
+            setActiveTestCaseId("");
           }
 
         } catch (err: any) {
@@ -847,7 +806,7 @@ export function ChallengeEditor({
         isRunningRef.current = true;
         setIsRunning(true);
         setOutput("Pending...\n");
-        setTestResults(null);
+        setRunResult(null);
         setLastRunMode(mode);
         setRunMessage("Pending...");
         setActiveTab("result");
@@ -890,7 +849,6 @@ export function ChallengeEditor({
               setBottomPanelHeight(45);
               setIsBottomPanelCollapsed(false);
             }
-            setLastSubmitPassed(null);
             return;
           }
 
@@ -898,13 +856,12 @@ export function ChallengeEditor({
             return;
           }
 
-          const tests = normalized.tests ?? [];
-          setTestResults(tests);
-          const submitPassed =
-            mode === "submit" && typeof result.result?.passed === "boolean"
-              ? result.result.passed
-              : null;
-          setLastSubmitPassed(submitPassed);
+          const finalResult = normalized.result ?? null;
+          if (!finalResult) {
+            setRunMessage(formatServerError());
+            return;
+          }
+          setRunResult(finalResult);
           setActiveTab("result");
           setRunMessage("");
 
@@ -913,20 +870,19 @@ export function ChallengeEditor({
           }
           setIsBottomPanelCollapsed(false);
 
-          const allPassed =
-            tests.length > 0 &&
-            tests.every((r: TestResult) => r.status === "Accepted");
-          const overallPassed = submitPassed ?? allPassed;
-          if (allPassed) {
-            setActiveTestCaseId(tests[0]?.id ?? "");
-          } else {
-            const firstFailed = tests.find((r: TestResult) => r.status !== "Accepted");
-            if (firstFailed) {
-              setActiveTestCaseId(firstFailed.id);
+          const tests = finalResult.tests;
+          if (tests.length > 0) {
+            if (finalResult.summary.failed === 0) {
+              setActiveTestCaseId(tests[0]?.id ?? "");
+            } else {
+              const firstFailed = tests.find((r) => r.status !== "Accepted") ?? tests[0];
+              setActiveTestCaseId(firstFailed?.id ?? "");
             }
+          } else {
+            setActiveTestCaseId("");
           }
 
-          if (mode === "submit" && overallPassed && activeChallenge) {
+          if (mode === "submit" && finalResult.summary.failed === 0 && activeChallenge) {
             markChallengeSolved(courseId, activeChallenge.id);
             setIsSolved(true);
           }
@@ -975,6 +931,9 @@ export function ChallengeEditor({
       executionMode,
       isBottomPanelCollapsed,
       ensurePyodideLoaded,
+      formatServerError,
+      normalizeBrowserResults,
+      normalizeServerResult,
     ]
   );
 
@@ -1595,7 +1554,7 @@ export function ChallengeEditor({
 
                   {activeTab === "result" && (
                     <div id="result-panel" role="tabpanel" aria-label="Test results" className="flex flex-col h-full">
-                      {!testResults ? (
+                      {!runResult ? (
                         <div className="flex-1 flex items-center justify-center text-muted/60 text-sm italic">
                           {runMessage || (isRunning ? "Running..." : "Run or submit to see results...")}
                         </div>
@@ -1604,30 +1563,12 @@ export function ChallengeEditor({
                           {/* Overall Status */}
                           <div className="p-4 pb-2">
                             {(() => {
-                              const publicResults = testResults.filter(
-                                (r) => !r.hidden
-                              );
-                              const publicTotal = publicResults.length;
-                              const publicPassed = publicResults.filter(
-                                (r) => r.status === "Accepted"
-                              ).length;
-                              const hiddenFailed = testResults.some(
-                                (r) => r.hidden && r.status !== "Accepted"
-                              );
-                              const verdict = deriveVerdict(testResults);
-                              const allPublicPassed =
-                                publicTotal > 0 && publicPassed === publicTotal;
-                              const submitPassed =
-                                lastRunMode === "submit" &&
-                                lastSubmitPassed === true;
-                              const submitFailed =
-                                lastRunMode === "submit" &&
-                                lastSubmitPassed === false;
+                              const summary = runResult.summary;
+                              const allPassed = summary.failed === 0 && summary.total > 0;
+                              const statusLabel = runResult.status;
 
-                              if (submitPassed) {
-                                // All tests passed
+                              if (allPassed) {
                                 if (lastRunMode === "submit" && isSolved) {
-                                  // Submit mode success - Challenge Complete
                                   return (
                                     <div className="flex flex-col gap-3">
                                       <div className="flex items-center justify-between">
@@ -1635,75 +1576,41 @@ export function ChallengeEditor({
                                           <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
                                             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                                           </div>
-                                              <div>
+                                          <div>
                                             <h3 className="text-primary font-semibold">
                                               Challenge Complete
                                             </h3>
                                             <p className="text-sm text-muted">
-                                              {publicPassed} / {publicTotal} public tests
-                                              passed
+                                              {summary.passed} / {summary.total} tests passed
                                             </p>
                                           </div>
                                         </div>
-                                        {/* Next Challenge Link */}
-                                            {activeChallengeIndex <
-                                              challenges.length - 1 && (
-                                              <button
-                                                onClick={() =>
-                                                  setActiveChallengeIndexWithWarmup(
-                                                    activeChallengeIndex + 1
-                                                  )
-                                                }
-                                                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 text-secondary hover:text-primary rounded-md transition-colors group"
-                                              >
-                                              <span>Next Challenge</span>
-                                              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                                            </button>
-                                          )}
+                                        {activeChallengeIndex <
+                                          challenges.length - 1 && (
+                                          <button
+                                            onClick={() =>
+                                              setActiveChallengeIndexWithWarmup(
+                                                activeChallengeIndex + 1
+                                              )
+                                            }
+                                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 text-secondary hover:text-primary rounded-md transition-colors group"
+                                          >
+                                            <span>Next Challenge</span>
+                                            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                          </button>
+                                        )}
                                       </div>
                                     </div>
                                   );
-                                } else {
-                                  // Run mode success - public tests only
-                                  return (
-                                    <div className="flex items-center justify-between">
-                                      <h3 className="text-emerald-400 font-medium flex items-center gap-2">
-                                        <CheckCircle2 className="w-4 h-4" />
-                                        {publicPassed} / {publicTotal} tests passed
-                                      </h3>
-                                      {!isSolved && (
-                                        <span className="text-xs text-muted">
-                                          Submit to run all tests
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
                                 }
-                              }
 
-                              if (submitFailed && allPublicPassed && hiddenFailed) {
-                                return (
-                                  <div className="flex flex-col gap-2">
-                                    <h3 className="text-rose-400 font-medium flex items-center gap-2">
-                                      <AlertCircle className="w-4 h-4" />
-                                      Hidden tests failed
-                                    </h3>
-                                    <p className="text-sm text-muted">
-                                      {publicPassed} / {publicTotal} public tests passed
-                                    </p>
-                                  </div>
-                                );
-                              }
-
-                              if (allPublicPassed) {
-                                // Run mode success - public tests only
                                 return (
                                   <div className="flex items-center justify-between">
                                     <h3 className="text-emerald-400 font-medium flex items-center gap-2">
                                       <CheckCircle2 className="w-4 h-4" />
-                                      {publicPassed} / {publicTotal} tests passed
+                                      {summary.passed} / {summary.total} tests passed
                                     </h3>
-                                    {!isSolved && (
+                                    {lastRunMode === "run" && !isSolved && (
                                       <span className="text-xs text-muted">
                                         Submit to run all tests
                                       </span>
@@ -1712,56 +1619,49 @@ export function ChallengeEditor({
                                 );
                               }
 
-                              if (verdict.kind === "error" || verdict.kind === "wrong") {
-                                  return (
-                                    <div className="flex flex-col gap-2">
-                                      <h3 className="text-rose-400 font-medium flex items-center gap-2">
-                                        <AlertCircle className="w-4 h-4" />
-                                        {verdict.label}
-                                      </h3>
-                                      <p className="text-sm text-muted">
-                                        {publicPassed} / {publicTotal} tests passed
-                                      </p>
-                                    </div>
-                                  );
-                                }
-
-                                return (
+                              return (
+                                <div className="flex flex-col gap-2">
                                   <h3 className="text-rose-400 font-medium flex items-center gap-2">
                                     <AlertCircle className="w-4 h-4" />
-                                    {publicPassed} / {publicTotal} tests passed
+                                    {statusLabel}
                                   </h3>
-                                );
+                                  <p className="text-sm text-muted">
+                                    {summary.passed} / {summary.total} tests passed
+                                  </p>
+                                </div>
+                              );
                             })()}
                           </div>
 
                           {/* Result Tabs */}
-                          <div className="flex items-center gap-2 px-4 border-b border-border overflow-x-auto">
-                            {testResults.map((r, idx) => (
-                              <button
-                                key={r.id}
-                                onClick={() => setActiveTestCaseId(r.id)}
-                                className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 whitespace-nowrap ${
-                                  activeTestCaseId === r.id
-                                    ? "bg-surface text-primary"
-                                    : "text-muted hover:bg-surface"
-                                }`}
-                              >
-                                <span
-                                  className={`w-2 h-2 rounded-full ${
-                                    r.status === "Accepted"
-                                      ? "bg-emerald-400"
-                                      : "bg-rose-400"
+                          {runResult.tests.length > 0 && (
+                            <div className="flex items-center gap-2 px-4 border-b border-border overflow-x-auto">
+                              {runResult.tests.map((r, idx) => (
+                                <button
+                                  key={r.id}
+                                  onClick={() => setActiveTestCaseId(r.id)}
+                                  className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 whitespace-nowrap ${
+                                    activeTestCaseId === r.id
+                                      ? "bg-surface text-primary"
+                                      : "text-muted hover:bg-surface"
                                   }`}
-                                />
-                                {r.hidden ? "Hidden Test" : `Case ${idx + 1}`}
-                              </button>
-                            ))}
-                          </div>
+                                >
+                                  <span
+                                    className={`w-2 h-2 rounded-full ${
+                                      r.status === "Accepted"
+                                        ? "bg-emerald-400"
+                                        : "bg-rose-400"
+                                    }`}
+                                  />
+                                  {r.hidden ? "Hidden Test" : `Case ${idx + 1}`}
+                                </button>
+                              ))}
+                            </div>
+                          )}
 
                           {/* Result Details */}
                           <div className="flex-1 p-4 overflow-y-auto">
-                            {testResults.map((r) => {
+                            {runResult.tests.map((r) => {
                               if (r.id !== activeTestCaseId) return null;
                               return (
                                 <div key={r.id} className="flex flex-col gap-3">

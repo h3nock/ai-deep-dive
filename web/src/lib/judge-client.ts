@@ -1,3 +1,5 @@
+import type { RunResult } from "@/lib/test-results";
+
 export type JudgeSubmitRequest = {
   problemId: string;
   code: string;
@@ -18,7 +20,7 @@ export type JudgeJobResult = {
   started_at?: number;
   finished_at?: number;
   attempts?: number;
-  result?: any;
+  result?: RunResult;
   error?: string;
 };
 

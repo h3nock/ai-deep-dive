@@ -230,41 +230,58 @@ def _truncate(value: str, max_chars: int) -> str:
     return value[: max_chars - 3] + "..."
 
 
-def _sanitize_results(results: list[dict[str, Any]], max_output_chars: int) -> list[dict[str, Any]]:
-    sanitized = []
-    first_hidden_failure: dict[str, Any] | None = None
+def _sanitize_item(item: dict[str, Any], max_output_chars: int) -> dict[str, Any]:
+    return {
+        "id": item.get("id", ""),
+        "status": item.get("status", ""),
+        "hidden": bool(item.get("hidden", False)),
+        "input": item.get("input", ""),
+        "stdout": _truncate(item.get("stdout", ""), max_output_chars),
+        "output": _truncate(item.get("output", ""), max_output_chars),
+        "expected": _truncate(item.get("expected", ""), max_output_chars),
+        "stderr": _truncate(item.get("stderr", ""), max_output_chars),
+    }
+
+
+def _summarize_results(
+    results: list[dict[str, Any]],
+) -> tuple[dict[str, int], dict[str, Any] | None]:
+    total = 0
+    passed = 0
+    hidden_total = 0
+    hidden_passed = 0
+    first_failed: dict[str, Any] | None = None
+
     for item in results:
+        total += 1
+        status = item.get("status", "")
         hidden = bool(item.get("hidden", False))
+
         if hidden:
-            if item.get("status") != "Accepted" and first_hidden_failure is None:
-                first_hidden_failure = item
-            continue
-        sanitized.append(
-            {
-                "id": item.get("id", ""),
-                "status": item.get("status", ""),
-                "hidden": False,
-                "input": item.get("input", ""),
-                "stdout": _truncate(item.get("stdout", ""), max_output_chars),
-                "output": _truncate(item.get("output", ""), max_output_chars),
-                "expected": _truncate(item.get("expected", ""), max_output_chars),
-                "stderr": _truncate(item.get("stderr", ""), max_output_chars),
-            }
-        )
-    if first_hidden_failure is not None:
-        sanitized.append(
-            {
-                "id": first_hidden_failure.get("id", ""),
-                "status": first_hidden_failure.get("status", ""),
-                "hidden": True,
-                "input": first_hidden_failure.get("input", ""),
-                "stdout": _truncate(first_hidden_failure.get("stdout", ""), max_output_chars),
-                "output": _truncate(first_hidden_failure.get("output", ""), max_output_chars),
-                "expected": _truncate(first_hidden_failure.get("expected", ""), max_output_chars),
-                "stderr": _truncate(first_hidden_failure.get("stderr", ""), max_output_chars),
-            }
-        )
-    return sanitized
+            hidden_total += 1
+
+        if status == "Accepted":
+            passed += 1
+            if hidden:
+                hidden_passed += 1
+        elif first_failed is None:
+            first_failed = item
+
+    failed = total - passed
+    public_total = total - hidden_total
+    public_passed = passed - hidden_passed
+
+    summary = {
+        "total": total,
+        "passed": passed,
+        "failed": failed,
+        "public_total": public_total,
+        "public_passed": public_passed,
+        "hidden_total": hidden_total,
+        "hidden_passed": hidden_passed,
+    }
+
+    return summary, first_failed
 
 
 def _with_sandbox_cwd(sandbox_cmd: list[str], cwd: Path) -> list[str]:
@@ -279,6 +296,7 @@ def run_problem(
     user_code: str,
     max_output_chars: int,
     include_hidden: bool = True,
+    detail_mode: str = "all",
     sandbox_cmd: list[str] | None = None,
 ) -> dict[str, Any]:
     config = _build_test_config(problem, include_hidden)
@@ -304,18 +322,38 @@ def run_problem(
                 timeout=problem.time_limit_s,
             )
         except subprocess.TimeoutExpired:
+            total_cases = len(config["cases"])
+            summary = {
+                "total": total_cases,
+                "passed": 0,
+                "failed": total_cases,
+                "public_total": total_cases if not include_hidden else len(problem.public_tests),
+                "public_passed": 0,
+                "hidden_total": 0 if not include_hidden else len(problem.hidden_tests),
+                "hidden_passed": 0,
+            }
             return {
-                "passed": False,
-                "summary": {"total": len(config["cases"]), "passed": 0},
+                "status": "Time Limit Exceeded",
+                "summary": summary,
                 "tests": [],
                 "error": f"Time Limit Exceeded ({problem.time_limit_s}s)",
                 "error_kind": "user",
             }
 
     if result.returncode != 0:
+        total_cases = len(config["cases"])
+        summary = {
+            "total": total_cases,
+            "passed": 0,
+            "failed": total_cases,
+            "public_total": total_cases if not include_hidden else len(problem.public_tests),
+            "public_passed": 0,
+            "hidden_total": 0 if not include_hidden else len(problem.hidden_tests),
+            "hidden_passed": 0,
+        }
         return {
-            "passed": False,
-            "summary": {"total": len(config["cases"]), "passed": 0},
+            "status": "Runtime Error",
+            "summary": summary,
             "tests": [],
             "error": result.stderr.strip() or "Runner failed",
             "error_kind": "internal",
@@ -324,21 +362,41 @@ def run_problem(
     try:
         tests_raw = json.loads(result.stdout)
     except json.JSONDecodeError:
+        total_cases = len(config["cases"])
+        summary = {
+            "total": total_cases,
+            "passed": 0,
+            "failed": total_cases,
+            "public_total": total_cases if not include_hidden else len(problem.public_tests),
+            "public_passed": 0,
+            "hidden_total": 0 if not include_hidden else len(problem.hidden_tests),
+            "hidden_passed": 0,
+        }
         return {
-            "passed": False,
-            "summary": {"total": len(config["cases"]), "passed": 0},
+            "status": "Runtime Error",
+            "summary": summary,
             "tests": [],
             "error": f"Invalid runner output. Stdout: {result.stdout}\nStderr: {result.stderr}",
             "error_kind": "internal",
         }
 
-    total_count = len(tests_raw)
-    passed_count = sum(1 for t in tests_raw if t.get("status") == "Accepted")
-    tests = _sanitize_results(tests_raw, max_output_chars)
+    summary, first_failed = _summarize_results(tests_raw)
+    status = "Accepted"
+    if summary["failed"] > 0 and first_failed is not None:
+        status = first_failed.get("status", "Wrong Answer")
+
+    if detail_mode == "first_failure":
+        tests = (
+            [_sanitize_item(first_failed, max_output_chars)]
+            if first_failed is not None
+            else []
+        )
+    else:
+        tests = [_sanitize_item(item, max_output_chars) for item in tests_raw]
 
     return {
-        "passed": passed_count == total_count,
-        "summary": {"total": total_count, "passed": passed_count},
+        "status": status,
+        "summary": summary,
         "tests": tests,
         "error": None,
     }

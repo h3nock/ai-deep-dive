@@ -89,10 +89,6 @@ def submit_command(challenge_id: str, verbose: bool) -> None:
         ))
         raise SystemExit(1)
 
-    display_results(console, result.results, verbose)
-
-    console.print()
-
     if result.passed:
         console.print(Panel(
             f"[green bold]✓ All tests passed![/green bold]\n\n"
@@ -106,6 +102,16 @@ def submit_command(challenge_id: str, verbose: bool) -> None:
         console.print()
         console.print("[dim]Tip: Run 'ai-deep-dive sync' to update your web profile[/dim]")
         raise SystemExit(0)
+
+    display_results(
+        console,
+        result.results,
+        verbose,
+        first_failure_only=True,
+        show_hidden_summary=False,
+    )
+
+    console.print()
 
     failed_count = result.total - result.passed_count
     console.print(Panel(
