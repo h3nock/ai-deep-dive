@@ -310,21 +310,6 @@ export const getPostBySlug = cache(
             const { data: challengeData, content: challengeBody } =
               matter(descriptionContent);
 
-            let defaultTestCases = [];
-            const testsPath = path.join(bundlePath, "tests.json");
-            if (fs.existsSync(testsPath)) {
-              try {
-                defaultTestCases = JSON.parse(
-                  fs.readFileSync(testsPath, "utf8")
-                );
-              } catch (e) {
-                console.error(
-                  `Failed to load tests for bundle ${bundleName}:`,
-                  e
-                );
-              }
-            }
-
             if (!challengeData.problemId) {
               throw new Error(
                 `Missing problemId in ${path.relative(contentDirectory, descriptionPath)}`
@@ -335,7 +320,6 @@ export const getPostBySlug = cache(
               ...challengeData,
               id: autoId,
               description: challengeBody,
-              defaultTestCases,
               chapterNumber,
               problemNumber,
             } as Challenge;

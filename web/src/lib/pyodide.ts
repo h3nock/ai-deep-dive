@@ -84,14 +84,12 @@ export interface TestResult {
   output: string;
   expected: string;
   stderr?: string;
-  hidden?: boolean;
 }
 
 export interface TestCase {
   id: string;
   input: string; // Python code to set up input variables
   expected: string;
-  hidden?: boolean;
 }
 
 export interface TestConfig {
@@ -367,7 +365,6 @@ except Exception:
       output,
       expected: testCase.expected,
       stderr: stderr || currentStderr,
-      hidden: testCase.hidden,
     });
   }
 

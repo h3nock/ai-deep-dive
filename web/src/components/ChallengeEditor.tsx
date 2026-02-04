@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Play,
@@ -67,7 +67,6 @@ interface TestCase {
   id: string;
   inputs: Record<string, string>;
   expected: string;
-  hidden?: boolean;
   explanation?: string;
 }
 
@@ -169,17 +168,11 @@ export function ChallengeEditor({
   const [activePane, setActivePane] = useState<"prose" | "editor">("editor");
 
   // Test Case State
-  const [testCases, setTestCases] = useState<TestCase[]>([
-    {
-      id: "1",
-      inputs: { numRows: "5" },
-      expected: "[[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1]]",
-    },
-    { id: "2", inputs: { numRows: "1" }, expected: "[[1]]" },
-  ]);
-  const [activeTestCaseId, setActiveTestCaseId] = useState<string>("1");
+  const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [activeTestCaseId, setActiveTestCaseId] = useState<string>("");
   const [testResults, setTestResults] = useState<TestResult[] | null>(null);
   const [bundleExamples, setBundleExamples] = useState<TestCase[] | null>(null);
+  const [lastSubmitPassed, setLastSubmitPassed] = useState<boolean | null>(null);
 
   const [output, setOutput] = useState<string | null>(null); // Raw console output (fallback)
   const [isVimMode, setIsVimMode] = useState(() => {
@@ -243,7 +236,6 @@ export function ChallengeEditor({
         output: "",
         expected: "",
         stderr: message,
-        hidden: false,
       },
     ],
     []
@@ -461,43 +453,21 @@ export function ChallengeEditor({
 
       // Load solved status
       setIsSolved(isChallengeSolved(courseId, activeChallenge.id));
-      if (
-        activeChallenge.defaultTestCases &&
-        activeChallenge.defaultTestCases.length > 0
-      ) {
-        // Filter visible cases based on configuration
-        // If visibleTestCases is set, take first N non-hidden cases.
-        // Otherwise take all non-hidden cases.
-        // Hidden cases are always excluded from the editor tabs initially.
-        const nonHidden = activeChallenge.defaultTestCases.filter(
-          (tc) => !tc.hidden
-        );
-        const visibleCount =
-          activeChallenge.visibleTestCases !== undefined
-            ? activeChallenge.visibleTestCases
-            : nonHidden.length;
-        const visibleCases = nonHidden.slice(0, visibleCount);
+      setTestCases([]);
+      setActiveTestCaseId("");
+      setLastSubmitPassed(null);
 
-        // We also want to keep the hidden cases in the state so they run, but they are filtered out in the UI
-        // Actually, if we want to "hide" the extra ones, we should mark them as hidden in the state?
-        // But defaultTestCases already has hidden flags.
-        // If visibleTestCases < nonHidden.length, we treat the excess as hidden.
+      const buildEmptyCase = () => {
+        const initialInputs: Record<string, string> = {};
+        if (activeChallenge.arguments) {
+          activeChallenge.arguments.forEach((arg) => {
+            initialInputs[arg.name] = "";
+          });
+        }
+        return { id: "case1", inputs: initialInputs, expected: "" } as TestCase;
+      };
 
-        const processedCases = activeChallenge.defaultTestCases.map(
-          (tc, index) => {
-            // Check if this case is one of the "visible" ones
-            const isVisible = visibleCases.some((vc) => vc.id === tc.id);
-            if (isVisible) return tc;
-            return { ...tc, hidden: true };
-          }
-        );
-
-        setTestCases(processedCases);
-        const firstVisible = processedCases.find((tc) => !tc.hidden);
-        setActiveTestCaseId(
-          firstVisible ? firstVisible.id : processedCases[0].id
-        );
-      } else if (activeChallenge.problemId) {
+      if (activeChallenge.problemId) {
         hasAsync = true;
         (async () => {
           try {
@@ -514,7 +484,6 @@ export function ChallengeEditor({
                 id: tc.id,
                 inputs: tc.inputs || {},
                 expected,
-                hidden: tc.hidden,
               } as TestCase;
             });
 
@@ -522,24 +491,25 @@ export function ChallengeEditor({
             setBundleExamples(cases);
             if (cases.length > 0) {
               setTestCases(cases);
-              const firstVisible = cases.find((tc) => !tc.hidden) || cases[0];
-              setActiveTestCaseId(firstVisible.id);
+              setActiveTestCaseId(cases[0].id);
+            } else {
+              const emptyCase = buildEmptyCase();
+              setTestCases([emptyCase]);
+              setActiveTestCaseId(emptyCase.id);
             }
           } catch (err) {
             console.warn("Failed to load public bundle", err);
+            if (cancelled) return;
+            const emptyCase = buildEmptyCase();
+            setTestCases([emptyCase]);
+            setActiveTestCaseId(emptyCase.id);
           }
         })();
       } else {
-        // Default empty case if none provided or defaultTestCases is empty
-        const initialInputs: Record<string, string> = {};
-        if (activeChallenge.arguments) {
-          activeChallenge.arguments.forEach((arg) => {
-            initialInputs[arg.name] = "";
-          });
-        }
-        const newId = "case1";
-        setTestCases([{ id: newId, inputs: initialInputs, expected: "" }]);
-        setActiveTestCaseId(newId);
+        // Default empty case if no public bundle exists for this challenge
+        const emptyCase = buildEmptyCase();
+        setTestCases([emptyCase]);
+        setActiveTestCaseId(emptyCase.id);
       }
       setTestResults(null);
       setOutput("");
@@ -730,13 +700,15 @@ export function ChallengeEditor({
       if (isRunningRef.current) {
         return;
       }
+      if (mode === "run") {
+        setLastSubmitPassed(null);
+      }
 
       const useBrowser = executionMode === "browser" && mode === "run";
       const useServer = executionMode === "server" || mode === "submit";
 
       // Filter test cases based on mode
-      const casesToRun =
-        mode === "run" ? testCases.filter((tc) => !tc.hidden) : testCases; // Submit runs ALL test cases including hidden
+      const casesToRun = testCases;
 
       // Track which challenge we're running for race condition detection
       const runChallengeId = activeChallenge?.id;
@@ -775,7 +747,6 @@ export function ChallengeEditor({
                 id: tc.id,
                 input: inputCode,
                 expected: tc.expected,
-                hidden: tc.hidden,
               };
             });
 
@@ -846,7 +817,7 @@ export function ChallengeEditor({
           const allPassed = finalResults.every((r) => r.status === "Accepted");
           if (allPassed) {
             // Select first test case
-            setActiveTestCaseId(finalResults[0]?.id || "1");
+            setActiveTestCaseId(finalResults[0]?.id ?? "");
           } else {
             // Select first failed test case
             const firstFailed = finalResults.find((r) => r.status !== "Accepted");
@@ -919,6 +890,7 @@ export function ChallengeEditor({
               setBottomPanelHeight(45);
               setIsBottomPanelCollapsed(false);
             }
+            setLastSubmitPassed(null);
             return;
           }
 
@@ -928,6 +900,11 @@ export function ChallengeEditor({
 
           const tests = normalized.tests ?? [];
           setTestResults(tests);
+          const submitPassed =
+            mode === "submit" && typeof result.result?.passed === "boolean"
+              ? result.result.passed
+              : null;
+          setLastSubmitPassed(submitPassed);
           setActiveTab("result");
           setRunMessage("");
 
@@ -939,8 +916,9 @@ export function ChallengeEditor({
           const allPassed =
             tests.length > 0 &&
             tests.every((r: TestResult) => r.status === "Accepted");
+          const overallPassed = submitPassed ?? allPassed;
           if (allPassed) {
-            setActiveTestCaseId(tests[0]?.id || "1");
+            setActiveTestCaseId(tests[0]?.id ?? "");
           } else {
             const firstFailed = tests.find((r: TestResult) => r.status !== "Accepted");
             if (firstFailed) {
@@ -948,7 +926,7 @@ export function ChallengeEditor({
             }
           }
 
-          if (mode === "submit" && allPassed && activeChallenge) {
+          if (mode === "submit" && overallPassed && activeChallenge) {
             markChallengeSolved(courseId, activeChallenge.id);
             setIsSolved(true);
           }
@@ -1088,11 +1066,7 @@ export function ChallengeEditor({
   const runShortcut = isMac ? "Cmd + ," : "Ctrl + ,";
   const submitShortcut = isMac ? "Cmd + Enter" : "Ctrl + Enter";
 
-  // Memoize visible test cases for performance
-  const visibleTestCases = useMemo(
-    () => testCases.filter((tc) => !tc.hidden),
-    [testCases]
-  );
+  const visibleTestCases = testCases;
 
   // Dragging state for premium feel
   const isDragging = isDraggingLeft || isDraggingBottom;
@@ -1169,12 +1143,8 @@ export function ChallengeEditor({
 
             {/* Automated Example Test Cases */}
             {(() => {
-              const exampleCases =
-                activeChallenge.defaultTestCases &&
-                activeChallenge.defaultTestCases.length > 0
-                  ? activeChallenge.defaultTestCases
-                  : bundleExamples || [];
-              if (exampleCases.filter((tc) => !tc.hidden).length === 0) {
+              const exampleCases = bundleExamples || [];
+              if (exampleCases.length === 0) {
                 return null;
               }
               return (
@@ -1183,16 +1153,9 @@ export function ChallengeEditor({
                     Examples
                   </div>
                   <div className="flex flex-col gap-3">
-                    {(() => {
-                      const nonHidden = exampleCases.filter((tc) => !tc.hidden);
-                      const visibleCount =
-                        activeChallenge.visibleTestCases !== undefined
-                          ? activeChallenge.visibleTestCases
-                          : nonHidden.length;
-                      return nonHidden
-                        .slice(0, visibleCount)
-                        .map((tc) => <ExampleCard key={tc.id} testCase={tc} />);
-                    })()}
+                    {exampleCases.map((tc) => (
+                      <ExampleCard key={tc.id} testCase={tc} />
+                    ))}
                   </div>
                 </div>
               );
@@ -1272,12 +1235,12 @@ export function ChallengeEditor({
 
                 <div className="w-px h-4 bg-border" aria-hidden="true" />
 
-                {/* Run Code Button (visible tests only) */}
+                {/* Run Code Button (public tests only) */}
                 <button
                   onClick={() => handleRun("run")}
                   disabled={isRunning}
-                  title={`Run visible tests (${runShortcut})`}
-                  aria-label={`Run visible tests, keyboard shortcut ${runShortcut}`}
+                  title={`Run public tests (${runShortcut})`}
+                  aria-label={`Run public tests, keyboard shortcut ${runShortcut}`}
                   className="flex items-center gap-2 px-4 py-1.5 hover:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-secondary hover:text-primary text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning && lastRunMode === "run" ? (
@@ -1290,12 +1253,12 @@ export function ChallengeEditor({
 
                 <div className="w-px h-4 bg-border" aria-hidden="true" />
 
-                {/* Submit Button (all tests including hidden) */}
+                {/* Submit Button (all tests on the server) */}
                 <button
                   onClick={() => handleRun("submit")}
                   disabled={isRunning}
                   title={`Submit and run all tests (${submitShortcut})`}
-                  aria-label={`Submit and run all tests including hidden tests, keyboard shortcut ${submitShortcut}`}
+                  aria-label={`Submit and run all tests, keyboard shortcut ${submitShortcut}`}
                   className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/15 disabled:bg-transparent disabled:text-muted disabled:cursor-not-allowed text-emerald-400 text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning && lastRunMode === "submit" ? (
@@ -1572,8 +1535,7 @@ export function ChallengeEditor({
                       {/* Case Editors */}
                       <div className="flex-1 flex flex-col gap-6 p-4 overflow-y-auto">
                         {testCases.map((tc) => {
-                          if (tc.id !== activeTestCaseId || tc.hidden)
-                            return null;
+                          if (tc.id !== activeTestCaseId) return null;
                           return (
                             <div key={tc.id} className="flex flex-col gap-6">
                               {activeChallenge?.arguments?.map((arg) => (
@@ -1642,14 +1604,27 @@ export function ChallengeEditor({
                           {/* Overall Status */}
                           <div className="p-4 pb-2">
                             {(() => {
-                              const totalTests = testResults.length;
-                              const passedTests = testResults.filter(
+                              const publicResults = testResults.filter(
+                                (r) => !r.hidden
+                              );
+                              const publicTotal = publicResults.length;
+                              const publicPassed = publicResults.filter(
                                 (r) => r.status === "Accepted"
                               ).length;
+                              const hiddenFailed = testResults.some(
+                                (r) => r.hidden && r.status !== "Accepted"
+                              );
                               const verdict = deriveVerdict(testResults);
-                              const allPassed = verdict.kind === "accepted";
+                              const allPublicPassed =
+                                publicTotal > 0 && publicPassed === publicTotal;
+                              const submitPassed =
+                                lastRunMode === "submit" &&
+                                lastSubmitPassed === true;
+                              const submitFailed =
+                                lastRunMode === "submit" &&
+                                lastSubmitPassed === false;
 
-                              if (allPassed) {
+                              if (submitPassed) {
                                 // All tests passed
                                 if (lastRunMode === "submit" && isSolved) {
                                   // Submit mode success - Challenge Complete
@@ -1660,12 +1635,12 @@ export function ChallengeEditor({
                                           <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
                                             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                                           </div>
-                                          <div>
+                                              <div>
                                             <h3 className="text-primary font-semibold">
                                               Challenge Complete
                                             </h3>
                                             <p className="text-sm text-muted">
-                                              {passedTests} / {totalTests} tests
+                                              {publicPassed} / {publicTotal} public tests
                                               passed
                                             </p>
                                           </div>
@@ -1689,12 +1664,12 @@ export function ChallengeEditor({
                                     </div>
                                   );
                                 } else {
-                                  // Run mode success - visible tests only
+                                  // Run mode success - public tests only
                                   return (
                                     <div className="flex items-center justify-between">
                                       <h3 className="text-emerald-400 font-medium flex items-center gap-2">
                                         <CheckCircle2 className="w-4 h-4" />
-                                        {passedTests} / {totalTests} tests passed
+                                        {publicPassed} / {publicTotal} tests passed
                                       </h3>
                                       {!isSolved && (
                                         <span className="text-xs text-muted">
@@ -1704,8 +1679,40 @@ export function ChallengeEditor({
                                     </div>
                                   );
                                 }
-                              } else {
-                                if (verdict.kind === "error" || verdict.kind === "wrong") {
+                              }
+
+                              if (submitFailed && allPublicPassed && hiddenFailed) {
+                                return (
+                                  <div className="flex flex-col gap-2">
+                                    <h3 className="text-rose-400 font-medium flex items-center gap-2">
+                                      <AlertCircle className="w-4 h-4" />
+                                      Hidden tests failed
+                                    </h3>
+                                    <p className="text-sm text-muted">
+                                      {publicPassed} / {publicTotal} public tests passed
+                                    </p>
+                                  </div>
+                                );
+                              }
+
+                              if (allPublicPassed) {
+                                // Run mode success - public tests only
+                                return (
+                                  <div className="flex items-center justify-between">
+                                    <h3 className="text-emerald-400 font-medium flex items-center gap-2">
+                                      <CheckCircle2 className="w-4 h-4" />
+                                      {publicPassed} / {publicTotal} tests passed
+                                    </h3>
+                                    {!isSolved && (
+                                      <span className="text-xs text-muted">
+                                        Submit to run all tests
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              }
+
+                              if (verdict.kind === "error" || verdict.kind === "wrong") {
                                   return (
                                     <div className="flex flex-col gap-2">
                                       <h3 className="text-rose-400 font-medium flex items-center gap-2">
@@ -1713,7 +1720,7 @@ export function ChallengeEditor({
                                         {verdict.label}
                                       </h3>
                                       <p className="text-sm text-muted">
-                                        {passedTests} / {totalTests} tests passed
+                                        {publicPassed} / {publicTotal} tests passed
                                       </p>
                                     </div>
                                   );
@@ -1722,65 +1729,34 @@ export function ChallengeEditor({
                                 return (
                                   <h3 className="text-rose-400 font-medium flex items-center gap-2">
                                     <AlertCircle className="w-4 h-4" />
-                                    {passedTests} / {totalTests} tests passed
+                                    {publicPassed} / {publicTotal} tests passed
                                   </h3>
                                 );
-                              }
                             })()}
                           </div>
 
                           {/* Result Tabs */}
                           <div className="flex items-center gap-2 px-4 border-b border-border overflow-x-auto">
-                            {(() => {
-                              // Determine which test results to show as tabs
-                              const visibleResults = testResults.filter(
-                                (r) => !r.hidden
-                              );
-                              const hiddenResults = testResults.filter(
-                                (r) => r.hidden
-                              );
-                              const allVisiblePassed = visibleResults.every(
-                                (r) => r.status === "Accepted"
-                              );
-                              const firstFailedHidden = hiddenResults.find(
-                                (r) => r.status !== "Accepted"
-                              );
-
-                              // Build the list of results to display
-                              let resultsToShow: typeof testResults = [];
-
-                              if (lastRunMode === "submit") {
-                                // Submit mode: show visible tests + first failed hidden (if all visible passed)
-                                resultsToShow = [...visibleResults];
-                                if (allVisiblePassed && firstFailedHidden) {
-                                  resultsToShow.push(firstFailedHidden);
-                                }
-                              } else {
-                                // Run mode: only visible tests were run
-                                resultsToShow = visibleResults;
-                              }
-
-                              return resultsToShow.map((r, idx) => (
-                                <button
-                                  key={r.id}
-                                  onClick={() => setActiveTestCaseId(r.id)}
-                                  className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 whitespace-nowrap ${
-                                    activeTestCaseId === r.id
-                                      ? "bg-surface text-primary"
-                                      : "text-muted hover:bg-surface"
+                            {testResults.map((r, idx) => (
+                              <button
+                                key={r.id}
+                                onClick={() => setActiveTestCaseId(r.id)}
+                                className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 whitespace-nowrap ${
+                                  activeTestCaseId === r.id
+                                    ? "bg-surface text-primary"
+                                    : "text-muted hover:bg-surface"
+                                }`}
+                              >
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    r.status === "Accepted"
+                                      ? "bg-emerald-400"
+                                      : "bg-rose-400"
                                   }`}
-                                >
-                                  <span
-                                    className={`w-2 h-2 rounded-full ${
-                                      r.status === "Accepted"
-                                        ? "bg-emerald-400"
-                                        : "bg-rose-400"
-                                    }`}
-                                  />
-                                  {r.hidden ? "Hidden Test" : `Case ${idx + 1}`}
-                                </button>
-                              ));
-                            })()}
+                                />
+                                {r.hidden ? "Hidden Test" : `Case ${idx + 1}`}
+                              </button>
+                            ))}
                           </div>
 
                           {/* Result Details */}
@@ -1789,12 +1765,6 @@ export function ChallengeEditor({
                               if (r.id !== activeTestCaseId) return null;
                               return (
                                 <div key={r.id} className="flex flex-col gap-3">
-                                  {r.hidden ? (
-                                    <div className="p-3 bg-surface rounded-lg text-secondary text-[13px] font-mono">
-                                      Hidden test details are not available.
-                                    </div>
-                                  ) : (
-                                    <>
                                   {isErrorStatus(r.status) && r.stderr && (
                                     <div className="p-3 bg-rose-500/5 border border-rose-500/20 rounded-lg text-rose-300 text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
                                       {r.stderr}
@@ -1846,8 +1816,6 @@ export function ChallengeEditor({
                                           </div>
                                         </div>
                                       </div>
-                                    </>
-                                  )}
                                     </>
                                   )}
                                 </div>
