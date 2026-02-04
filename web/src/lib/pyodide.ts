@@ -1,5 +1,6 @@
 // Pyodide browser-based Python execution
 // Used for simple challenges (chapters 1-3) that don't require external dependencies
+import type { RunResult, TestResult, TestStatus } from "@/lib/test-results";
 
 type PyodideInterface = {
   runPython: (code: string) => any;
@@ -75,16 +76,6 @@ export function preloadPyodide(): void {
   });
 }
 
-// Test result interface matching the existing test harness
-export interface TestResult {
-  id: string;
-  status: "Accepted" | "Wrong Answer" | "Runtime Error";
-  input: string;
-  stdout: string;
-  output: string;
-  expected: string;
-  stderr?: string;
-}
 
 export interface TestCase {
   id: string;
@@ -108,7 +99,7 @@ export async function runTestsWithPyodide(
   config: TestConfig,
   onStdout?: (text: string) => void,
   onStderr?: (text: string) => void
-): Promise<TestResult[]> {
+): Promise<RunResult> {
   const pyodide = await loadPyodide();
 
   const results: TestResult[] = [];
@@ -213,17 +204,24 @@ except Exception:
   // Check if user code had an error
   const userError = await pyodide.runPythonAsync("__user_error__");
   if (userError) {
-    return [
-      {
-        id: "error",
-        status: "Runtime Error",
-        input: "",
-        stdout: currentStdout,
-        output: "",
-        expected: "",
-        stderr: userError,
-      },
-    ];
+    const isLimit = String(userError).includes("ExecutionLimitExceeded");
+    const status: TestStatus = isLimit ? "Time Limit Exceeded" : "Runtime Error";
+    const message = isLimit ? "Time Limit Exceeded" : userError;
+    return {
+      status,
+      summary: { total: 1, passed: 0, failed: 1 },
+      tests: [
+        {
+          id: "error",
+          status,
+          input: "",
+          stdout: currentStdout,
+          output: "",
+          expected: "",
+          stderr: message,
+        },
+      ],
+    };
   }
 
   const comparisonType = config.comparison?.type ?? "approx";
@@ -235,7 +233,7 @@ except Exception:
     currentStdout = "";
     currentStderr = "";
 
-    let status: TestResult["status"] = "Accepted";
+    let status: TestStatus = "Accepted";
     let output = "";
     let stderr = "";
 
@@ -368,7 +366,17 @@ except Exception:
     });
   }
 
-  return results;
+  const total = results.length;
+  const passed = results.filter((r) => r.status === "Accepted").length;
+  const failed = total - passed;
+  const firstFailed = results.find((r) => r.status !== "Accepted");
+  const status: TestStatus = failed === 0 ? "Accepted" : (firstFailed?.status ?? "Wrong Answer");
+
+  return {
+    status,
+    summary: { total, passed, failed },
+    tests: results,
+  };
 }
 
 // List of packages available in Pyodide that we support

@@ -56,11 +56,13 @@ def main() -> None:
             results.mark_running(job_id)
             problem = load_problem(problem_id, settings.problems_root)
             include_hidden = kind != "run"
+            detail_mode = "all" if kind == "run" else "first_failure"
             result = run_problem(
                 problem,
                 code,
                 settings.max_output_chars,
                 include_hidden=include_hidden,
+                detail_mode=detail_mode,
                 sandbox_cmd=settings.sandbox_cmd or None,
             )
             if result.get("error"):
