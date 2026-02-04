@@ -232,9 +232,12 @@ def _truncate(value: str, max_chars: int) -> str:
 
 def _sanitize_results(results: list[dict[str, Any]], max_output_chars: int) -> list[dict[str, Any]]:
     sanitized = []
+    first_hidden_failure: dict[str, Any] | None = None
     for item in results:
         hidden = bool(item.get("hidden", False))
         if hidden:
+            if item.get("status") != "Accepted" and first_hidden_failure is None:
+                first_hidden_failure = item
             continue
         sanitized.append(
             {
@@ -246,6 +249,19 @@ def _sanitize_results(results: list[dict[str, Any]], max_output_chars: int) -> l
                 "output": _truncate(item.get("output", ""), max_output_chars),
                 "expected": _truncate(item.get("expected", ""), max_output_chars),
                 "stderr": _truncate(item.get("stderr", ""), max_output_chars),
+            }
+        )
+    if first_hidden_failure is not None:
+        sanitized.append(
+            {
+                "id": first_hidden_failure.get("id", ""),
+                "status": first_hidden_failure.get("status", ""),
+                "hidden": True,
+                "input": first_hidden_failure.get("input", ""),
+                "stdout": _truncate(first_hidden_failure.get("stdout", ""), max_output_chars),
+                "output": _truncate(first_hidden_failure.get("output", ""), max_output_chars),
+                "expected": _truncate(first_hidden_failure.get("expected", ""), max_output_chars),
+                "stderr": _truncate(first_hidden_failure.get("stderr", ""), max_output_chars),
             }
         )
     return sanitized

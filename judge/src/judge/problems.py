@@ -51,7 +51,7 @@ def _parse_expected(value: Any) -> Any:
     return value
 
 
-def _case_from_raw(raw: dict[str, Any]) -> TestCase:
+def _case_from_raw(raw: dict[str, Any], hidden_override: bool | None = None) -> TestCase:
     input_code = raw.get("input_code")
     if input_code is None and "inputs" in raw:
         input_code = ""
@@ -79,32 +79,27 @@ def _case_from_raw(raw: dict[str, Any]) -> TestCase:
     else:
         expected_value = _parse_expected(expected_raw)
 
+    hidden = bool(raw.get("hidden", False))
+    if hidden_override is not None:
+        hidden = hidden_override
+
     return TestCase(
         id=str(raw.get("id", "")),
         input_code=input_code,
         expected=expected_value,
-        hidden=bool(raw.get("hidden", False)),
+        hidden=hidden,
         comparison=comparison,
     )
 
 
-def _load_tests(path: Path, hidden_default: bool) -> list[TestCase]:
+def _load_tests(path: Path, is_hidden_tests: bool) -> list[TestCase]:
     if not path.exists():
         return []
     raw = json.loads(path.read_text())
     cases = raw.get("cases", raw) if isinstance(raw, dict) else raw
     parsed: list[TestCase] = []
     for item in cases:
-        case = _case_from_raw(item)
-        if hidden_default and not case.hidden:
-            case = TestCase(
-                id=case.id,
-                input_code=case.input_code,
-                expected=case.expected,
-                hidden=True,
-                comparison=case.comparison,
-            )
-        parsed.append(case)
+        parsed.append(_case_from_raw(item, hidden_override=is_hidden_tests))
     return parsed
 
 
@@ -122,8 +117,8 @@ def load_problem(problem_id: str, root: Path) -> Problem:
         atol=float(comparison_raw.get("atol", 1e-8)),
     )
 
-    public_tests = _load_tests(problem_dir / "public_tests.json", hidden_default=False)
-    hidden_tests = _load_tests(problem_dir / "hidden_tests.json", hidden_default=True)
+    public_tests = _load_tests(problem_dir / "public_tests.json", is_hidden_tests=False)
+    hidden_tests = _load_tests(problem_dir / "hidden_tests.json", is_hidden_tests=True)
 
     return Problem(
         id=manifest.get("id", problem_id),
