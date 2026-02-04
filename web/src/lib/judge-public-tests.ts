@@ -12,7 +12,6 @@ type PublicTestCase = {
   inputs?: Record<string, string>;
   expected: unknown;
   expected_is_code?: boolean;
-  hidden?: boolean;
   comparison?: Comparison;
 };
 
@@ -114,7 +113,6 @@ export function bundleToTestConfig(bundle: PublicBundle): TestConfig {
       id: tc.id,
       input,
       expected,
-      hidden: tc.hidden,
     };
   });
 

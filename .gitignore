@@ -58,6 +58,7 @@ Thumbs.db
 
 # Judge data
 judge/data/
+judge/tests/
 
 # Generated public test bundles
 web/public/judge-tests/

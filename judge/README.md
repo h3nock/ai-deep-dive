@@ -72,6 +72,12 @@ python judge/scripts/export_public_tests.py
 Bundles are written to `web/public/judge-tests/` and treated as build artifacts.
 `web/scripts/export-judge-tests.mjs` runs automatically on `npm run build`.
 
+To publish tests for the CLI from the judge VM:
+
+```bash
+python judge/scripts/export_tests_endpoint.py --out-root /opt/ai-deep-dive/judge/tests
+```
+
 ## Submit a sample job
 
 ```bash
@@ -111,7 +117,8 @@ JUDGE_SANDBOX_CMD_JSON='["nsjail","--config","/etc/judge/nsjail.cfg","--"]'
 ## Notes
 
 - OS-level sandboxing is optional. Enable it on the VM with `JUDGE_SANDBOX_CMD_JSON`.
-- Hidden tests never reach the browser. Only public bundles are exported.
+- Hidden tests are not bundled for the browser. On submit, the first failing
+  hidden test is returned for debugging.
 - Production setup lives in `judge/deploy/`. See the deploy README for steps.
 - Daily timers run on the VM to prune old jobs and save database backups.
 

@@ -6,6 +6,12 @@ server {
     limit_req_status 429;
     limit_conn conn 20;
 
+    location /judge-tests/ {
+        limit_except GET OPTIONS { deny all; }
+        alias ${JUDGE_TESTS_ROOT}/;
+        try_files $uri =404;
+    }
+
     location /submit {
         limit_req zone=submit burst=5 nodelay;
         limit_except POST OPTIONS { deny all; }

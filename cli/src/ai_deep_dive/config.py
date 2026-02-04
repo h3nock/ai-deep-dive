@@ -7,6 +7,8 @@ from typing import Optional
 
 # Default Website URL (can be overridden in global config)
 DEFAULT_WEBSITE_URL = "https://learning.h3nok.dev"
+# Default tests endpoint (judge VM)
+DEFAULT_TESTS_URL = "https://judge.h3nok.dev"
 
 # Directory names
 CONFIG_DIR_NAME = ".ai-deep-dive"
@@ -47,10 +49,25 @@ def get_website_url() -> str:
     return config.get("website_url", DEFAULT_WEBSITE_URL)
 
 
+def get_tests_url() -> str:
+    """Get the tests URL from global config, or use website URL."""
+    config = get_global_config()
+    if "tests_url" in config:
+        return config["tests_url"]
+    return config.get("website_url", DEFAULT_TESTS_URL)
+
+
 def set_website_url(url: str) -> None:
     """Set a custom website URL in global config."""
     config = get_global_config()
     config["website_url"] = url.rstrip("/")  # Remove trailing slash
+    save_global_config(config)
+
+
+def set_tests_url(url: str) -> None:
+    """Set a custom tests URL in global config."""
+    config = get_global_config()
+    config["tests_url"] = url.rstrip("/")  # Remove trailing slash
     save_global_config(config)
 
 

@@ -42,7 +42,7 @@ build-chatgpt/
 
 Open the folder in VS Code (or any editor). Edit the challenge files to implement your solutions.
 
-### 3. Test Your Solution
+### 3. Test Your Solution (Public Tests)
 
 ```bash
 ai-deep-dive test 02-01
@@ -53,7 +53,13 @@ The test command will:
 - Find your solution file (even if you reorganized the folder)
 - Run the test suite
 - Show detailed results
-- Update your local progress
+- Validate against public tests only
+
+To run public + hidden tests and record completion:
+
+```bash
+ai-deep-dive submit 02-01
+```
 
 ## Commands
 
@@ -61,6 +67,7 @@ The test command will:
 | ---------------------------- | ---------------------------------------- |
 | `ai-deep-dive init <course>` | Initialize a new course workspace        |
 | `ai-deep-dive test <id>`     | Run tests for a specific challenge       |
+| `ai-deep-dive submit <id>`   | Run public + hidden tests                |
 | `ai-deep-dive status`        | Show your progress in the current course |
 | `ai-deep-dive list`          | List available courses                   |
 
@@ -79,7 +86,19 @@ You can reorganize your files however you like within the workspace. The CLI wil
 
 ### Progress Sync
 
-Your progress is stored locally in `~/.ai-deep-dive/status.json`. Use `ai-deep-dive sync` to sync your progress to the website.
+Your progress is stored locally in `~/.ai-deep-dive/status.json`. Use `ai-deep-dive submit` to record completion, then `ai-deep-dive sync` to sync your progress to the website.
+
+### Tests and Bundles
+
+Public tests are fetched from the tests endpoint (config `tests_url`, defaults to `https://judge.h3nok.dev`) and cached locally under `~/.ai-deep-dive/cache/judge-tests`.
+
+Hidden tests are fetched from the same tests endpoint and cached locally under the same cache directory. This enables GPU-heavy challenges to be validated locally via `ai-deep-dive submit`.
+
+You can set the endpoint with:
+
+```bash
+ai-deep-dive config set-tests-url https://tests.example.com
+```
 
 ## Development
 
