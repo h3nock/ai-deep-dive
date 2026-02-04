@@ -57,7 +57,8 @@ Notes:
   `expected_is_code: true`.
 - Use `input_code` for arbitrary setup.
 - Prefer `inputs` (object of name to value) for better browser rendering.
-- Hidden tests stay on the server. Public bundles can be cached by the frontend or CDN.
+- Hidden tests stay on the server. The judge returns the first failing hidden
+  test on submit for debugging. Public bundles can be cached by the frontend or CDN.
 
 ## Public bundle export
 
@@ -67,3 +68,12 @@ Notes:
 - `public_bundle.<version>.json` (public tests + runner)
 
 Fetch `public_manifest.json` first to learn the bundle filename for cache-friendly URLs.
+
+## Judge tests endpoint export
+
+`judge/scripts/export_tests_endpoint.py` writes to `judge/tests/...` for serving
+from the judge VM at `/judge-tests/`. It exports:
+
+- `public_manifest.json`
+- `public_bundle.<version>.json`
+- `hidden_tests.json` (copied as-is)

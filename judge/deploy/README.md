@@ -25,7 +25,19 @@ pip install -e .
 CPU-only PyTorch is required to run torch problems on the VM. Install it in
 the same venv using the official PyTorch install selector.
 
-## 3) Configure environment
+## 3) Export tests endpoint
+
+The CLI expects public bundles and `hidden_tests.json` to be served from
+`/judge-tests/` on the judge domain. Export them into the tests root:
+
+```bash
+cd /opt/ai-deep-dive/judge
+python judge/scripts/export_tests_endpoint.py --out-root /opt/ai-deep-dive/judge/tests
+```
+
+Re-run this after updating `judge/problems`.
+
+## 4) Configure environment
 
 ```bash
 sudo cp judge/deploy/judge.env.example /etc/judge/judge.env
@@ -34,7 +46,7 @@ sudo chown judge:judge /etc/judge/judge.env
 
 Set `JUDGE_ALLOWED_ORIGINS` when the web app is hosted on a different origin.
 
-## 4) Install and start Redis
+## 5) Install and start Redis
 
 ```bash
 sudo apt-get update
@@ -49,7 +61,7 @@ appendfsync everysec
 maxmemory-policy noeviction
 ```
 
-## 5) Nsjail sandbox
+## 6) Nsjail sandbox
 
 Install nsjail (Ubuntu):
 
@@ -79,7 +91,7 @@ and `/etc/subgid`. The rlimit values are in MB or seconds.
 The worker override installed in step 7 is required so nsjail can create user
 namespaces. Run that step after enabling nsjail.
 
-## 6) Install systemd services
+## 7) Install systemd services
 
 ```bash
 sudo cp judge/deploy/judge-api.service /etc/systemd/system/
@@ -92,7 +104,7 @@ sudo systemctl enable --now judge-worker-light@1
 sudo systemctl enable --now judge-worker-torch@1
 ```
 
-## 7) Apply nginx + worker hardening
+## 8) Apply nginx + worker hardening
 
 Install nginx, then apply the nginx config, API binding, and worker hardening:
 
@@ -104,6 +116,9 @@ sudo JUDGE_DOMAIN=judge.example.com judge/deploy/apply.sh
 If TLS is required, issue a certificate first (for example with certbot), then
 re-run the command above. Set `JUDGE_CERT_DIR` if the certificate files live
 somewhere else.
+
+Static tests are served from `JUDGE_TESTS_ROOT` (default
+`/opt/ai-deep-dive/judge/tests`) at `/judge-tests/`.
 
 Files used:
 - `judge/deploy/judge-api.service`
@@ -130,7 +145,7 @@ To trigger a run immediately:
 sudo systemctl start judge-backup.service
 ```
 
-## 8) Verify
+## 9) Verify
 
 ```bash
 curl http://localhost:8000/health
