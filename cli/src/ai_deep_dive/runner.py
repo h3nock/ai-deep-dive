@@ -323,13 +323,29 @@ def run_tests(
         try:
             raw_results = json.loads(stdout)
         except json.JSONDecodeError:
-            return TestRunResult(
-                passed=False,
-                total=len(challenge.test_cases),
-                passed_count=0,
-                results=[],
-                error=f"Failed to parse test results.\nStdout: {stdout}\nStderr: {stderr}",
-            )
+            json_line = ""
+            if stdout:
+                for line in reversed(stdout.splitlines()):
+                    line = line.strip()
+                    if line:
+                        json_line = line
+                        break
+            if json_line:
+                try:
+                    raw_results = json.loads(json_line)
+                except json.JSONDecodeError:
+                    raw_results = None
+            else:
+                raw_results = None
+
+            if raw_results is None:
+                return TestRunResult(
+                    passed=False,
+                    total=len(challenge.test_cases),
+                    passed_count=0,
+                    results=[],
+                    error=f"Failed to parse test results.\nStdout: {stdout}\nStderr: {stderr}",
+                )
         
         # Check for top-level error
         if len(raw_results) == 1 and raw_results[0].get("id") == "error":

@@ -35,7 +35,7 @@ def test_command(challenge_id: str, verbose: bool) -> None:
     challenge = context.challenge
     solution_path = context.solution_path
     
-    # Refresh public tests using remote-first + cache strategy
+    # Refresh public tests using cache-first + remote fallback
     loaded_public = load_public_tests(challenge.problem_id)
     if loaded_public:
         test_cases, runner, comparison = loaded_public
@@ -97,6 +97,3 @@ def test_command(challenge_id: str, verbose: bool) -> None:
             border_style="red",
         ))
         raise SystemExit(1)
-
-
-            console.print(f"  [dim]Expected:[/dim] {result.expected}")
