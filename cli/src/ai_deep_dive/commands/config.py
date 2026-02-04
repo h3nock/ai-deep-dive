@@ -9,6 +9,9 @@ from ai_deep_dive.config import (
     get_website_url,
     set_website_url,
     DEFAULT_WEBSITE_URL,
+    get_tests_url,
+    set_tests_url,
+    DEFAULT_TESTS_URL,
 )
 
 console = Console()
@@ -18,12 +21,14 @@ console = Console()
 def config_command() -> None:
     """Manage CLI configuration.
     
-    View or update global settings like the website URL.
+    View or update global settings like the website and tests URL.
     
     Examples:
         ai-deep-dive config show
         ai-deep-dive config set-url https://my-site.com
+        ai-deep-dive config set-tests-url https://tests.my-site.com
         ai-deep-dive config reset-url
+        ai-deep-dive config reset-tests-url
     """
     pass
 
@@ -46,6 +51,16 @@ def show_config() -> None:
         current_url,
         "custom" if is_custom else "default"
     )
+
+    # Tests URL
+    current_tests_url = get_tests_url()
+    tests_source = "custom" if config.get("tests_url") is not None else ("inherited" if is_custom else "default")
+    table.add_row(
+        "tests_url",
+        current_tests_url,
+        tests_source,
+    )
+
     
     console.print(table)
     
@@ -73,6 +88,26 @@ def set_url(url: str) -> None:
     console.print(f"[green]✓[/green] Website URL set to: [cyan]{url}[/cyan]")
 
 
+@config_command.command("set-tests-url")
+@click.argument("url")
+def set_tests_url_command(url: str) -> None:
+    """Set a custom tests URL.
+
+    Use this if you're hosting judge bundles on a separate domain or CDN.
+
+    Example:
+        ai-deep-dive config set-tests-url https://tests.my-site.com
+    """
+    if not url.startswith("http://") and not url.startswith("https://"):
+        console.print("[red]Error:[/red] URL must start with http:// or https://")
+        raise SystemExit(1)
+
+    set_tests_url(url)
+    console.print(f"[green]✓[/green] Tests URL set to: [cyan]{url}[/cyan]")
+
+
+
+
 @config_command.command("reset-url")
 def reset_url() -> None:
     """Reset website URL to the default.
@@ -88,3 +123,21 @@ def reset_url() -> None:
         console.print(f"[green]✓[/green] Website URL reset to default: [cyan]{DEFAULT_WEBSITE_URL}[/cyan]")
     else:
         console.print(f"[yellow]Already using default URL:[/yellow] [cyan]{DEFAULT_WEBSITE_URL}[/cyan]")
+
+
+@config_command.command("reset-tests-url")
+def reset_tests_url() -> None:
+    """Reset tests URL to the default.
+
+    Removes any custom tests URL and uses the website URL or default.
+    """
+    config = get_global_config()
+
+    if "tests_url" in config:
+        del config["tests_url"]
+        from ai_deep_dive.config import save_global_config
+        save_global_config(config)
+        console.print(f"[green]✓[/green] Tests URL reset to default: [cyan]{DEFAULT_TESTS_URL}[/cyan]")
+    else:
+        console.print(f"[yellow]Already using default tests URL:[/yellow] [cyan]{get_tests_url()}[/cyan]")
+

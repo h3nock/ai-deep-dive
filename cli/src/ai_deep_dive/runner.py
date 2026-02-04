@@ -6,7 +6,7 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from ai_deep_dive.manifest import Challenge
 
@@ -37,10 +37,85 @@ class TestRunResult:
 # The test harness code - executes user code against test cases
 HARNESS_CODE = '''
 import json
-import sys
 import io
+import math
+import ast
 import traceback
+import sys
 from contextlib import redirect_stdout, redirect_stderr
+
+def normalize(value):
+    if hasattr(value, "tolist"):
+        try:
+            return value.tolist()
+        except Exception:
+            return str(value)
+    return value
+
+
+def allclose(a, b, rtol, atol):
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+        return math.isclose(a, b, rel_tol=rtol, abs_tol=atol)
+    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+        if len(a) != len(b):
+            return False
+        return all(allclose(x, y, rtol, atol) for x, y in zip(a, b))
+    if isinstance(a, dict) and isinstance(b, dict):
+        if a.keys() != b.keys():
+            return False
+        return all(allclose(a[k], b[k], rtol, atol) for k in a.keys())
+    return a == b
+
+
+def compare(actual, expected, comparison):
+    cmp_type = comparison.get("type", "exact")
+    rtol = float(comparison.get("rtol", 1e-5))
+    atol = float(comparison.get("atol", 1e-8))
+    if cmp_type == "allclose":
+        return allclose(actual, expected, rtol, atol)
+    return actual == expected
+
+
+def _is_user_frame(frame):
+    return frame.filename in ("solution.py", "testcase.py")
+
+
+def format_user_error():
+    exc_type, exc_value, exc_tb = sys.exc_info()
+    if isinstance(exc_value, SyntaxError):
+        lineno = exc_value.lineno or 0
+        text = exc_value.text or ""
+        lines = []
+        if lineno:
+            lines.append(f"Line {lineno}:")
+        if text:
+            lines.append(f"    {text.rstrip()}")
+        msg = exc_value.msg if hasattr(exc_value, "msg") else str(exc_value)
+        lines.append(f"{exc_type.__name__}: {msg}")
+        return "\\n".join(lines)
+
+    frames = traceback.extract_tb(exc_tb)
+    user_frames = [frame for frame in frames if _is_user_frame(frame)]
+    if not user_frames:
+        last = frames[-1] if frames else None
+        if last:
+            line = last.line or ""
+            if line:
+                return f"Line {last.lineno}:\\n    {line}\\n{exc_type.__name__}: {exc_value}"
+            return f"Line {last.lineno}:\\n{exc_type.__name__}: {exc_value}"
+        return f"{exc_type.__name__}: {exc_value}"
+
+    lines = []
+    for frame in user_frames:
+        if frame.name == "<module>":
+            lines.append(f"Line {frame.lineno}:")
+        else:
+            lines.append(f"Line {frame.lineno}, in {frame.name}:")
+        if frame.line:
+            lines.append(f"    {frame.line}")
+    lines.append(f"{exc_type.__name__}: {exc_value}")
+    return "\\n".join(lines)
+
 
 def run_cases():
     try:
@@ -50,8 +125,6 @@ def run_cases():
         print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": "test_config.json not found"}]))
         return
 
-    results = []
-    
     try:
         with open("main.py", "r") as f:
             user_code = f.read()
@@ -60,70 +133,75 @@ def run_cases():
         return
 
     runner_expression = config.get("runner", "")
+    comparison_default = config.get("comparison", {"type": "exact"})
 
-    # Execute user code once to define functions/classes
     exec_globals = {}
     try:
-        exec(user_code, exec_globals)
+        compiled = compile(user_code, "solution.py", "exec")
+        exec(compiled, exec_globals)
     except Exception:
-        error_msg = traceback.format_exc()
+        error_msg = format_user_error()
         print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": error_msg}]))
         return
 
+    results = []
     for case in config.get("cases", []):
         stdout_capture = io.StringIO()
         stderr_capture = io.StringIO()
-        
-        input_code = case.get("input", "")
-        expected_json = case.get("expected", "null")
+
+        input_code = case.get("input_code", "")
+        expected = case.get("expected")
+        expected_is_code = case.get("expected_is_code", False)
         is_hidden = case.get("hidden", False)
-        
+        comparison = case.get("comparison") or comparison_default
+
         status = "Accepted"
         output_str = ""
         stdout_val = ""
         stderr_val = ""
-        
+
         try:
             case_globals = exec_globals.copy()
-            exec(input_code, case_globals)
-            
+            compiled_input = compile(input_code, "testcase.py", "exec")
+            exec(compiled_input, case_globals)
+
             with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
                 actual_value = eval(runner_expression, case_globals)
-            
+
             stdout_val = stdout_capture.getvalue()
             stderr_val = stderr_capture.getvalue()
-            
-            try:
-                expected_value = json.loads(expected_json)
-            except json.JSONDecodeError:
-                expected_value = expected_json
 
-            try:
-                actual_value_normalized = json.loads(json.dumps(actual_value))
-            except TypeError:
-                actual_value_normalized = str(actual_value)
-            
-            if actual_value_normalized != expected_value:
+            actual_value = normalize(actual_value)
+
+            if expected_is_code and isinstance(expected, str):
+                try:
+                    expected = ast.literal_eval(expected)
+                except Exception:
+                    pass
+
+            if not compare(actual_value, expected, comparison):
                 status = "Wrong Answer"
-                output_str = json.dumps(actual_value_normalized)
-            else:
-                output_str = json.dumps(actual_value_normalized)
-
+            output_str = repr(actual_value)
         except Exception:
             status = "Runtime Error"
-            stderr_val = stderr_capture.getvalue() + "\\n" + traceback.format_exc()
-        
+            stderr_val = stderr_capture.getvalue()
+            error_msg = format_user_error()
+            if stderr_val:
+                stderr_val = stderr_val + "\\n" + error_msg
+            else:
+                stderr_val = error_msg
+
         results.append({
-            "id": case["id"],
+            "id": case.get("id", ""),
             "status": status,
             "input": input_code,
             "stdout": stdout_val,
             "output": output_str,
-            "expected": expected_json,
+            "expected": repr(expected),
             "stderr": stderr_val,
-            "hidden": is_hidden
+            "hidden": is_hidden,
         })
-        
+
     print(json.dumps(results))
 
 if __name__ == "__main__":
@@ -131,31 +209,42 @@ if __name__ == "__main__":
 '''
 
 
+def _serialize_expected(value: Any) -> tuple[Any, bool]:
+    try:
+        json.dumps(value)
+        return value, False
+    except (TypeError, ValueError):
+        return repr(value), True
+
+
 def build_test_config(challenge: Challenge) -> dict:
     """Build the test configuration for a challenge."""
     cases = []
-    
+    comparison_default = challenge.comparison or {"type": "exact"}
+
     for tc in challenge.test_cases:
-        # Convert inputs dict to assignment code
-        input_code = ""
-        for arg_name, arg_value in tc.inputs.items():
-            input_code += f"{arg_name} = {arg_value}\n"
-        
-        cases.append({
-            "id": tc.id,
-            "input": input_code,
-            "expected": tc.expected,
-            "hidden": tc.hidden,
-        })
-    
-    # Clean up execution snippet (remove print wrapper if present)
-    runner = challenge.execution_snippet.strip()
+        expected, expected_is_code = _serialize_expected(tc.expected)
+        comparison = tc.comparison or comparison_default
+        cases.append(
+            {
+                "id": tc.id,
+                "input_code": tc.input_code,
+                "expected": expected,
+                "expected_is_code": expected_is_code,
+                "hidden": tc.hidden,
+                "comparison": comparison,
+            }
+        )
+
+    # Prefer runner from judge manifest/bundle, fallback to execution snippet
+    runner = (challenge.runner or challenge.execution_snippet or "").strip()
     if runner.startswith("print(") and runner.endswith(")"):
         runner = runner[6:-1]
-    
+
     return {
         "cases": cases,
         "runner": runner,
+        "comparison": comparison_default,
     }
 
 
@@ -230,13 +319,9 @@ def run_tests(
         # Parse results
         stdout = result.stdout.strip()
         stderr = result.stderr.strip()
-        
-        # Find the JSON output (last line)
-        lines = stdout.split("\n")
-        json_line = lines[-1] if lines else ""
-        
+
         try:
-            raw_results = json.loads(json_line)
+            raw_results = json.loads(stdout)
         except json.JSONDecodeError:
             return TestRunResult(
                 passed=False,

@@ -5,6 +5,7 @@ import click
 from ai_deep_dive import __version__
 from ai_deep_dive.commands.init import init_command
 from ai_deep_dive.commands.test import test_command
+from ai_deep_dive.commands.submit import submit_command
 from ai_deep_dive.commands.status import status_command
 from ai_deep_dive.commands.list import list_command
 from ai_deep_dive.commands.sync import sync_command
@@ -25,6 +26,7 @@ def cli(ctx: click.Context) -> None:
 # Register commands
 cli.add_command(init_command, name="init")
 cli.add_command(test_command, name="test")
+cli.add_command(submit_command, name="submit")
 cli.add_command(status_command, name="status")
 cli.add_command(list_command, name="list")
 cli.add_command(sync_command, name="sync")

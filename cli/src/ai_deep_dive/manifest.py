@@ -1,7 +1,7 @@
 """Course manifest definitions - what challenges exist for each course."""
 
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -15,9 +15,11 @@ class ChallengeArgument:
 class TestCase:
     """A test case for a challenge."""
     id: str
-    inputs: dict[str, str]  # argument name -> value (as string)
-    expected: str
+    input_code: str  # Python setup code for the case
+    expected: Any
+    expected_is_code: bool = False
     hidden: bool = False
+    comparison: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -25,6 +27,7 @@ class Challenge:
     """A single coding challenge."""
     id: str  # e.g., "02-01" 
     slug: str  # e.g., "pair-counter"
+    problem_id: str  # e.g., "build-gpt/02-tokenization/01-pair-counter"
     title: str
     filename: str  # e.g., "01_pair_counter.py"
     function_name: str  # The main function to implement
@@ -34,8 +37,10 @@ class Challenge:
     difficulty: str = "Medium"
     initial_code: str = ""
     execution_snippet: str = ""  # e.g., "get_stats(ids)"
+    runner: str = ""  # Runner expression from judge manifest/bundle
     arguments: list[ChallengeArgument] = field(default_factory=list)
     test_cases: list[TestCase] = field(default_factory=list)
+    comparison: Optional[dict[str, Any]] = None
     description: str = ""
 
 
