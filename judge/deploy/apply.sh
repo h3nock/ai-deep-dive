@@ -34,6 +34,8 @@ install -m 644 "$ROOT_DIR/deploy/judge-api.service" /etc/systemd/system/judge-ap
 
 # Nginx rate limiting zones
 install -m 644 "$ROOT_DIR/deploy/nginx/ratelimit.conf" /etc/nginx/conf.d/judge-ratelimit.conf
+# Cloudflare real IP restore (safe even if not using Cloudflare)
+install -m 644 "$ROOT_DIR/deploy/nginx/cloudflare-realip.conf" /etc/nginx/conf.d/judge-cloudflare-realip.conf
 
 # Nginx site config
 NGINX_TEMPLATE="$ROOT_DIR/deploy/nginx/judge.http.conf.template"
