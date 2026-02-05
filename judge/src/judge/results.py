@@ -51,8 +51,15 @@ class ResultsStore:
             if "error_kind" not in columns:
                 conn.execute("ALTER TABLE jobs ADD COLUMN error_kind TEXT")
 
-    def create_job(self, job_id: str, problem_id: str, profile: str, kind: str) -> None:
-        now = int(time.time())
+    def create_job(
+        self,
+        job_id: str,
+        problem_id: str,
+        profile: str,
+        kind: str,
+        created_at: Optional[int] = None,
+    ) -> None:
+        now = created_at if created_at is not None else int(time.time())
         with self._connect() as conn:
             conn.execute(
                 """
@@ -125,3 +132,14 @@ class ResultsStore:
             "error": row["error"],
             "error_kind": row["error_kind"],
         }
+
+    def count_by_status(self) -> dict[str, int]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT status, COUNT(*) as count
+                FROM jobs
+                GROUP BY status
+                """
+            ).fetchall()
+        return {row["status"]: row["count"] for row in rows}

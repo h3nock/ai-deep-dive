@@ -27,6 +27,7 @@ classifiers = [
 dependencies = [
     "fastapi>=0.110.0",
     "pydantic>=2.6.0",
+    "prometheus_client>=0.20.0",
     "redis>=5.0.0",
     "uvicorn[standard]>=0.29.0",
 ]

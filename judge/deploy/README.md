@@ -95,6 +95,7 @@ namespaces. Run that step after enabling nsjail.
 
 ```bash
 sudo cp judge/deploy/judge-api.service /etc/systemd/system/
+sudo cp judge/deploy/judge-metrics-init.service /etc/systemd/system/
 sudo cp judge/deploy/judge-worker-light@.service /etc/systemd/system/
 sudo cp judge/deploy/judge-worker-torch@.service /etc/systemd/system/
 
@@ -122,6 +123,7 @@ Static tests are served from `JUDGE_TESTS_ROOT` (default
 
 Files used:
 - `judge/deploy/judge-api.service`
+- `judge/deploy/judge-metrics-init.service`
 - `judge/deploy/nginx/judge.http.conf.template`
 - `judge/deploy/nginx/judge.https.conf.template`
 - `judge/deploy/nginx/ratelimit.conf`
@@ -152,6 +154,21 @@ curl http://localhost:8000/health
 curl http://judge.example.com/health
 curl https://judge.example.com/health
 ```
+
+## Metrics (Prometheus)
+
+The API serves Prometheus metrics at `/metrics`. To include worker metrics,
+set `PROMETHEUS_MULTIPROC_DIR` in `/etc/judge/judge.env` and create the
+directory with judge ownership:
+
+```bash
+sudo mkdir -p /opt/ai-deep-dive/judge/metrics
+sudo chown -R judge:judge /opt/ai-deep-dive/judge/metrics
+```
+
+Prometheus should scrape the API port (localhost or via nginx). When using
+multiprocess mode, `judge-metrics-init.service` clears the multiprocess
+directory on service startup to avoid stale gauge values from old PIDs.
 
 ## Scaling on a single VM
 

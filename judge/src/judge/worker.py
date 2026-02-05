@@ -5,6 +5,13 @@ import json
 import time
 
 from judge.config import load_settings
+from judge.metrics import (
+    job_finished,
+    job_started,
+    observe_job_duration,
+    observe_job_queue_wait,
+    register_process_exit,
+)
 from judge.problems import load_problem
 from judge.queue import RedisQueue
 from judge.results import ResultsStore
@@ -23,6 +30,7 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     args = _parse_args()
     settings = load_settings()
+    register_process_exit()
 
     queue = RedisQueue(settings.redis_url)
     queue.ensure_group(args.stream, args.group)
@@ -47,10 +55,18 @@ def main() -> None:
         problem_id = payload.get("problem_id", "")
         kind = payload.get("kind", "submit")
         code = payload.get("code", "")
+        profile = payload.get("profile", "") or "unknown"
+        created_at = payload.get("created_at")
 
         if not job_id or not problem_id:
             queue.ack(args.stream, args.group, msg_id)
             return
+
+        started_at = time.perf_counter()
+        job_started(profile, kind)
+        observe_job_queue_wait(profile, created_at if isinstance(created_at, (int, float)) else None)
+        status = "error"
+        error_kind = "internal"
 
         try:
             results.mark_running(job_id)
@@ -66,17 +82,23 @@ def main() -> None:
                 sandbox_cmd=settings.sandbox_cmd or None,
             )
             if result.get("error"):
+                error_kind = result.get("error_kind", "internal")
                 results.mark_error(
                     job_id,
                     str(result["error"]),
                     result,
-                    error_kind=result.get("error_kind", "internal"),
+                    error_kind=error_kind,
                 )
             else:
+                status = "done"
+                error_kind = "none"
                 results.mark_done(job_id, result)
         except Exception as exc:
             results.mark_error(job_id, f"Worker error: {exc}", error_kind="internal")
         finally:
+            duration = time.perf_counter() - started_at
+            observe_job_duration(profile, duration)
+            job_finished(profile, status, error_kind)
             queue.ack(args.stream, args.group, msg_id)
 
     while True:

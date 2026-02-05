@@ -107,6 +107,7 @@ Environment variables:
 - `JUDGE_BACKUP_RETENTION_DAYS` (default: `7`)
 - `JUDGE_ALLOWED_ORIGINS` (comma-separated)
 - `JUDGE_SANDBOX_CMD_JSON` (optional sandbox wrapper)
+- `PROMETHEUS_MULTIPROC_DIR` (optional, for API + worker metric aggregation)
 
 Sandbox example (nsjail):
 
@@ -121,6 +122,25 @@ JUDGE_SANDBOX_CMD_JSON='["nsjail","--config","/etc/judge/nsjail.cfg","--"]'
   hidden test is returned for debugging.
 - Production setup lives in `judge/deploy/`. See the deploy README for steps.
 - Daily timers run on the VM to prune old jobs and save database backups.
+
+## Metrics (Prometheus)
+
+The API exposes Prometheus metrics at `/metrics`. To aggregate worker + API
+metrics, set `PROMETHEUS_MULTIPROC_DIR` for all judge services and ensure the
+directory exists and is writable by the `judge` user.
+
+Example Prometheus scrape config:
+
+```yaml
+scrape_configs:
+  - job_name: "judge-api"
+    static_configs:
+      - targets: ["127.0.0.1:8000"]
+```
+
+When using multiprocess mode, clear the multiprocess directory on service
+startup to avoid stale gauges from old PIDs. The deploy setup handles this via
+`judge-metrics-init.service`.
 
 ## Problem format
 

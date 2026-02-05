@@ -1,6 +1,7 @@
 [Unit]
 Description=AI Deep Dive Judge Worker (light %i)
-After=network.target redis.service
+Wants=judge-metrics-init.service
+After=network.target redis.service judge-metrics-init.service
 
 [Service]
 Type=simple
