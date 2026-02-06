@@ -26,6 +26,14 @@ if [[ -f /etc/judge/judge.env ]]; then
   set +a
 fi
 
+if [[ -z "${PROMETHEUS_MULTIPROC_DIR+x}" ]]; then
+  PROMETHEUS_MULTIPROC_DIR=/var/lib/judge/prometheus-multiproc
+fi
+if [[ -n "$PROMETHEUS_MULTIPROC_DIR" ]]; then
+  mkdir -p "$PROMETHEUS_MULTIPROC_DIR"
+  chown judge:judge "$PROMETHEUS_MULTIPROC_DIR"
+fi
+
 mkdir -p "$JUDGE_TESTS_ROOT"
 chown -R judge:judge "$JUDGE_TESTS_ROOT"
 
