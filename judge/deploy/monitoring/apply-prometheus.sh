@@ -11,6 +11,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 PROMETHEUS_CONFIG_PATH=${PROMETHEUS_CONFIG_PATH:-/etc/prometheus/prometheus.yml}
 PROMETHEUS_RULES_DIR=${PROMETHEUS_RULES_DIR:-/etc/prometheus/rules}
 PROMETHEUS_RULES_PATH="$PROMETHEUS_RULES_DIR/judge-alerts.yml"
+PROMETHEUS_CONFIG_DIR=$(dirname "$PROMETHEUS_CONFIG_PATH")
 
 SCRAPE_INTERVAL=${SCRAPE_INTERVAL:-15s}
 EVALUATION_INTERVAL=${EVALUATION_INTERVAL:-15s}
@@ -22,10 +23,20 @@ NODE_EXPORTER_TARGETS=${NODE_EXPORTER_TARGETS:-127.0.0.1:9100}
 JUDGE_API_SCHEME=${JUDGE_API_SCHEME:-http}
 JUDGE_API_METRICS_PATH=${JUDGE_API_METRICS_PATH:-/metrics}
 
+if [[ ! -f "$SCRIPT_DIR/prometheus.yml.template" ]]; then
+  echo "Missing template file: $SCRIPT_DIR/prometheus.yml.template" >&2
+  exit 1
+fi
+if [[ ! -f "$SCRIPT_DIR/judge-alerts.yml" ]]; then
+  echo "Missing alerts file: $SCRIPT_DIR/judge-alerts.yml" >&2
+  exit 1
+fi
+
 build_targets_block() {
   local csv="$1"
   local target
   local block=""
+  local -a raw_targets
 
   IFS=',' read -r -a raw_targets <<< "$csv"
   for target in "${raw_targets[@]}"; do
@@ -54,6 +65,7 @@ trap 'rm -f "$tmp_config"' EXIT
 awk \
   -v scrape_interval="$SCRAPE_INTERVAL" \
   -v evaluation_interval="$EVALUATION_INTERVAL" \
+  -v prometheus_rules_path="$PROMETHEUS_RULES_PATH" \
   -v judge_api_scheme="$JUDGE_API_SCHEME" \
   -v judge_api_metrics_path="$JUDGE_API_METRICS_PATH" \
   -v prometheus_targets_block="$PROMETHEUS_TARGETS_BLOCK" \
@@ -66,6 +78,7 @@ awk \
   {
     gsub("__SCRAPE_INTERVAL__", scrape_interval)
     gsub("__EVALUATION_INTERVAL__", evaluation_interval)
+    gsub("__PROMETHEUS_RULES_PATH__", prometheus_rules_path)
     gsub("__JUDGE_API_SCHEME__", judge_api_scheme)
     gsub("__JUDGE_API_METRICS_PATH__", judge_api_metrics_path)
     print
@@ -73,15 +86,20 @@ awk \
   ' "$SCRIPT_DIR/prometheus.yml.template" > "$tmp_config"
 
 if command -v promtool >/dev/null 2>&1; then
-  promtool check config "$tmp_config"
   promtool check rules "$SCRIPT_DIR/judge-alerts.yml"
 else
-  echo "promtool not found; skipped Prometheus config validation." >&2
+  echo "promtool not found; skipped Prometheus validation." >&2
 fi
 
+mkdir -p "$PROMETHEUS_CONFIG_DIR"
 mkdir -p "$PROMETHEUS_RULES_DIR"
-install -m 644 "$tmp_config" "$PROMETHEUS_CONFIG_PATH"
 install -m 644 "$SCRIPT_DIR/judge-alerts.yml" "$PROMETHEUS_RULES_PATH"
+
+if command -v promtool >/dev/null 2>&1; then
+  promtool check config "$tmp_config"
+fi
+
+install -m 644 "$tmp_config" "$PROMETHEUS_CONFIG_PATH"
 
 systemctl enable --now prometheus
 systemctl restart prometheus
