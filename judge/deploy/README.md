@@ -159,8 +159,10 @@ curl https://judge.example.com/health
 
 ## Metrics (Prometheus)
 
-The API serves Prometheus metrics at `/metrics`. To include worker metrics, set
-`PROMETHEUS_MULTIPROC_DIR` in `/etc/judge/judge.env`. Default is:
+The API serves Prometheus metrics at `http://127.0.0.1:8000/metrics`.
+Default nginx templates intentionally do not proxy `/metrics` publicly.
+To include worker metrics, set `PROMETHEUS_MULTIPROC_DIR` in `/etc/judge/judge.env`.
+Default is:
 
 ```
 PROMETHEUS_MULTIPROC_DIR=/var/lib/judge/prometheus-multiproc
@@ -186,6 +188,13 @@ Templates and rules are tracked in:
 - `judge/deploy/monitoring/prometheus.yml.template`
 - `judge/deploy/monitoring/judge-alerts.yml`
 - `judge/deploy/monitoring/apply-prometheus.sh`
+- `judge/deploy/monitoring/alertmanager.yml.template`
+- `judge/deploy/monitoring/alertmanager.env.example`
+- `judge/deploy/monitoring/apply-alertmanager.sh`
+- `judge/deploy/monitoring/grafana-datasource.yml.template`
+- `judge/deploy/monitoring/grafana-dashboard-provider.yml.template`
+- `judge/deploy/monitoring/grafana/judge-overview.json`
+- `judge/deploy/monitoring/apply-grafana.sh`
 
 Apply them on the monitoring host:
 
@@ -203,18 +212,57 @@ sudo JUDGE_API_TARGETS=10.0.1.4:8000 \
   ./deploy/monitoring/apply-prometheus.sh
 ```
 
-If scraping through HTTPS on nginx instead of direct port 8000:
-
-```bash
-sudo JUDGE_API_SCHEME=https \
-  JUDGE_API_TARGETS=judge.example.com \
-  JUDGE_API_METRICS_PATH=/metrics \
-  ./deploy/monitoring/apply-prometheus.sh
-```
-
 The script validates with `promtool` (if installed), writes
 `/etc/prometheus/prometheus.yml`, installs rule file
 `/etc/prometheus/rules/judge-alerts.yml`, then restarts Prometheus.
+
+Prometheus is also configured to send alerts to Alertmanager. Default
+Alertmanager target is `127.0.0.1:9093`. Override with
+`ALERTMANAGER_TARGETS`.
+
+### Install and apply Alertmanager (Telegram + email)
+
+```bash
+sudo apt-get install -y prometheus-alertmanager
+sudo install -d -m 700 /etc/judge
+sudo cp /opt/ai-deep-dive/judge/deploy/monitoring/alertmanager.env.example /etc/judge/alertmanager.env
+sudo chmod 600 /etc/judge/alertmanager.env
+# edit /etc/judge/alertmanager.env with your real values
+cd /opt/ai-deep-dive/judge
+sudo ./deploy/monitoring/apply-alertmanager.sh
+```
+
+`apply-alertmanager.sh` loads `/etc/judge/alertmanager.env` by default, renders
+Alertmanager config, validates with `amtool` when available, then restarts
+`prometheus-alertmanager` (or `alertmanager` when that service name is used).
+
+Telegram-only setup works by providing only Telegram variables.
+Email-only setup works by providing only email/SMTP variables.
+
+### Install and apply Grafana
+
+```bash
+sudo apt-get install -y grafana
+cd /opt/ai-deep-dive/judge
+sudo ./deploy/monitoring/apply-grafana.sh
+```
+
+This provisions:
+
+- Prometheus datasource (`uid: prometheus`)
+- Judge dashboard provider
+- `Judge Overview` dashboard from repo JSON
+
+Default Grafana access is port `3000`. For private access from your laptop:
+
+```bash
+ssh -N -L 13000:127.0.0.1:3000 -L 9090:127.0.0.1:9090 root@<vm-ip-or-dns-only-host>
+```
+
+Then open:
+
+- `http://127.0.0.1:13000` (Grafana)
+- `http://127.0.0.1:9090` (Prometheus)
 
 ## Scaling on a single VM
 

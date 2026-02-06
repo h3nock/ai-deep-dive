@@ -127,9 +127,12 @@ JUDGE_SANDBOX_CMD_JSON='["nsjail","--config","/etc/judge/nsjail.cfg","--"]'
 
 ## Metrics (Prometheus)
 
-The API exposes Prometheus metrics at `/metrics`. To aggregate worker + API
-metrics, set `PROMETHEUS_MULTIPROC_DIR` for all judge services and ensure the
-directory exists and is writable by the `judge` user.
+The API exposes Prometheus metrics at `http://127.0.0.1:8000/metrics`.
+The deploy nginx templates do not expose `/metrics` on the public domain.
+To aggregate worker + API metrics, set `PROMETHEUS_MULTIPROC_DIR` for all judge
+services and ensure the directory exists and is writable by the `judge` user.
+If Prometheus runs on a separate VM, scrape using private-network IP targets
+(for example `10.x.x.x`) instead of public endpoints.
 
 Use a runtime path outside git, for example:
 
@@ -144,6 +147,10 @@ Deploy automation:
   files on startup.
 - `judge/deploy/monitoring/apply-prometheus.sh` applies repo-managed
   Prometheus config + alert rules.
+- `judge/deploy/monitoring/apply-alertmanager.sh` applies Alertmanager routing
+  for Telegram/email notifications.
+- `judge/deploy/monitoring/apply-grafana.sh` provisions Grafana datasource and
+  dashboard.
 
 ## Problem format
 
