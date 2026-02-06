@@ -1,0 +1,11 @@
+[Unit]
+Description=AI Deep Dive Judge metrics directory init
+After=network.target
+
+[Service]
+Type=oneshot
+User=judge
+Group=judge
+EnvironmentFile=/etc/judge/judge.env
+ExecStart=/bin/bash -lc 'set -euo pipefail; if [[ -n "${PROMETHEUS_MULTIPROC_DIR:-}" ]]; then mkdir -p "$PROMETHEUS_MULTIPROC_DIR"; find "$PROMETHEUS_MULTIPROC_DIR" -mindepth 1 -type f -delete; fi'
+RemainAfterExit=yes

@@ -31,6 +31,7 @@ chown -R judge:judge "$JUDGE_TESTS_ROOT"
 
 # API service (binds locally)
 install -m 644 "$ROOT_DIR/deploy/judge-api.service" /etc/systemd/system/judge-api.service
+install -m 644 "$ROOT_DIR/deploy/judge-metrics-init.service" /etc/systemd/system/judge-metrics-init.service
 
 # Nginx rate limiting zones
 install -m 644 "$ROOT_DIR/deploy/nginx/ratelimit.conf" /etc/nginx/conf.d/judge-ratelimit.conf
@@ -69,6 +70,7 @@ LIGHT_COUNT=${JUDGE_LIGHT_WORKERS:-1}
 TORCH_COUNT=${JUDGE_TORCH_WORKERS:-1}
 
 systemctl daemon-reload
+systemctl restart judge-metrics-init
 systemctl restart judge-api
 
 for i in $(seq 1 "$LIGHT_COUNT"); do

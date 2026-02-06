@@ -1,18 +1,26 @@
 """FastAPI service for the judge."""
 
+import time
 import uuid
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from judge.config import load_settings
+from judge.metrics import (
+    record_http_request,
+    register_process_exit,
+    render_metrics,
+    update_runtime_metrics,
+)
 from judge.models import JobResult, ProblemInfo, SubmitRequest, SubmitResponse
 from judge.problems import load_problem
 from judge.queue import RedisQueue
 from judge.results import ResultsStore
 
 settings = load_settings()
+register_process_exit()
 queue = RedisQueue(settings.redis_url)
 results = ResultsStore(settings.results_db)
 
@@ -29,6 +37,27 @@ if settings.allowed_origins:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    if request.url.path == "/metrics":
+        return await call_next(request)
+
+    start = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception:
+        duration = time.perf_counter() - start
+        record_http_request(request.method, request.url.path, 500, duration)
+        raise
+
+    duration = time.perf_counter() - start
+    route = request.scope.get("route")
+    path = getattr(route, "path", request.url.path)
+    record_http_request(request.method, path, response.status_code, duration)
+    return response
+
 
 def _sanitize_job(job: dict[str, Any]) -> dict[str, Any]:
     sanitized = dict(job)
@@ -47,6 +76,13 @@ def _sanitize_job(job: dict[str, Any]) -> dict[str, Any]:
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/metrics")
+async def metrics() -> Response:
+    update_runtime_metrics(queue.client, results, STREAMS.values())
+    data, content_type = render_metrics()
+    return Response(content=data, media_type=content_type)
 
 
 @app.get("/problems/{problem_id}", response_model=ProblemInfo)
@@ -75,7 +111,8 @@ async def submit(request: SubmitRequest) -> SubmitResponse:
     stream = STREAMS[profile]
 
     job_id = str(uuid.uuid4())
-    results.create_job(job_id, problem.id, profile, request.kind)
+    created_at = int(time.time())
+    results.create_job(job_id, problem.id, profile, request.kind, created_at=created_at)
 
     payload = {
         "job_id": job_id,
@@ -83,6 +120,7 @@ async def submit(request: SubmitRequest) -> SubmitResponse:
         "profile": profile,
         "kind": request.kind,
         "code": request.code,
+        "created_at": created_at,
     }
     queue.enqueue(stream, payload)
 
