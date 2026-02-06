@@ -1,0 +1,34 @@
+groups:
+  - name: judge
+    rules:
+      - alert: JudgeApiDown
+        expr: up{job="judge-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Judge API target is down"
+          description: "Prometheus cannot scrape judge-api for at least 2 minutes."
+
+      - alert: JudgeQueueBacklogHigh
+        expr: max(judge_queue_stream_length{stream=~"queue:light|queue:torch"}) > 200
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Judge queue backlog is high"
+          description: "At least one queue stream stayed above 200 pending jobs for 10 minutes."
+
+      - alert: JudgeErrorRateHigh
+        expr: |
+          (
+            sum(rate(judge_job_finished_total{status="error"}[10m]))
+            /
+            clamp_min(sum(rate(judge_job_finished_total[10m])), 1)
+          ) > 0.20
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Judge job error ratio is high"
+          description: "More than 20% of jobs finished as error over the last 10 minutes."
