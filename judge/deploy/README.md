@@ -11,15 +11,17 @@ sudo mkdir -p /etc/judge
 sudo chown -R judge:judge /opt/ai-deep-dive
 ```
 
-## 2) Copy repo and create venv
+## 2) Copy repo and create venv (uv)
+
+Install `uv` on the VM first if it is not already available.
 
 ```bash
 # clone repo into /opt/ai-deep-dive
 sudo -u judge git clone <your-repo-url> /opt/ai-deep-dive
 cd /opt/ai-deep-dive/judge
-python3 -m venv .venv
+uv venv .venv
 source .venv/bin/activate
-pip install -e .
+uv pip install -e .
 ```
 
 CPU-only PyTorch is required to run torch problems on the VM. Install it in
@@ -157,18 +159,62 @@ curl https://judge.example.com/health
 
 ## Metrics (Prometheus)
 
-The API serves Prometheus metrics at `/metrics`. To include worker metrics,
-set `PROMETHEUS_MULTIPROC_DIR` in `/etc/judge/judge.env` and create the
-directory with judge ownership:
+The API serves Prometheus metrics at `/metrics`. To include worker metrics, set
+`PROMETHEUS_MULTIPROC_DIR` in `/etc/judge/judge.env`. Default is:
 
-```bash
-sudo mkdir -p /opt/ai-deep-dive/judge/metrics
-sudo chown -R judge:judge /opt/ai-deep-dive/judge/metrics
+```
+PROMETHEUS_MULTIPROC_DIR=/var/lib/judge/prometheus-multiproc
 ```
 
-Prometheus should scrape the API port (localhost or via nginx). When using
-multiprocess mode, `judge-metrics-init.service` clears the multiprocess
-directory on service startup to avoid stale gauge values from old PIDs.
+This directory is runtime scratch space (ephemeral shard files used by
+`prometheus_client` multiprocess mode). It should be outside the git repo and
+not committed. `judge/deploy/apply.sh` creates it and applies `judge:judge`
+ownership.
+
+### Install Prometheus + node-exporter
+
+```bash
+sudo apt-get update
+sudo apt-get install -y prometheus prometheus-node-exporter
+sudo systemctl enable --now prometheus prometheus-node-exporter
+```
+
+### Apply repo-managed Prometheus config
+
+Templates and rules are tracked in:
+
+- `judge/deploy/monitoring/prometheus.yml.template`
+- `judge/deploy/monitoring/judge-alerts.yml`
+- `judge/deploy/monitoring/apply-prometheus.sh`
+
+Apply them on the monitoring host:
+
+```bash
+cd /opt/ai-deep-dive/judge
+sudo ./deploy/monitoring/apply-prometheus.sh
+```
+
+For a separate monitoring VM, set target lists explicitly:
+
+```bash
+cd /opt/ai-deep-dive/judge
+sudo JUDGE_API_TARGETS=10.0.1.4:8000 \
+  NODE_EXPORTER_TARGETS=10.0.1.4:9100 \
+  ./deploy/monitoring/apply-prometheus.sh
+```
+
+If scraping through HTTPS on nginx instead of direct port 8000:
+
+```bash
+sudo JUDGE_API_SCHEME=https \
+  JUDGE_API_TARGETS=judge.example.com \
+  JUDGE_API_METRICS_PATH=/metrics \
+  ./deploy/monitoring/apply-prometheus.sh
+```
+
+The script validates with `promtool` (if installed), writes
+`/etc/prometheus/prometheus.yml`, installs rule file
+`/etc/prometheus/rules/judge-alerts.yml`, then restarts Prometheus.
 
 ## Scaling on a single VM
 

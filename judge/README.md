@@ -25,11 +25,13 @@ judge/
 
 ## Quick start (local)
 
+Install `uv` first if it is not already on your machine.
+
 ```bash
 cd judge
-python -m venv .venv
+uv venv .venv
 source .venv/bin/activate
-pip install -e .
+uv pip install -e .
 ```
 
 Start Redis locally:
@@ -129,18 +131,19 @@ The API exposes Prometheus metrics at `/metrics`. To aggregate worker + API
 metrics, set `PROMETHEUS_MULTIPROC_DIR` for all judge services and ensure the
 directory exists and is writable by the `judge` user.
 
-Example Prometheus scrape config:
+Use a runtime path outside git, for example:
 
-```yaml
-scrape_configs:
-  - job_name: "judge-api"
-    static_configs:
-      - targets: ["127.0.0.1:8000"]
+```bash
+PROMETHEUS_MULTIPROC_DIR=/var/lib/judge/prometheus-multiproc
 ```
 
-When using multiprocess mode, clear the multiprocess directory on service
-startup to avoid stale gauges from old PIDs. The deploy setup handles this via
-`judge-metrics-init.service`.
+Deploy automation:
+
+- `judge/deploy/apply.sh` prepares the multiprocess directory.
+- `judge/deploy/judge-metrics-init.service` clears stale multiprocess shard
+  files on startup.
+- `judge/deploy/monitoring/apply-prometheus.sh` applies repo-managed
+  Prometheus config + alert rules.
 
 ## Problem format
 
