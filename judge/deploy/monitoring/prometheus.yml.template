@@ -2,6 +2,12 @@ global:
   scrape_interval: __SCRAPE_INTERVAL__
   evaluation_interval: __EVALUATION_INTERVAL__
 
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+__ALERTMANAGER_TARGETS_BLOCK__
+
 rule_files:
   - __PROMETHEUS_RULES_PATH__
 

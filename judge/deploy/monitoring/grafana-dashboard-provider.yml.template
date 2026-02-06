@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+  - name: judge
+    orgId: 1
+    folder: Judge
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: __GRAFANA_DASHBOARD_DIR__
