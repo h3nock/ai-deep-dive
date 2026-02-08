@@ -23,9 +23,9 @@ fi
 
 ALERTMANAGER_SERVICE=${ALERTMANAGER_SERVICE:-}
 if [[ -z "$ALERTMANAGER_SERVICE" ]]; then
-  if systemctl list-unit-files --type=service | grep -q '^prometheus-alertmanager\.service'; then
+  if systemctl cat prometheus-alertmanager >/dev/null 2>&1; then
     ALERTMANAGER_SERVICE=prometheus-alertmanager
-  elif systemctl list-unit-files --type=service | grep -q '^alertmanager\.service'; then
+  elif systemctl cat alertmanager >/dev/null 2>&1; then
     ALERTMANAGER_SERVICE=alertmanager
   else
     echo "Could not find alertmanager service (prometheus-alertmanager or alertmanager)." >&2

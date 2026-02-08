@@ -28,7 +28,7 @@ GRAFANA_DASHBOARD_PROVIDER_PATH=${GRAFANA_DASHBOARD_PROVIDER_PATH:-/etc/grafana/
 GRAFANA_DASHBOARD_DIR=${GRAFANA_DASHBOARD_DIR:-/var/lib/grafana/dashboards}
 GRAFANA_DASHBOARD_PATH="$GRAFANA_DASHBOARD_DIR/judge-overview.json"
 
-if ! systemctl list-unit-files --type=service | grep -q "^${GRAFANA_SERVICE}\.service"; then
+if ! systemctl cat "$GRAFANA_SERVICE" >/dev/null 2>&1; then
   echo "Could not find Grafana service: $GRAFANA_SERVICE" >&2
   exit 1
 fi
