@@ -19,6 +19,7 @@ EVALUATION_INTERVAL=${EVALUATION_INTERVAL:-15s}
 PROMETHEUS_TARGETS=${PROMETHEUS_TARGETS:-127.0.0.1:9090}
 JUDGE_API_TARGETS=${JUDGE_API_TARGETS:-127.0.0.1:8000}
 NODE_EXPORTER_TARGETS=${NODE_EXPORTER_TARGETS:-127.0.0.1:9100}
+ALERTMANAGER_TARGETS=${ALERTMANAGER_TARGETS:-127.0.0.1:9093}
 
 JUDGE_API_SCHEME=${JUDGE_API_SCHEME:-http}
 JUDGE_API_METRICS_PATH=${JUDGE_API_METRICS_PATH:-/metrics}
@@ -58,6 +59,7 @@ build_targets_block() {
 PROMETHEUS_TARGETS_BLOCK=$(build_targets_block "$PROMETHEUS_TARGETS")
 JUDGE_API_TARGETS_BLOCK=$(build_targets_block "$JUDGE_API_TARGETS")
 NODE_EXPORTER_TARGETS_BLOCK=$(build_targets_block "$NODE_EXPORTER_TARGETS")
+ALERTMANAGER_TARGETS_BLOCK=$(build_targets_block "$ALERTMANAGER_TARGETS")
 
 tmp_config=$(mktemp)
 trap 'rm -f "$tmp_config"' EXIT
@@ -68,10 +70,12 @@ awk \
   -v prometheus_rules_path="$PROMETHEUS_RULES_PATH" \
   -v judge_api_scheme="$JUDGE_API_SCHEME" \
   -v judge_api_metrics_path="$JUDGE_API_METRICS_PATH" \
+  -v alertmanager_targets_block="$ALERTMANAGER_TARGETS_BLOCK" \
   -v prometheus_targets_block="$PROMETHEUS_TARGETS_BLOCK" \
   -v judge_api_targets_block="$JUDGE_API_TARGETS_BLOCK" \
   -v node_exporter_targets_block="$NODE_EXPORTER_TARGETS_BLOCK" \
   '
+  $0 == "__ALERTMANAGER_TARGETS_BLOCK__" { printf "%s", alertmanager_targets_block; next }
   $0 == "__PROMETHEUS_TARGETS_BLOCK__" { printf "%s", prometheus_targets_block; next }
   $0 == "__JUDGE_API_TARGETS_BLOCK__" { printf "%s", judge_api_targets_block; next }
   $0 == "__NODE_EXPORTER_TARGETS_BLOCK__" { printf "%s", node_exporter_targets_block; next }

@@ -1,0 +1,15 @@
+global:
+  resolve_timeout: 5m
+__SMTP_GLOBAL_BLOCK__
+
+route:
+  receiver: judge-notifications
+  group_by: ["alertname", "job", "severity"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 2h
+
+receivers:
+  - name: judge-notifications
+__EMAIL_CONFIG_BLOCK__
+__TELEGRAM_CONFIG_BLOCK__
