@@ -2,9 +2,9 @@
 title: "The PE Matrix"
 difficulty: "Easy"
 initialCode: |
-  import math
+  import torch
 
-  def build_pe_matrix(seq_len: int, d_model: int) -> list[list[float]]:
+  def build_pe_matrix(seq_len: int, d_model: int) -> torch.Tensor:
       # TODO: Build the full positional encoding matrix (seq_len x d_model).
       # Row i is the encoding for position i.
       # Compute frequencies once, then reuse for all positions.
@@ -17,6 +17,8 @@ arguments:
 executionSnippet: |
   build_pe_matrix(seq_len, d_model)
 visibleTestCases: 2
+dependencies:
+  - torch
 problemId: "build-gpt/04-positional-encoding/03-pe-matrix"
 ---
 

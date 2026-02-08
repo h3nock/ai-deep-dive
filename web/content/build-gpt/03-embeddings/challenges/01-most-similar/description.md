@@ -2,21 +2,23 @@
 title: "Most Similar Tokens"
 difficulty: "Medium"
 initialCode: |
-  import math
+  import torch
 
-  def most_similar(query_id: int, embedding_matrix: list[list[float]], k: int) -> list[int]:
+  def most_similar(query_id: int, embedding_matrix: torch.Tensor, k: int) -> list[int]:
       # TODO: Find the k most similar tokens to query_id
       pass
 arguments:
   - name: query_id
     type: int
   - name: embedding_matrix
-    type: list[list[float]]
+    type: torch.Tensor
   - name: k
     type: int
 executionSnippet: |
   most_similar(query_id, embedding_matrix, k)
 visibleTestCases: 2
+dependencies:
+  - torch
 problemId: "build-gpt/03-embeddings/01-most-similar"
 ---
 

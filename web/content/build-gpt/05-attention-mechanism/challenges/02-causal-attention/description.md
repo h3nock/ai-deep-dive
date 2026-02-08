@@ -2,31 +2,33 @@
 title: "Causal Attention"
 difficulty: "Medium"
 initialCode: |
-  import math
+  import torch
 
-  def causal_attention(Q: list[list[float]], K: list[list[float]], V: list[list[float]]) -> list[list[float]]:
+  def causal_attention(Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor) -> torch.Tensor:
       """
       Compute causal (masked) attention output.
       
       Args:
-          Q: Query matrix of shape (seq_len, d_k)
-          K: Key matrix of shape (seq_len, d_k)
-          V: Value matrix of shape (seq_len, d_v)
+          Q: Query tensor of shape (seq_len, d_k)
+          K: Key tensor of shape (seq_len, d_k)
+          V: Value tensor of shape (seq_len, d_v)
       
       Returns:
-          Output matrix of shape (seq_len, d_v)
+          Output tensor of shape (seq_len, d_v)
       """
       pass
 arguments:
   - name: Q
-    type: "list[list[float]]"
+    type: torch.Tensor
   - name: K
-    type: "list[list[float]]"
+    type: torch.Tensor
   - name: V
-    type: "list[list[float]]"
+    type: torch.Tensor
 executionSnippet: |
   causal_attention(Q, K, V)
 visibleTestCases: 2
+dependencies:
+  - torch
 problemId: "build-gpt/05-attention-mechanism/02-causal-attention"
 ---
 

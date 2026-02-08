@@ -26,9 +26,11 @@ classifiers = [
 ]
 dependencies = [
     "fastapi>=0.110.0",
+    "numpy>=1.26.0",
     "pydantic>=2.6.0",
     "prometheus_client>=0.20.0",
     "redis>=5.0.0",
+    "torch>=2.2.0",
     "uvicorn[standard]>=0.29.0",
 ]
 
@@ -48,3 +50,11 @@ where = ["src"]
 line-length = 100
 select = ["E", "F", "I", "N", "W", "UP"]
 ignore = ["E501"]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
