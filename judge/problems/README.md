@@ -78,3 +78,32 @@ from the judge VM at `/judge-tests/`. It exports:
 - `public_manifest.json`
 - `public_bundle.<version>.json`
 - `hidden_tests.json` (copied as-is)
+
+## Hidden test generation
+
+`judge/scripts/generate_hidden_tests.py` generates deterministic hidden tests for
+the current build-gpt challenges.
+
+Default behavior:
+- writes `hidden_tests.json` for each supported build-gpt problem
+- generates 20 hidden cases per problem (inside the 15-25 target range)
+- uses scenario buckets: boundary, adversarial, random, regression, stress
+- emits IDs with bucket prefixes (`b`, `a`, `r`, `g`, `s`)
+
+Generate files:
+
+```bash
+python judge/scripts/generate_hidden_tests.py
+```
+
+Check reproducibility in CI/local validation:
+
+```bash
+python judge/scripts/generate_hidden_tests.py --check
+```
+
+Generate one problem only:
+
+```bash
+python judge/scripts/generate_hidden_tests.py --only build-gpt/03-embeddings/01-most-similar
+```
