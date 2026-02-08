@@ -2,28 +2,164 @@
   "version": 1,
   "cases": [
     {
-      "id": "case2",
+      "id": "b01",
       "inputs": {
-        "ids": "[256, 111]",
-        "merges": "{(97, 98): 256}"
-      },
-      "expected": "abo"
-    },
-    {
-      "id": "case3",
-      "inputs": {
-        "ids": "[257, 99]",
-        "merges": "{(97, 97): 256, (256, 98): 257}"
-      },
-      "expected": "aabc"
-    },
-    {
-      "id": "case4",
-      "inputs": {
-        "ids": "[72, 101, 108, 108, 111]",
+        "ids": "[]",
         "merges": "{}"
       },
-      "expected": "Hello"
+      "expected": ""
+    },
+    {
+      "id": "b02",
+      "inputs": {
+        "ids": "[256]",
+        "merges": "{(104, 105): 256}"
+      },
+      "expected": "hi"
+    },
+    {
+      "id": "a01",
+      "inputs": {
+        "ids": "[257]",
+        "merges": "{(97, 98): 256, (256, 99): 257}"
+      },
+      "expected": "abc"
+    },
+    {
+      "id": "a02",
+      "inputs": {
+        "ids": "[258]",
+        "merges": "{(240, 159): 256, (256, 153): 257, (257, 130): 258}"
+      },
+      "expected": "🙂"
+    },
+    {
+      "id": "g01",
+      "inputs": {
+        "ids": "[259]",
+        "merges": "{(97, 110): 256, (98, 256): 257, (256, 97): 258, (257, 258): 259}"
+      },
+      "expected": "banana"
+    },
+    {
+      "id": "g02",
+      "inputs": {
+        "ids": "[263, 262, 259]",
+        "merges": "{(32, 119): 256, (101, 108): 257, (104, 257): 258, (108, 100): 259, (108, 111): 260, (111, 114): 261, (256, 261): 262, (258, 260): 263}"
+      },
+      "expected": "hello world"
+    },
+    {
+      "id": "g03",
+      "inputs": {
+        "ids": "[258]",
+        "merges": "{(97, 98): 256, (256, 256): 257, (257, 257): 258}"
+      },
+      "expected": "abababab"
+    },
+    {
+      "id": "g04",
+      "inputs": {
+        "ids": "[259]",
+        "merges": "{(67, 97): 256, (102, 195): 257, (256, 257): 258, (258, 169): 259}"
+      },
+      "expected": "Café"
+    },
+    {
+      "id": "s01",
+      "inputs": {
+        "ids": "[269]",
+        "merges": "{(97, 98): 256, (256, 256): 257, (257, 257): 258, (258, 258): 259, (259, 259): 260, (260, 260): 261, (261, 261): 262, (262, 262): 263, (263, 263): 264, (260, 258): 265, (261, 265): 266, (262, 266): 267, (263, 267): 268, (264, 268): 269}"
+      },
+      "expected": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab"
+    },
+    {
+      "id": "s02",
+      "inputs": {
+        "ids": "[277]",
+        "merges": "{(97, 116): 256, (101, 110): 257, (105, 111): 258, (105, 122): 259, (107, 257): 260, (111, 260): 261, (116, 261): 262, (256, 258): 263, (259, 263): 264, (262, 264): 265, (265, 110): 266, (32, 266): 267, (267, 267): 268, (268, 268): 269, (269, 269): 270, (270, 270): 271, (271, 271): 272, (272, 272): 273, (266, 273): 274, (268, 267): 275, (272, 275): 276, (274, 276): 277}"
+      },
+      "expected": "tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization"
+    },
+    {
+      "id": "s03",
+      "inputs": {
+        "ids": "[270]",
+        "merges": "{(130, 228): 256, (153, 256): 257, (159, 257): 258, (184, 173): 259, (240, 258): 260, (260, 259): 261, (261, 261): 262, (262, 262): 263, (263, 263): 264, (264, 264): 265, (265, 265): 266, (266, 266): 267, (267, 267): 268, (268, 263): 269, (268, 269): 270}"
+      },
+      "expected": "🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中"
+    },
+    {
+      "id": "s04",
+      "inputs": {
+        "ids": "[272, 271, 277]",
+        "merges": "{(109, 32): 256, (101, 256): 257, (105, 112): 258, (108, 111): 259, (114, 257): 260, (115, 117): 261, (258, 261): 262, (259, 260): 263, (263, 262): 264, (256, 264): 265, (265, 265): 266, (266, 266): 267, (267, 267): 268, (268, 268): 269, (269, 269): 270, (270, 270): 271, (264, 271): 272, (265, 109): 273, (266, 273): 274, (267, 274): 275, (268, 275): 276, (269, 276): 277}"
+      },
+      "expected": "lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum"
+    },
+    {
+      "id": "r01",
+      "inputs": {
+        "ids": "[98, 100, 265, 103, 32, 98, 99, 262, 98, 103, 98, 261, 256, 100, 100, 259, 100, 99, 101, 103, 102, 100, 257, 265, 266, 258, 260, 102, 264, 98, 260, 256, 103, 101, 97, 261, 99, 261, 102, 102, 262, 97, 259, 98, 258, 103, 97, 261, 32, 257, 102, 98, 102, 264, 101, 263, 259, 258, 102, 100, 265, 104, 99, 103, 32, 97, 100, 98, 100, 260, 259, 102, 260, 100, 101, 257, 102, 97, 103, 101, 99, 100, 103, 97, 98, 266, 99, 101, 98, 101, 263, 258, 257, 264, 100, 266, 256, 262, 97, 256, 263, 32]",
+        "merges": "{(32, 99): 256, (32, 101): 257, (99, 104): 258, (101, 100): 259, (103, 103): 260, (103, 104): 261, (32, 102): 262, (32, 103): 263, (32, 104): 264, (99, 102): 265, (104, 97): 266}"
+      },
+      "expected": "bdcfg bc fbgbgh cddeddcegfd ecfhachggf hbgg cgeaghcghff faedbchgagh  efbf he gedchfdcfhcg adbdggedfggde efagecdgabhacebe gch e hdha c fa c g "
+    },
+    {
+      "id": "r02",
+      "inputs": {
+        "ids": "[261, 99, 32, 104, 98, 103, 100, 98, 32, 256, 104, 32, 260, 97, 102, 97, 256, 263, 259, 260, 100, 258, 97, 100, 262, 97, 261, 99, 103, 99, 104, 100, 32, 257, 97, 256, 100, 257, 104, 101, 263, 103, 100, 262, 257, 104, 103, 256, 103, 32, 99, 102, 97, 265, 99, 258, 100, 99, 257, 100, 98, 97, 102, 102, 98, 32, 264, 260, 103, 102, 104, 265, 103, 259, 32, 104, 259, 101, 104, 258, 103, 102, 258, 262, 101, 261, 98, 102, 100, 99, 101, 104, 258, 98, 102, 103, 98, 256, 265, 257, 102, 263, 103, 261, 32, 100, 101, 104, 101, 99, 104, 97, 100, 256, 99, 104, 103, 101, 97, 103, 102, 259, 260, 103, 258, 102, 104, 102, 99, 103, 32, 264, 99, 257, 103, 104, 102, 264, 101, 259, 103]",
+        "merges": "{(104, 104): 256, (100, 97): 257, (100, 102): 258, (100, 104): 259, (98, 98): 260, (101, 102): 261, (32, 101): 262, (32, 102): 263, (98, 100): 264, (98, 101): 265}"
+      },
+      "expected": "efc hbgdb hhh bbafahh fdhbbddfad eaefcgchd daahhddahe fgd edahghhg cfabecdfdcdadbaffb bdbbgfhbegdh hdhehdfgfdf eeefbfdcehdfbfgbhhbedaf fgef dehechadhhchgeagfdhbbgdffhfcg bdcdaghfbdedhg"
+    },
+    {
+      "id": "r03",
+      "inputs": {
+        "ids": "[104, 100, 32, 262, 98, 99, 32, 103, 98, 101, 32, 258, 102, 257, 102, 256, 104, 101, 257, 100, 99, 104, 104, 103, 263, 101, 103, 258, 103, 32, 99, 103, 256, 260, 97, 261, 101, 100, 97, 256, 263, 103, 32, 97, 102, 103, 103, 102, 103, 103, 104, 103, 103, 99, 102, 259, 32, 98, 102, 99, 101, 98, 101, 104, 100, 104, 261, 103, 99, 260, 261, 102, 98, 100, 32, 103, 262, 99, 257, 97, 97, 259, 256, 100, 101, 99, 98, 258, 103, 100, 100, 101, 259, 101, 98, 97, 98, 104, 32, 101, 99, 258, 256, 102, 102, 262, 100, 98, 32, 97, 32, 257, 104, 97, 260]",
+        "merges": "{(104, 98): 256, (32, 104): 257, (97, 99): 258, (32, 102): 259, (97, 101): 260, (100, 102): 261, (100, 103): 262, (101, 101): 263}"
+      },
+      "expected": "hd dgbc gbe acf hfhbhe hdchhgeeegacg cghbaeadfedahbeeg afggfgghggcf f bfcebehdhdfgcaedffbd gdgc haa fhbdecbacgdde febabh ecachbffdgdb a  hhaae"
+    },
+    {
+      "id": "r04",
+      "inputs": {
+        "ids": "[32, 256, 32, 102, 99, 102, 256, 104, 32, 102, 103, 101, 102, 258, 100, 32, 103, 100, 99, 256, 103, 101, 257, 101, 257, 257, 100, 100, 102, 32, 100, 102, 98, 258, 259, 100, 256, 99, 100, 256, 32, 100, 99, 102, 32, 97, 98, 98, 258, 258, 32, 100, 100, 98, 100, 102, 104, 97, 97, 97, 102, 100, 104, 104, 104, 256, 259, 103, 100, 32, 32, 103, 259, 103, 98, 97, 102, 99, 99, 99, 97, 101, 100, 98, 103, 258, 257, 97, 256, 99, 101, 100, 99, 103, 98, 97, 257, 32, 98, 101, 97, 103, 98, 99, 103, 104, 100, 97, 101, 257, 103, 100, 256, 104, 97, 102, 99, 98, 259, 99, 97, 97, 103, 102, 98, 103, 103, 259, 258, 100, 98, 99, 256, 101, 104, 102, 101, 102, 98, 103, 97, 97, 104, 104, 99, 98, 99, 102, 98, 101, 104, 102, 32, 97]",
+        "merges": "{(99, 104): 256, (102, 102): 257, (98, 104): 258, (100, 101): 259}"
+      },
+      "expected": " ch fcfchh fgefbhd gdcchgeffeffffddf dfbbhdedchcdch dcf abbbhbh ddbdfhaaafdhhhchdegd  gdegbafcccaedbgbhffachcedcgbaff beagbcghdaeffgdchhafcbdecaagfbggdebhdbcchehfefbgaahhcbcfbehf a"
+    },
+    {
+      "id": "r05",
+      "inputs": {
+        "ids": "[259, 264, 266, 97, 100, 103, 267, 104, 260, 104, 262, 103, 263, 257, 102, 268, 104, 101, 257, 104, 100, 101, 266, 100, 269, 100, 263, 256, 103, 261, 262, 265, 98, 100, 258, 259, 32, 104, 256, 102, 104, 97, 256, 261, 32, 265, 32, 103, 260, 102, 100, 97, 257, 264, 99]",
+        "merges": "{(99, 103): 256, (99, 104): 257, (102, 98): 258, (32, 97): 259, (97, 103): 260, (97, 104): 261, (98, 101): 262, (98, 102): 263, (98, 103): 264, (102, 103): 265, (102, 258): 266, (104, 104): 267, (32, 98): 268, (32, 101): 269}"
+      },
+      "expected": " abgffbadghhhaghbegbfchf bhechhdeffbd edbfcggahbefgbdfb a hcgfhacgah fg gagfdachbgc"
+    },
+    {
+      "id": "r06",
+      "inputs": {
+        "ids": "[97, 100, 102, 97, 261, 32, 256, 100, 261, 104, 259, 99, 104, 103, 32, 103, 104, 102, 99, 101, 259, 258, 32, 102, 102, 98, 32, 101, 104, 32, 100, 32, 103, 99, 101, 97, 98, 102, 100, 102, 258, 98, 258, 99, 100, 260, 98, 32, 32, 103, 98, 98, 100, 104, 97, 259, 97, 32, 99, 100, 32, 98, 102, 32, 100, 98, 32, 102, 32, 257, 99, 257, 104, 256, 103, 103, 97, 101, 100, 260, 102, 256, 98, 104, 99, 98, 260, 104, 99, 104, 256, 103, 104, 261, 260, 99, 258, 32, 100, 258, 103, 103, 258, 102, 101, 100, 99, 101, 99, 100, 103, 100, 97, 103, 256, 97, 98, 100, 100, 32, 102, 98, 257, 261, 98, 103, 102, 100, 100, 32, 104, 32, 257, 100, 104, 257, 100, 98, 104, 257, 259, 102, 32, 256, 99, 32, 259, 102, 97, 101, 102, 103, 102, 32, 258, 100, 99, 102, 257, 101]",
+        "merges": "{(97, 97): 256, (101, 98): 257, (104, 100): 258, (99, 99): 259, (97, 104): 260, (99, 103): 261}"
+      },
+      "expected": "adfacg aadcghccchg ghfcecchd ffb eh d gceabfdfhdbhdcdahb  gbbdhacca cd bf db f ebcebhaaggaedahfaabhcbahhchaaghcgahchd dhdgghdfedcecdgdagaaabdd fbebcgbgfdd h ebdhebdbhebccf aac ccfaefgf hddcfebe"
+    },
+    {
+      "id": "r07",
+      "inputs": {
+        "ids": "[100, 102, 98, 256, 103, 104, 260, 100, 100, 99, 101, 102, 98, 104, 32, 262, 256, 98, 101, 101, 104, 256, 32, 103, 100, 97, 259, 103, 99, 32, 103, 259, 258, 97, 101, 99, 32, 98, 260, 259, 100, 102, 97, 100, 257, 103, 32, 262, 104, 102, 262, 100, 97, 32, 32, 257, 97, 101, 256, 103, 257, 261, 102, 103, 258, 98, 97, 98, 258, 261, 257, 258, 101, 101, 97, 98, 101, 99, 99, 261, 103, 97, 260, 102, 260, 102, 259, 32, 102, 32, 256, 97, 104, 103, 98, 100]",
+        "merges": "{(100, 98): 256, (97, 99): 257, (98, 102): 258, (100, 104): 259, (104, 99): 260, (32, 100): 261, (101, 103): 262}"
+      },
+      "expected": "dfbdbghhcddcefbh egdbbeehdb gdadhgc gdhbfaec bhcdhdfadacg eghfegda  acaedbgac dfgbfbabbf dacbfeeabecc dgahcfhcfdh f dbahgbd"
+    },
+    {
+      "id": "r08",
+      "inputs": {
+        "ids": "[256, 100, 103, 32, 97, 264, 260, 99, 273, 264, 102, 260, 267, 261, 102, 103, 97, 257, 260, 97, 101, 266, 100, 102, 104, 101, 260, 256, 261, 101, 97, 103, 102, 32, 258, 256, 103, 32, 100, 32, 258, 269, 259, 101, 257, 100, 270, 102, 100, 262, 32, 271, 268, 100, 259, 103, 101, 261, 257, 102, 100, 265, 99, 257, 258, 103, 102, 103, 262, 97, 265, 257, 103, 258, 99, 97, 97, 273, 256, 102, 271, 262, 102, 99, 263, 267, 103, 99, 98, 104, 32, 101, 102, 265, 270, 262, 102, 272, 268, 99, 103, 266, 97, 104, 263, 32, 267, 268, 103, 99, 269, 101, 102, 32, 263, 261, 103, 100, 100, 100, 101, 266, 104, 266, 264, 263, 259, 98, 270, 271, 262, 261, 272, 100, 258, 267, 102, 256, 272, 260, 256, 98, 99, 103, 100, 265, 259, 98, 32, 259, 97, 257, 256, 101, 98, 104, 99, 32, 104, 100, 32, 101, 98, 99, 256, 97, 101, 269, 258, 100, 259, 100]",
+        "merges": "{(104, 102): 256, (97, 98): 257, (100, 98): 258, (101, 99): 259, (32, 103): 260, (101, 103): 261, (104, 103): 262, (100, 97): 263, (102, 102): 264, (103, 103): 265, (104, 97): 266, (104, 98): 267, (32, 98): 268, (97, 99): 269, (100, 99): 270, (100, 104): 271, (101, 101): 272, (32, 99): 273}"
+      },
+      "expected": "hfdg aff gc cfff ghbegfgaab gaehadfhe ghfegeagf dbhfg d dbaceceabddcfdhg dh bdecgeegabfdggcabdbgfghgaggabgdbcaa chffdhhgfcdahbgcbh efggdchgfee bcghaahda hb bgcacef daeggdddehahhaffdaecbdcdhhgegeeddbhbfhfee ghfbcgdggecb ecaabhfebhc hd ebchfaeacdbdecd"
     }
   ]
 }
