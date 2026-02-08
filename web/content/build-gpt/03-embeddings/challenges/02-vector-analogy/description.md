@@ -2,9 +2,9 @@
 title: "Vector Analogy (A − B + C)"
 difficulty: "Medium"
 initialCode: |
-  import math
+  import torch
 
-  def solve_analogy(a_id: int, b_id: int, c_id: int, embedding_matrix: list[list[float]]) -> int:
+  def solve_analogy(a_id: int, b_id: int, c_id: int, embedding_matrix: torch.Tensor) -> int:
       # TODO: Solve the analogy using vector arithmetic
       pass
 arguments:
@@ -15,10 +15,12 @@ arguments:
   - name: c_id
     type: int
   - name: embedding_matrix
-    type: list[list[float]]
+    type: torch.Tensor
 executionSnippet: |
   solve_analogy(a_id, b_id, c_id, embedding_matrix)
 visibleTestCases: 2
+dependencies:
+  - torch
 problemId: "build-gpt/03-embeddings/02-vector-analogy"
 ---
 

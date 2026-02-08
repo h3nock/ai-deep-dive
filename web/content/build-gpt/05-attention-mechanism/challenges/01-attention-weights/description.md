@@ -2,28 +2,30 @@
 title: "Attention Weights"
 difficulty: "Easy"
 initialCode: |
-  import math
+  import torch
 
-  def attention_weights(Q: list[list[float]], K: list[list[float]]) -> list[list[float]]:
+  def attention_weights(Q: torch.Tensor, K: torch.Tensor) -> torch.Tensor:
       """
       Compute attention weights from Query and Key matrices.
       
       Args:
-          Q: Query matrix of shape (seq_len, d_k)
-          K: Key matrix of shape (seq_len, d_k)
+          Q: Query tensor of shape (seq_len, d_k)
+          K: Key tensor of shape (seq_len, d_k)
       
       Returns:
-          Attention weights of shape (seq_len, seq_len)
+          Attention weights tensor of shape (seq_len, seq_len)
       """
       pass
 arguments:
   - name: Q
-    type: "list[list[float]]"
+    type: torch.Tensor
   - name: K
-    type: "list[list[float]]"
+    type: torch.Tensor
 executionSnippet: |
   attention_weights(Q, K)
 visibleTestCases: 2
+dependencies:
+  - torch
 problemId: "build-gpt/05-attention-mechanism/01-attention-weights"
 ---
 
