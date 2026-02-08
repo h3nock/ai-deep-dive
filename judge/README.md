@@ -131,8 +131,8 @@ The API exposes Prometheus metrics at `http://127.0.0.1:8000/metrics`.
 The deploy nginx templates do not expose `/metrics` on the public domain.
 To aggregate worker + API metrics, set `PROMETHEUS_MULTIPROC_DIR` for all judge
 services and ensure the directory exists and is writable by the `judge` user.
-If Prometheus runs on a separate VM, scrape using private-network IP targets
-(for example `10.x.x.x`) instead of public endpoints.
+If Prometheus runs on a separate VM, expose metrics on a private-network
+endpoint and scrape that private endpoint (instead of exposing metrics publicly).
 
 Use a runtime path outside git, for example:
 
@@ -147,10 +147,15 @@ Deploy automation:
   files on startup.
 - `judge/deploy/monitoring/apply-prometheus.sh` applies repo-managed
   Prometheus config + alert rules.
+- `judge/deploy/monitoring/install-monitoring.sh` installs monitoring packages
+  and enables services (Prometheus/Alertmanager/Grafana, Ubuntu-only).
 - `judge/deploy/monitoring/apply-alertmanager.sh` applies Alertmanager routing
-  for Telegram/email notifications.
+  for Telegram/email notifications and enforces single-node runtime flags for
+  `prometheus-alertmanager`.
 - `judge/deploy/monitoring/apply-grafana.sh` provisions Grafana datasource and
   dashboard.
+- `judge/deploy/monitoring/send-test-alert.sh` injects a synthetic alert to
+  test Telegram/email delivery through Alertmanager.
 
 ## Problem format
 

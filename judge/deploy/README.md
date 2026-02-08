@@ -173,12 +173,29 @@ This directory is runtime scratch space (ephemeral shard files used by
 not committed. `judge/deploy/apply.sh` creates it and applies `judge:judge`
 ownership.
 
-### Install Prometheus + node-exporter
+### Install monitoring packages (Prometheus + Alertmanager + Grafana)
+
+`install-monitoring.sh` is Ubuntu-only. It exits early on non-Ubuntu distros.
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y prometheus prometheus-node-exporter
-sudo systemctl enable --now prometheus prometheus-node-exporter
+cd /opt/ai-deep-dive/judge
+sudo ./deploy/monitoring/install-monitoring.sh
+```
+
+This installer:
+
+- enables Ubuntu `universe` (needed for `prometheus-alertmanager` on some images)
+- adds Grafana APT repo + signing key
+- installs `prometheus`, `prometheus-node-exporter`, `prometheus-alertmanager`, `grafana`
+- enables and starts all monitoring services
+
+On non-Ubuntu systems, install equivalent packages/repos manually, then run:
+
+```bash
+cd /opt/ai-deep-dive/judge
+sudo ./deploy/monitoring/apply-prometheus.sh
+sudo ./deploy/monitoring/apply-alertmanager.sh
+sudo ./deploy/monitoring/apply-grafana.sh
 ```
 
 ### Apply repo-managed Prometheus config
@@ -188,6 +205,7 @@ Templates and rules are tracked in:
 - `judge/deploy/monitoring/prometheus.yml.template`
 - `judge/deploy/monitoring/judge-alerts.yml`
 - `judge/deploy/monitoring/apply-prometheus.sh`
+- `judge/deploy/monitoring/install-monitoring.sh`
 - `judge/deploy/monitoring/alertmanager.yml.template`
 - `judge/deploy/monitoring/alertmanager.env.example`
 - `judge/deploy/monitoring/apply-alertmanager.sh`
@@ -195,6 +213,7 @@ Templates and rules are tracked in:
 - `judge/deploy/monitoring/grafana-dashboard-provider.yml.template`
 - `judge/deploy/monitoring/grafana/judge-overview.json`
 - `judge/deploy/monitoring/apply-grafana.sh`
+- `judge/deploy/monitoring/send-test-alert.sh`
 
 Apply them on the monitoring host:
 
@@ -207,10 +226,19 @@ For a separate monitoring VM, set target lists explicitly:
 
 ```bash
 cd /opt/ai-deep-dive/judge
-sudo JUDGE_API_TARGETS=10.0.1.4:8000 \
+sudo JUDGE_API_TARGETS=10.0.1.4:80 \
   NODE_EXPORTER_TARGETS=10.0.1.4:9100 \
   ./deploy/monitoring/apply-prometheus.sh
 ```
+
+Topology notes:
+
+- Single-VM default: keep `JUDGE_API_TARGETS=127.0.0.1:8000` and scrape local loopback.
+- Separate monitoring VM: API service binds to `127.0.0.1` by default
+  (`judge/deploy/judge-api.service`), so remote Prometheus cannot scrape `:8000` directly.
+- For separate monitoring VM, expose API metrics through a private-network path
+  (for example nginx on private IP/interface, restricted to monitoring VM IP/CIDR),
+  then set `JUDGE_API_TARGETS` to that private endpoint.
 
 The script validates with `promtool` (if installed), writes
 `/etc/prometheus/prometheus.yml`, installs rule file
@@ -223,7 +251,6 @@ Alertmanager target is `127.0.0.1:9093`. Override with
 ### Install and apply Alertmanager (Telegram + email)
 
 ```bash
-sudo apt-get install -y prometheus-alertmanager
 sudo install -d -m 700 /etc/judge
 sudo cp /opt/ai-deep-dive/judge/deploy/monitoring/alertmanager.env.example /etc/judge/alertmanager.env
 sudo chmod 600 /etc/judge/alertmanager.env
@@ -235,6 +262,9 @@ sudo ./deploy/monitoring/apply-alertmanager.sh
 `apply-alertmanager.sh` loads `/etc/judge/alertmanager.env` by default, renders
 Alertmanager config, validates with `amtool` when available, then restarts
 `prometheus-alertmanager` (or `alertmanager` when that service name is used).
+When using `prometheus-alertmanager`, the script also enforces single-node
+runtime flags in `/etc/default/prometheus-alertmanager` to avoid gossip mesh
+startup failures.
 
 Telegram-only setup works by providing only Telegram variables.
 Email-only setup works by providing only email/SMTP variables.
@@ -242,7 +272,6 @@ Email-only setup works by providing only email/SMTP variables.
 ### Install and apply Grafana
 
 ```bash
-sudo apt-get install -y grafana
 cd /opt/ai-deep-dive/judge
 sudo ./deploy/monitoring/apply-grafana.sh
 ```
@@ -263,6 +292,20 @@ Then open:
 
 - `http://127.0.0.1:13000` (Grafana)
 - `http://127.0.0.1:9090` (Prometheus)
+
+### Test Telegram/email notifications
+
+Inject a synthetic alert directly into Alertmanager:
+
+```bash
+cd /opt/ai-deep-dive/judge
+sudo ./deploy/monitoring/send-test-alert.sh
+```
+
+Expected:
+
+- Telegram bot sends a message to `ALERTMANAGER_TELEGRAM_CHAT_ID` (if configured).
+- Email receiver gets a message (if configured).
 
 ## Scaling on a single VM
 
