@@ -52,6 +52,9 @@ if [[ -z "$ALERTMANAGER_RUN_GROUP" ]]; then
     ALERTMANAGER_RUN_GROUP=$(id -gn "$ALERTMANAGER_RUN_USER")
   fi
 fi
+ALERTMANAGER_WEB_LISTEN_ADDRESS=${ALERTMANAGER_WEB_LISTEN_ADDRESS:-127.0.0.1:9093}
+ALERTMANAGER_CLUSTER_LISTEN_ADDRESS=${ALERTMANAGER_CLUSTER_LISTEN_ADDRESS:-}
+ALERTMANAGER_STORAGE_PATH=${ALERTMANAGER_STORAGE_PATH:-/var/lib/prometheus/alertmanager}
 
 ALERTMANAGER_SMTP_SMARTHOST=${ALERTMANAGER_SMTP_SMARTHOST:-}
 ALERTMANAGER_SMTP_FROM=${ALERTMANAGER_SMTP_FROM:-}
@@ -143,6 +146,18 @@ if [[ -n "$ALERTMANAGER_RUN_GROUP" ]]; then
   install -m 640 -o root -g "$ALERTMANAGER_RUN_GROUP" "$tmp_config" "$ALERTMANAGER_CONFIG_PATH"
 else
   install -m 640 "$tmp_config" "$ALERTMANAGER_CONFIG_PATH"
+fi
+
+# Ubuntu/Debian prometheus-alertmanager package reads ARGS from
+# /etc/default/prometheus-alertmanager. Enforce single-node defaults here so
+# startup does not fail when cluster advertise address auto-detection breaks.
+if [[ "$ALERTMANAGER_SERVICE" == "prometheus-alertmanager" ]] && [[ -f /etc/default/prometheus-alertmanager ]]; then
+  ALERTMANAGER_RUNTIME_ARGS="--config.file=$ALERTMANAGER_CONFIG_PATH --storage.path=$ALERTMANAGER_STORAGE_PATH --web.listen-address=$ALERTMANAGER_WEB_LISTEN_ADDRESS --cluster.listen-address=$ALERTMANAGER_CLUSTER_LISTEN_ADDRESS"
+  if grep -q '^ARGS=' /etc/default/prometheus-alertmanager; then
+    sed -i "s|^ARGS=.*|ARGS=\"$ALERTMANAGER_RUNTIME_ARGS\"|" /etc/default/prometheus-alertmanager
+  else
+    printf 'ARGS="%s"\n' "$ALERTMANAGER_RUNTIME_ARGS" >> /etc/default/prometheus-alertmanager
+  fi
 fi
 
 systemctl enable --now "$ALERTMANAGER_SERVICE"
