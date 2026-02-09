@@ -15,7 +15,7 @@ from judge.metrics import (
 from judge.problems import ProblemRepository
 from judge.queue import RedisQueue
 from judge.results import ResultsStore
-from judge.runner import run_problem
+from judge.runner import IsolateConfig, run_problem
 
 
 def _parse_args() -> argparse.Namespace:
@@ -25,6 +25,22 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--consumer", required=True, help="Consumer name")
     parser.add_argument("--reclaim-interval", type=int, default=30, help="Seconds")
     return parser.parse_args()
+
+
+def _derive_isolate_box_id(stream: str, consumer: str) -> int:
+    suffix = consumer.rsplit("-", 1)[-1]
+    if not suffix.isdigit():
+        raise ValueError(f"Invalid worker consumer name for isolate box id: {consumer}")
+
+    index = int(suffix)
+    if index < 1 or index > 49:
+        raise ValueError(f"Worker index out of supported range (1-49): {consumer}")
+
+    if stream == "queue:light":
+        return index
+    if stream == "queue:torch":
+        return 50 + index
+    raise ValueError(f"Unsupported stream for isolate box mapping: {stream}")
 
 
 def main() -> None:
@@ -37,6 +53,16 @@ def main() -> None:
 
     results = ResultsStore(settings.results_db)
     problems = ProblemRepository(settings.problems_root)
+    isolate = IsolateConfig(
+        executable=settings.isolate_bin,
+        box_id=_derive_isolate_box_id(args.stream, args.consumer),
+        use_cgroups=settings.isolate_use_cgroups,
+        process_limit=settings.isolate_process_limit,
+        wall_time_extra_s=settings.isolate_wall_time_extra_s,
+        timeout_grace_s=settings.isolate_timeout_grace_s,
+        fsize_kb=settings.isolate_fsize_kb,
+        python_bin=settings.python_bin,
+    )
 
     last_reclaim = 0.0
 
@@ -86,7 +112,7 @@ def main() -> None:
                 settings.max_output_chars,
                 include_hidden=include_hidden,
                 detail_mode=detail_mode,
-                sandbox_cmd=settings.sandbox_cmd or None,
+                isolate=isolate,
             )
             if result.get("error"):
                 error_kind = result.get("error_kind", "internal")
