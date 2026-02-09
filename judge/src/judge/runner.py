@@ -323,7 +323,7 @@ def _resolve_python_for_isolate(isolate: IsolateConfig) -> tuple[str, list[str]]
     venv_root = python_bin.parent.parent
     pyvenv_cfg = venv_root / "pyvenv.cfg"
     if python_bin.parent.name == "bin" and pyvenv_cfg.exists():
-        return "/venv/bin/python", [f"--dir=/venv={venv_root}"]
+        return f"/venv/bin/{python_bin.name}", [f"--dir=/venv={venv_root}"]
 
     return str(python_bin), []
 
@@ -340,7 +340,11 @@ def _init_isolate_box(isolate: IsolateConfig) -> Path:
         if init.returncode == 0:
             raw = init.stdout.strip().splitlines()
             if raw:
-                return Path(raw[-1])
+                value = raw[-1].strip()
+                if value.isdigit():
+                    return Path(f"/var/local/lib/isolate/{isolate.box_id}/box")
+                path = Path(value)
+                return path if path.name == "box" else path / "box"
             return Path(f"/var/local/lib/isolate/{isolate.box_id}/box")
         _cleanup_isolate_box(isolate)
     raise RuntimeError(f"isolate init failed for box {isolate.box_id}: {init.stderr.strip()}")
