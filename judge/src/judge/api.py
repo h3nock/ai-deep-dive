@@ -15,7 +15,7 @@ from judge.metrics import (
     update_runtime_metrics,
 )
 from judge.models import JobResult, ProblemInfo, SubmitRequest, SubmitResponse
-from judge.problems import load_problem
+from judge.problems import ProblemRepository
 from judge.queue import RedisQueue
 from judge.results import ResultsStore
 
@@ -23,6 +23,7 @@ settings = load_settings()
 register_process_exit()
 queue = RedisQueue(settings.redis_url)
 results = ResultsStore(settings.results_db)
+problems = ProblemRepository(settings.problems_root)
 
 STREAMS = {
     "light": "queue:light",
@@ -88,7 +89,7 @@ async def metrics() -> Response:
 @app.get("/problems/{problem_id}", response_model=ProblemInfo)
 async def get_problem(problem_id: str) -> ProblemInfo:
     try:
-        problem = load_problem(problem_id, settings.problems_root)
+        problem = problems.get_route_info(problem_id)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Problem not found")
     return ProblemInfo(
@@ -103,7 +104,7 @@ async def get_problem(problem_id: str) -> ProblemInfo:
 @app.post("/submit", response_model=SubmitResponse)
 async def submit(request: SubmitRequest) -> SubmitResponse:
     try:
-        problem = load_problem(request.problem_id, settings.problems_root)
+        problem = problems.get_route_info(request.problem_id)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Problem not found")
 

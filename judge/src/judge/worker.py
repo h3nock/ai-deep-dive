@@ -12,7 +12,7 @@ from judge.metrics import (
     observe_job_queue_wait,
     register_process_exit,
 )
-from judge.problems import load_problem
+from judge.problems import ProblemRepository
 from judge.queue import RedisQueue
 from judge.results import ResultsStore
 from judge.runner import run_problem
@@ -36,6 +36,7 @@ def main() -> None:
     queue.ensure_group(args.stream, args.group)
 
     results = ResultsStore(settings.results_db)
+    problems = ProblemRepository(settings.problems_root)
 
     last_reclaim = 0.0
 
@@ -70,9 +71,15 @@ def main() -> None:
 
         try:
             results.mark_running(job_id)
-            problem = load_problem(problem_id, settings.problems_root)
-            include_hidden = kind != "run"
-            detail_mode = "all" if kind == "run" else "first_failure"
+            is_run = kind == "run"
+            if is_run:
+                problem = problems.get_for_run(problem_id)
+                include_hidden = False
+                detail_mode = "all"
+            else:
+                problem = problems.get_for_submit(problem_id)
+                include_hidden = True
+                detail_mode = "first_failure"
             result = run_problem(
                 problem,
                 code,
