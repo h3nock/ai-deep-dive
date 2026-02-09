@@ -197,6 +197,14 @@ class ProblemRepository:
         )
 
 
+_LEGACY_REPOS: dict[Path, ProblemRepository] = {}
+
+
 def load_problem(problem_id: str, root: Path) -> Problem:
     """Backward-compatible helper for existing imports."""
-    return ProblemRepository(root).get_for_submit(problem_id)
+    root_path = Path(root)
+    repo = _LEGACY_REPOS.get(root_path)
+    if repo is None:
+        repo = ProblemRepository(root_path)
+        _LEGACY_REPOS[root_path] = repo
+    return repo.get_for_submit(problem_id)
