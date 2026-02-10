@@ -1,6 +1,8 @@
 """Local runner for executing tests against user code."""
 
+import hashlib
 import json
+import py_compile
 import subprocess
 import sys
 import tempfile
@@ -182,6 +184,10 @@ def run_cases():
 if __name__ == "__main__":
     run_cases()
 '''
+_HARNESS_DIGEST = hashlib.sha256(HARNESS_CODE.encode("utf-8")).hexdigest()[:12]
+_RUNTIME_DIR = Path(tempfile.gettempdir()) / "judge-runtime"
+_HARNESS_HOST_PATH = _RUNTIME_DIR / f"harness-{_HARNESS_DIGEST}.py"
+_HARNESS_BYTECODE_PATH = _RUNTIME_DIR / f"harness-{_HARNESS_DIGEST}.pyc"
 
 
 @dataclass(frozen=True)
@@ -363,6 +369,35 @@ def _parse_isolate_meta(meta_path: Path) -> dict[str, str]:
     return parsed
 
 
+def _ensure_harness_file() -> Path:
+    if _HARNESS_HOST_PATH.exists():
+        return _HARNESS_HOST_PATH
+
+    _RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    temp_path = _HARNESS_HOST_PATH.with_suffix(".tmp")
+    temp_path.write_text(HARNESS_CODE)
+    temp_path.replace(_HARNESS_HOST_PATH)
+    return _HARNESS_HOST_PATH
+
+
+def _harness_entrypoint() -> str:
+    harness_source = _ensure_harness_file()
+    if not _HARNESS_BYTECODE_PATH.exists():
+        try:
+            py_compile.compile(
+                str(harness_source),
+                cfile=str(_HARNESS_BYTECODE_PATH),
+                doraise=True,
+            )
+        except (py_compile.PyCompileError, OSError):
+            return f"/runtime/{harness_source.name}"
+    return f"/runtime/{_HARNESS_BYTECODE_PATH.name}"
+
+
+def _isolate_meta_path(box_id: int) -> Path:
+    return _RUNTIME_DIR / f"isolate-meta-{box_id}.txt"
+
+
 def _run_in_isolate(
     problem: Problem,
     user_code: str,
@@ -370,54 +405,57 @@ def _run_in_isolate(
     isolate: IsolateConfig,
 ) -> tuple[int, str, str, dict[str, str]]:
     box_path = _init_isolate_box(isolate)
-    with tempfile.TemporaryDirectory() as host_tmp:
-        meta_path = Path(host_tmp) / "isolate.meta"
-        try:
-            (box_path / "main.py").write_text(user_code)
-            (box_path / "harness.py").write_text(HARNESS_CODE)
-            (box_path / "test_config.json").write_text(json.dumps(config))
+    meta_path = _isolate_meta_path(isolate.box_id)
+    harness_entrypoint = _harness_entrypoint()
+    try:
+        _RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+        if meta_path.exists():
+            meta_path.unlink()
+        (box_path / "main.py").write_text(user_code)
+        (box_path / "test_config.json").write_text(json.dumps(config))
 
-            wall_time = max(problem.time_limit_s + isolate.wall_time_extra_s, problem.time_limit_s + 1)
-            python_bin, dir_mounts = _resolve_python_for_isolate(isolate)
-            run_cmd = _isolate_base_cmd(isolate) + [
-                f"--time={problem.time_limit_s}",
-                f"--wall-time={wall_time}",
-                f"--mem={max(problem.memory_mb, 1) * 1024}",
-                f"--fsize={max(isolate.fsize_kb, 1)}",
-                f"--processes={max(isolate.process_limit, 1)}",
-                f"--meta={meta_path}",
-                "--stdout=stdout.txt",
-                "--stderr=stderr.txt",
+        wall_time = max(problem.time_limit_s + isolate.wall_time_extra_s, problem.time_limit_s + 1)
+        python_bin, dir_mounts = _resolve_python_for_isolate(isolate)
+        run_cmd = _isolate_base_cmd(isolate) + [
+            f"--time={problem.time_limit_s}",
+            f"--wall-time={wall_time}",
+            f"--mem={max(problem.memory_mb, 1) * 1024}",
+            f"--fsize={max(isolate.fsize_kb, 1)}",
+            f"--processes={max(isolate.process_limit, 1)}",
+            f"--meta={meta_path}",
+            "--stdout=stdout.txt",
+            "--stderr=stderr.txt",
+            f"--dir=/runtime={_RUNTIME_DIR}",
+        ]
+        if isolate.use_cgroups:
+            run_cmd.append(f"--cg-mem={max(problem.memory_mb, 1) * 1024}")
+        run_cmd.extend(dir_mounts)
+        run_cmd.extend(
+            [
+                "--run",
+                "--",
+                python_bin,
+                "-I",
+                harness_entrypoint,
             ]
-            if isolate.use_cgroups:
-                run_cmd.append(f"--cg-mem={max(problem.memory_mb, 1) * 1024}")
-            run_cmd.extend(dir_mounts)
-            run_cmd.extend(
-                [
-                    "--run",
-                    "--",
-                    python_bin,
-                    "-I",
-                    "harness.py",
-                ]
-            )
-            result = subprocess.run(
-                run_cmd,
-                cwd=box_path,
-                capture_output=True,
-                text=True,
-                timeout=wall_time + isolate.timeout_grace_s,
-                check=False,
-            )
+        )
+        result = subprocess.run(
+            run_cmd,
+            cwd=box_path,
+            capture_output=True,
+            text=True,
+            timeout=wall_time + isolate.timeout_grace_s,
+            check=False,
+        )
 
-            stdout_path = box_path / "stdout.txt"
-            stderr_path = box_path / "stderr.txt"
-            stdout = stdout_path.read_text() if stdout_path.exists() else result.stdout
-            stderr = stderr_path.read_text() if stderr_path.exists() else result.stderr
-            isolate_meta = _parse_isolate_meta(meta_path)
-            return result.returncode, stdout, stderr, isolate_meta
-        finally:
-            _cleanup_isolate_box(isolate)
+        stdout_path = box_path / "stdout.txt"
+        stderr_path = box_path / "stderr.txt"
+        stdout = stdout_path.read_text() if stdout_path.exists() else result.stdout
+        stderr = stderr_path.read_text() if stderr_path.exists() else result.stderr
+        isolate_meta = _parse_isolate_meta(meta_path)
+        return result.returncode, stdout, stderr, isolate_meta
+    finally:
+        _cleanup_isolate_box(isolate)
 
 
 def _isolate_failed_with_tle(meta: dict[str, str]) -> bool:
