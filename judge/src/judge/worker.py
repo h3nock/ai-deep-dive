@@ -1,7 +1,6 @@
 """Worker loop for executing judge jobs."""
 
 import argparse
-import json
 import time
 
 from judge.config import load_settings
@@ -67,23 +66,13 @@ def main() -> None:
     last_reclaim = 0.0
 
     def process_entry(msg_id: str, fields: dict[str, str]) -> None:
-        payload_raw = fields.get("payload")
-        if not payload_raw:
-            queue.ack(args.stream, args.group, msg_id)
-            return
-
-        try:
-            payload = json.loads(payload_raw)
-        except json.JSONDecodeError:
-            queue.ack(args.stream, args.group, msg_id)
-            return
-
-        job_id = payload.get("job_id", "")
-        problem_id = payload.get("problem_id", "")
-        kind = payload.get("kind", "submit")
-        code = payload.get("code", "")
-        profile = payload.get("profile", "") or "unknown"
-        created_at = payload.get("created_at")
+        job_id = fields.get("job_id", "")
+        problem_id = fields.get("problem_id", "")
+        kind = fields.get("kind", "submit")
+        code = fields.get("code", "")
+        profile = fields.get("profile", "") or "unknown"
+        created_at_raw = fields.get("created_at", "").strip()
+        created_at = int(created_at_raw) if created_at_raw.isdigit() else None
 
         if not job_id or not problem_id:
             queue.ack(args.stream, args.group, msg_id)
@@ -91,7 +80,7 @@ def main() -> None:
 
         started_at = time.perf_counter()
         job_started(profile, kind)
-        observe_job_queue_wait(profile, created_at if isinstance(created_at, (int, float)) else None)
+        observe_job_queue_wait(profile, created_at)
         status = "error"
         error_kind = "internal"
 
