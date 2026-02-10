@@ -305,5 +305,5 @@ Expected:
 
 ## Scaling on a single VM
 
-- Increase `JUDGE_LIGHT_WORKERS` and `JUDGE_TORCH_WORKERS` in `/etc/judge/judge.env`.
+- Increase `JUDGE_API_WORKERS`, `JUDGE_LIGHT_WORKERS`, and `JUDGE_TORCH_WORKERS` in `/etc/judge/judge.env`.
 - Re-run `judge/deploy/apply.sh` to start the new instances.

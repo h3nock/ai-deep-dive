@@ -102,6 +102,7 @@ Environment variables:
 - `JUDGE_MAX_OUTPUT_CHARS` (default: `2000`)
 - `JUDGE_JOB_CLAIM_IDLE_MS` (default: `30000`)
 - `JUDGE_JOB_CLAIM_COUNT` (default: `10`)
+- `JUDGE_API_WORKERS` (default: `1`)
 - `JUDGE_JOB_RETENTION_DAYS` (default: `7`)
 - `JUDGE_QUEUE_MAXLEN` (default: `10000`)
 - `JUDGE_QUEUE_STREAMS` (default: `queue:light,queue:torch`)
