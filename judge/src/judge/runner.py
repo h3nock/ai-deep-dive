@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 import py_compile
 import subprocess
 import sys
@@ -188,6 +189,18 @@ _HARNESS_DIGEST = hashlib.sha256(HARNESS_CODE.encode("utf-8")).hexdigest()[:12]
 _RUNTIME_DIR = Path(tempfile.gettempdir()) / "judge-runtime"
 _HARNESS_HOST_PATH = _RUNTIME_DIR / f"harness-{_HARNESS_DIGEST}.py"
 _HARNESS_BYTECODE_PATH = _RUNTIME_DIR / f"harness-{_HARNESS_DIGEST}.pyc"
+_THREAD_ENV_DEFAULTS = {
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1",
+    "PYTORCH_NUM_THREADS": "1",
+}
+_OPTIONAL_SANDBOX_ENV_VARS = (
+    "PYTORCH_JIT",
+    "CUDA_VISIBLE_DEVICES",
+)
 
 
 @dataclass(frozen=True)
@@ -398,6 +411,17 @@ def _isolate_meta_path(box_id: int) -> Path:
     return _RUNTIME_DIR / f"isolate-meta-{box_id}.txt"
 
 
+def _isolate_env_flags() -> list[str]:
+    flags: list[str] = []
+    for name, default in _THREAD_ENV_DEFAULTS.items():
+        value = os.getenv(name, default)
+        flags.append(f"--env={name}={value}")
+    for name in _OPTIONAL_SANDBOX_ENV_VARS:
+        if name in os.environ:
+            flags.append(f"--env={name}={os.environ[name]}")
+    return flags
+
+
 def _run_in_isolate(
     problem: Problem,
     user_code: str,
@@ -430,6 +454,7 @@ def _run_in_isolate(
         if isolate.use_cgroups:
             run_cmd.append(f"--cg-mem={max(problem.memory_mb, 1) * 1024}")
         run_cmd.extend(dir_mounts)
+        run_cmd.extend(_isolate_env_flags())
         run_cmd.extend(
             [
                 "--run",
