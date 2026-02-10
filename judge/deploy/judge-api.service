@@ -7,8 +7,9 @@ After=network.target redis.service judge-metrics-init.service
 Type=simple
 User=judge
 WorkingDirectory=/opt/ai-deep-dive/judge
+Environment=JUDGE_API_WORKERS=1
 EnvironmentFile=/etc/judge/judge.env
-ExecStart=/opt/ai-deep-dive/judge/.venv/bin/uvicorn judge.api:app --host 127.0.0.1 --port 8000 --workers 1
+ExecStart=/opt/ai-deep-dive/judge/.venv/bin/uvicorn judge.api:app --host 127.0.0.1 --port 8000 --workers ${JUDGE_API_WORKERS}
 Restart=always
 RestartSec=2
 

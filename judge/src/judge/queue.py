@@ -1,7 +1,6 @@
 """Redis Streams queue helpers."""
 
-import json
-from typing import Any, Optional
+from typing import Any
 
 import redis
 from redis.exceptions import ResponseError
@@ -19,15 +18,18 @@ class RedisQueue:
                 raise
 
     def enqueue(self, stream: str, payload: dict[str, Any]) -> str:
+        created_at = payload.get("created_at")
         fields = {
             "job_id": payload.get("job_id", ""),
             "problem_id": payload.get("problem_id", ""),
             "profile": payload.get("profile", ""),
-            "payload": json.dumps(payload),
+            "kind": payload.get("kind", "submit"),
+            "code": payload.get("code", ""),
+            "created_at": str(created_at) if created_at is not None else "",
         }
         return self.client.xadd(stream, fields)
 
-    def read(self, stream: str, group: str, consumer: str, block_ms: int = 5000) -> Optional[tuple[str, dict[str, str]]]:
+    def read(self, stream: str, group: str, consumer: str, block_ms: int = 5000) -> tuple[str, dict[str, str]] | None:
         entries = self.client.xreadgroup(
             group,
             consumer,

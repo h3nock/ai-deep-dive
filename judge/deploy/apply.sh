@@ -34,6 +34,10 @@ if [[ -n "$PROMETHEUS_MULTIPROC_DIR" ]]; then
   chown judge:judge "$PROMETHEUS_MULTIPROC_DIR"
 fi
 
+mkdir -p /var/local/lib/isolate
+chown root:root /var/local/lib/isolate
+chmod 0755 /var/local/lib/isolate
+
 mkdir -p "$JUDGE_TESTS_ROOT"
 chown -R judge:judge "$JUDGE_TESTS_ROOT"
 

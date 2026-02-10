@@ -63,35 +63,31 @@ appendfsync everysec
 maxmemory-policy noeviction
 ```
 
-## 6) Nsjail sandbox
+## 6) Isolate sandbox
 
-Install nsjail (Ubuntu):
-
-```bash
-sudo apt-get install -y nsjail uidmap
-sudo mkdir -p /etc/judge
-sudo cp judge/deploy/nsjail.cfg /etc/judge/nsjail.cfg
-```
-
-Nsjail uses user namespaces. Assign a subuid/subgid range to the judge user:
+Install isolate (Ubuntu):
 
 ```bash
-sudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 judge
+sudo apt-get install -y isolate
+sudo mkdir -p /var/local/lib/isolate
+sudo chown root:root /var/local/lib/isolate
+sudo chmod 0755 /var/local/lib/isolate
 ```
-
-Confirm `/etc/subuid` and `/etc/subgid` contain the same range for `judge`.
 
 Then set in `/etc/judge/judge.env`:
 
 ```
-JUDGE_SANDBOX_CMD_JSON=["nsjail","--config","/etc/judge/nsjail.cfg","--"]
+JUDGE_ISOLATE_BIN=/usr/bin/isolate
+JUDGE_ISOLATE_USE_CGROUPS=1
+JUDGE_ISOLATE_PROCESSES=64
+JUDGE_ISOLATE_WALL_TIME_EXTRA_S=2
+JUDGE_ISOLATE_TIMEOUT_GRACE_S=5
+JUDGE_ISOLATE_FSIZE_KB=1024
+JUDGE_PYTHON_BIN=/opt/ai-deep-dive/judge/.venv/bin/python
 ```
 
-Edit `/etc/judge/nsjail.cfg` to match the `outside_id` range from `/etc/subuid`
-and `/etc/subgid`. The rlimit values are in MB or seconds.
-
-The worker override installed in step 7 is required so nsjail can create user
-namespaces. Run that step after enabling nsjail.
+The worker override installed in step 7 keeps thread counts capped and allows
+worker access to isolate runtime paths.
 
 ## 7) Install systemd services
 
@@ -309,5 +305,5 @@ Expected:
 
 ## Scaling on a single VM
 
-- Increase `JUDGE_LIGHT_WORKERS` and `JUDGE_TORCH_WORKERS` in `/etc/judge/judge.env`.
+- Increase `JUDGE_API_WORKERS`, `JUDGE_LIGHT_WORKERS`, and `JUDGE_TORCH_WORKERS` in `/etc/judge/judge.env`.
 - Re-run `judge/deploy/apply.sh` to start the new instances.

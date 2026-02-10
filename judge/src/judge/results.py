@@ -2,23 +2,30 @@
 
 import json
 import sqlite3
+import threading
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class ResultsStore:
     def __init__(self, db_path: Path) -> None:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._thread_local = threading.local()
         self._init_db()
 
     def _connect(self) -> sqlite3.Connection:
+        conn = getattr(self._thread_local, "conn", None)
+        if conn is not None:
+            return conn
+
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA synchronous=NORMAL")
         conn.execute("PRAGMA busy_timeout=5000")
+        self._thread_local.conn = conn
         return conn
 
     def _init_db(self) -> None:
@@ -57,7 +64,7 @@ class ResultsStore:
         problem_id: str,
         profile: str,
         kind: str,
-        created_at: Optional[int] = None,
+        created_at: int | None = None,
     ) -> None:
         now = created_at if created_at is not None else int(time.time())
         with self._connect() as conn:
@@ -97,8 +104,8 @@ class ResultsStore:
         self,
         job_id: str,
         error: str,
-        result: Optional[dict[str, Any]] = None,
-        error_kind: Optional[str] = None,
+        result: dict[str, Any] | None = None,
+        error_kind: str | None = None,
     ) -> None:
         now = int(time.time())
         result_json = json.dumps(result) if result else None
@@ -112,7 +119,7 @@ class ResultsStore:
                 ("error", now, result_json, error, error_kind, job_id),
             )
 
-    def get_job(self, job_id: str) -> Optional[dict[str, Any]]:
+    def get_job(self, job_id: str) -> dict[str, Any] | None:
         with self._connect() as conn:
             row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
         if not row:

@@ -1,15 +1,16 @@
 """Local runner for executing tests against user code."""
 
+import hashlib
 import json
-import os
+import py_compile
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from judge.problems import Problem, TestCase
-
+from judge.problems import Problem
 
 HARNESS_CODE = '''
 import json
@@ -183,6 +184,22 @@ def run_cases():
 if __name__ == "__main__":
     run_cases()
 '''
+_HARNESS_DIGEST = hashlib.sha256(HARNESS_CODE.encode("utf-8")).hexdigest()[:12]
+_RUNTIME_DIR = Path(tempfile.gettempdir()) / "judge-runtime"
+_HARNESS_HOST_PATH = _RUNTIME_DIR / f"harness-{_HARNESS_DIGEST}.py"
+_HARNESS_BYTECODE_PATH = _RUNTIME_DIR / f"harness-{_HARNESS_DIGEST}.pyc"
+
+
+@dataclass(frozen=True)
+class IsolateConfig:
+    executable: str
+    box_id: int
+    use_cgroups: bool = True
+    process_limit: int = 64
+    wall_time_extra_s: int = 2
+    timeout_grace_s: int = 5
+    fsize_kb: int = 1024
+    python_bin: str = sys.executable
 
 
 def _serialize_expected(value: Any) -> tuple[Any, bool]:
@@ -284,11 +301,169 @@ def _summarize_results(
     return summary, first_failed
 
 
-def _with_sandbox_cwd(sandbox_cmd: list[str], cwd: Path) -> list[str]:
-    if "--" not in sandbox_cmd:
-        return sandbox_cmd
-    idx = sandbox_cmd.index("--")
-    return sandbox_cmd[:idx] + ["--cwd", str(cwd)] + sandbox_cmd[idx:]
+def _build_error_summary(problem: Problem, include_hidden: bool, total_cases: int) -> dict[str, int]:
+    return {
+        "total": total_cases,
+        "passed": 0,
+        "failed": total_cases,
+        "public_total": total_cases if not include_hidden else len(problem.public_tests),
+        "public_passed": 0,
+        "hidden_total": 0 if not include_hidden else len(problem.hidden_tests),
+        "hidden_passed": 0,
+    }
+
+
+def _isolate_base_cmd(isolate: IsolateConfig) -> list[str]:
+    cmd = [isolate.executable]
+    if isolate.use_cgroups:
+        cmd.append("--cg")
+    cmd.append(f"--box-id={isolate.box_id}")
+    return cmd
+
+
+def _resolve_python_for_isolate(isolate: IsolateConfig) -> tuple[str, list[str]]:
+    python_bin = Path(isolate.python_bin)
+    if not python_bin.is_absolute():
+        return isolate.python_bin, []
+
+    venv_root = python_bin.parent.parent
+    pyvenv_cfg = venv_root / "pyvenv.cfg"
+    if python_bin.parent.name == "bin" and pyvenv_cfg.exists():
+        return f"/venv/bin/{python_bin.name}", [f"--dir=/venv={venv_root}"]
+
+    return str(python_bin), []
+
+
+def _cleanup_isolate_box(isolate: IsolateConfig) -> None:
+    cleanup_cmd = _isolate_base_cmd(isolate) + ["--cleanup"]
+    subprocess.run(cleanup_cmd, capture_output=True, text=True, check=False)
+
+
+def _init_isolate_box(isolate: IsolateConfig) -> Path:
+    init_cmd = _isolate_base_cmd(isolate) + ["--init"]
+    for _ in range(2):
+        init = subprocess.run(init_cmd, capture_output=True, text=True, check=False)
+        if init.returncode == 0:
+            raw = init.stdout.strip().splitlines()
+            if raw:
+                value = raw[-1].strip()
+                if value.isdigit():
+                    return Path(f"/var/local/lib/isolate/{isolate.box_id}/box")
+                path = Path(value)
+                return path if path.name == "box" else path / "box"
+            return Path(f"/var/local/lib/isolate/{isolate.box_id}/box")
+        _cleanup_isolate_box(isolate)
+    raise RuntimeError(f"isolate init failed for box {isolate.box_id}: {init.stderr.strip()}")
+
+
+def _parse_isolate_meta(meta_path: Path) -> dict[str, str]:
+    if not meta_path.exists():
+        return {}
+
+    parsed: dict[str, str] = {}
+    for line in meta_path.read_text().splitlines():
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        parsed[key.strip()] = value.strip()
+    return parsed
+
+
+def _ensure_harness_file() -> Path:
+    if _HARNESS_HOST_PATH.exists():
+        return _HARNESS_HOST_PATH
+
+    _RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+    temp_path = _HARNESS_HOST_PATH.with_suffix(".tmp")
+    temp_path.write_text(HARNESS_CODE)
+    temp_path.replace(_HARNESS_HOST_PATH)
+    return _HARNESS_HOST_PATH
+
+
+def _harness_entrypoint() -> str:
+    harness_source = _ensure_harness_file()
+    if not _HARNESS_BYTECODE_PATH.exists():
+        try:
+            py_compile.compile(
+                str(harness_source),
+                cfile=str(_HARNESS_BYTECODE_PATH),
+                doraise=True,
+            )
+        except (py_compile.PyCompileError, OSError):
+            return f"/runtime/{harness_source.name}"
+    return f"/runtime/{_HARNESS_BYTECODE_PATH.name}"
+
+
+def _isolate_meta_path(box_id: int) -> Path:
+    return _RUNTIME_DIR / f"isolate-meta-{box_id}.txt"
+
+
+def _run_in_isolate(
+    problem: Problem,
+    user_code: str,
+    config: dict[str, Any],
+    isolate: IsolateConfig,
+) -> tuple[int, str, str, dict[str, str]]:
+    box_path = _init_isolate_box(isolate)
+    meta_path = _isolate_meta_path(isolate.box_id)
+    harness_entrypoint = _harness_entrypoint()
+    try:
+        _RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
+        if meta_path.exists():
+            meta_path.unlink()
+        (box_path / "main.py").write_text(user_code)
+        (box_path / "test_config.json").write_text(json.dumps(config))
+
+        wall_time = max(problem.time_limit_s + isolate.wall_time_extra_s, problem.time_limit_s + 1)
+        python_bin, dir_mounts = _resolve_python_for_isolate(isolate)
+        run_cmd = _isolate_base_cmd(isolate) + [
+            f"--time={problem.time_limit_s}",
+            f"--wall-time={wall_time}",
+            f"--mem={max(problem.memory_mb, 1) * 1024}",
+            f"--fsize={max(isolate.fsize_kb, 1)}",
+            f"--processes={max(isolate.process_limit, 1)}",
+            f"--meta={meta_path}",
+            "--stdout=stdout.txt",
+            "--stderr=stderr.txt",
+            f"--dir=/runtime={_RUNTIME_DIR}",
+        ]
+        if isolate.use_cgroups:
+            run_cmd.append(f"--cg-mem={max(problem.memory_mb, 1) * 1024}")
+        run_cmd.extend(dir_mounts)
+        run_cmd.extend(
+            [
+                "--run",
+                "--",
+                python_bin,
+                "-I",
+                harness_entrypoint,
+            ]
+        )
+        result = subprocess.run(
+            run_cmd,
+            cwd=box_path,
+            capture_output=True,
+            text=True,
+            timeout=wall_time + isolate.timeout_grace_s,
+            check=False,
+        )
+
+        stdout_path = box_path / "stdout.txt"
+        stderr_path = box_path / "stderr.txt"
+        stdout = stdout_path.read_text() if stdout_path.exists() else result.stdout
+        stderr = stderr_path.read_text() if stderr_path.exists() else result.stderr
+        isolate_meta = _parse_isolate_meta(meta_path)
+        return result.returncode, stdout, stderr, isolate_meta
+    finally:
+        _cleanup_isolate_box(isolate)
+
+
+def _isolate_failed_with_tle(meta: dict[str, str]) -> bool:
+    return meta.get("status") == "TO"
+
+
+def _isolate_failed_with_mle(meta: dict[str, str]) -> bool:
+    return meta.get("cg-oom-killed") not in {None, "", "0"}
 
 
 def run_problem(
@@ -297,86 +472,66 @@ def run_problem(
     max_output_chars: int,
     include_hidden: bool = True,
     detail_mode: str = "all",
-    sandbox_cmd: list[str] | None = None,
+    isolate: IsolateConfig | None = None,
 ) -> dict[str, Any]:
+    if isolate is None:
+        raise ValueError("isolate configuration is required")
+
     config = _build_test_config(problem, include_hidden)
+    total_cases = len(config["cases"])
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        if sandbox_cmd:
-            os.chmod(tmpdir, 0o777)
-        tmpdir_path = Path(tmpdir)
-        (tmpdir_path / "main.py").write_text(user_code)
-        (tmpdir_path / "harness.py").write_text(HARNESS_CODE)
-        (tmpdir_path / "test_config.json").write_text(json.dumps(config))
+    try:
+        returncode, stdout, stderr, isolate_meta = _run_in_isolate(problem, user_code, config, isolate)
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "Time Limit Exceeded",
+            "summary": _build_error_summary(problem, include_hidden, total_cases),
+            "tests": [],
+            "error": f"Time Limit Exceeded ({problem.time_limit_s}s)",
+            "error_kind": "user",
+        }
+    except Exception as exc:
+        return {
+            "status": "Runtime Error",
+            "summary": _build_error_summary(problem, include_hidden, total_cases),
+            "tests": [],
+            "error": f"Runner failed: {exc}",
+            "error_kind": "internal",
+        }
 
-        command = [sys.executable, "-I", "harness.py"]
-        if sandbox_cmd:
-            command = _with_sandbox_cwd(sandbox_cmd, tmpdir_path) + command
-
-        try:
-            result = subprocess.run(
-                command,
-                cwd=tmpdir_path,
-                capture_output=True,
-                text=True,
-                timeout=problem.time_limit_s,
-            )
-        except subprocess.TimeoutExpired:
-            total_cases = len(config["cases"])
-            summary = {
-                "total": total_cases,
-                "passed": 0,
-                "failed": total_cases,
-                "public_total": total_cases if not include_hidden else len(problem.public_tests),
-                "public_passed": 0,
-                "hidden_total": 0 if not include_hidden else len(problem.hidden_tests),
-                "hidden_passed": 0,
-            }
+    if returncode != 0:
+        if _isolate_failed_with_tle(isolate_meta):
             return {
                 "status": "Time Limit Exceeded",
-                "summary": summary,
+                "summary": _build_error_summary(problem, include_hidden, total_cases),
                 "tests": [],
                 "error": f"Time Limit Exceeded ({problem.time_limit_s}s)",
                 "error_kind": "user",
             }
-
-    if result.returncode != 0:
-        total_cases = len(config["cases"])
-        summary = {
-            "total": total_cases,
-            "passed": 0,
-            "failed": total_cases,
-            "public_total": total_cases if not include_hidden else len(problem.public_tests),
-            "public_passed": 0,
-            "hidden_total": 0 if not include_hidden else len(problem.hidden_tests),
-            "hidden_passed": 0,
-        }
+        if _isolate_failed_with_mle(isolate_meta):
+            return {
+                "status": "Memory Limit Exceeded",
+                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "tests": [],
+                "error": f"Memory Limit Exceeded ({problem.memory_mb}MB)",
+                "error_kind": "user",
+            }
         return {
             "status": "Runtime Error",
-            "summary": summary,
+            "summary": _build_error_summary(problem, include_hidden, total_cases),
             "tests": [],
-            "error": result.stderr.strip() or "Runner failed",
+            "error": stderr.strip() or "Runner failed",
             "error_kind": "internal",
         }
 
     try:
-        tests_raw = json.loads(result.stdout)
+        tests_raw = json.loads(stdout)
     except json.JSONDecodeError:
-        total_cases = len(config["cases"])
-        summary = {
-            "total": total_cases,
-            "passed": 0,
-            "failed": total_cases,
-            "public_total": total_cases if not include_hidden else len(problem.public_tests),
-            "public_passed": 0,
-            "hidden_total": 0 if not include_hidden else len(problem.hidden_tests),
-            "hidden_passed": 0,
-        }
         return {
             "status": "Runtime Error",
-            "summary": summary,
+            "summary": _build_error_summary(problem, include_hidden, total_cases),
             "tests": [],
-            "error": f"Invalid runner output. Stdout: {result.stdout}\nStderr: {result.stderr}",
+            "error": f"Invalid runner output. Stdout: {stdout}\nStderr: {stderr}",
             "error_kind": "internal",
         }
 

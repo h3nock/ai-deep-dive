@@ -36,6 +36,15 @@ class Problem:
     hidden_tests: list[TestCase]
 
 
+@dataclass(frozen=True)
+class ProblemRouteInfo:
+    id: str
+    version: str
+    requires_torch: bool
+    time_limit_s: int
+    memory_mb: int
+
+
 def _safe_problem_path(root: Path, problem_id: str) -> Path:
     if problem_id.startswith("/") or ".." in problem_id.split("/"):
         raise ValueError("Invalid problem id")
@@ -49,6 +58,15 @@ def _parse_expected(value: Any) -> Any:
         except json.JSONDecodeError:
             return value
     return value
+
+
+def _comparison_from_raw(raw: dict[str, Any] | None) -> Comparison:
+    comparison_raw = raw if isinstance(raw, dict) else {}
+    return Comparison(
+        type=comparison_raw.get("type", "exact"),
+        rtol=float(comparison_raw.get("rtol", 1e-5)),
+        atol=float(comparison_raw.get("atol", 1e-8)),
+    )
 
 
 def _case_from_raw(raw: dict[str, Any], hidden_override: bool | None = None) -> TestCase:
@@ -92,42 +110,88 @@ def _case_from_raw(raw: dict[str, Any], hidden_override: bool | None = None) -> 
     )
 
 
-def _load_tests(path: Path, is_hidden_tests: bool) -> list[TestCase]:
-    if not path.exists():
-        return []
-    raw = json.loads(path.read_text())
-    cases = raw.get("cases", raw) if isinstance(raw, dict) else raw
-    parsed: list[TestCase] = []
-    for item in cases:
-        parsed.append(_case_from_raw(item, hidden_override=is_hidden_tests))
-    return parsed
+def _file_signature(path: Path) -> tuple[int, int]:
+    stat = path.stat()
+    return (stat.st_mtime_ns, stat.st_size)
 
 
-def load_problem(problem_id: str, root: Path) -> Problem:
-    problem_dir = _safe_problem_path(root, problem_id)
-    manifest_path = problem_dir / "manifest.json"
-    if not manifest_path.exists():
-        raise FileNotFoundError(f"manifest.json not found for {problem_id}")
+class ProblemRepository:
+    def __init__(self, root: Path) -> None:
+        self.root = Path(root)
+        self._manifest_cache: dict[str, tuple[tuple[int, int], dict[str, Any]]] = {}
+        self._tests_cache: dict[tuple[str, bool], tuple[tuple[int, int], tuple[TestCase, ...]]] = {}
 
-    manifest = json.loads(manifest_path.read_text())
-    comparison_raw = manifest.get("comparison", {})
-    comparison = Comparison(
-        type=comparison_raw.get("type", "exact"),
-        rtol=float(comparison_raw.get("rtol", 1e-5)),
-        atol=float(comparison_raw.get("atol", 1e-8)),
-    )
+    def get_route_info(self, problem_id: str) -> ProblemRouteInfo:
+        manifest = self._load_manifest(problem_id)
+        return ProblemRouteInfo(
+            id=str(manifest.get("id", problem_id)),
+            version=str(manifest.get("version", "v1")),
+            requires_torch=bool(manifest.get("requires_torch", False)),
+            time_limit_s=int(manifest.get("time_limit_s", 10)),
+            memory_mb=int(manifest.get("memory_mb", 1024)),
+        )
 
-    public_tests = _load_tests(problem_dir / "public_tests.json", is_hidden_tests=False)
-    hidden_tests = _load_tests(problem_dir / "hidden_tests.json", is_hidden_tests=True)
+    def get_for_run(self, problem_id: str) -> Problem:
+        return self._build_problem(problem_id, include_hidden=False)
 
-    return Problem(
-        id=manifest.get("id", problem_id),
-        version=str(manifest.get("version", "v1")),
-        runner=manifest.get("runner", ""),
-        requires_torch=bool(manifest.get("requires_torch", False)),
-        time_limit_s=int(manifest.get("time_limit_s", 10)),
-        memory_mb=int(manifest.get("memory_mb", 1024)),
-        comparison=comparison,
-        public_tests=public_tests,
-        hidden_tests=hidden_tests,
-    )
+    def get_for_submit(self, problem_id: str) -> Problem:
+        return self._build_problem(problem_id, include_hidden=True)
+
+    def _problem_dir(self, problem_id: str) -> Path:
+        return _safe_problem_path(self.root, problem_id)
+
+    def _load_manifest(self, problem_id: str) -> dict[str, Any]:
+        manifest_path = self._problem_dir(problem_id) / "manifest.json"
+        if not manifest_path.exists():
+            raise FileNotFoundError(f"manifest.json not found for {problem_id}")
+
+        sig = _file_signature(manifest_path)
+        cached = self._manifest_cache.get(problem_id)
+        if cached and cached[0] == sig:
+            return cached[1]
+
+        manifest = json.loads(manifest_path.read_text())
+        self._manifest_cache[problem_id] = (sig, manifest)
+        return manifest
+
+    def _load_tests(self, problem_id: str, is_hidden_tests: bool) -> list[TestCase]:
+        cache_key = (problem_id, is_hidden_tests)
+        test_file = "hidden_tests.json" if is_hidden_tests else "public_tests.json"
+        tests_path = self._problem_dir(problem_id) / test_file
+
+        if not tests_path.exists():
+            self._tests_cache.pop(cache_key, None)
+            return []
+
+        sig = _file_signature(tests_path)
+        cached = self._tests_cache.get(cache_key)
+        if cached and cached[0] == sig:
+            return list(cached[1])
+
+        raw = json.loads(tests_path.read_text())
+        cases = raw.get("cases", raw) if isinstance(raw, dict) else raw
+        parsed: list[TestCase] = []
+        for item in cases:
+            parsed.append(_case_from_raw(item, hidden_override=is_hidden_tests))
+
+        frozen = tuple(parsed)
+        self._tests_cache[cache_key] = (sig, frozen)
+        return list(frozen)
+
+    def _build_problem(self, problem_id: str, include_hidden: bool) -> Problem:
+        manifest = self._load_manifest(problem_id)
+        comparison = _comparison_from_raw(manifest.get("comparison"))
+        public_tests = self._load_tests(problem_id, is_hidden_tests=False)
+        hidden_tests = self._load_tests(problem_id, is_hidden_tests=True) if include_hidden else []
+
+        return Problem(
+            id=str(manifest.get("id", problem_id)),
+            version=str(manifest.get("version", "v1")),
+            runner=manifest.get("runner", ""),
+            requires_torch=bool(manifest.get("requires_torch", False)),
+            time_limit_s=int(manifest.get("time_limit_s", 10)),
+            memory_mb=int(manifest.get("memory_mb", 1024)),
+            comparison=comparison,
+            public_tests=public_tests,
+            hidden_tests=hidden_tests,
+        )

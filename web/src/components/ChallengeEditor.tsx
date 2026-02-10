@@ -824,7 +824,7 @@ export function ChallengeEditor({
           const result = await waitForJudgeResult(submit.job_id, {
             timeoutMs: 120000,
             intervalFn: (_attempt, elapsedMs) => {
-              if (elapsedMs < 10000) return 400;
+              if (elapsedMs < 10000) return 200;
               if (elapsedMs < 30000) return 1000;
               if (elapsedMs < 120000) return 2000;
               return 5000;

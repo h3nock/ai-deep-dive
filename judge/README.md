@@ -102,24 +102,26 @@ Environment variables:
 - `JUDGE_MAX_OUTPUT_CHARS` (default: `2000`)
 - `JUDGE_JOB_CLAIM_IDLE_MS` (default: `30000`)
 - `JUDGE_JOB_CLAIM_COUNT` (default: `10`)
+- `JUDGE_API_WORKERS` (default: `1`)
 - `JUDGE_JOB_RETENTION_DAYS` (default: `7`)
 - `JUDGE_QUEUE_MAXLEN` (default: `10000`)
 - `JUDGE_QUEUE_STREAMS` (default: `queue:light,queue:torch`)
 - `JUDGE_BACKUP_DIR` (default: `judge/data/backups`)
 - `JUDGE_BACKUP_RETENTION_DAYS` (default: `7`)
 - `JUDGE_ALLOWED_ORIGINS` (comma-separated)
-- `JUDGE_SANDBOX_CMD_JSON` (optional sandbox wrapper)
+- `JUDGE_ISOLATE_BIN` (default: `/usr/bin/isolate`)
+- `JUDGE_ISOLATE_USE_CGROUPS` (default: `1`)
+- `JUDGE_ISOLATE_PROCESSES` (default: `64`)
+- `JUDGE_ISOLATE_WALL_TIME_EXTRA_S` (default: `2`)
+- `JUDGE_ISOLATE_TIMEOUT_GRACE_S` (default: `5`)
+- `JUDGE_ISOLATE_FSIZE_KB` (default: `1024`)
+- `JUDGE_PYTHON_BIN` (default: worker interpreter path)
 - `PROMETHEUS_MULTIPROC_DIR` (optional, for API + worker metric aggregation)
-
-Sandbox example (nsjail):
-
-```bash
-JUDGE_SANDBOX_CMD_JSON='["nsjail","--config","/etc/judge/nsjail.cfg","--"]'
-```
 
 ## Notes
 
-- OS-level sandboxing is optional. Enable it on the VM with `JUDGE_SANDBOX_CMD_JSON`.
+- The judge executes every run/submit inside isolate.
+- Worker consumer names must follow the template services (`light-%i`, `torch-%i`).
 - Hidden tests are not bundled for the browser. On submit, the first failing
   hidden test is returned for debugging.
 - Production setup lives in `judge/deploy/`. See the deploy README for steps.
