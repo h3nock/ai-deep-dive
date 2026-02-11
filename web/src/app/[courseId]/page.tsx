@@ -12,7 +12,9 @@ import { isSafePathSegment } from "@/lib/path-safety";
 import fs from "fs";
 import path from "path";
 
-export const revalidate = 300;
+export const dynamic = "force-static";
+export const dynamicParams = false;
+export const revalidate = false;
 
 export async function generateStaticParams() {
   return listCollections().map((courseId) => ({ courseId }));

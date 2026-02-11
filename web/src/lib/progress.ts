@@ -92,8 +92,14 @@ export function isStepComplete(courseId: string, step: number): boolean {
 }
 
 // Update current step (for "continue where you left off")
-export function updateCurrentStep(courseId: string, step: number): void {
-  const progress = getCourseProgress(courseId) || {
+// Returns true only when persisted data actually changes.
+export function updateCurrentStep(courseId: string, step: number): boolean {
+  const existing = getCourseProgress(courseId);
+  if (existing && existing.currentStep === step) {
+    return false;
+  }
+
+  const progress = existing || {
     completedSteps: [],
     lastVisited: new Date().toISOString(),
     currentStep: step,
@@ -102,6 +108,7 @@ export function updateCurrentStep(courseId: string, step: number): void {
   progress.currentStep = step;
   progress.lastVisited = new Date().toISOString();
   saveProgress(courseId, progress);
+  return true;
 }
 
 // Get completion percentage
