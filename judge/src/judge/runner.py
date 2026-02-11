@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import math
 import os
 import py_compile
 import subprocess
@@ -113,10 +114,18 @@ def run_cases():
     runner_expression = config.get("runner", "")
     comparison_default = config.get("comparison", {"type": "exact"})
 
-    exec_globals = {}
     try:
-        compiled = compile(user_code, "solution.py", "exec")
-        exec(compiled, exec_globals)
+        compiled_runner = compile(runner_expression, "runner.py", "eval")
+    except Exception as exc:
+        print(json.dumps([{
+            "id": "error",
+            "status": "Runtime Error",
+            "stderr": f"Invalid runner expression: {exc}",
+        }]))
+        return
+
+    try:
+        compiled_solution = compile(user_code, "solution.py", "exec")
     except Exception:
         error_msg = format_user_error()
         print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": error_msg}]))
@@ -139,12 +148,19 @@ def run_cases():
         stderr_val = ""
 
         try:
-            case_globals = exec_globals.copy()
-            compiled_input = compile(input_code, "testcase.py", "exec")
-            exec(compiled_input, case_globals)
-
             with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
-                actual_value = eval(runner_expression, case_globals)
+                # Re-exec user code per case to avoid mutable global state leaking between cases.
+                # Set explicit module metadata expected by typical Python submissions.
+                case_globals = {
+                    "__builtins__": __builtins__,
+                    "__name__": "solution",
+                    "__file__": "solution.py",
+                    "__package__": None,
+                }
+                exec(compiled_solution, case_globals)
+                compiled_input = compile(input_code, "testcase.py", "exec")
+                exec(compiled_input, case_globals)
+                actual_value = eval(compiled_runner, case_globals)
 
             stdout_val = stdout_capture.getvalue()
             stderr_val = stderr_capture.getvalue()
@@ -162,6 +178,7 @@ def run_cases():
             output_str = repr(actual_value)
         except Exception:
             status = "Runtime Error"
+            stdout_val = stdout_capture.getvalue()
             stderr_val = stderr_capture.getvalue()
             error_msg = format_user_error()
             if stderr_val:
@@ -216,11 +233,46 @@ class IsolateConfig:
 
 
 def _serialize_expected(value: Any) -> tuple[Any, bool]:
-    try:
-        json.dumps(value)
+    # Keep JSON values as-is only when a JSON roundtrip preserves Python types.
+    # Otherwise send a Python literal and parse it in the harness.
+    if _json_roundtrip_preserves_types(value):
         return value, False
+    return repr(value), True
+
+
+def _json_roundtrip_preserves_types(value: Any) -> bool:
+    try:
+        decoded = json.loads(json.dumps(value))
     except (TypeError, ValueError):
-        return repr(value), True
+        return False
+    return _structural_equal(value, decoded)
+
+
+def _structural_equal(left: Any, right: Any) -> bool:
+    if isinstance(left, float) and isinstance(right, float):
+        if math.isnan(left) and math.isnan(right):
+            return True
+        return left == right
+
+    if type(left) is not type(right):
+        return False
+
+    if isinstance(left, list):
+        if len(left) != len(right):
+            return False
+        return all(_structural_equal(a, b) for a, b in zip(left, right))
+
+    if isinstance(left, dict):
+        if len(left) != len(right):
+            return False
+        for key, left_value in left.items():
+            if key not in right:
+                return False
+            if not _structural_equal(left_value, right[key]):
+                return False
+        return True
+
+    return left == right
 
 
 def _build_test_config(problem: Problem, include_hidden: bool) -> dict[str, Any]:
