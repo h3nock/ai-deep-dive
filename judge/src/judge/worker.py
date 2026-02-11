@@ -67,14 +67,14 @@ def main() -> None:
 
     def process_entry(msg_id: str, fields: dict[str, str]) -> None:
         job_id = fields.get("job_id", "")
-        problem_id = fields.get("problem_id", "")
+        problem_key = fields.get("problem_key", "") or fields.get("problem_id", "")
         kind = fields.get("kind", "submit")
         code = fields.get("code", "")
         profile = fields.get("profile", "") or "unknown"
         created_at_raw = fields.get("created_at", "").strip()
         created_at = int(created_at_raw) if created_at_raw.isdigit() else None
 
-        if not job_id or not problem_id:
+        if not job_id or not problem_key:
             queue.ack(args.stream, args.group, msg_id)
             return
 
@@ -83,19 +83,21 @@ def main() -> None:
         observe_job_queue_wait(profile, created_at)
         status = "error"
         error_kind = "internal"
+        should_ack = False
 
         try:
             results.mark_running(job_id)
             if kind not in {"run", "submit"}:
                 results.mark_error(job_id, f"Invalid job kind: {kind}", error_kind="internal")
+                should_ack = True
                 return
 
             if kind == "run":
-                problem = problems.get_for_run(problem_id)
+                problem = problems.get_for_run(problem_key)
                 include_hidden = False
                 detail_mode = "all"
             else:
-                problem = problems.get_for_submit(problem_id)
+                problem = problems.get_for_submit(problem_key)
                 include_hidden = True
                 detail_mode = "first_failure"
             result = run_problem(
@@ -114,17 +116,27 @@ def main() -> None:
                     result,
                     error_kind=error_kind,
                 )
+                should_ack = True
             else:
                 status = "done"
                 error_kind = "none"
                 results.mark_done(job_id, result)
+                should_ack = True
         except Exception as exc:
-            results.mark_error(job_id, f"Worker error: {exc}", error_kind="internal")
+            try:
+                results.mark_error(job_id, f"Worker error: {exc}", error_kind="internal")
+                should_ack = True
+            except Exception:
+                should_ack = False
         finally:
             duration = time.perf_counter() - started_at
             observe_job_duration(profile, duration)
             job_finished(profile, status, error_kind)
-            queue.ack(args.stream, args.group, msg_id)
+            if should_ack:
+                try:
+                    queue.ack(args.stream, args.group, msg_id)
+                except Exception:
+                    pass
 
     while True:
         now = time.time()

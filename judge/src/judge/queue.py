@@ -22,6 +22,7 @@ class RedisQueue:
         fields = {
             "job_id": payload.get("job_id", ""),
             "problem_id": payload.get("problem_id", ""),
+            "problem_key": payload.get("problem_key", payload.get("problem_id", "")),
             "profile": payload.get("profile", ""),
             "kind": payload.get("kind", "submit"),
             "code": payload.get("code", ""),

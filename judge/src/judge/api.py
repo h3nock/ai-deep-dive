@@ -122,12 +122,24 @@ async def submit(request: SubmitRequest) -> SubmitResponse:
     payload = {
         "job_id": job_id,
         "problem_id": problem.id,
+        "problem_key": request.problem_id,
         "profile": profile,
         "kind": request.kind,
         "code": request.code,
         "created_at": created_at,
     }
-    queue.enqueue(stream, payload)
+    try:
+        queue.enqueue(stream, payload)
+    except Exception as exc:
+        try:
+            results.mark_error(
+                job_id,
+                "Failed to enqueue job",
+                error_kind="internal",
+            )
+        except Exception:
+            pass
+        raise HTTPException(status_code=503, detail="Judge queue unavailable") from exc
 
     return SubmitResponse(job_id=job_id, status="queued")
 
