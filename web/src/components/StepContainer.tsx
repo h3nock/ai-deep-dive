@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Map } from "lucide-react";
 import { PostData } from "@/lib/posts";
@@ -10,11 +10,15 @@ import { MarkCompleteButton } from "./MarkCompleteButton";
 import { useProgress } from "@/lib/progress-context";
 import { useChallengeProgress } from "@/lib/use-challenge-progress";
 import type { ChallengeWorkspaceProps } from "./ChallengeWorkspace";
+import {
+  lessonChallengePath,
+  lessonChallengesPath,
+  lessonGuidePath,
+} from "@/lib/lesson-routes";
 
 const ChallengeWorkspace = dynamic<ChallengeWorkspaceProps>(
   () => import("./ChallengeWorkspace").then((mod) => mod.ChallengeWorkspace),
   {
-    ssr: false,
     loading: () => (
       <div className="flex flex-1 items-center justify-center text-muted">
         Loading workspace...
@@ -24,13 +28,13 @@ const ChallengeWorkspace = dynamic<ChallengeWorkspaceProps>(
 );
 
 interface StepContainerProps {
-  post: PostData;
+  post: Omit<PostData, "content">;
   prevPost: Omit<PostData, "content"> | null;
   nextPost: Omit<PostData, "content"> | null;
   children: React.ReactNode; // The rendered MDX guide
   collection: string;
-  initialTab?: "guide" | "challenges";
-  initialChallengeIndex?: number | null;
+  view: "guide" | "challenges";
+  challengeIndex: number | null;
 }
 
 export function StepContainer({
@@ -39,18 +43,17 @@ export function StepContainer({
   nextPost,
   children,
   collection,
-  initialTab = "guide",
-  initialChallengeIndex = null,
+  view,
+  challengeIndex,
 }: StepContainerProps) {
-  const pathname = usePathname();
-
-  // State is the source of truth - initialized from server props to prevent flash
-  const [activeTab, setActiveTab] = useState<"guide" | "challenges">(initialTab);
-  const [activeChallengeIndex, setActiveChallengeIndex] = useState<number | null>(
-    initialChallengeIndex
-  );
+  const router = useRouter();
+  const activeTab = view;
+  const activeChallengeIndex = challengeIndex;
 
   const hasChallenges = post.challenges && post.challenges.length > 0;
+  const guideHref = lessonGuidePath(collection, post.slug);
+  const challengesHref = lessonChallengesPath(collection, post.slug);
+  const prefetchedChallengeRouteSetRef = useRef<Set<string>>(new Set());
   const challengeIds = useMemo(
     () => post.challenges?.map((c) => c.id) ?? [],
     [post.challenges]
@@ -61,74 +64,104 @@ export function StepContainer({
     isLoaded: isChallengesLoaded,
   } = useChallengeProgress(collection, challengeIds);
   const { setCurrentStep } = useProgress();
-  const warmChallengeTabResources = useCallback(() => {
-    void import("./ChallengeWorkspace");
-  }, []);
+  const warmChallengeHandleRef = useRef<
+    { kind: "idle"; id: number } | { kind: "timeout"; id: number } | null
+  >(null);
 
-  // Track if we should sync state to URL (skip initial mount)
-  const shouldSyncToUrl = useRef(false);
-
-  // Sync state TO URL when state changes (after initial mount)
-  // Uses history.replaceState for instant URL update (no Next.js navigation overhead)
-  useEffect(() => {
-    if (!shouldSyncToUrl.current) {
-      shouldSyncToUrl.current = true;
+  const cancelWarmChallengeResources = useCallback(() => {
+    const handle = warmChallengeHandleRef.current;
+    if (!handle) {
       return;
     }
 
-    const params = new URLSearchParams();
-
-    if (activeTab === "challenges") {
-      params.set("view", "challenges");
-      if (activeChallengeIndex !== null) {
-        params.set("c", activeChallengeIndex.toString());
-      }
+    warmChallengeHandleRef.current = null;
+    if (handle.kind === "idle") {
+      window.cancelIdleCallback?.(handle.id);
+      return;
     }
 
-    const queryString = params.toString();
-    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    window.clearTimeout(handle.id);
+  }, []);
 
-    // Use history.replaceState for instant URL update (no navigation)
-    window.history.replaceState(null, "", newUrl);
-  }, [activeTab, activeChallengeIndex, pathname]);
+  const warmChallengeTabResources = useCallback(
+    (mode: "idle" | "now") => {
+      if (typeof window === "undefined") return;
 
-  // Sync state FROM URL when browser navigates (back/forward)
-  useEffect(() => {
-    const handlePopState = () => {
-      const params = new URLSearchParams(window.location.search);
-      const viewParam = params.get("view");
-      const cParam = params.get("c");
+      const run = () => {
+        warmChallengeHandleRef.current = null;
+        void import("./ChallengeWorkspace");
+        void import("./ChallengeEditor");
+      };
 
-      const newTab = viewParam === "challenges" && hasChallenges ? "challenges" : "guide";
-      setActiveTab(newTab);
-
-      if (cParam !== null && hasChallenges) {
-        const parsed = parseInt(cParam, 10);
-        if (!isNaN(parsed) && parsed >= 0 && parsed < post.challenges!.length) {
-          setActiveChallengeIndex(parsed);
-        } else {
-          setActiveChallengeIndex(null);
-        }
-      } else {
-        setActiveChallengeIndex(null);
+      if (mode === "now") {
+        cancelWarmChallengeResources();
+        run();
+        return;
       }
-    };
 
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [hasChallenges, post.challenges?.length]);
+      if (warmChallengeHandleRef.current) {
+        return;
+      }
 
-  // Simple handlers that just update state
-  const handleTabChange = useCallback((tab: "guide" | "challenges") => {
-    setActiveTab(tab);
-    // Always clear challenge index when switching tabs
-    // (going to guide = no challenge, going to challenges = show list)
-    setActiveChallengeIndex(null);
-  }, []);
+      const ric = window.requestIdleCallback;
+      if (ric) {
+        const id = ric(run, { timeout: 1500 });
+        warmChallengeHandleRef.current = { kind: "idle", id };
+        return;
+      }
 
-  const handleChallengeIndexChange = useCallback((index: number | null) => {
-    setActiveChallengeIndex(index);
-  }, []);
+      const id = window.setTimeout(run, 300);
+      warmChallengeHandleRef.current = { kind: "timeout", id };
+    },
+    [cancelWarmChallengeResources]
+  );
+
+  const prefetchChallengeIndex = useCallback(
+    (index: number) => {
+      if (!hasChallenges) {
+        return;
+      }
+
+      const challengeId = post.challenges?.[index]?.id;
+      if (!challengeId) {
+        return;
+      }
+
+      if (prefetchedChallengeRouteSetRef.current.has(challengeId)) {
+        return;
+      }
+      prefetchedChallengeRouteSetRef.current.add(challengeId);
+      router.prefetch(lessonChallengePath(collection, post.slug, challengeId));
+    },
+    [collection, hasChallenges, post.challenges, post.slug, router]
+  );
+
+  useEffect(() => {
+    prefetchedChallengeRouteSetRef.current.clear();
+  }, [collection, post.slug]);
+
+  const handleChallengeIndexChange = useCallback(
+    (index: number | null) => {
+      if (!hasChallenges) {
+        return;
+      }
+
+      if (index === null) {
+        router.push(challengesHref, { scroll: false });
+        return;
+      }
+
+      const challengeId = post.challenges?.[index]?.id;
+      if (!challengeId) {
+        return;
+      }
+
+      router.push(lessonChallengePath(collection, post.slug, challengeId), {
+        scroll: false,
+      });
+    },
+    [challengesHref, collection, hasChallenges, post.challenges, post.slug, router]
+  );
 
   // Track current step when viewing a chapter
   useEffect(() => {
@@ -139,8 +172,21 @@ export function StepContainer({
 
   useEffect(() => {
     if (activeTab !== "challenges" || !hasChallenges) return;
-    warmChallengeTabResources();
-  }, [activeTab, hasChallenges, warmChallengeTabResources]);
+    warmChallengeTabResources("idle");
+    return cancelWarmChallengeResources;
+  }, [
+    activeTab,
+    cancelWarmChallengeResources,
+    hasChallenges,
+    warmChallengeTabResources,
+  ]);
+
+  useEffect(() => {
+    if (activeTab !== "challenges" || !hasChallenges) return;
+    // Only prefetch from the list view to avoid prefetch churn while switching challenges.
+    if (activeChallengeIndex !== null) return;
+    prefetchChallengeIndex(0);
+  }, [activeChallengeIndex, activeTab, hasChallenges, prefetchChallengeIndex]);
 
   // Smart Back Link Logic
   const getBackLink = () => {
@@ -173,8 +219,9 @@ export function StepContainer({
           {hasChallenges && (
             <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-6">
               <div className="max-w-5xl mx-auto flex gap-6">
-                <button
-                  onClick={() => handleTabChange("guide")}
+                <Link
+                  href={guideHref}
+                  prefetch
                   className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
                     activeTab === "guide"
                       ? "border-primary text-primary"
@@ -182,12 +229,10 @@ export function StepContainer({
                   }`}
                 >
                   Guide
-                </button>
-                <button
-                  onClick={() => handleTabChange("challenges")}
-                  onPointerEnter={() => hasChallenges && warmChallengeTabResources()}
-                  onPointerDown={() => hasChallenges && warmChallengeTabResources()}
-                  onFocus={() => hasChallenges && warmChallengeTabResources()}
+                </Link>
+                <Link
+                  href={challengesHref}
+                  prefetch
                   className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
                     activeTab === "challenges"
                       ? "border-primary text-primary"
@@ -202,7 +247,7 @@ export function StepContainer({
                       : `0/${totalChallenges}`}
                     )
                   </span>
-                </button>
+                </Link>
               </div>
             </div>
           )}
@@ -317,6 +362,7 @@ export function StepContainer({
               challenges={post.challenges || []}
               activeChallengeIndex={activeChallengeIndex}
               setActiveChallengeIndex={handleChallengeIndexChange}
+              prefetchChallengeIndex={prefetchChallengeIndex}
             />
           )}
         </div>

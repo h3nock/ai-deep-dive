@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { ChallengeList } from "./ChallengeList";
 import type { Challenge } from "@/lib/challenge-types";
@@ -8,8 +8,9 @@ import type { Challenge } from "@/lib/challenge-types";
 export interface ChallengeWorkspaceProps {
   courseId: string;
   challenges: Challenge[];
-  activeChallengeIndex?: number | null;
-  setActiveChallengeIndex?: (index: number | null) => void;
+  activeChallengeIndex: number | null;
+  setActiveChallengeIndex: (index: number | null) => void;
+  prefetchChallengeIndex?: (index: number) => void;
 }
 
 const ChallengeEditor = dynamic(
@@ -27,29 +28,40 @@ const ChallengeEditor = dynamic(
 export function ChallengeWorkspace({
   courseId,
   challenges,
-  activeChallengeIndex: externalActiveIndex,
-  setActiveChallengeIndex: externalSetActiveIndex,
+  activeChallengeIndex,
+  setActiveChallengeIndex,
+  prefetchChallengeIndex,
 }: ChallengeWorkspaceProps) {
-  const [internalActiveIndex, setInternalActiveIndex] = useState<number | null>(
-    null
+  const [editorMounted, setEditorMounted] = useState(
+    activeChallengeIndex !== null
+  );
+  const [cachedChallengeIndex, setCachedChallengeIndex] = useState<number | null>(
+    activeChallengeIndex
   );
 
-  const activeChallengeIndex =
-    externalActiveIndex !== undefined ? externalActiveIndex : internalActiveIndex;
-  const setActiveChallengeIndex =
-    externalSetActiveIndex || setInternalActiveIndex;
+  useEffect(() => {
+    if (activeChallengeIndex === null) {
+      return;
+    }
 
-  // Track if editor has ever been mounted (lazy mount optimization)
-  const [editorMounted, setEditorMounted] = useState(false);
-  if (!editorMounted && activeChallengeIndex !== null) {
-    setEditorMounted(true);
-  }
+    const timeoutId = window.setTimeout(() => {
+      setEditorMounted(true);
+      setCachedChallengeIndex(activeChallengeIndex);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activeChallengeIndex]);
 
   const onSelectIndex = useCallback(
-    (index: number) => setActiveChallengeIndex(index),
+    (index: number) => {
+      setEditorMounted(true);
+      setCachedChallengeIndex(index);
+      setActiveChallengeIndex(index);
+    },
     [setActiveChallengeIndex]
   );
 
+  const editorChallengeIndex = activeChallengeIndex ?? cachedChallengeIndex;
   const showList = activeChallengeIndex === null;
 
   return (
@@ -61,12 +73,12 @@ export function ChallengeWorkspace({
             courseId={courseId}
             challenges={challenges}
             onSelectIndex={onSelectIndex}
+            onPrefetchIndex={prefetchChallengeIndex}
           />
         </div>
       )}
 
-      {/* Editor kept mounted but hidden to preserve Monaco workers */}
-      {editorMounted && (
+      {editorMounted && editorChallengeIndex !== null && (
         <div
           className={`flex-1 ${showList ? "hidden" : ""}`}
           aria-hidden={showList}
@@ -74,7 +86,7 @@ export function ChallengeWorkspace({
           <ChallengeEditor
             courseId={courseId}
             challenges={challenges}
-            activeChallengeIndex={activeChallengeIndex ?? 0}
+            activeChallengeIndex={editorChallengeIndex}
             setActiveChallengeIndex={setActiveChallengeIndex}
           />
         </div>

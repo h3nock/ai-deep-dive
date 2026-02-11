@@ -41,6 +41,43 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+function createAbortError(): Error {
+  const error = new Error("Polling aborted");
+  error.name = "AbortError";
+  return error;
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw createAbortError();
+  }
+}
+
+function sleepWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
+  if (!signal) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(createAbortError());
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+
+    const onAbort = () => {
+      clearTimeout(timeoutId);
+      reject(createAbortError());
+    };
+
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
 export async function submitToJudge(
   request: JudgeSubmitRequest
 ): Promise<JudgeSubmitResponse> {
@@ -57,9 +94,12 @@ export async function submitToJudge(
   });
 }
 
-export async function fetchJudgeResult(jobId: string): Promise<JudgeJobResult> {
+export async function fetchJudgeResult(
+  jobId: string,
+  signal?: AbortSignal
+): Promise<JudgeJobResult> {
   const base = requireBaseUrl();
-  return fetchJson<JudgeJobResult>(`${base}/result/${jobId}`);
+  return fetchJson<JudgeJobResult>(`${base}/result/${jobId}`, { signal });
 }
 
 export async function waitForJudgeResult(
@@ -69,6 +109,7 @@ export async function waitForJudgeResult(
     intervalMs?: number;
     intervalFn?: (attempt: number, elapsedMs: number) => number;
     onUpdate?: (r: JudgeJobResult) => void;
+    signal?: AbortSignal;
   }
 ): Promise<JudgeJobResult> {
   const timeoutMs = options?.timeoutMs ?? 15000;
@@ -76,7 +117,8 @@ export async function waitForJudgeResult(
   let attempt = 0;
 
   while (Date.now() - start < timeoutMs) {
-    const result = await fetchJudgeResult(jobId);
+    throwIfAborted(options?.signal);
+    const result = await fetchJudgeResult(jobId, options?.signal);
     options?.onUpdate?.(result);
     if (result.status === "done" || result.status === "error") {
       return result;
@@ -84,7 +126,7 @@ export async function waitForJudgeResult(
     const elapsed = Date.now() - start;
     const intervalMs =
       options?.intervalFn?.(attempt, elapsed) ?? options?.intervalMs ?? 1000;
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    await sleepWithAbort(intervalMs, options?.signal);
     attempt += 1;
   }
 

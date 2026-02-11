@@ -40,8 +40,12 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
 
   // Load progress on mount
   useEffect(() => {
-    setProgress(getAllProgress());
-    setIsLoaded(true);
+    const timeoutId = window.setTimeout(() => {
+      setProgress(getAllProgress());
+      setIsLoaded(true);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   // Refresh progress from localStorage
@@ -66,8 +70,10 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   }, [refreshProgress]);
 
   const setCurrentStep = useCallback((courseId: string, step: number) => {
-    updateCurrentStep(courseId, step);
-    refreshProgress();
+    const changed = updateCurrentStep(courseId, step);
+    if (changed) {
+      refreshProgress();
+    }
   }, [refreshProgress]);
 
   const resetCourse = useCallback((courseId: string) => {

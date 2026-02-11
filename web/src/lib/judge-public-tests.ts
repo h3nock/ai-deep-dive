@@ -36,6 +36,9 @@ type PublicBundle = {
 };
 
 const bundleCache = new Map<string, PublicBundle>();
+const manifestCache = new Map<string, PublicManifest>();
+const manifestPromiseCache = new Map<string, Promise<PublicManifest>>();
+const bundlePromiseCache = new Map<string, Promise<PublicBundle>>();
 
 function problemPath(problemId: string): string {
   return problemId
@@ -76,18 +79,47 @@ function normalizeTests(tests: PublicTestsFile | PublicTestCase[]): PublicTestCa
 
 export async function fetchPublicBundle(problemId: string): Promise<PublicBundle> {
   const path = problemPath(problemId);
-  const manifestUrl = `/judge-tests/${path}/public_manifest.json`;
-  const manifest = await fetchJson<PublicManifest>(manifestUrl);
+  let manifest = manifestCache.get(problemId);
+  if (!manifest) {
+    let manifestPromise = manifestPromiseCache.get(problemId);
+    if (!manifestPromise) {
+      const manifestUrl = `/judge-tests/${path}/public_manifest.json`;
+      manifestPromise = fetchJson<PublicManifest>(manifestUrl)
+        .then((loadedManifest) => {
+          manifestCache.set(problemId, loadedManifest);
+          return loadedManifest;
+        })
+        .finally(() => {
+          manifestPromiseCache.delete(problemId);
+        });
+      manifestPromiseCache.set(problemId, manifestPromise);
+    }
+    manifest = await manifestPromise;
+  }
+
   const cacheKey = `${problemId}@${manifest.version}`;
 
   if (bundleCache.has(cacheKey)) {
     return bundleCache.get(cacheKey)!;
   }
 
+  const inFlightBundle = bundlePromiseCache.get(cacheKey);
+  if (inFlightBundle) {
+    return inFlightBundle;
+  }
+
   const bundleUrl = `/judge-tests/${path}/${manifest.bundle}`;
-  const bundle = await fetchJson<PublicBundle>(bundleUrl);
-  bundleCache.set(cacheKey, bundle);
-  return bundle;
+  const bundlePromise = fetchJson<PublicBundle>(bundleUrl)
+    .then((bundle) => {
+      bundleCache.set(cacheKey, bundle);
+      return bundle;
+    })
+    .finally(() => {
+      bundlePromiseCache.delete(cacheKey);
+    });
+  bundlePromiseCache.set(cacheKey, bundlePromise);
+
+  return bundlePromise;
 }
 
 export function bundleToTestConfig(bundle: PublicBundle): TestConfig {
