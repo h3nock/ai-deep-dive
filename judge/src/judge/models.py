@@ -1,13 +1,14 @@
 """API models."""
 
+from typing import Any, Literal, Optional
+
 from pydantic import BaseModel, Field
-from typing import Any, Optional
 
 
 class SubmitRequest(BaseModel):
     problem_id: str = Field(..., description="Problem identifier")
     code: str = Field(..., description="User Python code")
-    kind: str = Field("submit", description="submit or run")
+    kind: Literal["submit", "run"] = Field("submit", description="submit or run")
 
 
 class SubmitResponse(BaseModel):

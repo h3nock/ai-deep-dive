@@ -86,8 +86,11 @@ def main() -> None:
 
         try:
             results.mark_running(job_id)
-            is_run = kind == "run"
-            if is_run:
+            if kind not in {"run", "submit"}:
+                results.mark_error(job_id, f"Invalid job kind: {kind}", error_kind="internal")
+                return
+
+            if kind == "run":
                 problem = problems.get_for_run(problem_id)
                 include_hidden = False
                 detail_mode = "all"

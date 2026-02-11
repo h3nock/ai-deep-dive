@@ -86,12 +86,14 @@ async def metrics() -> Response:
     return Response(content=data, media_type=content_type)
 
 
-@app.get("/problems/{problem_id}", response_model=ProblemInfo)
+@app.get("/problems/{problem_id:path}", response_model=ProblemInfo)
 async def get_problem(problem_id: str) -> ProblemInfo:
     try:
         problem = problems.get_route_info(problem_id)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Problem not found")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid problem id")
     return ProblemInfo(
         id=problem.id,
         version=problem.version,
@@ -107,6 +109,8 @@ async def submit(request: SubmitRequest) -> SubmitResponse:
         problem = problems.get_route_info(request.problem_id)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Problem not found")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid problem id")
 
     profile = "torch" if problem.requires_torch else "light"
     stream = STREAMS[profile]
@@ -117,7 +121,7 @@ async def submit(request: SubmitRequest) -> SubmitResponse:
 
     payload = {
         "job_id": job_id,
-        "problem_id": request.problem_id,
+        "problem_id": problem.id,
         "profile": profile,
         "kind": request.kind,
         "code": request.code,
