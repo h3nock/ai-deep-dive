@@ -11,13 +11,22 @@ groups:
           description: "Prometheus cannot scrape judge-api for at least 2 minutes."
 
       - alert: JudgeQueueBacklogHigh
-        expr: max(judge_queue_stream_length{stream=~"queue:light|queue:torch"}) > 200
+        expr: max(judge_queue_group_lag{stream=~"queue:light|queue:torch",group=~"workers-light|workers-torch"}) > 25
         for: 10m
         labels:
           severity: warning
         annotations:
           summary: "Judge queue backlog is high"
-          description: "At least one queue stream stayed above 200 pending jobs for 10 minutes."
+          description: "At least one queue consumer group lag stayed above 25 jobs for 10 minutes."
+
+      - alert: JudgeQueuePendingHigh
+        expr: max(judge_queue_group_pending{stream=~"queue:light|queue:torch",group=~"workers-light|workers-torch"}) > 25
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Judge queue pending entries are high"
+          description: "At least one queue consumer group has more than 25 pending entries for 10 minutes."
 
       - alert: JudgeErrorRateHigh
         expr: |
