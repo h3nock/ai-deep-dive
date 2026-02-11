@@ -10,23 +10,50 @@ groups:
           summary: "Judge API target is down"
           description: "Prometheus cannot scrape judge-api for at least 2 minutes."
 
-      - alert: JudgeQueueBacklogHigh
-        expr: max(judge_queue_group_lag{stream=~"queue:light|queue:torch",group=~"workers-light|workers-torch"}) > 25
+      - alert: JudgeLightQueueBacklogHigh
+        expr: judge_queue_group_lag{stream="queue:light",group="workers-light"} > 240
         for: 10m
         labels:
           severity: warning
         annotations:
-          summary: "Judge queue backlog is high"
-          description: "At least one queue consumer group lag stayed above 25 jobs for 10 minutes."
+          summary: "Judge light queue backlog is high"
+          description: "Light queue lag stayed above 240 jobs for 10 minutes."
 
-      - alert: JudgeQueuePendingHigh
-        expr: max(judge_queue_group_pending{stream=~"queue:light|queue:torch",group=~"workers-light|workers-torch"}) > 25
+      - alert: JudgeTorchQueueBacklogHigh
+        expr: judge_queue_group_lag{stream="queue:torch",group="workers-torch"} > 500
         for: 10m
         labels:
           severity: warning
         annotations:
-          summary: "Judge queue pending entries are high"
-          description: "At least one queue consumer group has more than 25 pending entries for 10 minutes."
+          summary: "Judge torch queue backlog is high"
+          description: "Torch queue lag stayed above 500 jobs for 10 minutes."
+
+      - alert: JudgeQueueWaitP95High
+        expr: histogram_quantile(0.95, sum by (profile, le) (rate(judge_job_queue_wait_seconds_bucket[10m]))) > 20
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Judge queue wait p95 is high"
+          description: "Queue wait p95 stayed above 20s for at least one profile for 10 minutes."
+
+      - alert: JudgeLightQueuePendingHigh
+        expr: judge_queue_group_pending{stream="queue:light",group="workers-light"} > 3
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Judge light queue pending entries are high"
+          description: "Light queue pending entries stayed above 3 for 10 minutes."
+
+      - alert: JudgeTorchQueuePendingHigh
+        expr: judge_queue_group_pending{stream="queue:torch",group="workers-torch"} > 6
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Judge torch queue pending entries are high"
+          description: "Torch queue pending entries stayed above 6 for 10 minutes."
 
       - alert: JudgeErrorRateHigh
         expr: |
