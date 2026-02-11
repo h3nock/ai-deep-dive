@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import Link from "next/link";
 import {
   Play,
   CheckCircle2,
@@ -17,7 +16,6 @@ import {
   ChevronUp,
   ChevronDown,
   ArrowRight,
-  Terminal,
 } from "lucide-react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import { AutoResizingEditor } from "./AutoResizingEditor";
@@ -69,6 +67,35 @@ interface TestCase {
   inputs: Record<string, string>;
   expected: string;
   explanation?: string;
+}
+
+type EditorOnMount = NonNullable<React.ComponentProps<typeof Editor>["onMount"]>;
+type MonacoEditorInstance = Parameters<EditorOnMount>[0];
+type MonacoInstance = Parameters<EditorOnMount>[1];
+type MonacoVimSession = { dispose: () => void };
+type MonacoVimModule = {
+  initVimMode: (
+    editor: MonacoEditorInstance,
+    statusNode?: HTMLElement | null
+  ) => MonacoVimSession;
+};
+
+let monacoVimModulePromise: Promise<MonacoVimModule> | null = null;
+
+function loadMonacoVim(): Promise<MonacoVimModule> {
+  if (!monacoVimModulePromise) {
+    monacoVimModulePromise = import("monaco-vim").then((module) => ({
+      initVimMode: module.initVimMode as MonacoVimModule["initVimMode"],
+    }));
+  }
+
+  return monacoVimModulePromise;
+}
+
+function withJitter(baseMs: number, ratio = 0.1): number {
+  const delta = Math.max(1, Math.floor(baseMs * ratio));
+  const offset = Math.floor(Math.random() * (2 * delta + 1)) - delta;
+  return Math.max(100, baseMs + offset);
 }
 
 
@@ -138,12 +165,26 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
   );
 }
 
-export function ChallengeEditor({
+interface ChallengeEditorContentProps extends ChallengeEditorProps {
+  activeChallenge: Challenge;
+}
+
+export function ChallengeEditor(props: ChallengeEditorProps) {
+  const activeChallenge = props.challenges[props.activeChallengeIndex];
+  if (!activeChallenge) {
+    return null;
+  }
+
+  return <ChallengeEditorContent {...props} activeChallenge={activeChallenge} />;
+}
+
+function ChallengeEditorContent({
   courseId,
   challenges,
   activeChallengeIndex,
   setActiveChallengeIndex,
-}: ChallengeEditorProps) {
+  activeChallenge,
+}: ChallengeEditorContentProps) {
   const [code, setCode] = useState("");
   const [isSolved, setIsSolved] = useState(false);
   const [lastRunMode, setLastRunMode] = useState<"run" | "submit" | null>(null);
@@ -269,8 +310,8 @@ export function ChallengeEditor({
   // We don't need to debounce test cases for sync anymore, we send them on run
 
   const monaco = useMonaco();
-  const editorRef = useRef<any>(null);
-  const vimModeRef = useRef<any>(null);
+  const editorRef = useRef<MonacoEditorInstance | null>(null);
+  const vimModeRef = useRef<MonacoVimSession | null>(null);
   const consoleRef = useRef<HTMLDivElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -284,6 +325,7 @@ export function ChallengeEditor({
   const monacoWarmupHandleRef = useRef<
     { kind: "idle"; id: number } | { kind: "timeout"; id: number } | null
   >(null);
+  const judgePollAbortRef = useRef<AbortController | null>(null);
 
   const cancelScheduledMonacoWarmup = useCallback(() => {
     const handle = monacoWarmupHandleRef.current;
@@ -296,6 +338,14 @@ export function ChallengeEditor({
     }
 
     window.clearTimeout(handle.id);
+  }, []);
+
+  const abortJudgePolling = useCallback(() => {
+    if (!judgePollAbortRef.current) {
+      return;
+    }
+    judgePollAbortRef.current.abort();
+    judgePollAbortRef.current = null;
   }, []);
 
   const warmMonaco = useCallback(
@@ -334,6 +384,12 @@ export function ChallengeEditor({
 
   useEffect(() => cancelScheduledMonacoWarmup, [cancelScheduledMonacoWarmup]);
 
+  useEffect(() => abortJudgePolling, [abortJudgePolling]);
+
+  useEffect(() => {
+    abortJudgePolling();
+  }, [abortJudgePolling, activeChallenge.id]);
+
   useEffect(() => {
     pyodideStatusRef.current = pyodideStatus;
     if (pyodideStatus === "ready") {
@@ -358,11 +414,6 @@ export function ChallengeEditor({
     [setActiveChallengeIndex, warmMonaco]
   );
 
-  const activeChallenge = challenges[activeChallengeIndex];
-  if (!activeChallenge) {
-    return null;
-  }
-
   // Do not auto-load Pyodide on mount. Only mark ready if another challenge already loaded it.
   useEffect(() => {
     if (isPyodideLoaded()) {
@@ -382,14 +433,6 @@ export function ChallengeEditor({
       setExecutionMode("server");
     }
   }, [activeChallenge]);
-
-  // Warm public test bundle for judge-backed challenges
-  useEffect(() => {
-    if (!activeChallenge?.problemId) return;
-    fetchPublicBundle(activeChallenge.problemId).catch(() => {
-      // Ignore preload failures; will retry on run
-    });
-  }, [activeChallenge?.problemId]);
 
   // Load code from localStorage or use initial code when challenge changes
   useEffect(() => {
@@ -478,7 +521,7 @@ export function ChallengeEditor({
         }
       };
     }
-  }, [activeChallenge]);
+  }, [activeChallenge, courseId]);
 
   // Save code to localStorage with debounce
   useEffect(() => {
@@ -499,11 +542,12 @@ export function ChallengeEditor({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [code, activeChallenge]);
+  }, [activeChallenge, code, courseId]);
 
   // Vim Mode Effect
   useEffect(() => {
     if (!editorRef.current || !monaco) return;
+    let cancelled = false;
 
     // Always dispose existing vim mode first
     if (vimModeRef.current) {
@@ -512,23 +556,27 @@ export function ChallengeEditor({
     }
 
     if (isVimMode) {
-      try {
-        // @ts-ignore
-        const { initVimMode } = require("monaco-vim");
-        const statusNode = document.getElementById("vim-status-bar");
-        vimModeRef.current = initVimMode(editorRef.current, statusNode);
-      } catch (e) {
-        console.error("Failed to enable Vim mode:", e);
-      }
+      const statusNode = document.getElementById("vim-status-bar");
+      void loadMonacoVim()
+        .then(({ initVimMode }) => {
+          if (cancelled || !editorRef.current) {
+            return;
+          }
+          vimModeRef.current = initVimMode(editorRef.current, statusNode);
+        })
+        .catch((error) => {
+          console.error("Failed to enable Vim mode:", error);
+        });
     }
 
     return () => {
+      cancelled = true;
       if (vimModeRef.current) {
         vimModeRef.current.dispose();
         vimModeRef.current = null;
       }
     };
-  }, [isVimMode, monaco, activeChallenge?.id]);
+  }, [isVimMode, monaco, activeChallenge.id]);
 
   // Persist vim mode preference (skip on initial mount to avoid writing the same value back)
   useEffect(() => {
@@ -600,7 +648,10 @@ export function ChallengeEditor({
   }, [activeChallenge, executionMode, ensurePyodideLoaded]);
 
   // Editor Command
-  const handleEditorDidMount = (editor: any, monacoInstance: any) => {
+  const handleEditorDidMount = (
+    editor: MonacoEditorInstance,
+    monacoInstance: MonacoInstance
+  ) => {
     editorRef.current = editor;
 
     // Theme is already defined in beforeMount, just ensure it's applied
@@ -626,16 +677,17 @@ export function ChallengeEditor({
     // Initialize vim mode if already enabled from localStorage
     // This handles the case where useEffect runs before the editor mounts
     if (isVimMode && !vimModeRef.current) {
-      try {
-        // @ts-ignore
-        const { initVimMode } = require("monaco-vim");
-        const statusNode = document.getElementById("vim-status-bar");
-        if (statusNode) {
+      const statusNode = document.getElementById("vim-status-bar");
+      void loadMonacoVim()
+        .then(({ initVimMode }) => {
+          if (editorRef.current !== editor || vimModeRef.current) {
+            return;
+          }
           vimModeRef.current = initVimMode(editor, statusNode);
-        }
-      } catch (e) {
-        console.error("Failed to enable Vim mode:", e);
-      }
+        })
+        .catch((error) => {
+          console.error("Failed to enable Vim mode:", error);
+        });
     }
   };
 
@@ -665,7 +717,7 @@ export function ChallengeEditor({
       const casesToRun = testCases;
 
       // Track which challenge we're running for race condition detection
-      const runChallengeId = activeChallenge?.id;
+      const runChallengeId = activeChallenge.id;
 
       if (useBrowser) {
         // === BROWSER EXECUTION (Pyodide) ===
@@ -784,11 +836,13 @@ export function ChallengeEditor({
             setActiveTestCaseId("");
           }
 
-        } catch (err: any) {
+        } catch (err: unknown) {
           // Only show error if still on the same challenge
           if (currentChallengeIdRef.current === runChallengeId) {
+            const errorMessage =
+              err instanceof Error ? err.message : String(err);
             setPyodideStatus("error");
-            setOutput((prev) => (prev || "") + `\nError: ${err.message}`);
+            setOutput((prev) => (prev || "") + `\nError: ${errorMessage}`);
             setActiveTab("console");
             if (isBottomPanelCollapsed) {
               setBottomPanelHeight(45);
@@ -814,7 +868,12 @@ export function ChallengeEditor({
           setIsBottomPanelCollapsed(false);
         }
 
+        let pollAbortController: AbortController | null = null;
         try {
+          abortJudgePolling();
+          pollAbortController = new AbortController();
+          judgePollAbortRef.current = pollAbortController;
+
           const submit = await submitToJudge({
             problemId: activeChallenge.problemId,
             code,
@@ -824,11 +883,12 @@ export function ChallengeEditor({
           const result = await waitForJudgeResult(submit.job_id, {
             timeoutMs: 120000,
             intervalFn: (_attempt, elapsedMs) => {
-              if (elapsedMs < 10000) return 200;
-              if (elapsedMs < 30000) return 1000;
-              if (elapsedMs < 120000) return 2000;
-              return 5000;
+              if (elapsedMs < 5000) return withJitter(200);
+              if (elapsedMs < 20000) return withJitter(500);
+              if (elapsedMs < 60000) return withJitter(1000);
+              return withJitter(2000);
             },
+            signal: pollAbortController.signal,
             onUpdate: (update) => {
               if (update.status === "queued") {
                 setOutput("Pending...\n");
@@ -885,12 +945,18 @@ export function ChallengeEditor({
             markChallengeSolved(courseId, activeChallenge.id);
             setIsSolved(true);
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
+          if (err instanceof Error && err.name === "AbortError") {
+            return;
+          }
+
           if (currentChallengeIdRef.current === runChallengeId) {
-            if (String(err?.message || "").includes("Timed out waiting")) {
+            const errorMessage =
+              err instanceof Error ? err.message : String(err ?? "");
+            if (errorMessage.includes("Timed out waiting")) {
               setRunMessage("Request took too long. Please try again.");
             } else {
-              setRunMessage(formatServerError(err?.message));
+              setRunMessage(formatServerError(errorMessage));
             }
             setActiveTab("result");
             if (isBottomPanelCollapsed) {
@@ -899,6 +965,12 @@ export function ChallengeEditor({
             }
           }
         } finally {
+          if (
+            pollAbortController &&
+            judgePollAbortRef.current === pollAbortController
+          ) {
+            judgePollAbortRef.current = null;
+          }
           isRunningRef.current = false;
           setIsRunning(false);
         }
@@ -924,7 +996,9 @@ export function ChallengeEditor({
       }
     },
     [
+      abortJudgePolling,
       code,
+      courseId,
       testCases,
       activeChallenge,
       executionMode,
