@@ -10,74 +10,56 @@ type ChallengeListProps = {
   courseId: string;
   challenges: Challenge[];
   onSelectIndex: (index: number) => void;
+  onPrefetchIndex?: (index: number) => void;
 };
-
-type WarmupHandle =
-  | { kind: "idle"; id: number }
-  | { kind: "timeout"; id: number }
-  | null;
 
 export function ChallengeList({
   courseId,
   challenges,
   onSelectIndex,
+  onPrefetchIndex,
 }: ChallengeListProps) {
   const challengeIds = useMemo(() => challenges.map((c) => c.id), [challenges]);
   const { solvedCount, total: totalChallenges, isLoaded: isProgressLoaded } =
     useChallengeProgress(courseId, challengeIds);
+  const prefetchedIndexSetRef = useRef<Set<number>>(new Set());
+  const hoverPrefetchHandleRef = useRef<number | null>(null);
 
-  const warmEditorHandleRef = useRef<WarmupHandle>(null);
-
-  const cancelWarmEditor = useCallback(() => {
-    const handle = warmEditorHandleRef.current;
-    if (!handle) return;
-    warmEditorHandleRef.current = null;
-
-    if (handle.kind === "idle") {
-      window.cancelIdleCallback?.(handle.id);
-      return;
-    }
-    window.clearTimeout(handle.id);
-  }, []);
-
-  const warmEditorChunk = useCallback(
-    (mode: "idle" | "now") => {
-      if (typeof window === "undefined") return;
-
-      const run = () => {
-        warmEditorHandleRef.current = null;
-        void import("./ChallengeEditor");
-      };
-
-      if (mode === "now") {
-        cancelWarmEditor();
-        run();
+  const prefetchChallengeRoute = useCallback(
+    (index: number) => {
+      if (!onPrefetchIndex || prefetchedIndexSetRef.current.has(index)) {
         return;
       }
-
-      if (warmEditorHandleRef.current) return;
-
-      const ric = window.requestIdleCallback;
-      if (ric) {
-        const id = ric(run, { timeout: 1500 });
-        warmEditorHandleRef.current = { kind: "idle", id };
-        return;
-      }
-
-      const id = window.setTimeout(run, 250);
-      warmEditorHandleRef.current = { kind: "timeout", id };
+      prefetchedIndexSetRef.current.add(index);
+      onPrefetchIndex(index);
     },
-    [cancelWarmEditor]
+    [onPrefetchIndex]
   );
 
-  const warmMonacoNow = useCallback(() => {
-    warmEditorChunk("now");
-    void import("@/lib/monaco-preload").then(({ preloadMonaco }) =>
-      preloadMonaco()
-    );
-  }, [warmEditorChunk]);
+  const cancelHoverPrefetch = useCallback(() => {
+    if (hoverPrefetchHandleRef.current === null) {
+      return;
+    }
+    window.clearTimeout(hoverPrefetchHandleRef.current);
+    hoverPrefetchHandleRef.current = null;
+  }, []);
 
-  useEffect(() => cancelWarmEditor, [cancelWarmEditor]);
+  const scheduleHoverPrefetch = useCallback(
+    (index: number) => {
+      cancelHoverPrefetch();
+      hoverPrefetchHandleRef.current = window.setTimeout(() => {
+        hoverPrefetchHandleRef.current = null;
+        prefetchChallengeRoute(index);
+      }, 160);
+    },
+    [cancelHoverPrefetch, prefetchChallengeRoute]
+  );
+
+  useEffect(() => {
+    prefetchedIndexSetRef.current.clear();
+  }, [challenges]);
+
+  useEffect(() => cancelHoverPrefetch, [cancelHoverPrefetch]);
 
   return (
     <div className="flex flex-col h-full overflow-y-auto py-12">
@@ -105,14 +87,9 @@ export function ChallengeList({
             return (
               <div key={challenge.id} className="py-1">
                 <button
-                  onPointerEnter={() => warmEditorChunk("idle")}
-                  onFocus={() => warmEditorChunk("idle")}
-                  onPointerDown={() => warmMonacoNow()}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      warmMonacoNow();
-                    }
-                  }}
+                  onPointerEnter={() => scheduleHoverPrefetch(idx)}
+                  onPointerLeave={cancelHoverPrefetch}
+                  onFocus={() => prefetchChallengeRoute(idx)}
                   onClick={() => onSelectIndex(idx)}
                   className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-zinc-900/50 rounded-lg transition-all group"
                 >
