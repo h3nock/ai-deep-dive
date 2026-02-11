@@ -543,6 +543,12 @@ def _isolate_failed_with_mle(meta: dict[str, str]) -> bool:
     return meta.get("cg-oom-killed") not in {None, "", "0"}
 
 
+def _isolate_failed_with_internal_error(meta: dict[str, str]) -> bool:
+    # Isolate uses XX for sandbox/runtime infrastructure failures.
+    status = meta.get("status")
+    return status == "XX" or status is None
+
+
 def run_problem(
     problem: Problem,
     user_code: str,
@@ -598,7 +604,7 @@ def run_problem(
             "summary": _build_error_summary(problem, include_hidden, total_cases),
             "tests": [],
             "error": stderr.strip() or "Runner failed",
-            "error_kind": "internal",
+            "error_kind": "internal" if _isolate_failed_with_internal_error(isolate_meta) else "user",
         }
 
     try:
