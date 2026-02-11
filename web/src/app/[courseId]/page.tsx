@@ -184,7 +184,7 @@ export default async function RoadmapPage({
           {/* What You'll Build */}
           <div className="md:pl-8">
             <h3 className="text-sm font-medium text-secondary uppercase tracking-wider mb-4">
-              What You'll Build
+              What You&apos;ll Build
             </h3>
             {Array.isArray(metadata.outcome) ? (
               <ul className="space-y-2.5">
