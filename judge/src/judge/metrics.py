@@ -6,6 +6,7 @@ import atexit
 import os
 import time
 from collections.abc import Iterable
+from typing import Any
 
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -70,6 +71,18 @@ QUEUE_STREAM_LENGTH = Gauge(
     ["stream"],
     multiprocess_mode="livemax",
 )
+QUEUE_GROUP_LAG = Gauge(
+    "judge_queue_group_lag",
+    "Redis consumer group lag by stream/group",
+    ["stream", "group"],
+    multiprocess_mode="livemax",
+)
+QUEUE_GROUP_PENDING = Gauge(
+    "judge_queue_group_pending",
+    "Redis consumer group pending entries by stream/group",
+    ["stream", "group"],
+    multiprocess_mode="livemax",
+)
 JOBS_BY_STATUS = Gauge(
     "judge_jobs_in_status",
     "Jobs by status in SQLite",
@@ -123,7 +136,10 @@ def update_runtime_metrics(
     queue_client: object | None,
     results_store: object | None,
     streams: Iterable[str],
+    stream_groups: dict[str, str] | None = None,
 ) -> None:
+    stream_group_map = stream_groups or {}
+
     if queue_client is not None:
         for stream in streams:
             try:
@@ -131,6 +147,40 @@ def update_runtime_metrics(
             except Exception:
                 continue
             QUEUE_STREAM_LENGTH.labels(stream=stream).set(length)
+
+            group_name = stream_group_map.get(stream)
+            if not group_name:
+                continue
+
+            try:
+                groups_raw = queue_client.xinfo_groups(stream)
+            except Exception:
+                continue
+
+            group_info: dict[str, Any] | None = None
+            for item in groups_raw:
+                if isinstance(item, dict) and str(item.get("name", "")) == group_name:
+                    group_info = item
+                    break
+
+            if group_info is None:
+                QUEUE_GROUP_LAG.labels(stream=stream, group=group_name).set(0)
+                QUEUE_GROUP_PENDING.labels(stream=stream, group=group_name).set(0)
+                continue
+
+            lag_raw = group_info.get("lag")
+            pending_raw = group_info.get("pending")
+            try:
+                lag_value = int(lag_raw) if lag_raw is not None else 0
+            except (TypeError, ValueError):
+                lag_value = 0
+            try:
+                pending_value = int(pending_raw) if pending_raw is not None else 0
+            except (TypeError, ValueError):
+                pending_value = 0
+
+            QUEUE_GROUP_LAG.labels(stream=stream, group=group_name).set(max(lag_value, 0))
+            QUEUE_GROUP_PENDING.labels(stream=stream, group=group_name).set(max(pending_value, 0))
 
     if results_store is not None:
         try:

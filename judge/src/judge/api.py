@@ -29,6 +29,10 @@ STREAMS = {
     "light": "queue:light",
     "torch": "queue:torch",
 }
+STREAM_GROUPS = {
+    "queue:light": "workers-light",
+    "queue:torch": "workers-torch",
+}
 
 app = FastAPI(title="AI Deep Dive Judge")
 if settings.allowed_origins:
@@ -81,7 +85,7 @@ async def health() -> dict[str, str]:
 
 @app.get("/metrics")
 async def metrics() -> Response:
-    update_runtime_metrics(queue.client, results, STREAMS.values())
+    update_runtime_metrics(queue.client, results, STREAMS.values(), STREAM_GROUPS)
     data, content_type = render_metrics()
     return Response(content=data, media_type=content_type)
 
