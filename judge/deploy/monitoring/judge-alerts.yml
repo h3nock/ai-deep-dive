@@ -10,25 +10,66 @@ groups:
           summary: "Judge API target is down"
           description: "Prometheus cannot scrape judge-api for at least 2 minutes."
 
-      - alert: JudgeQueueBacklogHigh
-        expr: max(judge_queue_stream_length{stream=~"queue:light|queue:torch"}) > 200
-        for: 10m
+      - alert: JudgeLightWorkersMissing
+        expr: (sum((time() - judge_worker_heartbeat_unixtime{profile="light"}) < bool __WORKER_HEARTBEAT_STALE_SECONDS__) or vector(0)) < __LIGHT_WORKERS__
+        for: __WORKER_HEALTH_FOR__
+        labels:
+          severity: critical
+        annotations:
+          summary: "Judge light workers missing heartbeats"
+          description: "Live light workers stayed below __LIGHT_WORKERS__ for __WORKER_HEALTH_FOR__ (stale after __WORKER_HEARTBEAT_STALE_SECONDS__s)."
+
+      - alert: JudgeTorchWorkersMissing
+        expr: (sum((time() - judge_worker_heartbeat_unixtime{profile="torch"}) < bool __WORKER_HEARTBEAT_STALE_SECONDS__) or vector(0)) < __TORCH_WORKERS__
+        for: __WORKER_HEALTH_FOR__
+        labels:
+          severity: critical
+        annotations:
+          summary: "Judge torch workers missing heartbeats"
+          description: "Live torch workers stayed below __TORCH_WORKERS__ for __WORKER_HEALTH_FOR__ (stale after __WORKER_HEARTBEAT_STALE_SECONDS__s)."
+
+      - alert: JudgeLightQueueBacklogHigh
+        expr: judge_queue_group_lag{stream="queue:light",group="workers-light"} > __LIGHT_BACKLOG_WARN__
+        for: __BACKLOG_WARN_FOR__
         labels:
           severity: warning
         annotations:
-          summary: "Judge queue backlog is high"
-          description: "At least one queue stream stayed above 200 pending jobs for 10 minutes."
+          summary: "Judge light queue backlog is high"
+          description: "Light queue lag stayed above __LIGHT_BACKLOG_WARN__ jobs for __BACKLOG_WARN_FOR__."
 
-      - alert: JudgeErrorRateHigh
+      - alert: JudgeTorchQueueBacklogHigh
+        expr: judge_queue_group_lag{stream="queue:torch",group="workers-torch"} > __TORCH_BACKLOG_WARN__
+        for: __BACKLOG_WARN_FOR__
+        labels:
+          severity: warning
+        annotations:
+          summary: "Judge torch queue backlog is high"
+          description: "Torch queue lag stayed above __TORCH_BACKLOG_WARN__ jobs for __BACKLOG_WARN_FOR__."
+
+      - alert: JudgeQueueWaitP95High
+        expr: |
+          histogram_quantile(0.95, sum by (profile, le) (rate(judge_job_queue_wait_seconds_bucket[__QUEUE_WAIT_WINDOW__]))) > __QUEUE_WAIT_P95_WARN_SECONDS__
+          and
+          sum by (profile) (increase(judge_job_started_total[__QUEUE_WAIT_WINDOW__])) >= __QUEUE_WAIT_MIN_STARTS__
+        for: __QUEUE_WAIT_FOR__
+        labels:
+          severity: warning
+        annotations:
+          summary: "Judge queue wait p95 is high"
+          description: "Queue wait p95 stayed above __QUEUE_WAIT_P95_WARN_SECONDS__s for __QUEUE_WAIT_FOR__ with at least __QUEUE_WAIT_MIN_STARTS__ started jobs in __QUEUE_WAIT_WINDOW__."
+
+      - alert: JudgeInternalErrorRateHigh
         expr: |
           (
-            sum(rate(judge_job_finished_total{status="error"}[10m]))
+            sum by (profile) (rate(judge_job_finished_total{status="error",error_kind="internal"}[__INTERNAL_ERROR_WINDOW__]))
             /
-            clamp_min(sum(rate(judge_job_finished_total[10m])), 1)
-          ) > 0.20
-        for: 15m
+            clamp_min(sum by (profile) (rate(judge_job_finished_total[__INTERNAL_ERROR_WINDOW__])), 1)
+          ) > __INTERNAL_ERROR_RATE_THRESHOLD__
+          and
+          sum by (profile) (increase(judge_job_finished_total[__INTERNAL_ERROR_WINDOW__])) >= __INTERNAL_ERROR_MIN_COMPLETIONS__
+        for: __INTERNAL_ERROR_FOR__
         labels:
           severity: warning
         annotations:
-          summary: "Judge job error ratio is high"
-          description: "More than 20% of jobs finished as error over the last 10 minutes."
+          summary: "Judge internal error ratio is high"
+          description: "Internal error ratio stayed above __INTERNAL_ERROR_RATE_THRESHOLD__ over __INTERNAL_ERROR_WINDOW__ with at least __INTERNAL_ERROR_MIN_COMPLETIONS__ completions for the affected profile."

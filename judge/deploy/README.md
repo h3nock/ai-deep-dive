@@ -239,6 +239,26 @@ Topology notes:
 The script validates with `promtool` (if installed), writes
 `/etc/prometheus/prometheus.yml`, installs rule file
 `/etc/prometheus/rules/judge-alerts.yml`, then restarts Prometheus.
+`apply-prometheus.sh` also renders alert thresholds from environment so rules
+track your worker/capacity configuration automatically.
+
+By default the script reads `/etc/judge/judge.env` (if present), then applies
+these alert tuning variables:
+
+- `ALERT_LIGHT_WORKERS` / `ALERT_TORCH_WORKERS` (fallback to `JUDGE_LIGHT_WORKERS` / `JUDGE_TORCH_WORKERS`)
+- `ALERT_LIGHT_SEC_PER_JOB` / `ALERT_TORCH_SEC_PER_JOB` (capacity model per worker)
+- `ALERT_CAPACITY_SAFETY` (default `0.8`)
+- `ALERT_BACKLOG_WARN_MINUTES` and `ALERT_BACKLOG_FOR` (queue lag warning calibration)
+- `ALERT_QUEUE_WAIT_P95_WARN_SECONDS`, `ALERT_QUEUE_WAIT_WINDOW`,
+  `ALERT_QUEUE_WAIT_FOR`, `ALERT_QUEUE_WAIT_MIN_STARTS`
+- `ALERT_WORKER_HEARTBEAT_STALE_SECONDS` and `ALERT_WORKER_HEALTH_FOR`
+- `ALERT_INTERNAL_ERROR_RATE_THRESHOLD`, `ALERT_INTERNAL_ERROR_WINDOW_MINUTES`,
+  `ALERT_INTERNAL_ERROR_FOR`, `ALERT_INTERNAL_ERROR_MIN_COMPLETIONS`
+
+Backlog warning thresholds are computed as:
+
+- `safe_throughput = workers * (1 / sec_per_job) * ALERT_CAPACITY_SAFETY`
+- `warn_backlog = ceil(safe_throughput * ALERT_BACKLOG_WARN_MINUTES * 60)`
 
 Prometheus is also configured to send alerts to Alertmanager. Default
 Alertmanager target is `127.0.0.1:9093`. Override with

@@ -38,12 +38,17 @@
       },
       "targets": [
         {
-          "expr": "judge_queue_stream_length",
-          "legendFormat": "{{stream}}",
+          "expr": "judge_queue_group_lag",
+          "legendFormat": "{{stream}}/{{group}} lag",
           "refId": "A"
+        },
+        {
+          "expr": "judge_queue_group_pending",
+          "legendFormat": "{{stream}}/{{group}} pending",
+          "refId": "B"
         }
       ],
-      "title": "Queue Length",
+      "title": "Queue Lag And Pending",
       "type": "timeseries"
     },
     {
