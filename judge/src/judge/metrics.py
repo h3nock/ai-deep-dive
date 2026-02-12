@@ -89,6 +89,12 @@ JOBS_BY_STATUS = Gauge(
     ["status"],
     multiprocess_mode="livemax",
 )
+WORKER_HEARTBEAT_UNIXTIME = Gauge(
+    "judge_worker_heartbeat_unixtime",
+    "Last worker heartbeat timestamp (unix time)",
+    ["profile", "consumer"],
+    multiprocess_mode="livemax",
+)
 
 
 def register_process_exit() -> None:
@@ -130,6 +136,10 @@ def observe_job_queue_wait(profile: str, created_at: float | None) -> None:
         return
     wait_s = max(0.0, time.time() - created_at)
     JOB_QUEUE_WAIT_SECONDS.labels(profile=profile).observe(wait_s)
+
+
+def worker_heartbeat(profile: str, consumer: str) -> None:
+    WORKER_HEARTBEAT_UNIXTIME.labels(profile=profile, consumer=consumer).set(time.time())
 
 
 def update_runtime_metrics(

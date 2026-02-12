@@ -10,6 +10,7 @@ from judge.metrics import (
     observe_job_duration,
     observe_job_queue_wait,
     register_process_exit,
+    worker_heartbeat,
 )
 from judge.problems import ProblemRepository
 from judge.queue import RedisQueue
@@ -42,6 +43,14 @@ def _derive_isolate_box_id(stream: str, consumer: str) -> int:
     raise ValueError(f"Unsupported stream for isolate box mapping: {stream}")
 
 
+def _profile_for_stream(stream: str) -> str:
+    if stream == "queue:light":
+        return "light"
+    if stream == "queue:torch":
+        return "torch"
+    return "unknown"
+
+
 def main() -> None:
     args = _parse_args()
     settings = load_settings()
@@ -62,10 +71,13 @@ def main() -> None:
         fsize_kb=settings.isolate_fsize_kb,
         python_bin=settings.python_bin,
     )
+    worker_profile = _profile_for_stream(args.stream)
+    worker_heartbeat(worker_profile, args.consumer)
 
     last_reclaim = 0.0
 
     def process_entry(msg_id: str, fields: dict[str, str]) -> None:
+        worker_heartbeat(worker_profile, args.consumer)
         job_id = fields.get("job_id", "")
         problem_key = fields.get("problem_key", "") or fields.get("problem_id", "")
         kind = fields.get("kind", "submit")
@@ -132,6 +144,7 @@ def main() -> None:
             duration = time.perf_counter() - started_at
             observe_job_duration(profile, duration)
             job_finished(profile, status, error_kind)
+            worker_heartbeat(worker_profile, args.consumer)
             if should_ack:
                 try:
                     queue.ack(args.stream, args.group, msg_id)
@@ -139,6 +152,7 @@ def main() -> None:
                     pass
 
     while True:
+        worker_heartbeat(worker_profile, args.consumer)
         now = time.time()
         if now - last_reclaim > args.reclaim_interval:
             reclaimed = queue.autoclaim(
