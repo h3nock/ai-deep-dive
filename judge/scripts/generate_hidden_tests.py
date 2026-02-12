@@ -267,6 +267,71 @@ def _causal_attention_ref(
     return out
 
 
+def _matmul_ref(a: list[list[float]], b: list[list[float]]) -> list[list[float]]:
+    rows = len(a)
+    inner = len(a[0]) if rows else 0
+    if len(b) != inner:
+        raise ValueError("Incompatible matrix shapes for matmul")
+
+    cols = len(b[0]) if b else 0
+    out: list[list[float]] = []
+    for i in range(rows):
+        row: list[float] = []
+        for j in range(cols):
+            row.append(sum(a[i][k] * b[k][j] for k in range(inner)))
+        out.append(row)
+    return out
+
+
+def _multi_head_causal_attention_ref(
+    x: list[list[float]],
+    w_q: list[list[float]],
+    w_k: list[list[float]],
+    w_v: list[list[float]],
+    w_o: list[list[float]],
+    num_heads: int,
+) -> list[list[float]]:
+    seq_len = len(x)
+    d_model = len(x[0]) if seq_len else 0
+    if d_model == 0:
+        return []
+    if d_model % num_heads != 0:
+        raise ValueError("d_model must be divisible by num_heads")
+
+    d_head = d_model // num_heads
+    q = _matmul_ref(x, w_q)
+    k = _matmul_ref(x, w_k)
+    v = _matmul_ref(x, w_v)
+
+    def _split_heads(m: list[list[float]]) -> list[list[list[float]]]:
+        heads: list[list[list[float]]] = []
+        for head_idx in range(num_heads):
+            head_rows: list[list[float]] = []
+            start = head_idx * d_head
+            end = start + d_head
+            for token_idx in range(seq_len):
+                head_rows.append(m[token_idx][start:end])
+            heads.append(head_rows)
+        return heads
+
+    q_heads = _split_heads(q)
+    k_heads = _split_heads(k)
+    v_heads = _split_heads(v)
+
+    head_outputs: list[list[list[float]]] = []
+    for head_idx in range(num_heads):
+        head_outputs.append(_causal_attention_ref(q_heads[head_idx], k_heads[head_idx], v_heads[head_idx]))
+
+    merged: list[list[float]] = []
+    for token_idx in range(seq_len):
+        row: list[float] = []
+        for head_idx in range(num_heads):
+            row.extend(head_outputs[head_idx][token_idx])
+        merged.append(row)
+
+    return _matmul_ref(merged, w_o)
+
+
 def _torch_matrix_input_code(var_name: str, matrix: list[list[float]]) -> str:
     return f"{var_name} = torch.tensor({repr(matrix)}, dtype=torch.float32)\n"
 
@@ -929,6 +994,127 @@ def _gen_causal_attention(rng: random.Random) -> list[Case]:
     return cases
 
 
+def _gen_multi_head_causal_attention(rng: random.Random) -> list[Case]:
+    cases: list[Case] = []
+
+    def _identity(n: int) -> list[list[float]]:
+        return [[1.0 if i == j else 0.0 for j in range(n)] for i in range(n)]
+
+    fixed = [
+        (
+            "boundary",
+            [[0.5, 0.5, 0.5, 0.5]],
+            _identity(4),
+            _identity(4),
+            _identity(4),
+            _identity(4),
+            2,
+        ),
+        (
+            "boundary",
+            [[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0]],
+            _identity(4),
+            _identity(4),
+            _identity(4),
+            _identity(4),
+            2,
+        ),
+        (
+            "adversarial",
+            [[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0]],
+            _identity(4),
+            _identity(4),
+            _identity(4),
+            [[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]],
+            2,
+        ),
+        (
+            "adversarial",
+            [[1.0, 0.0, 0.0, 1.0], [0.0, 1.0, 1.0, 0.0], [1.0, 1.0, 0.0, 0.0]],
+            [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0], [0.0, 0.0, 1.0, 0.0]],
+            [[0.0, 1.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]],
+            _identity(4),
+            _identity(4),
+            2,
+        ),
+        (
+            "regression",
+            [[1.0, 0.0, 0.5, 0.5, 1.0, 0.0], [0.0, 1.0, 0.5, 0.5, 0.0, 1.0], [0.5, 0.5, 1.0, 0.0, 1.0, 1.0]],
+            [[0.5, 0.5, 0.0, 0.0, 0.2, 0.0], [0.5, -0.5, 0.0, 0.0, 0.0, 0.2], [0.0, 0.0, 0.5, 0.5, 0.2, 0.0], [0.0, 0.0, 0.5, -0.5, 0.0, 0.2], [0.2, 0.0, 0.2, 0.0, 0.5, 0.0], [0.0, 0.2, 0.0, 0.2, 0.0, 0.5]],
+            [[0.5, -0.5, 0.0, 0.0, 0.1, 0.0], [0.5, 0.5, 0.0, 0.0, 0.0, 0.1], [0.0, 0.0, 0.5, -0.5, 0.1, 0.0], [0.0, 0.0, 0.5, 0.5, 0.0, 0.1], [0.1, 0.0, 0.1, 0.0, 0.5, 0.0], [0.0, 0.1, 0.0, 0.1, 0.0, 0.5]],
+            _identity(6),
+            [[1.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]],
+            3,
+        ),
+        (
+            "regression",
+            [[1.0, 0.0, 0.0, 1.0, 0.5, 0.5, 1.0, 0.0], [0.0, 1.0, 1.0, 0.0, 0.5, 0.5, 0.0, 1.0], [0.5, 0.5, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.5, 0.5]],
+            [[0.6, 0.0, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0], [0.0, 0.6, 0.0, 0.0, 0.0, 0.2, 0.0, 0.0], [0.0, 0.0, 0.6, 0.0, 0.0, 0.0, 0.2, 0.0], [0.0, 0.0, 0.0, 0.6, 0.0, 0.0, 0.0, 0.2], [0.2, 0.0, 0.0, 0.0, 0.6, 0.0, 0.0, 0.0], [0.0, 0.2, 0.0, 0.0, 0.0, 0.6, 0.0, 0.0], [0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 0.6, 0.0], [0.0, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 0.6]],
+            [[0.6, 0.0, 0.0, 0.0, -0.2, 0.0, 0.0, 0.0], [0.0, 0.6, 0.0, 0.0, 0.0, -0.2, 0.0, 0.0], [0.0, 0.0, 0.6, 0.0, 0.0, 0.0, -0.2, 0.0], [0.0, 0.0, 0.0, 0.6, 0.0, 0.0, 0.0, -0.2], [-0.2, 0.0, 0.0, 0.0, 0.6, 0.0, 0.0, 0.0], [0.0, -0.2, 0.0, 0.0, 0.0, 0.6, 0.0, 0.0], [0.0, 0.0, -0.2, 0.0, 0.0, 0.0, 0.6, 0.0], [0.0, 0.0, 0.0, -0.2, 0.0, 0.0, 0.0, 0.6]],
+            _identity(8),
+            _identity(8),
+            4,
+        ),
+    ]
+
+    for bucket, x, w_q, w_k, w_v, w_o, num_heads in fixed:
+        expected = _round_nested(
+            _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads), digits=10
+        )
+        code = "import torch\n"
+        code += _torch_matrix_input_code("X", x)
+        code += _torch_matrix_input_code("W_Q", w_q)
+        code += _torch_matrix_input_code("W_K", w_k)
+        code += _torch_matrix_input_code("W_V", w_v)
+        code += _torch_matrix_input_code("W_O", w_o)
+        code += f"num_heads = {num_heads}\n"
+        cases.append(Case(bucket, input_code=code, expected=expected))
+
+    for seq_len, d_model, num_heads in [(16, 12, 3), (20, 16, 4), (24, 12, 6), (18, 24, 6)]:
+        x = _random_matrix(rng, seq_len, d_model, low=-1.5, high=1.5)
+        w_q = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
+        w_k = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
+        w_v = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
+        w_o = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
+        expected = _round_nested(
+            _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads), digits=10
+        )
+        code = "import torch\n"
+        code += _torch_matrix_input_code("X", x)
+        code += _torch_matrix_input_code("W_Q", w_q)
+        code += _torch_matrix_input_code("W_K", w_k)
+        code += _torch_matrix_input_code("W_V", w_v)
+        code += _torch_matrix_input_code("W_O", w_o)
+        code += f"num_heads = {num_heads}\n"
+        cases.append(Case("stress", input_code=code, expected=expected))
+
+    for _ in range(10):
+        d_model = rng.choice([4, 6, 8, 10, 12, 16])
+        head_candidates = [h for h in [2, 3, 4, 5, 6, 8] if d_model % h == 0]
+        num_heads = rng.choice(head_candidates)
+        seq_len = rng.randint(2, 12)
+
+        x = _random_matrix(rng, seq_len, d_model, low=-2.0, high=2.0)
+        w_q = _random_matrix(rng, d_model, d_model, low=-1.0, high=1.0)
+        w_k = _random_matrix(rng, d_model, d_model, low=-1.0, high=1.0)
+        w_v = _random_matrix(rng, d_model, d_model, low=-1.0, high=1.0)
+        w_o = _random_matrix(rng, d_model, d_model, low=-1.0, high=1.0)
+
+        expected = _round_nested(
+            _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads), digits=10
+        )
+        code = "import torch\n"
+        code += _torch_matrix_input_code("X", x)
+        code += _torch_matrix_input_code("W_Q", w_q)
+        code += _torch_matrix_input_code("W_K", w_k)
+        code += _torch_matrix_input_code("W_V", w_v)
+        code += _torch_matrix_input_code("W_O", w_o)
+        code += f"num_heads = {num_heads}\n"
+        cases.append(Case("random", input_code=code, expected=expected))
+
+    return cases
+
+
 PROBLEM_GENERATORS: dict[str, ProblemGenerator] = {
     "build-gpt/01-from-text-to-bytes/01-encoder": _gen_encoder,
     "build-gpt/01-from-text-to-bytes/02-byte-inspector": _gen_byte_inspector,
@@ -944,6 +1130,7 @@ PROBLEM_GENERATORS: dict[str, ProblemGenerator] = {
     "build-gpt/04-positional-encoding/03-pe-matrix": _gen_pe_matrix,
     "build-gpt/05-attention-mechanism/01-attention-weights": _gen_attention_weights,
     "build-gpt/05-attention-mechanism/02-causal-attention": _gen_causal_attention,
+    "build-gpt/06-multi-head-attention/01-multi-head-causal-attention": _gen_multi_head_causal_attention,
 }
 
 
@@ -962,6 +1149,7 @@ PROBLEM_SEEDS: dict[str, int] = {
     "build-gpt/04-positional-encoding/03-pe-matrix": 403,
     "build-gpt/05-attention-mechanism/01-attention-weights": 501,
     "build-gpt/05-attention-mechanism/02-causal-attention": 502,
+    "build-gpt/06-multi-head-attention/01-multi-head-causal-attention": 601,
 }
 
 
