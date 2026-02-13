@@ -20,7 +20,7 @@
     "monaco-editor": "^0.54.0",
     "monaco-vim": "^0.4.2",
     "next": "^16.0.7",
-    "next-mdx-remote": "^5.0.0",
+    "next-mdx-remote": "^6.0.0",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-markdown": "^10.1.0",
