@@ -8,3 +8,58 @@ description: "How the feed-forward network transforms each token independently."
   The previous chapters gave each token a context-aware representation through attention, where tokens gather relevant information from other positions in the sequence. This chapter introduces the feed-forward network (FFN), which takes each token's enriched vector and rewrites its features through a learned transformation applied at every position. Attention controls what information flows between positions, and the FFN controls how that information gets processed within each position.
 </Description>
 
+
+<Step title="FFN Anatomy">
+  <Description>
+    The FFN takes a token's vector of size `d_model` and passes it through two linear transformations with a nonlinear activation function in between. The first linear projection expands it from `d_model` to a larger intermediate size called `d_ff`. Then a nonlinear activation function is applied element-wise. Finally, a second linear projection contracts the result back from `d_ff` to `d_model`. The output has the same size as the input, but its contents have been transformed.
+  </Description>
+
+  <div className="my-6 flex justify-center overflow-x-auto">
+    <div className="inline-flex items-center gap-2 font-mono text-sm p-4">
+      <div className="px-3 py-2 bg-surface rounded border border-border text-center">
+        <div className="text-muted text-xs mb-0.5">input</div>
+        <div className="text-primary font-semibold">d_model</div>
+      </div>
+      <div className="text-muted text-lg">→</div>
+      <div className="px-3 py-2 bg-blue-500/10 rounded border border-blue-500/30 text-center">
+        <div className="text-blue-400 text-xs mb-0.5">W<sub>1</sub></div>
+        <div className="text-blue-400">expand</div>
+      </div>
+      <div className="text-muted text-lg">→</div>
+      <div className="px-3 py-2 bg-amber-500/10 rounded border border-amber-500/30 text-center">
+        <div className="text-amber-400 text-xs mb-0.5">activation</div>
+        <div className="text-amber-400 font-semibold">d_ff</div>
+      </div>
+      <div className="text-muted text-lg">→</div>
+      <div className="px-3 py-2 bg-blue-500/10 rounded border border-blue-500/30 text-center">
+        <div className="text-blue-400 text-xs mb-0.5">W<sub>2</sub></div>
+        <div className="text-blue-400">contract</div>
+      </div>
+      <div className="text-muted text-lg">→</div>
+      <div className="px-3 py-2 bg-surface rounded border border-border text-center">
+        <div className="text-muted text-xs mb-0.5">output</div>
+        <div className="text-primary font-semibold">d_model</div>
+      </div>
+    </div>
+  </div>
+
+  <Description>
+    In equation form, the complete operation is:
+  </Description>
+
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border">
+    <div className="text-center font-mono text-lg text-primary">
+      FFN(x) = W<sub>2</sub> · activation(W<sub>1</sub> · x + b<sub>1</sub>) + b<sub>2</sub>
+    </div>
+  </div>
+
+  <Description>
+    In GPT-2's base configuration, `d_model = 768` and `d_ff = 4 × d_model = 3072`, giving W<sub>1</sub> the shape `768 × 3072` and W<sub>2</sub> the shape `3072 × 768`. This 4× expansion ratio is a common default across many Transformer architectures based on emprical findings.
+  </Description>
+
+  <Description>
+    Unlike attention, which connects tokens to each other, the FFN processes each token entirely on its own. Every position passes through the same W<sub>1</sub>, W<sub>2</sub>, and biases, and no information flows between tokens during this step.
+  </Description>
+
+</Step>
+
