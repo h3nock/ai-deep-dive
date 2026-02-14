@@ -57,10 +57,6 @@ description: "How the feed-forward network transforms each token independently."
     In GPT-2's base configuration, `d_model = 768` and `d_ff = 4 × d_model = 3072`, giving W<sub>1</sub> the shape `768 × 3072` and W<sub>2</sub> the shape `3072 × 768`. This 4× expansion ratio is a common default across many Transformer architectures based on emprical findings.
   </Description>
 
-  <Description>
-    Unlike attention, which connects tokens to each other, the FFN processes each token entirely on its own. Every position passes through the same W<sub>1</sub>, W<sub>2</sub>, and biases, and no information flows between tokens during this step.
-  </Description>
-
 </Step>
 
 
