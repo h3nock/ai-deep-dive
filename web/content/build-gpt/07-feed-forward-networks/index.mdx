@@ -5,7 +5,7 @@ description: "How the feed-forward network transforms each token independently."
 ---
 
 <Description>
-  The previous chapters gave each token a context-aware representation through attention, where tokens gather relevant information from other positions in the sequence. This chapter introduces the feed-forward network (FFN), which takes each token's enriched vector and rewrites its features through a learned transformation applied independently at every position. While attention handles the flow of information between positions, the FFN processes that information within each position.
+  The previous chapters gave each token a context-aware representation through attention, where tokens gather relevant information from other positions in the sequence. This chapter introduces the feed-forward network (FFN), which takes each token's enriched vector and rewrites its features through a learned transformation applied at every position. Attention controls what information flows between positions, and the FFN controls how that information gets processed within each position.
 </Description>
 
 
@@ -63,3 +63,18 @@ description: "How the feed-forward network transforms each token independently."
 
 </Step>
 
+
+<Step title="Why the Activation Matters">
+  <Description>
+    Without the activation, the FFN is just two linear projections applied in sequence, and since composing two linear transformations always produces another single linear transformation, the product W<sub>2</sub>·W<sub>1</sub> collapses into one matrix. That reduces the entire FFN to a single `d_model × d_model` multiplication where the expansion to `d_ff` adds nothing and the network can no longer capture nonlinear relationships in the data.
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center space-y-2">
+    <div className="text-muted">Without activation:</div>
+    <div>W<sub>2</sub> · (W<sub>1</sub> · x) = (W<sub>2</sub> · W<sub>1</sub>) · x = W<sub>combined</sub> · x</div>
+  </div>
+
+  <Description>
+      The activation function breaks this linearity by applying a nonlinear operation between the two projections. After W<sub>1</sub> expands the input into `d_ff` values, the activation decides which of those values pass through. With ReLU for example, one of the most widely used activation functions in deep learning, any negative value becomes zero while positive values pass through unchanged. This means after applying the activation function, different inputs produce different patterns of active (on) and inactive (off) neurons, so W<sub>2</sub> receives a selectively filtered signal rather than a plain linear combination. This nonlinear filtering is what prevents the two weight matrices from collapsing into one and what gives the FFN the ability to model nonlinear relationships in the data.
+  </Description>
+</Step>
