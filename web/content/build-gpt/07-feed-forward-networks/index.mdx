@@ -88,7 +88,7 @@ description: "How the feed-forward network transforms each token independently."
     Without the activation, the FFN is just two linear projections applied in sequence, and since composing two linear transformations always produces another single linear transformation, the product W<sub>2</sub>·W<sub>1</sub> collapses into one matrix. That reduces the entire FFN to a single `d_model × d_model` multiplication where the expansion to `d_ff` adds nothing and the network can no longer capture nonlinear relationships in the data.
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center space-y-2">
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border font-mono text-sm text-center text-primary space-y-2">
     <div className="text-muted">Without activation:</div>
     <div>W<sub>2</sub> · (W<sub>1</sub> · x) = (W<sub>2</sub> · W<sub>1</sub>) · x = W<sub>combined</sub> · x</div>
   </div>
