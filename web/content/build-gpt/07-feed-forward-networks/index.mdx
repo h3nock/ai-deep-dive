@@ -82,6 +82,6 @@ description: "How the feed-forward network transforms each token independently."
   </div>
 
   <Description>
-      The activation function breaks this linearity by applying a nonlinear operation between the two projections. After W<sub>1</sub> expands the input into `d_ff` values, the activation decides which of those values pass through. With ReLU for example, one of the most widely used activation functions in deep learning, any negative value becomes zero while positive values pass through unchanged. This means after applying the activation function, different inputs produce different patterns of active (on) and inactive (off) neurons, so W<sub>2</sub> receives a selectively filtered signal rather than a plain linear combination. This nonlinear filtering is what prevents the two weight matrices from collapsing into one and what gives the FFN the ability to model nonlinear relationships in the data.
+    The activation function prevents this collapse by inserting a nonlinear operation between the two projections. As covered above, it selectively zeros out or suppresses different neurons for each token, so W<sub>2</sub> receives a different filtered signal each time rather than a plain linear combination of W<sub>1</sub>'s output. This is what keeps the two matrices from collapsing into a single linear operation and what makes the expansion to `d_ff` meaningful.
   </Description>
 </Step>
