@@ -52,6 +52,11 @@ const NormalizedStepSize = dynamic(() =>
         (mod) => mod.NormalizedStepSize
     )
 );
+const ActivationGraph = dynamic(() =>
+    import("@/components/mdx/ActivationGraph").then(
+        (mod) => mod.ActivationGraph
+    )
+);
 
 const components = {
     SplitLayout,
@@ -84,6 +89,7 @@ const components = {
     NormalizedStepSize,
     BinaryVsSmooth,
     RotationVisualization,
+    ActivationGraph,
 };
 
 interface LessonGuideContentProps {

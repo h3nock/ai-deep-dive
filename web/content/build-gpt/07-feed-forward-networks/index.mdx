@@ -97,3 +97,38 @@ description: "How the feed-forward network transforms each token independently."
     The activation function prevents this collapse by inserting a nonlinear operation between the two projections. As covered above, it selectively zeros out or suppresses different neurons for each token, so W<sub>2</sub> receives a different filtered signal each time rather than a plain linear combination of W<sub>1</sub>'s output. This is what keeps the two matrices from collapsing into a single linear operation and what makes the expansion to `d_ff` meaningful.
   </Description>
 </Step>
+
+
+<Step title="Activation Functions">
+  <Description>
+    We used ReLU as the example earlier because its behavior is straightforward, but the choice of activation function affects how gradients flow during training and whether certain neurons can become permanently inactive. The original Transformer used ReLU, GPT-2 switched to GELU, and models like DeepSeek and Mistral use gated variants like SwiGLU.
+  </Description>
+
+  <ActivationGraph />
+
+  <Description>
+    **ReLU** (Rectified Linear Unit) is the simplest option. It zeros out any negative value and passes positive values through unchanged, making the filtering binary. During training, weight initialization and layer normalization keep most neurons operating near the zero boundary. So, a weight update can push a neuron past zero for every input, and once there, it outputs zero, which means zero gradient during backpropagation, so the weights never update and the neuron is permanently dead. In large networks, a significant fraction of neurons can die this way, silently reducing the model's capacity.
+  </Description>
+
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border font-mono text-sm text-center text-primary">
+    ReLU(x) = max(0, x)
+  </div>
+
+  <Description>
+    **GELU** (Gaussian Error Linear Unit) is what GPT-2 uses. Instead of the hard cutoff at zero, GELU curves smoothly through the transition region, gradually suppressing small negative values rather than forcing them to zero. Because of this smooth transition, neurons near the zero boundary still receive meaningful gradient updates even when their output is slightly negative, so they can continue learning, which prevents them from becoming permanently dead.
+  </Description>
+
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border font-mono text-sm text-center text-primary">
+    GELU(x) = x · Φ(x)
+  </div>
+
+  <Description>
+    Φ(x) is the standard normal cumulative distribution function. In practice, it is approximated using a tanh function.
+  </Description>
+
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border font-mono text-sm text-center text-primary">
+    Φ(x) ≈ 0.5(1 + tanh(√(2/π) · (x + 0.044715x³)))
+  </div>
+</Step>
+
+
