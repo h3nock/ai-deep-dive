@@ -4,4 +4,141 @@ step: 7
 description: "How the feed-forward network transforms each token independently."
 ---
 
-<ComingSoon />
+<Description>
+  In the previous chapters, attention allowed each token to gather relevant information from other positions in the sequence, producing a context-aware representation. This chapter introduces the feed-forward network (FFN), which takes each token's enriched vector and rewrites its features through a learned transformation applied independently at every position. While attention handles the flow of information between positions, the FFN processes that information within each position.
+</Description>
+
+
+<Step title="The FFN">
+  <Description>
+    The FFN takes a token's vector of size `d_model` and passes it through two linear transformations with a nonlinear activation function in between. The first linear projection expands the vector from `d_model` to a larger intermediate size called `d_ff`. Then a nonlinear activation function is applied element-wise. Finally, a second linear projection contracts the result back from `d_ff` to `d_model`.
+  </Description>
+
+  <div className="my-6 flex justify-center overflow-x-auto">
+    <svg viewBox="0 0 520 160" className="w-full" style={{ maxWidth: "520px", display: "block" }}>
+      {/* Input box - d_model (small) */}
+      <rect x="10" y="55" width="60" height="50" rx="4" fill="#18181B" stroke="#27272A" strokeWidth="1" />
+      <text x="40" y="72" textAnchor="middle" fill="#71717A" fontSize="10" fontFamily="var(--font-mono)">input</text>
+      <text x="40" y="90" textAnchor="middle" fill="#D4D4D8" fontSize="12" fontWeight="600" fontFamily="var(--font-mono)">d_model</text>
+
+      {/* Arrow */}
+      <text x="85" y="84" textAnchor="middle" fill="#71717A" fontSize="16">→</text>
+
+      {/* W₁ - trapezoid expanding from small to large */}
+      <polygon points="100,55 160,20 160,140 100,105" rx="4" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" strokeWidth="1" />
+      <text x="125" y="76" textAnchor="middle" fill="#60a5fa" fontSize="10" fontFamily="var(--font-mono)">W₁</text>
+      <text x="125" y="92" textAnchor="middle" fill="#60a5fa" fontSize="11" fontFamily="var(--font-mono)">expand</text>
+
+      {/* Arrow */}
+      <text x="175" y="84" textAnchor="middle" fill="#71717A" fontSize="16">→</text>
+
+      {/* Activation box - d_ff (4x tall) */}
+      <rect x="190" y="20" width="70" height="120" rx="4" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.3)" strokeWidth="1" />
+      <text x="225" y="72" textAnchor="middle" fill="#f59e0b" fontSize="10" fontFamily="var(--font-mono)">activation</text>
+      <text x="225" y="90" textAnchor="middle" fill="#f59e0b" fontSize="12" fontWeight="600" fontFamily="var(--font-mono)">d_ff</text>
+
+      {/* Arrow */}
+      <text x="275" y="84" textAnchor="middle" fill="#71717A" fontSize="16">→</text>
+
+      {/* W₂ - trapezoid contracting from large to small */}
+      <polygon points="290,20 350,55 350,105 290,140" rx="4" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" strokeWidth="1" />
+      <text x="320" y="76" textAnchor="middle" fill="#60a5fa" fontSize="10" fontFamily="var(--font-mono)">W₂</text>
+      <text x="320" y="92" textAnchor="middle" fill="#60a5fa" fontSize="11" fontFamily="var(--font-mono)">contract</text>
+
+      {/* Arrow */}
+      <text x="365" y="84" textAnchor="middle" fill="#71717A" fontSize="16">→</text>
+
+      {/* Output box - d_model (small) */}
+      <rect x="380" y="55" width="60" height="50" rx="4" fill="#18181B" stroke="#27272A" strokeWidth="1" />
+      <text x="410" y="72" textAnchor="middle" fill="#71717A" fontSize="10" fontFamily="var(--font-mono)">output</text>
+      <text x="410" y="90" textAnchor="middle" fill="#D4D4D8" fontSize="12" fontWeight="600" fontFamily="var(--font-mono)">d_model</text>
+    </svg>
+  </div>
+
+  <Description>
+    In equation form, the complete operation is:
+  </Description>
+
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border">
+    <div className="text-center font-mono text-lg text-primary">
+      FFN(x) = W<sub>2</sub> · activation(W<sub>1</sub> · x + b<sub>1</sub>) + b<sub>2</sub>
+    </div>
+  </div>
+
+  <Description>
+    The expansion through W<sub>1</sub> produces a vector of `d_ff` values, where each value is a dot product between the token's vector and one of W<sub>1</sub>'s learned weight vectors. Each dot product measures how much the token's representation aligns with what that weight vector has learned to respond to. A large positive result means strong alignment, a value near zero means weak alignment, and a negative value means the representation points away from what that weight vector has learned.
+  </Description>
+
+  <Description>
+    The activation function then filters the expanded vector element-wise. With ReLU for example, every negative value becomes zero and every positive value passes through unchanged. Since different tokens produce different values after W<sub>1</sub>, the activation zeros out or suppresses different neurons for each one, so each token passes a different combination of active and suppressed neurons forward to W<sub>2</sub>.
+  </Description>
+
+  <Description>
+    The contraction through W<sub>2</sub> then maps these filtered values back from `d_ff` to `d_model` dimensions. Each of the `d_ff` neurons has a corresponding column in W<sub>2</sub> that defines how much that neuron contributes to each of the `d_model` output dimensions. Since different tokens activate different neurons, a different set of W<sub>2</sub> columns drives the output for each token, so the same weight matrices effectively apply a different transformation depending on the token's representation. This is what allows the FFN to capture nonlinear relationships rather than applying a single fixed transformation to every token.
+  </Description>
+
+  <Description>
+    In GPT-2's base configuration, `d_model = 768` and `d_ff = 4 × d_model = 3072`, giving W<sub>1</sub> the shape `768 × 3072` and W<sub>2</sub> the shape `3072 × 768`. This 4× expansion ratio is a common default across many Transformer architectures based on empirical findings.
+  </Description>
+</Step>
+
+
+<Step title="Why the Activation Matters">
+  <Description>
+    Without the activation, the FFN is just two linear projections applied in sequence, and since composing two linear transformations always produces another single linear transformation, the product W<sub>2</sub>·W<sub>1</sub> collapses into one matrix. That reduces the entire FFN to a single `d_model × d_model` multiplication where the expansion to `d_ff` adds nothing and the network can no longer capture nonlinear relationships in the data.
+  </Description>
+
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border font-mono text-sm text-center text-primary space-y-2">
+    <div className="text-muted">Without activation:</div>
+    <div>W<sub>2</sub> · (W<sub>1</sub> · x) = (W<sub>2</sub> · W<sub>1</sub>) · x = W<sub>combined</sub> · x</div>
+  </div>
+
+  <Description>
+    The activation function prevents this collapse by inserting a nonlinear operation between the two projections. As covered above, it selectively zeros out or suppresses different neurons for each token, so W<sub>2</sub> receives a different filtered signal each time rather than a plain linear combination of W<sub>1</sub>'s output. This is what keeps the two matrices from collapsing into a single linear operation and what makes the expansion to `d_ff` meaningful.
+  </Description>
+</Step>
+
+
+<Step title="Activation Functions">
+  <Description>
+    We used ReLU as the example earlier because its behavior is straightforward, but the choice of activation function affects how gradients flow during training and whether certain neurons can become permanently inactive. The original Transformer used ReLU, GPT-2 switched to GELU, and models like DeepSeek and Mistral use gated variants like SwiGLU.
+  </Description>
+
+  <ActivationGraph />
+
+  <Description>
+    **ReLU** (Rectified Linear Unit) is the simplest option. It zeros out any negative value and passes positive values through unchanged, making the filtering binary. During training, weight initialization and normalization keep most neurons operating near the zero boundary. So, a weight update can push a neuron past zero for every input, and once there, it outputs zero, which means zero gradient during backpropagation, so the weights never update and the neuron is permanently dead. In large networks, a significant fraction of neurons can die this way, silently reducing the model's capacity.
+  </Description>
+
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border font-mono text-sm text-center text-primary">
+    ReLU(x) = max(0, x)
+  </div>
+
+  <Description>
+    **GELU** (Gaussian Error Linear Unit) is what GPT-2 uses. Instead of the hard cutoff at zero, GELU curves smoothly through the transition region, gradually suppressing small negative values rather than forcing them to zero. Because of this smooth transition, neurons near the zero boundary still receive meaningful gradient updates even when their output is slightly negative, so they can continue learning, which prevents them from becoming permanently dead.
+  </Description>
+
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border font-mono text-sm text-center text-primary">
+    GELU(x) = x · Φ(x)
+  </div>
+
+  <Description>
+    Φ(x) is the standard normal cumulative distribution function. In practice, it is approximated using a tanh function.
+  </Description>
+
+  <div className="my-4 p-4 bg-surface rounded-lg border border-border font-mono text-sm text-center text-primary">
+    Φ(x) ≈ 0.5(1 + tanh(√(2/π) · (x + 0.044715x³)))
+  </div>
+</Step>
+
+
+<Callout type="success" title="Summary">
+  * The FFN processes each token independently through an expand, activate, contract pipeline. W<sub>1</sub> expands the vector from `d_model` to `d_ff`, the activation filters the expanded values element-wise, and W<sub>2</sub> contracts the result back to `d_model`
+  * The nonlinear activation between the two projections is what prevents W<sub>2</sub>·W<sub>1</sub> from collapsing into a single linear transformation, enabling the network to capture nonlinear relationships in the data
+  * ReLU zeros out all negative values and passes positive values unchanged, which can cause neurons that drift negative for every input to stop receiving gradients and become permanently dead
+  * GELU, used by GPT-2, replaces the hard cutoff with a smooth curve that gradually suppresses small negative values, so neurons near the zero boundary keep receiving gradient updates and continue learning
+</Callout>
+
+<Description>
+  With the FFN in place, each Transformer layer combines two complementary operations, attention and the FFN. To build a capable models, we need to stack many of these layers so that representations are refined progressively. But deep stacks introduce training stability problems. The next chapter covers **residual connections** and **layer normalization**, the two mechanisms that keep gradients and activations well-behaved across depth.
+</Description>
