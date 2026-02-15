@@ -139,3 +139,6 @@ description: "How the feed-forward network transforms each token independently."
   * GELU, used by GPT-2, replaces the hard cutoff with a smooth curve that gradually suppresses small negative values, so neurons near the zero boundary keep receiving gradient updates and continue learning
 </Callout>
 
+<Description>
+  With the FFN in place, each Transformer layer combines two complementary operations, attention and the FFN. To build a capable models, we need to stack many of these layers so that representations are refined progressively. But deep stacks introduce training stability problems. The next chapter covers **residual connections** and **layer normalization**, the two mechanisms that keep gradients and activations well-behaved across depth.
+</Description>
