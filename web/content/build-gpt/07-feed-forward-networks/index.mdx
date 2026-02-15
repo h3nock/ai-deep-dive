@@ -9,9 +9,9 @@ description: "How the feed-forward network transforms each token independently."
 </Description>
 
 
-<Step title="FFN Anatomy">
+<Step title="The FFN">
   <Description>
-    The FFN takes a token's vector of size `d_model` and passes it through two linear transformations with a nonlinear activation function in between. The first linear projection expands it from `d_model` to a larger intermediate size called `d_ff`. Then a nonlinear activation function is applied element-wise. Finally, a second linear projection contracts the result back from `d_ff` to `d_model`. The output has the same size as the input, but its contents have been transformed.
+    The FFN takes a token's vector of size `d_model` and passes it through two linear transformations with a nonlinear activation function in between. The first linear projection expands the vector from `d_model` to a larger intermediate size called `d_ff`. Then a nonlinear activation function is applied element-wise. Finally, a second linear projection contracts the result back from `d_ff` to `d_model`.
   </Description>
 
   <div className="my-6 flex justify-center overflow-x-auto">
@@ -54,9 +54,20 @@ description: "How the feed-forward network transforms each token independently."
   </div>
 
   <Description>
-    In GPT-2's base configuration, `d_model = 768` and `d_ff = 4 × d_model = 3072`, giving W<sub>1</sub> the shape `768 × 3072` and W<sub>2</sub> the shape `3072 × 768`. This 4× expansion ratio is a common default across many Transformer architectures based on emprical findings.
+    The expansion through W<sub>1</sub> produces a vector of `d_ff` values, where each value is a dot product between the token's vector and one of W<sub>1</sub>'s learned weight vectors. Each dot product measures how much the token's representation aligns with what that weight vector has learned to respond to. A large positive result means strong alignment, a value near zero means weak alignment, and a negative value means the representation points away from what that weight vector has learned.
   </Description>
 
+  <Description>
+    The activation function then filters the expanded vector element-wise. With ReLU for example, every negative value becomes zero and every positive value passes through unchanged. Since different tokens produce different values after W<sub>1</sub>, the activation zeros out or suppresses different neurons for each one, so each token passes a different combination of active and suppressed neurons forward to W<sub>2</sub>.
+  </Description>
+
+  <Description>
+    The contraction through W<sub>2</sub> then maps these filtered values back from `d_ff` to `d_model` dimensions. Each of the `d_ff` neurons has a corresponding column in W<sub>2</sub> that defines how much that neuron contributes to each of the `d_model` output dimensions. Since different tokens activate different neurons, a different set of W<sub>2</sub> columns drives the output for each token, so the same weight matrices effectively apply a different transformation depending on the token's representation. This is what allows the FFN to capture nonlinear relationships rather than applying a single fixed transformation to every token.
+  </Description>
+
+  <Description>
+    In GPT-2's base configuration, `d_model = 768` and `d_ff = 4 × d_model = 3072`, giving W<sub>1</sub> the shape `768 × 3072` and W<sub>2</sub> the shape `3072 × 768`. This 4× expansion ratio is a common default across many Transformer architectures based on empirical findings.
+  </Description>
 </Step>
 
 
