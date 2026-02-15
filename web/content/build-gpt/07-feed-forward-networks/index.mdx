@@ -132,3 +132,10 @@ description: "How the feed-forward network transforms each token independently."
 </Step>
 
 
+<Callout type="success" title="Summary">
+  * The FFN processes each token independently through an expand, activate, contract pipeline. W<sub>1</sub> expands the vector from `d_model` to `d_ff`, the activation filters the expanded values element-wise, and W<sub>2</sub> contracts the result back to `d_model`
+  * The nonlinear activation between the two projections is what prevents W<sub>2</sub>·W<sub>1</sub> from collapsing into a single linear transformation, enabling the network to capture nonlinear relationships in the data
+  * ReLU zeros out all negative values and passes positive values unchanged, which can cause neurons that drift negative for every input to stop receiving gradients and become permanently dead
+  * GELU, used by GPT-2, replaces the hard cutoff with a smooth curve that gradually suppresses small negative values, so neurons near the zero boundary keep receiving gradient updates and continue learning
+</Callout>
+
