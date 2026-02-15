@@ -107,7 +107,7 @@ description: "How the feed-forward network transforms each token independently."
   <ActivationGraph />
 
   <Description>
-    **ReLU** (Rectified Linear Unit) is the simplest option. It zeros out any negative value and passes positive values through unchanged, making the filtering binary. During training, weight initialization and layer normalization keep most neurons operating near the zero boundary. So, a weight update can push a neuron past zero for every input, and once there, it outputs zero, which means zero gradient during backpropagation, so the weights never update and the neuron is permanently dead. In large networks, a significant fraction of neurons can die this way, silently reducing the model's capacity.
+    **ReLU** (Rectified Linear Unit) is the simplest option. It zeros out any negative value and passes positive values through unchanged, making the filtering binary. During training, weight initialization and normalization keep most neurons operating near the zero boundary. So, a weight update can push a neuron past zero for every input, and once there, it outputs zero, which means zero gradient during backpropagation, so the weights never update and the neuron is permanently dead. In large networks, a significant fraction of neurons can die this way, silently reducing the model's capacity.
   </Description>
 
   <div className="my-4 p-4 bg-surface rounded-lg border border-border font-mono text-sm text-center text-primary">
