@@ -14,3 +14,30 @@ description: "How residual connections and layer normalization enable deep netwo
 </Description>
 </div>
 
+
+<Step title="Why Deep Stacks Break">
+  <Description>
+    Each layer applies its own transformation, and stacking means those transformations compound through every subsequent one.
+  </Description>
+
+  <Description>
+    During backpropagation, the gradient flows backward through every layer, multiplied at each one by that layer's local derivatives. In GPT-2, that's twelve multiplications in sequence. If those multipliers average below 1.0, the gradient shrinks at every step until early layers receive almost no learning signal, a problem known as **vanishing gradients**. If the multipliers average above 1.0, the gradient grows instead, eventually destabilizing training until it diverges. This is called **exploding gradients**.
+  </Description>
+
+  <div className="my-6 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-3">
+    <div>
+      <div className="text-zinc-400">0.7 × 0.7 × 0.7 × ... = 0.7<sup>12</sup> = <strong className="text-zinc-200">0.014</strong></div>
+      <div className="text-xs text-zinc-500 mt-1">A multiplier of 0.7 leaves only 1.4% of the gradient after 12 layers</div>
+    </div>
+    <div className="border-t border-zinc-800" />
+    <div>
+      <div className="text-zinc-400">1.3 × 1.3 × 1.3 × ... = 1.3<sup>12</sup> = <strong className="text-zinc-200">23.3</strong></div>
+      <div className="text-xs text-zinc-500 mt-1">A multiplier of 1.3 amplifies the gradient 23× over 12 layers</div>
+    </div>
+  </div>
+
+  <Description>
+    The forward pass also suffers from a related problem. Information from early layers must pass through every subsequent transformation to reach the output, and each layer's transformation can distort or overwrite the representations that earlier layers produced. Over enough layers, the representations that earlier layers produced are increasingly likely to be distorted or lost.
+  </Description>
+</Step>
+
