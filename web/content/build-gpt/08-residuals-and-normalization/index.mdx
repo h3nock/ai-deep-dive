@@ -4,4 +4,13 @@ step: 8
 description: "How residual connections and layer normalization enable deep networks."
 ---
 
-<ComingSoon />
+<div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
+<Description noMargin>
+  We now have all the core components, from embeddings and positional encoding to multi-head attention and feed-forward networks. But, a single pass through one attention layer and one FFN isn't enough to capture the full complexity of language. So, the model needs to refine its representations through multiple rounds of processing, and the way to do this is **stacking**. By repeating the same attention-then-FFN block many times in sequence, the model develops increasingly abstract patterns at each level.
+</Description>
+
+<Description>
+  GPT-2 stacks this block **12 times**, and GPT-3 stacks it **96 times**. That kind of depth is what gives these models their power, but it also creates serious training problems. This chapter explores what goes wrong and introduces the two techniques that fix it, **residual connections** and **layer normalization**.
+</Description>
+</div>
+
