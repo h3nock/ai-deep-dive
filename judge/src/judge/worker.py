@@ -1,7 +1,9 @@
 """Worker loop for executing judge jobs."""
 
 import argparse
+import logging
 import time
+from typing import Any
 
 from judge.config import load_settings
 from judge.metrics import (
@@ -16,6 +18,8 @@ from judge.problems import ProblemRepository
 from judge.queue import RedisQueue
 from judge.results import ResultsStore
 from judge.runner import IsolateConfig, run_problem
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_args() -> argparse.Namespace:
@@ -51,6 +55,36 @@ def _profile_for_stream(stream: str) -> str:
     return "unknown"
 
 
+def _parse_queue_message(fields: dict[str, str]) -> tuple[dict[str, Any], str | None]:
+    job_id = fields.get("job_id", "").strip()
+    if not job_id:
+        return {}, "missing job_id"
+
+    problem_key = fields.get("problem_key", "").strip() or fields.get("problem_id", "").strip()
+    if not problem_key:
+        return {}, "missing problem_key/problem_id"
+
+    kind = fields.get("kind", "submit").strip()
+    if kind not in {"run", "submit"}:
+        return {}, f"invalid kind: {kind or '<empty>'}"
+
+    code = fields.get("code", "")
+    if not isinstance(code, str):
+        return {}, "invalid code field"
+
+    created_at_raw = fields.get("created_at", "").strip()
+    if created_at_raw and not created_at_raw.isdigit():
+        return {}, f"invalid created_at: {created_at_raw}"
+
+    return {
+        "job_id": job_id,
+        "problem_key": problem_key,
+        "kind": kind,
+        "code": code,
+        "created_at": int(created_at_raw) if created_at_raw else None,
+    }, None
+
+
 def main() -> None:
     args = _parse_args()
     settings = load_settings()
@@ -78,17 +112,47 @@ def main() -> None:
 
     def process_entry(msg_id: str, fields: dict[str, str]) -> None:
         worker_heartbeat(worker_profile, args.consumer)
-        job_id = fields.get("job_id", "")
-        problem_key = fields.get("problem_key", "") or fields.get("problem_id", "")
-        kind = fields.get("kind", "submit")
-        code = fields.get("code", "")
-        profile = fields.get("profile", "") or "unknown"
-        created_at_raw = fields.get("created_at", "").strip()
-        created_at = int(created_at_raw) if created_at_raw.isdigit() else None
-
-        if not job_id or not problem_key:
-            queue.ack(args.stream, args.group, msg_id)
+        parsed, parse_error = _parse_queue_message(fields)
+        if parse_error:
+            logger.error(
+                "Invalid queue message: stream=%s group=%s msg_id=%s error=%s",
+                args.stream,
+                args.group,
+                msg_id,
+                parse_error,
+            )
+            job_id = fields.get("job_id", "").strip()
+            if job_id:
+                try:
+                    results.mark_error(
+                        job_id,
+                        f"Invalid queue payload: {parse_error}",
+                        error_kind="internal",
+                    )
+                except Exception:
+                    logger.exception(
+                        "Failed to persist invalid queue payload error: stream=%s msg_id=%s job_id=%s",
+                        args.stream,
+                        msg_id,
+                        job_id,
+                    )
+            try:
+                queue.ack(args.stream, args.group, msg_id)
+            except Exception:
+                logger.exception(
+                    "Failed to ack invalid queue message: stream=%s group=%s msg_id=%s",
+                    args.stream,
+                    args.group,
+                    msg_id,
+                )
             return
+
+        job_id = parsed["job_id"]
+        problem_key = parsed["problem_key"]
+        kind = parsed["kind"]
+        code = parsed["code"]
+        created_at = parsed["created_at"]
+        profile = worker_profile
 
         started_at = time.perf_counter()
         job_started(profile, kind)
@@ -99,10 +163,6 @@ def main() -> None:
 
         try:
             results.mark_running(job_id)
-            if kind not in {"run", "submit"}:
-                results.mark_error(job_id, f"Invalid job kind: {kind}", error_kind="internal")
-                should_ack = True
-                return
 
             if kind == "run":
                 problem = problems.get_for_run(problem_key)
@@ -135,10 +195,22 @@ def main() -> None:
                 results.mark_done(job_id, result)
                 should_ack = True
         except Exception as exc:
+            logger.exception(
+                "Worker failed while processing job: stream=%s msg_id=%s job_id=%s",
+                args.stream,
+                msg_id,
+                job_id,
+            )
             try:
                 results.mark_error(job_id, f"Worker error: {exc}", error_kind="internal")
                 should_ack = True
             except Exception:
+                logger.exception(
+                    "Failed to persist worker error result: stream=%s msg_id=%s job_id=%s",
+                    args.stream,
+                    msg_id,
+                    job_id,
+                )
                 should_ack = False
         finally:
             duration = time.perf_counter() - started_at
@@ -149,7 +221,13 @@ def main() -> None:
                 try:
                     queue.ack(args.stream, args.group, msg_id)
                 except Exception:
-                    pass
+                    logger.exception(
+                        "Failed to ack processed message: stream=%s group=%s msg_id=%s job_id=%s",
+                        args.stream,
+                        args.group,
+                        msg_id,
+                        job_id,
+                    )
 
     while True:
         worker_heartbeat(worker_profile, args.consumer)
