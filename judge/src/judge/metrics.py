@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import atexit
+import logging
 import os
 import time
 from collections.abc import Iterable
@@ -23,6 +24,7 @@ if _MULTIPROC_DIR:
     os.makedirs(_MULTIPROC_DIR, exist_ok=True)
 
 _JOB_STATUSES = ("queued", "running", "done", "error")
+logger = logging.getLogger(__name__)
 
 
 HTTP_REQUESTS_TOTAL = Counter(
@@ -106,7 +108,11 @@ def register_process_exit() -> None:
         try:
             multiprocess.mark_process_dead(pid)
         except Exception:
-            return
+            logger.warning(
+                "Failed to mark process dead in Prometheus multiprocess collector: pid=%s",
+                pid,
+                exc_info=True,
+            )
 
     atexit.register(_cleanup)
 
@@ -155,6 +161,11 @@ def update_runtime_metrics(
             try:
                 length = queue_client.xlen(stream)
             except Exception:
+                logger.warning(
+                    "Failed to query Redis stream length for metrics: stream=%s",
+                    stream,
+                    exc_info=True,
+                )
                 continue
             QUEUE_STREAM_LENGTH.labels(stream=stream).set(length)
 
@@ -165,6 +176,11 @@ def update_runtime_metrics(
             try:
                 groups_raw = queue_client.xinfo_groups(stream)
             except Exception:
+                logger.warning(
+                    "Failed to query Redis consumer groups for metrics: stream=%s",
+                    stream,
+                    exc_info=True,
+                )
                 continue
 
             group_info: dict[str, Any] | None = None
@@ -196,6 +212,7 @@ def update_runtime_metrics(
         try:
             counts = results_store.count_by_status()
         except Exception:
+            logger.warning("Failed to query SQLite job status counts for metrics", exc_info=True)
             counts = {}
         for status in _JOB_STATUSES:
             JOBS_BY_STATUS.labels(status=status).set(counts.get(status, 0))

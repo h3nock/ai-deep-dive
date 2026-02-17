@@ -1,13 +1,22 @@
 """API models."""
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 
 class SubmitRequest(BaseModel):
-    problem_id: str = Field(..., description="Problem identifier")
-    code: str = Field(..., description="User Python code")
+    problem_id: str = Field(
+        ...,
+        min_length=1,
+        max_length=255,
+        description="Problem identifier",
+    )
+    code: str = Field(
+        ...,
+        max_length=100_000,
+        description="User Python code",
+    )
     kind: Literal["submit", "run"] = Field("submit", description="submit or run")
 
 
@@ -22,11 +31,11 @@ class JobResult(BaseModel):
     problem_id: str
     profile: str
     created_at: int
-    started_at: Optional[int] = None
-    finished_at: Optional[int] = None
+    started_at: int | None = None
+    finished_at: int | None = None
     attempts: int = 0
-    result: Optional[Any] = None
-    error: Optional[str] = None
+    result: Any | None = None
+    error: str | None = None
 
 
 class ProblemInfo(BaseModel):
