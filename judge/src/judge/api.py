@@ -1,5 +1,6 @@
 """FastAPI service for the judge."""
 
+import logging
 import time
 import uuid
 from typing import Any
@@ -18,6 +19,8 @@ from judge.models import JobResult, ProblemInfo, SubmitRequest, SubmitResponse
 from judge.problems import ProblemRepository
 from judge.queue import RedisQueue
 from judge.results import ResultsStore
+
+logger = logging.getLogger(__name__)
 
 settings = load_settings()
 register_process_exit()
@@ -84,14 +87,14 @@ async def health() -> dict[str, str]:
 
 
 @app.get("/metrics")
-async def metrics() -> Response:
+def metrics() -> Response:
     update_runtime_metrics(queue.client, results, STREAMS.values(), STREAM_GROUPS)
     data, content_type = render_metrics()
     return Response(content=data, media_type=content_type)
 
 
 @app.get("/problems/{problem_id:path}", response_model=ProblemInfo)
-async def get_problem(problem_id: str) -> ProblemInfo:
+def get_problem(problem_id: str) -> ProblemInfo:
     try:
         problem = problems.get_route_info(problem_id)
     except FileNotFoundError:
@@ -108,7 +111,7 @@ async def get_problem(problem_id: str) -> ProblemInfo:
 
 
 @app.post("/submit", response_model=SubmitResponse)
-async def submit(request: SubmitRequest) -> SubmitResponse:
+def submit(request: SubmitRequest) -> SubmitResponse:
     try:
         problem = problems.get_route_info(request.problem_id)
     except FileNotFoundError:
@@ -142,14 +145,18 @@ async def submit(request: SubmitRequest) -> SubmitResponse:
                 error_kind="internal",
             )
         except Exception:
-            pass
+            logger.exception(
+                "Failed to persist enqueue failure result: job_id=%s stream=%s",
+                job_id,
+                stream,
+            )
         raise HTTPException(status_code=503, detail="Judge queue unavailable") from exc
 
     return SubmitResponse(job_id=job_id, status="queued")
 
 
 @app.get("/result/{job_id}", response_model=JobResult)
-async def get_result(job_id: str) -> JobResult:
+def get_result(job_id: str) -> JobResult:
     job = results.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
