@@ -4,7 +4,7 @@ import ast
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,7 @@ class TestCase:
     input_code: str
     expected: Any
     hidden: bool = False
-    comparison: Optional[Comparison] = None
+    comparison: Comparison | None = None
 
 
 @dataclass(frozen=True)
@@ -72,9 +72,14 @@ def _comparison_from_raw(raw: dict[str, Any] | None) -> Comparison:
 def _case_from_raw(raw: dict[str, Any], hidden_override: bool | None = None) -> TestCase:
     input_code = raw.get("input_code")
     if input_code is None and "inputs" in raw:
-        input_code = ""
+        lines: list[str] = []
         for name, value in raw["inputs"].items():
-            input_code += f"{name} = {value}\n"
+            if not isinstance(name, str) or not name.isidentifier():
+                raise ValueError(f"Invalid input variable name: {name!r}")
+            lines.append(f"{name} = {value!r}")
+        input_code = "\n".join(lines)
+        if input_code:
+            input_code += "\n"
     if input_code is None:
         input_code = ""
 

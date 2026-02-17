@@ -30,8 +30,12 @@ def _backup_path(backup_dir: Path) -> Path:
 
 
 def _copy_db(src: Path, dest: Path) -> None:
+    src_path = Path(src)
+    if not src_path.exists() or not src_path.is_file():
+        raise FileNotFoundError(f"SQLite source database does not exist: {src_path}")
+
     dest.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(src) as source:
+    with sqlite3.connect(f"file:{src_path}?mode=ro", uri=True) as source:
         with sqlite3.connect(dest) as target:
             source.backup(target)
 

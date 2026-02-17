@@ -108,7 +108,7 @@ class ResultsStore:
         error_kind: str | None = None,
     ) -> None:
         now = int(time.time())
-        result_json = json.dumps(result) if result else None
+        result_json = json.dumps(result) if result is not None else None
         with self._connect() as conn:
             conn.execute(
                 """
