@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 
 interface CharBreakdown {
   char: string;
@@ -23,9 +23,7 @@ const MAX_CHARS = 15;
  */
 export function LiveByteInspector() {
   const [text, setText] = useState("Hi 👋");
-  const [breakdown, setBreakdown] = useState<CharBreakdown[]>([]);
-
-  useEffect(() => {
+  const breakdown = useMemo<CharBreakdown[]>(() => {
     const encoder = new TextEncoder();
     const newBreakdown: CharBreakdown[] = [];
 
@@ -42,7 +40,7 @@ export function LiveByteInspector() {
         bytes: Array.from(charBytes),
       });
     }
-    setBreakdown(newBreakdown);
+    return newBreakdown;
   }, [text]);
 
   const charCount = [...text].length;

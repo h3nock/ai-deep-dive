@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 
 interface CharComparison {
   char: string;
@@ -25,9 +25,7 @@ const MAX_CHARS = 5;
  */
 export function EncodingCompare() {
   const [text, setText] = useState("Hello");
-  const [comparison, setComparison] = useState<CharComparison[]>([]);
-
-  useEffect(() => {
+  const comparison = useMemo<CharComparison[]>(() => {
     const encoder = new TextEncoder();
     const newComparison: CharComparison[] = [];
 
@@ -50,7 +48,7 @@ export function EncodingCompare() {
         utf32Bytes,
       });
     }
-    setComparison(newComparison);
+    return newComparison;
   }, [text]);
 
   const charCount = [...text].length;

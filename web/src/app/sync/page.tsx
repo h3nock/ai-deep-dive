@@ -1,67 +1,90 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { getCourseConfig } from "@/lib/course-config";
 import { isChallengeSolved, markChallengesSolved } from "@/lib/challenge-storage";
 
 type Status = "loading" | "success" | "error";
+type SyncViewModel =
+  | { status: "loading" }
+  | { status: "error"; error: string }
+  | {
+      status: "success";
+      courseId: string;
+      courseName: string;
+      newlySolvedIds: string[];
+      newlySynced: number;
+      alreadySynced: number;
+    };
+
+const NOOP_SUBSCRIBE = () => () => {};
+const SERVER_HASH_SENTINEL = "__SERVER__";
 
 export default function SyncPage() {
-  const [status, setStatus] = useState<Status>("loading");
-  const [courseName, setCourseName] = useState("");
-  const [courseId, setCourseId] = useState("");
-  const [newlySynced, setNewlySynced] = useState(0);
-  const [alreadySynced, setAlreadySynced] = useState(0);
-  const [error, setError] = useState("");
+  const hash = useSyncExternalStore(
+    NOOP_SUBSCRIBE,
+    () => window.location.hash.slice(1),
+    () => SERVER_HASH_SENTINEL
+  );
+  const hasAppliedSyncRef = useRef(false);
 
-  useEffect(() => {
-    const hash = window.location.hash.slice(1); // Remove #
+  const viewModel = useMemo<SyncViewModel>(() => {
+    if (hash === SERVER_HASH_SENTINEL) {
+      return { status: "loading" };
+    }
+
+    // Remove leading #
     if (!hash) {
-      setError(
-        "No sync data. CLI sync is temporarily unavailable. See /setup for the latest status."
-      );
-      setStatus("error");
-      return;
+      return {
+        status: "error",
+        error:
+          "No sync data. CLI sync is temporarily unavailable. See /setup for the latest status.",
+      };
     }
 
     const [cId, challengesStr] = hash.split(":");
     if (!cId || !challengesStr) {
-      setError("Invalid sync URL format.");
-      setStatus("error");
-      return;
+      return { status: "error", error: "Invalid sync URL format." };
     }
 
     const config = getCourseConfig(cId);
     if (!config) {
-      setError(`Unknown course: "${cId}"`);
-      setStatus("error");
-      return;
+      return { status: "error", error: `Unknown course: "${cId}"` };
     }
 
-    setCourseId(cId);
-    setCourseName(config.title);
-
-    // Sync challenges to localStorage
     const challenges = challengesStr.split(",").filter(Boolean);
-    const newlySolved: string[] = [];
-    let existingCount = 0;
+    const newlySolvedIds: string[] = [];
+    let alreadySynced = 0;
 
     for (const id of challenges) {
       if (isChallengeSolved(cId, id)) {
-        existingCount++;
+        alreadySynced++;
       } else {
-        newlySolved.push(id);
+        newlySolvedIds.push(id);
       }
     }
 
-    markChallengesSolved(cId, newlySolved);
+    return {
+      status: "success",
+      courseId: cId,
+      courseName: config.title,
+      newlySolvedIds,
+      newlySynced: newlySolvedIds.length,
+      alreadySynced,
+    };
+  }, [hash]);
 
-    setNewlySynced(newlySolved.length);
-    setAlreadySynced(existingCount);
-    setStatus("success");
-  }, []);
+  useEffect(() => {
+    if (viewModel.status !== "success" || hasAppliedSyncRef.current) {
+      return;
+    }
+    markChallengesSolved(viewModel.courseId, viewModel.newlySolvedIds);
+    hasAppliedSyncRef.current = true;
+  }, [viewModel]);
+
+  const status: Status = viewModel.status;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -81,7 +104,9 @@ export default function SyncPage() {
             <h1 className="text-xl font-semibold text-primary mb-2">
               Sync Failed
             </h1>
-            <p className="text-muted mb-6">{error}</p>
+            <p className="text-muted mb-6">
+              {viewModel.status === "error" ? viewModel.error : ""}
+            </p>
             <Link
               href="/setup"
               className="text-secondary hover:text-primary underline"
@@ -97,29 +122,39 @@ export default function SyncPage() {
               <CheckCircle2 className="w-8 h-8 text-emerald-400" />
             </div>
             <h1 className="text-xl font-semibold text-primary mb-2">
-              {newlySynced > 0 ? "Sync Complete!" : "Already Synced"}
+              {viewModel.status === "success" && viewModel.newlySynced > 0
+                ? "Sync Complete!"
+                : "Already Synced"}
             </h1>
-            <p className="text-muted mb-6">{courseName}</p>
+            <p className="text-muted mb-6">
+              {viewModel.status === "success" ? viewModel.courseName : ""}
+            </p>
 
             <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800 mb-6 text-left">
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Newly synced</span>
                 <span
                   className={
-                    newlySynced > 0 ? "text-emerald-400" : "text-muted"
+                    viewModel.status === "success" && viewModel.newlySynced > 0
+                      ? "text-emerald-400"
+                      : "text-muted"
                   }
                 >
-                  {newlySynced}
+                  {viewModel.status === "success" ? viewModel.newlySynced : 0}
                 </span>
               </div>
               <div className="flex justify-between text-sm mt-2">
                 <span className="text-muted">Already synced</span>
-                <span className="text-muted">{alreadySynced}</span>
+                <span className="text-muted">
+                  {viewModel.status === "success" ? viewModel.alreadySynced : 0}
+                </span>
               </div>
             </div>
 
             <Link
-              href={`/${courseId}`}
+              href={
+                viewModel.status === "success" ? `/${viewModel.courseId}` : "/"
+              }
               className="block w-full px-4 py-2 bg-surface border border-border rounded-lg text-primary hover:bg-zinc-800 transition-colors"
             >
               Continue Course
