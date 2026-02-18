@@ -7,7 +7,7 @@ Live: https://learning.h3nok.dev
 ## Repo layout
 
 - `web/` — the platform (Next.js) + course content in `web/content/`
-- `cli/` — Python CLI for “Local” coding challenges (workspace + tests + progress sync)
+- `cli/` — Python CLI (temporarily frozen; project-focused workflows coming soon)
 
 ## Courses
 
@@ -29,6 +29,8 @@ npm run dev
 Open http://localhost:3000
 
 ### CLI
+
+The CLI is temporarily frozen while we redesign it for project-focused local workflows.
 
 ## Content
 
