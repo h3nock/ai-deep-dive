@@ -83,6 +83,28 @@ class RedisQueue:
     def ack(self, stream: str, group: str, msg_id: str) -> None:
         self.client.xack(stream, group, msg_id)
 
+    def ack_and_delete(self, stream: str, group: str, msg_id: str) -> tuple[int, int]:
+        acked = int(self.client.xack(stream, group, msg_id))
+        deleted = int(self.client.xdel(stream, msg_id))
+        return acked, deleted
+
+    def backlog(self, stream: str, group: str) -> int:
+        try:
+            groups = self.client.xinfo_groups(stream)
+        except ResponseError:
+            return 0
+
+        for info in groups:
+            if info.get("name") != group:
+                continue
+            pending = int(info.get("pending", 0))
+            lag_raw = info.get("lag")
+            lag = int(lag_raw) if isinstance(lag_raw, int) else 0
+            if lag < 0:
+                lag = 0
+            return pending + lag
+        return 0
+
     def autoclaim(
         self,
         stream: str,

@@ -137,10 +137,10 @@ def main() -> None:
                         job_id,
                     )
             try:
-                queue.ack(args.stream, args.group, msg_id)
+                queue.ack_and_delete(args.stream, args.group, msg_id)
             except Exception:
                 logger.exception(
-                    "Failed to ack invalid queue message: stream=%s group=%s msg_id=%s",
+                    "Failed to ack/delete invalid queue message: stream=%s group=%s msg_id=%s",
                     args.stream,
                     args.group,
                     msg_id,
@@ -225,10 +225,10 @@ def main() -> None:
             worker_heartbeat(worker_profile, args.consumer)
             if should_ack:
                 try:
-                    queue.ack(args.stream, args.group, msg_id)
+                    queue.ack_and_delete(args.stream, args.group, msg_id)
                 except Exception:
                     logger.exception(
-                        "Failed to ack processed message: stream=%s group=%s msg_id=%s job_id=%s",
+                        "Failed to ack/delete processed message: stream=%s group=%s msg_id=%s job_id=%s",
                         args.stream,
                         args.group,
                         msg_id,
