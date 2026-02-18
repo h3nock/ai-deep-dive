@@ -155,14 +155,19 @@ def main() -> None:
         profile = worker_profile
 
         started_at = time.perf_counter()
-        job_started(profile, kind)
-        observe_job_queue_wait(profile, created_at)
         status = "error"
         error_kind = "internal"
         should_ack = False
+        executed = False
 
         try:
-            results.mark_running(job_id)
+            if not results.mark_running(job_id):
+                should_ack = True
+                return
+
+            executed = True
+            job_started(profile, kind)
+            observe_job_queue_wait(profile, created_at)
 
             if kind == "run":
                 problem = problems.get_for_run(problem_key)
@@ -213,9 +218,10 @@ def main() -> None:
                 )
                 should_ack = False
         finally:
-            duration = time.perf_counter() - started_at
-            observe_job_duration(profile, duration)
-            job_finished(profile, status, error_kind)
+            if executed:
+                duration = time.perf_counter() - started_at
+                observe_job_duration(profile, duration)
+                job_finished(profile, status, error_kind)
             worker_heartbeat(worker_profile, args.consumer)
             if should_ack:
                 try:

@@ -76,29 +76,33 @@ class ResultsStore:
                 (job_id, "queued", profile, problem_id, kind, now),
             )
 
-    def mark_running(self, job_id: str) -> None:
+    def mark_running(self, job_id: str) -> bool:
         now = int(time.time())
         with self._connect() as conn:
-            conn.execute(
+            cursor = conn.execute(
                 """
                 UPDATE jobs
                 SET status = ?, started_at = ?, attempts = attempts + 1
                 WHERE id = ?
+                  AND status IN ('queued', 'running')
                 """,
                 ("running", now, job_id),
             )
+        return cursor.rowcount > 0
 
-    def mark_done(self, job_id: str, result: dict[str, Any]) -> None:
+    def mark_done(self, job_id: str, result: dict[str, Any]) -> bool:
         now = int(time.time())
         with self._connect() as conn:
-            conn.execute(
+            cursor = conn.execute(
                 """
                 UPDATE jobs
                 SET status = ?, finished_at = ?, result_json = ?, error = NULL, error_kind = NULL
                 WHERE id = ?
+                  AND status = 'running'
                 """,
                 ("done", now, json.dumps(result), job_id),
             )
+        return cursor.rowcount > 0
 
     def mark_error(
         self,
@@ -106,18 +110,20 @@ class ResultsStore:
         error: str,
         result: dict[str, Any] | None = None,
         error_kind: str | None = None,
-    ) -> None:
+    ) -> bool:
         now = int(time.time())
         result_json = json.dumps(result) if result is not None else None
         with self._connect() as conn:
-            conn.execute(
+            cursor = conn.execute(
                 """
                 UPDATE jobs
                 SET status = ?, finished_at = ?, result_json = ?, error = ?, error_kind = ?
                 WHERE id = ?
+                  AND status IN ('queued', 'running')
                 """,
                 ("error", now, result_json, error, error_kind, job_id),
             )
+        return cursor.rowcount > 0
 
     def get_job(self, job_id: str) -> dict[str, Any] | None:
         with self._connect() as conn:
