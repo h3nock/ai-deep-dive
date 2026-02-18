@@ -94,7 +94,6 @@ export function BinaryVsSmooth() {
     const segments: string[] = [];
     const stepWidth = GRAPH_WIDTH / (cycles * 2);
     
-    let x = 0;
     let isHigh: boolean = false;
     
     segments.push(`M 0 ${valueToY(0)}`);
@@ -112,7 +111,6 @@ export function BinaryVsSmooth() {
         segments.push(`L ${nextX.toFixed(1)} ${nextY.toFixed(1)}`);
       }
       
-      x = nextX;
       isHigh = nextIsHigh;
     }
     

@@ -29,7 +29,7 @@ export function CourseCard({
 }: CourseCardProps) {
   const isAvailable = status === "available";
   const Component = isAvailable && href ? Link : "div";
-  const { getCompletedCount, isLoaded } = useProgress();
+  const { getCompletedCount } = useProgress();
 
   const completedCount = courseId ? getCompletedCount(courseId) : 0;
   const hasProgress = completedCount > 0;

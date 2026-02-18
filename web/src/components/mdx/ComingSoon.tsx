@@ -1,5 +1,4 @@
 import React from "react";
-import { Description } from "./Description";
 
 export function ComingSoon() {
   return (
@@ -21,7 +20,7 @@ export function ComingSoon() {
       </div>
       <h2 className="mb-3 text-2xl font-semibold text-primary">Coming Soon</h2>
       <p className="max-w-md text-muted">
-        We're currently polishing this chapter to ensure it meets our high
+        We&apos;re currently polishing this chapter to ensure it meets our high
         standards. Check back soon for the complete content!
       </p>
     </div>

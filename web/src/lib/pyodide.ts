@@ -3,13 +3,18 @@
 import type { RunResult, TestResult, TestStatus } from "@/lib/test-results";
 
 type PyodideInterface = {
-  runPython: (code: string) => any;
-  runPythonAsync: (code: string) => Promise<any>;
+  runPython: (code: string) => unknown;
+  runPythonAsync: (code: string) => Promise<unknown>;
   loadPackage: (name: string | string[]) => Promise<void>;
-  globals: any;
+  globals: Record<string, unknown>;
   setStdout: (options: { batched: (text: string) => void }) => void;
   setStderr: (options: { batched: (text: string) => void }) => void;
 };
+
+type WindowWithPyodide = Window &
+  typeof globalThis & {
+    loadPyodide?: (options: { indexURL: string }) => Promise<PyodideInterface>;
+  };
 
 let pyodideInstance: PyodideInterface | null = null;
 let loadPromise: Promise<PyodideInterface> | null = null;
@@ -29,8 +34,13 @@ export async function loadPyodide(): Promise<PyodideInterface> {
 
   loadPromise = (async () => {
     try {
+      if (typeof window === "undefined") {
+        throw new Error("Pyodide can only be loaded in the browser");
+      }
+      const pyodideWindow = window as WindowWithPyodide;
+
       // Dynamically load Pyodide script if not already loaded
-      if (typeof window !== "undefined" && !(window as any).loadPyodide) {
+      if (!pyodideWindow.loadPyodide) {
         await new Promise<void>((resolve, reject) => {
           const script = document.createElement("script");
           script.src =
@@ -42,7 +52,11 @@ export async function loadPyodide(): Promise<PyodideInterface> {
       }
 
       // Initialize Pyodide
-      const pyodide = await (window as any).loadPyodide({
+      const loadPyodideFn = pyodideWindow.loadPyodide;
+      if (!loadPyodideFn) {
+        throw new Error("Pyodide loader is unavailable");
+      }
+      const pyodide = await loadPyodideFn({
         indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.6/full/",
       });
 
@@ -204,9 +218,10 @@ except Exception:
   // Check if user code had an error
   const userError = await pyodide.runPythonAsync("__user_error__");
   if (userError) {
-    const isLimit = String(userError).includes("ExecutionLimitExceeded");
+    const userErrorText = String(userError);
+    const isLimit = userErrorText.includes("ExecutionLimitExceeded");
     const status: TestStatus = isLimit ? "Time Limit Exceeded" : "Runtime Error";
-    const message = isLimit ? "Time Limit Exceeded" : userError;
+    const message = isLimit ? "Time Limit Exceeded" : userErrorText;
     return {
       status,
       summary: { total: 1, passed: 0, failed: 1 },
@@ -344,15 +359,15 @@ except Exception:
     const testError = await pyodide.runPythonAsync("__test_error__");
     if (testError) {
       status = "Runtime Error";
-      stderr = testError;
+      stderr = String(testError);
     } else {
       // Get comparison result from Python (comparison done in Python for exact semantics)
       const matched = await pyodide.runPythonAsync("__matched__");
       const resultRepr = await pyodide.runPythonAsync("__result_repr__");
 
       // Use repr() output for display - shows exact Python syntax
-      output = resultRepr;
-      status = matched ? "Accepted" : "Wrong Answer";
+      output = String(resultRepr ?? "");
+      status = Boolean(matched) ? "Accepted" : "Wrong Answer";
     }
 
     results.push({

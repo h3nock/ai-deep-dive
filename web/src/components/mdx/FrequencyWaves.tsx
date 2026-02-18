@@ -174,9 +174,6 @@ export function FrequencyWaves() {
             const handY = CLOCK_CENTER - CLOCK_RADIUS * Math.sin(wave.angle);
             const color = getColor(index);
             
-            // Position marker X on wave (synced with slider)
-            const markerX = (position / MAX_POSITION) * 200;
-            
             return (
               <div key={wave.dim} className="flex items-center gap-3">
                 {/* Clock */}
@@ -239,5 +236,4 @@ export function FrequencyWaves() {
     </div>
   );
 }
-
 

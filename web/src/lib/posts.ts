@@ -20,12 +20,22 @@ type CourseManifest = {
   steps?: StepMeta[];
 };
 
+type FrontmatterData = {
+  step?: number | string;
+  title?: string;
+  description?: string;
+  challenge?: string;
+  challenges?: Challenge[];
+  hidden?: boolean;
+  [key: string]: unknown;
+};
+
 export interface PostData {
   slug: string;
   title: string;
   step: number;
   description: string;
-  content: any; // Serialized MDX or raw string
+  content: string;
   challenge?: string; // Legacy
   challenges?: Challenge[]; // New list
   collection: string;
@@ -75,17 +85,20 @@ function loadPostFrontmatter(
   slug: string,
   collection: string,
   manifestStep?: StepMeta,
-  frontmatterData?: Record<string, any>
+  frontmatterData?: FrontmatterData
 ): Omit<PostData, "content"> {
   const data =
-    frontmatterData ?? matter(fs.readFileSync(filePath, "utf8")).data;
+    frontmatterData ??
+    (matter(fs.readFileSync(filePath, "utf8")).data as FrontmatterData);
 
   const stepCandidate =
     data.step ?? manifestStep?.step ?? deriveStepFromSlug(slug);
   const numericStep =
     typeof stepCandidate === "string"
       ? parseFloat(stepCandidate)
-      : stepCandidate;
+      : typeof stepCandidate === "number"
+        ? stepCandidate
+        : Number.NaN;
   const step = Number.isFinite(numericStep) ? numericStep : 0;
 
   return {
@@ -253,7 +266,8 @@ export const getPostBySlug = cache(
       }
 
       const fileContents = fs.readFileSync(postPath, "utf8");
-      const { data, content } = matter(fileContents);
+      const { data: rawData, content } = matter(fileContents);
+      const data = rawData as FrontmatterData;
 
       const postMeta = loadPostFrontmatter(
         postPath,

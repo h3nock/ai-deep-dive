@@ -14,7 +14,6 @@ interface MarkCompleteButtonProps {
 export function MarkCompleteButton({
   courseId,
   step,
-  nextHref,
   className,
 }: MarkCompleteButtonProps) {
   const { isComplete, toggleComplete, isLoaded } = useProgress();
