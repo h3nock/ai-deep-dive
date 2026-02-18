@@ -74,11 +74,14 @@ python judge/scripts/export_public_tests.py
 Bundles are written to `web/public/judge-tests/` and treated as build artifacts.
 `web/scripts/export-judge-tests.mjs` runs automatically on `npm run build`.
 
-To publish tests for the CLI from the judge VM:
+To publish judge test assets from the judge VM:
 
 ```bash
 python judge/scripts/export_tests_endpoint.py --out-root /opt/ai-deep-dive/judge/tests
 ```
+
+This export includes public manifests/bundles and hidden test files. Hidden
+tests are for judge execution only and are not publicly served over nginx.
 
 ## Submit a sample job
 
@@ -122,8 +125,9 @@ Environment variables:
 
 - The judge executes every run/submit inside isolate.
 - Worker consumer names must follow the template services (`light-%i`, `torch-%i`).
-- Hidden tests are not bundled for the browser. On submit, the first failing
-  hidden test is returned for debugging.
+- Hidden tests are not bundled for the browser and are not publicly served from
+  `/judge-tests/`. On submit, the first failing hidden test is returned for
+  debugging.
 - Production setup lives in `judge/deploy/`. See the deploy README for steps.
 - Daily timers run on the VM to prune old jobs and save database backups.
 

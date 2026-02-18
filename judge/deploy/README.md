@@ -29,8 +29,10 @@ the same venv using the official PyTorch install selector.
 
 ## 3) Export tests endpoint
 
-The CLI expects public bundles and `hidden_tests.json` to be served from
-`/judge-tests/` on the judge domain. Export them into the tests root:
+Public bundles are served from `/judge-tests/` on the judge domain. Hidden
+tests are exported to the same root for server-side judge execution but are not
+publicly served (`hidden_tests.json` returns `404`). Export assets into the
+tests root:
 
 ```bash
 cd /opt/ai-deep-dive/judge

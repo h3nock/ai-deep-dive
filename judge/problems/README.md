@@ -57,9 +57,10 @@ Notes:
   `expected_is_code: true`.
 - Use `input_code` for arbitrary setup.
 - Prefer `inputs` (object of name to value) for better browser rendering.
-- Hidden tests are served from the judge VM tests endpoint (not the web UI).
-  The judge returns the first failing hidden test on submit for debugging.
-  Public bundles can be cached by the frontend or CDN.
+- Hidden tests are not publicly served from `/judge-tests/`; nginx should return
+  `404` for direct `hidden_tests.json` requests.
+- The judge returns the first failing hidden test on submit for debugging.
+- Public bundles can be cached by the frontend or CDN.
 
 ## Public bundle export
 
@@ -77,7 +78,7 @@ from the judge VM at `/judge-tests/`. It exports:
 
 - `public_manifest.json`
 - `public_bundle.<version>.json`
-- `hidden_tests.json` (copied as-is)
+- `hidden_tests.json` (copied for server-side judge execution; not publicly served)
 
 ## Hidden test generation
 
