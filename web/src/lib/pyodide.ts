@@ -239,7 +239,7 @@ except Exception:
     };
   }
 
-  const comparisonType = config.comparison?.type ?? "approx";
+  const comparisonType = config.comparison?.type ?? "exact";
   const comparisonRtol = config.comparison?.rtol ?? 1e-6;
   const comparisonAtol = config.comparison?.atol ?? 1e-6;
 
