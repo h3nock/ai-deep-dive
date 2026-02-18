@@ -12,6 +12,7 @@ class Settings:
     results_db: Path
     problems_root: Path
     max_output_chars: int
+    queue_maxlen: int
     job_claim_idle_ms: int
     job_claim_count: int
     isolate_bin: str
@@ -35,6 +36,7 @@ def load_settings() -> Settings:
     results_db = Path(os.getenv("JUDGE_RESULTS_DB", str(base_dir / "data" / "judge.db")))
     problems_root = Path(os.getenv("JUDGE_PROBLEMS_ROOT", str(base_dir / "problems")))
     max_output_chars = int(os.getenv("JUDGE_MAX_OUTPUT_CHARS", "2000"))
+    queue_maxlen = int(os.getenv("JUDGE_QUEUE_MAXLEN", "10000"))
     job_claim_idle_ms = int(os.getenv("JUDGE_JOB_CLAIM_IDLE_MS", "30000"))
     job_claim_count = int(os.getenv("JUDGE_JOB_CLAIM_COUNT", "10"))
     isolate_bin = os.getenv("JUDGE_ISOLATE_BIN", "/usr/bin/isolate").strip()
@@ -58,6 +60,8 @@ def load_settings() -> Settings:
         raise ValueError("JUDGE_ISOLATE_FSIZE_KB must be >= 1")
     if not python_bin:
         raise ValueError("JUDGE_PYTHON_BIN must not be empty")
+    if queue_maxlen < 0:
+        raise ValueError("JUDGE_QUEUE_MAXLEN must be >= 0")
 
     origins_raw = os.getenv("JUDGE_ALLOWED_ORIGINS", "")
     allowed_origins = [origin.strip() for origin in origins_raw.split(",") if origin.strip()]
@@ -67,6 +71,7 @@ def load_settings() -> Settings:
         results_db=results_db,
         problems_root=problems_root,
         max_output_chars=max_output_chars,
+        queue_maxlen=queue_maxlen,
         job_claim_idle_ms=job_claim_idle_ms,
         job_claim_count=job_claim_count,
         isolate_bin=isolate_bin,
