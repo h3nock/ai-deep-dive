@@ -107,8 +107,7 @@ Environment variables:
 - `JUDGE_JOB_CLAIM_COUNT` (default: `10`)
 - `JUDGE_API_WORKERS` (default: `1`)
 - `JUDGE_JOB_RETENTION_DAYS` (default: `7`)
-- `JUDGE_QUEUE_MAXLEN` (default: `10000`)
-- `JUDGE_QUEUE_STREAMS` (default: `queue:light,queue:torch`)
+- `JUDGE_QUEUE_MAXLEN` (default: `10000`, per-stream backlog admission limit; `0` disables)
 - `JUDGE_BACKUP_DIR` (default: `judge/data/backups`)
 - `JUDGE_BACKUP_RETENTION_DAYS` (default: `7`)
 - `JUDGE_ALLOWED_ORIGINS` (comma-separated)
@@ -129,7 +128,7 @@ Environment variables:
   `/judge-tests/`. On submit, the first failing hidden test is returned for
   debugging.
 - Production setup lives in `judge/deploy/`. See the deploy README for steps.
-- Daily timers run on the VM to prune old jobs and save database backups.
+- Daily timers run on the VM to prune old database rows and save database backups.
 
 ## Metrics (Prometheus)
 
