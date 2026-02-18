@@ -6,6 +6,10 @@ server {
     limit_req_status 429;
     limit_conn conn 20;
 
+    location ~ ^/judge-tests/.+/hidden_tests\.json$ {
+        return 404;
+    }
+
     location /judge-tests/ {
         limit_except GET OPTIONS { deny all; }
         alias ${JUDGE_TESTS_ROOT}/;
