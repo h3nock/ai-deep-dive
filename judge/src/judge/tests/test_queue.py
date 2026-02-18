@@ -7,6 +7,8 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 HAS_REDIS = importlib.util.find_spec("redis") is not None
+if HAS_REDIS:
+    from redis.exceptions import ResponseError
 
 
 class RedisQueueEnqueueValidationTests(TestCase):
@@ -18,6 +20,17 @@ class RedisQueueEnqueueValidationTests(TestCase):
 
         self.queue = RedisQueue("redis://localhost:6379/0")
         self.queue.client.xadd = Mock(return_value="1-0")
+        self.queue.client.xack = Mock(return_value=1)
+        self.queue.client.xdel = Mock(return_value=1)
+        self.queue.client.xinfo_groups = Mock(
+            return_value=[
+                {
+                    "name": "workers-light",
+                    "pending": 3,
+                    "lag": 5,
+                }
+            ]
+        )
 
     def _payload(self) -> dict[str, object]:
         return {
@@ -75,3 +88,24 @@ class RedisQueueEnqueueValidationTests(TestCase):
             self.queue.enqueue("queue:light", payload)
 
         self.queue.client.xadd.assert_not_called()
+
+    def test_ack_and_delete_calls_both_redis_operations(self) -> None:
+        acked, deleted = self.queue.ack_and_delete("queue:light", "workers-light", "1-0")
+
+        self.assertEqual(acked, 1)
+        self.assertEqual(deleted, 1)
+        self.queue.client.xack.assert_called_once_with("queue:light", "workers-light", "1-0")
+        self.queue.client.xdel.assert_called_once_with("queue:light", "1-0")
+
+    def test_backlog_reads_pending_plus_lag(self) -> None:
+        backlog = self.queue.backlog("queue:light", "workers-light")
+
+        self.assertEqual(backlog, 8)
+        self.queue.client.xinfo_groups.assert_called_once_with("queue:light")
+
+    def test_backlog_returns_zero_for_missing_stream(self) -> None:
+        self.queue.client.xinfo_groups.side_effect = ResponseError("no such key")
+
+        backlog = self.queue.backlog("queue:light", "workers-light")
+
+        self.assertEqual(backlog, 0)

@@ -121,6 +121,16 @@ def submit(request: SubmitRequest) -> SubmitResponse:
 
     profile = "torch" if problem.requires_torch else "light"
     stream = STREAMS[profile]
+    group = STREAM_GROUPS[stream]
+
+    if settings.queue_maxlen > 0:
+        try:
+            stream_backlog = queue.backlog(stream, group)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Judge queue unavailable") from exc
+
+        if stream_backlog >= settings.queue_maxlen:
+            raise HTTPException(status_code=503, detail="Judge queue is full. Please retry.")
 
     job_id = str(uuid.uuid4())
     created_at = int(time.time())
