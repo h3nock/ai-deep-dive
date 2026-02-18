@@ -226,9 +226,7 @@ function ChallengeEditorContent({
   const [pyodideStatus, setPyodideStatus] = useState<
     "idle" | "loading" | "ready" | "error"
   >("idle");
-  const [executionMode, setExecutionMode] = useState<
-    "browser" | "server" | "cli"
-  >(
+  const [executionMode, setExecutionMode] = useState<"browser" | "server">(
     "browser"
   );
   const formatServerError = useCallback((message?: string) => {
@@ -974,25 +972,6 @@ function ChallengeEditorContent({
           isRunningRef.current = false;
           setIsRunning(false);
         }
-      } else {
-        // CLI-only challenge - show clear instructions
-        const challengeId = activeChallenge?.id || "<id>";
-        setOutput(
-          `This challenge requires PyTorch and must be run locally.\n\n` +
-            `Install CLI:\n` +
-            `  $ pip install ai-deep-dive\n\n` +
-            `Run tests:\n` +
-            `  $ ai-deep-dive test ${challengeId}\n\n` +
-            `Sync progress to web:\n` +
-            `  $ ai-deep-dive sync\n\n` +
-            `See /setup for the full setup guide.`
-        );
-        // Expand panel and show console
-        setActiveTab("console");
-        if (isBottomPanelCollapsed) {
-          setBottomPanelHeight(45);
-        }
-        setIsBottomPanelCollapsed(false);
       }
     },
     [

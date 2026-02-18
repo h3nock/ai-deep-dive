@@ -19,7 +19,9 @@ export default function SyncPage() {
   useEffect(() => {
     const hash = window.location.hash.slice(1); // Remove #
     if (!hash) {
-      setError("No sync data. Run 'ai-deep-dive sync' from your terminal.");
+      setError(
+        "No sync data. CLI sync is temporarily unavailable. See /setup for the latest status."
+      );
       setStatus("error");
       return;
     }

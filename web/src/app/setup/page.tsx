@@ -1,14 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  CheckCircle2,
-  Copy,
-  ChevronLeft,
-  Folder,
-  FileCode,
-  ChevronDown,
-} from "lucide-react";
+import { CheckCircle2, Copy, ChevronLeft, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 function CodeBlock({ children }: { children: string }) {
@@ -81,10 +74,8 @@ function FAQItem({
 export default function SetupPage() {
   return (
     <div className="min-h-screen bg-background text-secondary font-sans">
-      {/* Content */}
       <main className="w-full py-12">
         <div className="mx-auto max-w-[85ch] px-6 lg:px-8">
-          {/* Header */}
           <header className="mb-12 border-b border-border pb-8">
             <div className="flex items-center gap-3 mb-6 text-sm text-muted">
               <Link
@@ -100,145 +91,96 @@ export default function SetupPage() {
               Local Development Setup
             </h1>
             <p className="text-lg text-muted leading-relaxed">
-              Some challenges require dependencies that can&apos;t run in the
-              browser. The CLI tool sets up a local workspace and runs the
-              test suite for each challenge.
+              Chapter challenges are solved in the browser. The CLI is
+              temporarily frozen while we redesign it for project-focused local
+              workflows.
             </p>
           </header>
 
-          {/* Step 1 */}
           <section style={{ marginBottom: "var(--space-section)" }}>
             <h2 className="text-xl font-semibold text-primary mb-1">
-              1. Install the CLI
+              1. Install the CLI package
             </h2>
             <CodeBlock>{`pip install ai-deep-dive`}</CodeBlock>
             <p className="text-lg text-secondary leading-relaxed">
-              This installs the{" "}
-              <code className="px-1.5 py-0.5 bg-surface rounded text-sm text-secondary">
-                ai-deep-dive
-              </code>{" "}
-              command globally. Requires Python 3.8 or later.
+              This installs the command globally. Requires Python 3.9 or later.
             </p>
           </section>
 
-          {/* Step 2 */}
           <section style={{ marginBottom: "var(--space-section)" }}>
             <h2 className="text-xl font-semibold text-primary mb-1">
-              2. Initialize the course
+              2. Current CLI behavior
             </h2>
-            <CodeBlock>{`ai-deep-dive init build-gpt`}</CodeBlock>
+            <CodeBlock>{`ai-deep-dive
+ai-deep-dive --version`}</CodeBlock>
             <p className="text-lg text-secondary leading-relaxed">
-              Creates a workspace folder with starter files for every challenge,
-              organized by chapter.
+              Running the root command prints a temporary freeze message.
+              Version output remains available.
             </p>
+          </section>
 
-            {/* Folder structure */}
-            <div className="mt-6 p-4 bg-[#121212] rounded-lg border border-zinc-800">
-              <div className="flex items-center gap-2 text-secondary font-mono text-sm mb-3">
-                <Folder className="w-4 h-4 text-amber-400" />
-                <span>build-gpt/</span>
-              </div>
-              <div className="ml-6 space-y-2 font-mono text-sm">
-                <div className="flex items-center gap-2 text-muted">
-                  <Folder className="w-4 h-4 text-zinc-600" />
-                  <span>01-from-text-to-bytes/</span>
-                </div>
-                <div className="ml-6 space-y-1">
-                  <div className="flex items-center gap-2 text-muted">
-                    <FileCode className="w-4 h-4 text-zinc-600" />
-                    <span>01-01_utf8_encode.py</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted">
-                    <FileCode className="w-4 h-4 text-zinc-600" />
-                    <span>01-02_utf8_decode.py</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-muted">
-                  <Folder className="w-4 h-4 text-zinc-600" />
-                  <span>02-tokenization/</span>
-                </div>
-                <div className="ml-6">
-                  <span className="text-zinc-600">...</span>
-                </div>
-              </div>
-            </div>
-
+          <section style={{ marginBottom: "var(--space-section)" }}>
+            <h2 className="text-xl font-semibold text-primary mb-1">
+              3. Build GPT chapter challenges today
+            </h2>
+            <p className="text-lg text-secondary leading-relaxed">
+              Continue chapter challenge work directly in the browser course
+              interface. Public tests run there without local CLI setup.
+            </p>
             <p className="text-muted leading-relaxed mt-4">
-              Use{" "}
-              <code className="px-1.5 py-0.5 bg-surface rounded text-sm">
-                --dir my-folder
-              </code>{" "}
-              if you want a different folder name.
+              Open the course: {" "}
+              <Link
+                href="/build-gpt"
+                className="underline underline-offset-2 hover:text-primary"
+              >
+                Build GPT
+              </Link>
             </p>
           </section>
 
-          {/* Step 3 */}
           <section style={{ marginBottom: "var(--space-section)" }}>
             <h2 className="text-xl font-semibold text-primary mb-1">
-              3. Work on a challenge
+              4. Next CLI scope
             </h2>
-            <CodeBlock>{`cd build-gpt
-nvim .  # or your preferred editor`}</CodeBlock>
             <p className="text-lg text-secondary leading-relaxed">
-              Open the folder in your editor and find the challenge file. Each
-              filename starts with the challenge ID, for example{" "}
-              <code className="px-1.5 py-0.5 bg-surface rounded text-sm text-secondary">
-                01-02
-              </code>{" "}
-              means Chapter 1, Challenge 2.
+              The next CLI release is focused on local project workflows
+              (starting with GPT project implementation support), not chapter
+              challenge orchestration.
             </p>
           </section>
 
-          {/* Step 4 */}
-          <section style={{ marginBottom: "var(--space-section)" }}>
-            <h2 className="text-xl font-semibold text-primary mb-1">
-              4. Test your solution
-            </h2>
-            <CodeBlock>{`ai-deep-dive test 01-02`}</CodeBlock>
-            <p className="text-lg text-secondary leading-relaxed">
-              Runs the test suite for that challenge. The CLI expects the
-              filename to follow the naming convention and searches the current
-              directory recursively, so you can organize your folders however
-              you prefer.
-            </p>
-          </section>
-
-          {/* Step 5 */}
-          <section style={{ marginBottom: "var(--space-section)" }}>
-            <h2 className="text-xl font-semibold text-primary mb-1">
-              5. Sync your progress
-            </h2>
-            <CodeBlock>{`ai-deep-dive sync`}</CodeBlock>
-            <p className="text-lg text-secondary leading-relaxed">
-              Automatically imports locally completed challenges to the website.
-              Progress is stored in your browser on this machine.
-            </p>
-          </section>
-
-          {/* Other commands */}
           <section style={{ marginBottom: "var(--space-section)" }}>
             <h2 className="text-xl font-semibold text-primary mb-4">
-              Other commands
+              Unavailable during freeze
             </h2>
             <div className="space-y-3 text-lg">
               <div className="flex gap-4">
-                <code className="text-secondary font-mono shrink-0 w-28">
-                  status
+                <code className="text-secondary font-mono shrink-0 w-40">
+                  init
                 </code>
-                <span className="text-muted">
-                  Shows which challenges you&apos;ve completed locally
-                </span>
+                <span className="text-muted">Not exposed right now</span>
               </div>
               <div className="flex gap-4">
-                <code className="text-secondary font-mono shrink-0 w-28">
-                  list
+                <code className="text-secondary font-mono shrink-0 w-40">
+                  test / submit
                 </code>
-                <span className="text-muted">Lists all available courses</span>
+                <span className="text-muted">Not exposed right now</span>
+              </div>
+              <div className="flex gap-4">
+                <code className="text-secondary font-mono shrink-0 w-40">
+                  status / list / sync
+                </code>
+                <span className="text-muted">Not exposed right now</span>
+              </div>
+              <div className="flex gap-4">
+                <code className="text-secondary font-mono shrink-0 w-40">
+                  config
+                </code>
+                <span className="text-muted">Not exposed right now</span>
               </div>
             </div>
           </section>
 
-          {/* FAQ */}
           <section className="pt-8 border-t border-border">
             <h2 className="text-xl font-semibold text-primary mb-2">
               FAQs
@@ -246,35 +188,27 @@ nvim .  # or your preferred editor`}</CodeBlock>
             <div>
               <FAQItem question="Do I need a GPU?">
                 <p>
-                  No. All challenges run on CPU. The final training projects
-                  work best with a GPU, but you can reduce the model size and
-                  train on CPU if needed.
+                  Not for chapter challenges in the browser. For larger local
+                  project training runs, a GPU can help reduce runtime.
                 </p>
               </FAQItem>
 
-              <FAQItem question="I'm getting import errors">
-                <p className="mb-3">
-                  Install the required packages. For example:
-                </p>
-                <code className="block px-3 py-2 bg-[#121212] border border-zinc-800 rounded text-sm font-mono">
-                  pip install torch numpy
-                </code>
-              </FAQItem>
-
-              <FAQItem question="Can I work offline?">
+              <FAQItem question="Why are CLI challenge commands unavailable?">
                 <p>
-                  Yes. After running{" "}
-                  <code className="px-1.5 py-0.5 bg-surface rounded text-sm">
-                    ai-deep-dive init
-                  </code>
-                  , all files and tests are stored locally. You only need
-                  internet to sync progress to the website.
+                  We intentionally froze the old challenge-oriented CLI surface
+                  while we replace it with a project-focused workflow.
+                </p>
+              </FAQItem>
+
+              <FAQItem question="Can I still complete Build GPT chapters now?">
+                <p>
+                  Yes. Chapter challenges continue to run in the browser
+                  experience.
                 </p>
               </FAQItem>
             </div>
           </section>
 
-          {/* Back link */}
           <section className="pt-10">
             <Link
               href="/build-gpt"
