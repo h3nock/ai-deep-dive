@@ -251,6 +251,7 @@ code[data-theme*=" "] span {
 /* Code Block Styling - rehype-pretty-code (Deep Tech Terminal Style)
    SPACING: Uses Component Sandwich pattern (connected top, flow bottom) */
 [data-rehype-pretty-code-figure] {
+  position: relative;
   margin-top: var(--space-connected);
   margin-bottom: var(--space-flow);
 }
@@ -287,6 +288,51 @@ code[data-theme*=" "] span {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   margin-top: 0 !important;
+}
+
+/* ==========================================================================
+   Code Block Copy Button
+   ========================================================================== */
+
+.code-copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  color: var(--color-muted);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 150ms, color 150ms, background-color 150ms;
+}
+
+/* Show on figure hover */
+.group:hover .code-copy-btn {
+  opacity: 1;
+}
+
+.code-copy-btn:hover {
+  color: var(--color-primary);
+  background-color: var(--color-surface);
+}
+
+/* Icon swap logic */
+.code-copy-btn .code-check-icon {
+  display: none;
+}
+
+.code-copy-btn.copied .code-copy-icon {
+  display: none;
+}
+
+.code-copy-btn.copied .code-check-icon {
+  display: flex;
+  color: var(--color-success);
 }
 
 /* Inline code - Eye-Safe */

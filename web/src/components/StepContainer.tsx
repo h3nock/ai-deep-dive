@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useCallback, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Map } from "lucide-react";
 import { PostData } from "@/lib/posts";
 import { MarkCompleteButton } from "./MarkCompleteButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { CodeBlockCopyButtons } from "./CodeBlockCopyButton";
 import { useProgress } from "@/lib/progress-context";
 import { useChallengeProgress } from "@/lib/use-challenge-progress";
 import type { ChallengeWorkspaceProps } from "./ChallengeWorkspace";
@@ -36,6 +37,25 @@ interface StepContainerProps {
   collection: string;
   view: "guide" | "challenges";
   challengeIndex: number | null;
+}
+
+function ArticleWithCopyButtons({ children }: { children: React.ReactNode }) {
+  const articleRef = useRef<HTMLElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <article
+      ref={articleRef}
+      className="prose prose-lg prose-invert max-w-none [&_table]:w-full"
+    >
+      {children}
+      {mounted && <CodeBlockCopyButtons containerRef={articleRef} />}
+    </article>
+  );
 }
 
 export function StepContainer({
@@ -304,13 +324,9 @@ export function StepContainer({
                 </header>
 
                 {/* Content - The Reading Rail */}
-                <article
-                  className="prose prose-lg prose-invert max-w-none
-                  [&_table]:w-full
-                "
-                >
+                <ArticleWithCopyButtons>
                   {children}
-                </article>
+                </ArticleWithCopyButtons>
 
                 {/* Footer: Mark Complete + Navigation */}
                 <footer className="mt-12 pt-8 border-t border-border">
