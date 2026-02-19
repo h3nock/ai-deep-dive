@@ -229,26 +229,13 @@ function ChallengeEditorContent({
   const [executionMode, setExecutionMode] = useState<"browser" | "server">(
     "browser"
   );
-  const formatServerError = useCallback((message?: string) => {
-    const generic = "Something went wrong on our side. Please retry.";
-    if (!message) return generic;
-    const trimmed = message.trim();
-    const allowlist = ["Time Limit Exceeded", "Memory Limit Exceeded"];
-    if (allowlist.some((prefix) => trimmed.startsWith(prefix))) {
-      return trimmed;
-    }
-    return generic;
+  const formatServerError = useCallback(() => {
+    return "Something went wrong on our side. Please retry.";
   }, []);
-  const normalizeLimitError = useCallback((message?: string) => {
-    if (!message) return null;
-    const trimmed = message.trim();
-    if (trimmed.startsWith("Time Limit Exceeded")) {
-      return { status: "Time Limit Exceeded" as const, message: trimmed };
-    }
-    if (trimmed.startsWith("Memory Limit Exceeded")) {
-      return { status: "Memory Limit Exceeded" as const, message: trimmed };
-    }
-    return null;
+  const toErrorStatus = useCallback((status?: string): TestStatus => {
+    if (status === "Time Limit Exceeded") return "Time Limit Exceeded";
+    if (status === "Memory Limit Exceeded") return "Memory Limit Exceeded";
+    return "Runtime Error";
   }, []);
   const toErrorResult = useCallback(
     (status: TestStatus, message: string, summary?: TestSummary): RunResult => ({
@@ -279,14 +266,16 @@ function ChallengeEditorContent({
   );
   const normalizeServerResult = useCallback(
     (result: JudgeJobResult): { result?: RunResult; systemError?: string } => {
-      const rawError = result.error || result.result?.error;
-      if (result.status === "error" || rawError) {
-        const limit = normalizeLimitError(rawError);
-        if (limit) {
-          const summary = result.result?.summary;
-          return { result: toErrorResult(limit.status, limit.message, summary) };
+      if (result.status === "error") {
+        if (result.error_kind === "internal") {
+          return { systemError: formatServerError() };
         }
-        return { systemError: formatServerError(rawError) };
+
+        const errorStatus = toErrorStatus(result.result?.status);
+        const errorMessage = (result.error || result.result?.error || errorStatus).trim();
+        return {
+          result: toErrorResult(errorStatus, errorMessage, result.result?.summary),
+        };
       }
 
       const payload = result.result;
@@ -296,7 +285,7 @@ function ChallengeEditorContent({
 
       return { result: payload };
     },
-    [formatServerError, normalizeLimitError, toErrorResult]
+    [formatServerError, toErrorResult, toErrorStatus]
   );
   const isErrorStatus = useCallback(
     (status: TestStatus) =>
@@ -954,7 +943,7 @@ function ChallengeEditorContent({
             if (errorMessage.includes("Timed out waiting")) {
               setRunMessage("Request took too long. Please try again.");
             } else {
-              setRunMessage(formatServerError(errorMessage));
+              setRunMessage(formatServerError());
             }
             setActiveTab("result");
             if (isBottomPanelCollapsed) {

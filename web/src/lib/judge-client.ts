@@ -22,6 +22,7 @@ export type JudgeJobResult = {
   attempts?: number;
   result?: RunResult;
   error?: string;
+  error_kind?: "user" | "internal";
 };
 
 const BASE_URL = process.env.NEXT_PUBLIC_JUDGE_API_URL || "";
