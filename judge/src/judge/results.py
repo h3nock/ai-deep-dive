@@ -156,3 +156,7 @@ class ResultsStore:
                 """
             ).fetchall()
         return {row["status"]: row["count"] for row in rows}
+
+    def ping(self) -> None:
+        with self._connect() as conn:
+            conn.execute("SELECT 1").fetchone()

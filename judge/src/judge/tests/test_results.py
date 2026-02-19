@@ -35,3 +35,11 @@ class ResultsStoreTests(TestCase):
         assert job is not None
         self.assertEqual(job["result"], {})
         self.assertEqual(job["status"], "error")
+
+    def test_ping_executes_simple_query(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            db_path = Path(tmp_dir) / "judge.db"
+            store = ResultsStore(db_path)
+
+            # Should not raise for a healthy sqlite connection.
+            store.ping()
