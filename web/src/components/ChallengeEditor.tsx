@@ -35,7 +35,7 @@ import { bundleToTestConfig, fetchPublicBundle } from "@/lib/judge-public-tests"
 import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
 import type { JudgeJobResult } from "@/lib/judge-client";
 import type { Challenge } from "@/lib/challenge-types";
-import { ZINC_DARK_THEME, MONACO_THEME_NAME } from "@/lib/monaco-theme";
+import { createMonacoTheme, MONACO_THEME_NAME } from "@/lib/monaco-theme";
 import type {
   TestCase,
   MonacoEditorInstance,
@@ -1254,7 +1254,7 @@ function ChallengeEditorContent({
                 onMount={handleEditorDidMount}
                 beforeMount={(monaco) => {
                   // Define theme before mount to prevent flash
-                  monaco.editor.defineTheme(MONACO_THEME_NAME, ZINC_DARK_THEME);
+                  monaco.editor.defineTheme(MONACO_THEME_NAME, createMonacoTheme("dark"));
                 }}
                 loading={
                   <div className="w-full h-full bg-background pt-2 pl-4 font-mono text-sm leading-5">

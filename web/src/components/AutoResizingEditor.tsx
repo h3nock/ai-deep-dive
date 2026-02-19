@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import Editor, { OnMount, BeforeMount } from "@monaco-editor/react";
 import type { editor as MonacoEditor } from "monaco-editor";
-import { ZINC_DARK_THEME, MONACO_THEME_NAME } from "@/lib/monaco-theme";
+import { createMonacoTheme, MONACO_THEME_NAME } from "@/lib/monaco-theme";
 
 interface AutoResizingEditorProps {
   value: string;
@@ -23,7 +23,7 @@ export function AutoResizingEditor({
 
   const handleBeforeMount: BeforeMount = (monaco) => {
     // Define theme before mount to prevent flash
-    monaco.editor.defineTheme(MONACO_THEME_NAME, ZINC_DARK_THEME);
+    monaco.editor.defineTheme(MONACO_THEME_NAME, createMonacoTheme("dark"));
   };
 
   const handleEditorDidMount: OnMount = (editor) => {
