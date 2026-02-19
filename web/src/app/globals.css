@@ -2,17 +2,14 @@
 
 /* ==========================================================================
    Eye-Safe Theme Configuration (Tailwind v4 CSS-First)
-   HARD LOCKED TO DARK MODE - No light mode support
-   Optimized for 4+ hour reading sessions
+   Supports dark (default) and light modes via class on <html>
+   Dark mode optimized for 4+ hour reading sessions
    ========================================================================== */
 
-/* Force dark mode at CSS level - ignore system preferences */
 :root {
-  color-scheme: dark !important;
-
   /* ==========================================================================
      4-TIER SPACING SYSTEM (Gestalt-Driven)
-     
+
      Whitespace is the primary structural element in our "Void" layout.
      Proximity = Relationship. Never use random values.
      ========================================================================== */
@@ -50,22 +47,26 @@
   /* 64px - between Steps */
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: dark !important;
-  }
+/* Dark mode (default) */
+:root,
+.dark {
+  color-scheme: dark;
+}
+
+/* Light mode overrides */
+.light {
+  color-scheme: light;
 }
 
 @theme inline {
-  /* THE CANVAS - Warm enough to avoid blue light strain, dark enough for immersion */
+  /* Dark palette (default) — defined as Tailwind theme tokens so utilities
+     like bg-background, text-primary, border-border etc. are auto-generated. */
   --color-background: #09090B;
   /* Zinc-950 */
   --color-surface: #18181B;
   /* Zinc-900 (Cards/Sidebars) */
-
-  /* THE TEXT HIERARCHY - Night Reading Optimized (No Glow/Bloom) */
   --color-primary: #D4D4D8;
-  /* Zinc-300 (Headings - soft, no halation) */
+  /* Zinc-300 (Headings) */
   --color-secondary: #A1A1AA;
   /* Zinc-400 (Body text) */
   --color-muted: #71717A;
@@ -75,13 +76,11 @@
   --color-border-hover: #3f3f46;
   /* Zinc-700 (Hover state borders) */
   --color-terminal: #121212;
-  /* Code blocks, data containers - slightly lighter than void */
-
-  /* SEMANTIC STATES - Correct/Error feedback */
+  /* Code blocks, data containers */
   --color-success: #34D399;
-  /* Emerald-400 (Correct states) */
+  /* Emerald-400 */
   --color-error: #FB7185;
-  /* Rose-400 (Error states) */
+  /* Rose-400 */
 
   /* Legacy support */
   --color-foreground: var(--color-secondary);
@@ -89,6 +88,33 @@
   /* Typography */
   --font-sans: var(--font-geist-sans), "Geist Sans", "Inter", sans-serif;
   --font-mono: var(--font-geist-mono), "Geist Mono", "JetBrains Mono", monospace;
+}
+
+/* -------------------------------------------------------------------------
+   Light palette — overrides the @theme tokens when .light is on <html>.
+   Designed for comfortable daytime reading with the same hierarchy.
+   ------------------------------------------------------------------------- */
+.light {
+  --color-background: #ffffff;
+  --color-surface: #f4f4f5;
+  /* Zinc-100 */
+  --color-primary: #18181B;
+  /* Zinc-900 (Headings) */
+  --color-secondary: #3f3f46;
+  /* Zinc-700 (Body text) */
+  --color-muted: #71717A;
+  /* Zinc-500 (Meta/Captions) */
+  --color-border: #e4e4e7;
+  /* Zinc-200 (Dividers) */
+  --color-border-hover: #d4d4d8;
+  /* Zinc-300 (Hover state borders) */
+  --color-terminal: #f9fafb;
+  /* Gray-50 (Code blocks) */
+  --color-success: #059669;
+  /* Emerald-600 */
+  --color-error: #e11d48;
+  /* Rose-600 */
+  --color-foreground: var(--color-secondary);
 }
 
 body {
@@ -248,18 +274,19 @@ body {
 }
 
 /* ==========================================================================
-   Prose Overrides - Night Reading Safe (No Glow/Bloom)
+   Prose Overrides - Theme-Aware
    4-Tier Spacing Applied
    ========================================================================== */
 
-.prose {
+.prose,
+.prose-invert {
   --tw-prose-body: var(--color-secondary);
   --tw-prose-headings: var(--color-primary);
   --tw-prose-lead: var(--color-secondary);
   --tw-prose-links: var(--color-primary);
   --tw-prose-bold: var(--color-primary);
   --tw-prose-counters: var(--color-muted);
-  --tw-prose-bullets: #52525B;
+  --tw-prose-bullets: var(--color-muted);
   --tw-prose-hr: var(--color-border);
   --tw-prose-quotes: var(--color-secondary);
   --tw-prose-quote-borders: var(--color-border);
@@ -353,25 +380,8 @@ body {
   border-radius: 0.25rem;
 }
 
-/* Override prose-invert since we're dark-only */
-.prose-invert {
-  --tw-prose-body: var(--color-secondary);
-  --tw-prose-headings: var(--color-primary);
-  --tw-prose-lead: var(--color-secondary);
-  --tw-prose-links: var(--color-primary);
-  --tw-prose-bold: var(--color-primary);
-  --tw-prose-counters: var(--color-muted);
-  --tw-prose-bullets: #52525B;
-  --tw-prose-hr: var(--color-border);
-  --tw-prose-quotes: var(--color-secondary);
-  --tw-prose-quote-borders: var(--color-border);
-  --tw-prose-captions: var(--color-muted);
-  --tw-prose-code: var(--color-secondary);
-  --tw-prose-pre-code: var(--color-secondary);
-  --tw-prose-pre-bg: var(--color-terminal);
-  --tw-prose-th-borders: var(--color-border);
-  --tw-prose-td-borders: var(--color-border);
-}
+/* prose-invert is unified with .prose above — both use CSS custom properties
+   that automatically adapt to the active theme. */
 
 /* Inline code - slightly smaller than body text but readable */
 .prose :not(pre)>code {
@@ -393,13 +403,22 @@ body {
    Border-driven glow with stable background
    ========================================================================== */
 
-/* Card Glow Container - handles the glow effect on border */
+/* Card Glow Container - handles the glow effect on border
+   Uses CSS custom properties so light/dark themes get different glow tones */
 .card-glow {
-  --glow-color: rgba(161, 161, 170, 0);
-  /* Zinc-400 at 0% */
+  --glow-color: transparent;
+  --glow-shadow-ring: rgba(161, 161, 170, 0.15);
+  --glow-shadow-depth: rgba(0, 0, 0, 0.4);
+  --glow-shadow-spread: rgba(161, 161, 170, 0.1);
   position: relative;
   border-radius: 0.75rem;
   transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.light .card-glow {
+  --glow-shadow-ring: rgba(0, 0, 0, 0.08);
+  --glow-shadow-depth: rgba(0, 0, 0, 0.12);
+  --glow-shadow-spread: rgba(0, 0, 0, 0.04);
 }
 
 /* The glow ring - positioned behind the card */
@@ -430,7 +449,10 @@ body {
 /* Hover state - activate the glow */
 .card-glow:hover {
   --glow-color: rgba(161, 161, 170, 0.5);
-  /* Zinc-400 at 50% */
+}
+
+.light .card-glow:hover {
+  --glow-color: rgba(0, 0, 0, 0.15);
 }
 
 .card-glow:hover::before {
@@ -440,9 +462,9 @@ body {
 /* Subtle box shadow glow for depth */
 .card-glow:hover {
   box-shadow:
-    0 0 0 1px rgba(161, 161, 170, 0.15),
-    0 4px 24px -4px rgba(0, 0, 0, 0.4),
-    0 0 40px -8px rgba(161, 161, 170, 0.1);
+    0 0 0 1px var(--glow-shadow-ring),
+    0 4px 24px -4px var(--glow-shadow-depth),
+    0 0 40px -8px var(--glow-shadow-spread);
 }
 
 /* Interactive variant - for clickable cards */
@@ -452,8 +474,11 @@ body {
 
 .card-glow-interactive:hover {
   --glow-color: rgba(212, 212, 216, 0.4);
-  /* Zinc-300 - slightly brighter for interactive */
   transform: translateY(-1px);
+}
+
+.light .card-glow-interactive:hover {
+  --glow-color: rgba(0, 0, 0, 0.2);
 }
 
 .card-glow-interactive:hover::before {
@@ -471,7 +496,7 @@ body {
 }
 
 .card-glow-disabled:hover {
-  --glow-color: rgba(161, 161, 170, 0);
+  --glow-color: transparent;
   transform: none;
   box-shadow: none;
 }
