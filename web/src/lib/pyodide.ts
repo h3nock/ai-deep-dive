@@ -140,9 +140,9 @@ export async function runTestsWithPyodide(
     },
   });
 
-  // First, try to execute user code to define functions/classes
-  // We wrap this in a fresh namespace that persists across test cases
-  // Error handling is done in Python for clean, user-friendly messages
+  // First, compile + validate user code once.
+  // Each test case re-executes this compiled code in a fresh namespace.
+  // Error handling is done in Python for clean, user-friendly messages.
   const setupCode = `
 import traceback as __tb__
 import sys as __sys__
@@ -198,14 +198,19 @@ def __format_user_error__(user_filename='solution.py'):
     lines.append(f'{exc_type.__name__}: {exc_value}')
     return '\\n'.join(lines)
 
-__user_globals__ = {}
 __user_error__ = None
 try:
     __user_code__ = compile(${JSON.stringify(userCode)}, 'solution.py', 'exec')
+    __bootstrap_globals__ = {
+        "__builtins__": __builtins__,
+        "__name__": "solution",
+        "__file__": "solution.py",
+        "__package__": None,
+    }
     __reset_op_count__()
     __sys__.settrace(__trace_calls__)
     try:
-        exec(__user_code__, __user_globals__)
+        exec(__user_code__, __bootstrap_globals__)
     finally:
         __sys__.settrace(None)
 except Exception:
@@ -239,7 +244,7 @@ except Exception:
     };
   }
 
-  const comparisonType = config.comparison?.type ?? "approx";
+  const comparisonType = config.comparison?.type ?? "exact";
   const comparisonRtol = config.comparison?.rtol ?? 1e-6;
   const comparisonAtol = config.comparison?.atol ?? 1e-6;
 
@@ -252,13 +257,17 @@ except Exception:
     let output = "";
     let stderr = "";
 
-    // Create a fresh case-specific namespace that inherits user functions
-    // This prevents variable pollution between test cases
+    // Create a fresh namespace and re-execute user code per case.
+    // This prevents state pollution and avoids deepcopy failures on globals.
     // Comparison is done entirely in Python to preserve exact semantics
-    // (tuple keys, sets, complex numbers, etc. all work correctly)
+    // (tuple keys, sets, complex numbers, etc. all work correctly).
     const testCode = `
-import copy as __copy__
-__case_globals__ = __copy__.deepcopy(__user_globals__)
+__case_globals__ = {
+    "__builtins__": __builtins__,
+    "__name__": "solution",
+    "__file__": "solution.py",
+    "__package__": None,
+}
 __test_error__ = None
 __result_repr__ = None
 __expected_repr__ = None
@@ -273,6 +282,7 @@ try:
     __reset_op_count__()
     __sys__.settrace(__trace_calls__)
     try:
+        exec(__user_code__, __case_globals__)
         exec(__test_setup__, __case_globals__)
         __result__ = eval(${JSON.stringify(config.runner)}, __case_globals__)
     finally:
