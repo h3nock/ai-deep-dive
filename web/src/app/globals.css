@@ -232,6 +232,21 @@ body {
   background: var(--color-border-hover);
 }
 
+/* ==========================================================================
+   Shiki Multi-Theme Toggle
+   rehype-pretty-code generates --shiki-dark and --shiki-light on each span.
+   Default to dark; .light selector switches to light values.
+   ========================================================================== */
+code[data-theme*=" "],
+code[data-theme*=" "] span {
+  color: var(--shiki-dark);
+}
+
+.light code[data-theme*=" "],
+.light code[data-theme*=" "] span {
+  color: var(--shiki-light);
+}
+
 /* Code Block Styling - rehype-pretty-code (Deep Tech Terminal Style)
    SPACING: Uses Component Sandwich pattern (connected top, flow bottom) */
 [data-rehype-pretty-code-figure] {

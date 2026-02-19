@@ -111,8 +111,11 @@ export function LessonGuideContent({ source }: LessonGuideContentProps) {
                         [
                             rehypePrettyCode,
                             {
-                                theme: "github-dark",
-                                keepBackground: true,
+                                theme: {
+                                    dark: "github-dark",
+                                    light: "github-light",
+                                },
+                                keepBackground: false,
                             },
                         ],
                     ],
