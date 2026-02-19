@@ -106,18 +106,18 @@
   --color-border: #e4e4e7;           /* Zinc-200 (Dividers) */
   --color-border-hover: #d4d4d8;     /* Zinc-300 (Hover state borders) */
   --color-terminal: #f9fafb;         /* Gray-50 (Code blocks) */
-  --color-success: #059669;          /* Emerald-600 */
-  --color-error: #e11d48;            /* Rose-600 */
-  --color-warning: #d97706;          /* Amber-600 */
-  --color-info: #0284c7;             /* Sky-600 */
+  --color-success: #047857;          /* Emerald-700 */
+  --color-error: #be123c;            /* Rose-700 */
+  --color-warning: #b45309;          /* Amber-700 */
+  --color-info: #0369a1;             /* Sky-700 */
   --color-primary-hover: #27272A;    /* Zinc-800 (Filled button hover) */
 
-  --color-accent-1: #059669;         /* Emerald-600 */
-  --color-accent-2: #2563eb;         /* Blue-600 */
-  --color-accent-3: #e11d48;         /* Rose-600 */
-  --color-accent-4: #d97706;         /* Amber-600 */
-  --color-accent-5: #7c3aed;         /* Purple-600 */
-  --color-accent-6: #0891b2;         /* Cyan-600 */
+  --color-accent-1: #047857;         /* Emerald-700 */
+  --color-accent-2: #1d4ed8;         /* Blue-700 */
+  --color-accent-3: #be123c;         /* Rose-700 */
+  --color-accent-4: #b45309;         /* Amber-700 */
+  --color-accent-5: #6d28d9;         /* Purple-700 */
+  --color-accent-6: #0e7490;         /* Cyan-700 */
   --color-on-accent: #ffffff;        /* White text for solid accent fills */
   --color-foreground: var(--color-secondary);
 }
