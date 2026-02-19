@@ -2,15 +2,11 @@ name: judge tests
 
 on:
   pull_request:
-    paths:
-      - "judge/**"
-      - ".github/workflows/judge-tests.yml"
+    branches:
+      - main
   push:
     branches:
       - main
-    paths:
-      - "judge/**"
-      - ".github/workflows/judge-tests.yml"
 
 jobs:
   judge:
