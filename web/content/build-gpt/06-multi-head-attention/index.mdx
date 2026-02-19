@@ -50,7 +50,7 @@ description: "The limitation of single-head attention and how multiple heads ove
     We start by projecting the input `X` into distinct Query, Key, and Value matrices for each head using independent weights (`W_Q^i`, `W_K^i`, `W_V^i`). Since each head has its own unique projection, it maps the input into a different subspace. This allows each head to define "relevance" in its own way, enabling the model to simultaneously attend to information based on completely different criteria.
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-1">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm space-y-1">
     <div>Q<sub>i</sub> = X × W<sub>Q</sub><sup>i</sup></div>
     <div>K<sub>i</sub> = X × W<sub>K</sub><sup>i</sup></div>
     <div>V<sub>i</sub> = X × W<sub>V</sub><sup>i</sup></div>
@@ -60,7 +60,7 @@ description: "The limitation of single-head attention and how multiple heads ove
     With these specific projections, each head runs the standard attention function. It computes similarity scores using its own Queries and Keys, producing a unique attention distribution. All `h` heads perform this computation simultaneously.
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm text-center">
     head<sub>i</sub> = Attention(Q<sub>i</sub>, K<sub>i</sub>, V<sub>i</sub>)
   </div>
 
@@ -82,7 +82,7 @@ description: "The limitation of single-head attention and how multiple heads ove
     For a model with `d_model = 768` and 12 heads, this means each head projects into just 64 dimensions. Because the heads are narrower, the total number of parameters across all `h` heads matches that of a single full-size head, giving us multiple perspectives without a massive increase in compute.
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm text-center">
     h × (d_model × d_model/h) = d_model × d_model
   </div>
 </Step>

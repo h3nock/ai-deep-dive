@@ -38,7 +38,7 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
     Each token's representation (x) produces all three by projection through learned weight matrices:
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-1">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm space-y-1">
     <div>Q = x × W<sub>Q</sub></div>
     <div>K = x × W<sub>K</sub></div>
     <div>V = x × W<sub>V</sub></div>
@@ -63,7 +63,7 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
     We compute this for every pair of tokens in the sequence:
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm text-center">
     score<sub>ij</sub> = Q<sub>i</sub> · K<sub>j</sub>
   </div>
 
@@ -96,7 +96,7 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
             <div key={i} className="w-14 h-12 flex items-center justify-end pr-2 text-xs text-muted font-mono">{token}</div>
           ))}
         </div>
-        <div className="border border-zinc-700 rounded overflow-hidden">
+        <div className="border border-border-hover rounded overflow-hidden">
           {[
             [0.2, 0.1, 0.3, 0.1],
             [0.1, 0.2, 0.8, 0.4],
@@ -107,10 +107,10 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
               {row.map((score, j) => (
                 <div
                   key={j}
-                  className="w-14 h-12 flex items-center justify-center text-sm border-r border-b border-zinc-800 last:border-r-0"
+                  className="w-14 h-12 flex items-center justify-center text-sm border-r border-b border-border last:border-r-0"
                   style={{ backgroundColor: `rgba(16, 185, 129, ${score * 0.6})` }}
                 >
-                  <span className={score > 0.5 ? 'text-white' : 'text-zinc-400'}>{score.toFixed(1)}</span>
+                  <span className={score > 0.5 ? 'text-primary' : 'text-secondary'}>{score.toFixed(1)}</span>
                 </div>
               ))}
             </div>
@@ -143,7 +143,7 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
     As the dimension of the Query and Key vectors grows, dot products tend to produce larger numbers because each additional dimension adds to the sum. When softmax receives these larger values, it concentrates nearly all weight on whichever token has the highest score, and the output becomes essentially just that token's Value, losing the ability to blend information from multiple source tokens. Scaling the scores down by √d before softmax keeps the values moderate, allowing weight to spread across several tokens when useful:
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm text-center">
     attention weights = softmax( scores / √d )
   </div>
 
@@ -151,7 +151,7 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
     With weights computed, we take the weighted sum of Values:
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-center">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm text-center">
     output = Σ (weight<sub>j</sub> × V<sub>j</sub>)
   </div>
 
@@ -209,14 +209,14 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
             <div key={i} className="w-6 h-10 flex items-center justify-center text-xs text-muted">{q}</div>
           ))}
         </div>
-        <div className="border border-zinc-700 rounded">
+        <div className="border border-border-hover rounded">
           {[1, 2, 3, 4, 5].map((q) => (
             <div key={q} className="flex">
               {[1, 2, 3, 4, 5].map((k) => (
                 <div
                   key={k}
-                  className={`w-10 h-10 flex items-center justify-center text-sm border-r border-b border-zinc-800 last:border-r-0 ${
-                    k <= q ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-900/50 text-zinc-600'
+                  className={`w-10 h-10 flex items-center justify-center text-sm border-r border-b border-border last:border-r-0 ${
+                    k <= q ? 'bg-emerald-500/20 text-emerald-400' : 'bg-surface/50 text-muted'
                   }`}
                 >
                   {k <= q ? '✓' : '✗'}
@@ -235,7 +235,7 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
             <span className="text-muted">Can attend</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 bg-zinc-900/50 border border-zinc-700 rounded"></div>
+            <div className="w-3 h-3 bg-surface/50 border border-border-hover rounded"></div>
             <span className="text-muted">Masked (−∞)</span>
           </div>
         </div>
