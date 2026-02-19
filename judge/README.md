@@ -124,6 +124,11 @@ Environment variables:
 
 - The judge executes every run/submit inside isolate.
 - Worker consumer names must follow the template services (`light-%i`, `torch-%i`).
+- `/health` is a liveness endpoint only and returns `{"status":"ok"}` when the
+  API process is up.
+- `/ready` is a readiness endpoint and checks Redis, SQLite, and problem
+  manifests. It returns HTTP 200 with `status=ready` when all checks pass, and
+  HTTP 503 with `status=not_ready` plus per-dependency check details otherwise.
 - Hidden tests are not bundled for the browser and are not publicly served from
   `/judge-tests/`. On submit, the first failing hidden test is returned for
   debugging.
