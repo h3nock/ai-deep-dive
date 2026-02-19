@@ -51,7 +51,7 @@ export function ThinkingProcess({
         style={{ marginBottom: "var(--space-atomic)" }}
       >
         <div className="flex items-center justify-center w-5 h-5">
-          <BrainCircuit className="w-[18px] h-[18px] text-amber-400" />
+          <BrainCircuit className="w-[18px] h-[18px] text-warning" />
         </div>
         <span className="text-lg font-semibold text-primary">{title}</span>
       </div>

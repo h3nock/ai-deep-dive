@@ -51,13 +51,13 @@ export function ChapterCheckbox({
   return (
     <div
       className={cn(
-        "rounded-full border flex items-center justify-center shrink-0 border-emerald-400/50",
+        "rounded-full border flex items-center justify-center shrink-0 border-success/50",
         size === "sm" ? "w-4 h-4" : "w-5 h-5"
       )}
     >
       <Check
         className={cn(
-          "text-emerald-400",
+          "text-success",
           size === "sm" ? "w-2.5 h-2.5" : "w-3 h-3"
         )}
         strokeWidth={3}

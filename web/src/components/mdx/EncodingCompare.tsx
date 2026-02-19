@@ -15,13 +15,13 @@ const MAX_CHARS = 5;
  * EncodingCompare - UTF-32 vs UTF-8 Side-by-Side Comparison
  *
  * COLOR JUSTIFICATION (per COLOR_GUIDE.md):
- * - bg-emerald-500/20 + text-emerald-400: UTF-8 bytes - success (efficient encoding)
+ * - bg-success/20 + text-success: UTF-8 bytes - success (efficient encoding)
  * - bg-background + text-border-hover: Padding zeros - muted/disabled (wasted space)
  * - bg-surface + text-secondary: Non-zero UTF-32 bytes - neutral data
- * - text-sky-400: Savings percentage - info state
+ * - text-info: Savings percentage - info state
  * - text-muted: Labels, row headers - meta info
- * - text-rose-400: Counter at limit - error state
- * - text-amber-400: Counter near limit - warning state
+ * - text-error: Counter at limit - error state
+ * - text-warning: Counter near limit - warning state
  */
 export function EncodingCompare() {
   const [text, setText] = useState("Hello");
@@ -68,8 +68,8 @@ export function EncodingCompare() {
 
   // Counter color per COLOR_GUIDE: rose=error, amber=warning, muted=normal
   const getCounterColor = () => {
-    if (charCount >= MAX_CHARS) return "text-rose-400";
-    if (charCount >= 4) return "text-amber-400";
+    if (charCount >= MAX_CHARS) return "text-error";
+    if (charCount >= 4) return "text-warning";
     return "text-muted";
   };
 
@@ -109,14 +109,14 @@ export function EncodingCompare() {
           </div>
           <div className="text-muted">vs</div>
           <div className="text-center">
-            <div className="text-xl font-bold text-emerald-400">{utf8Total}</div>
+            <div className="text-xl font-bold text-success">{utf8Total}</div>
             <div className="text-xs text-muted">UTF-8 bytes</div>
           </div>
           {savings > 0 && (
             <>
               <div className="text-muted">=</div>
               <div className="text-center">
-                <div className="text-xl font-bold text-sky-400">
+                <div className="text-xl font-bold text-info">
                   {savingsPercent}%
                 </div>
                 <div className="text-xs text-muted">smaller</div>
@@ -184,7 +184,7 @@ export function EncodingCompare() {
                         {item.utf8Bytes.map((b, idx) => (
                           <span
                             key={idx}
-                            className="w-6 h-6 flex items-center justify-center rounded text-xs font-mono bg-emerald-500/20 text-emerald-400"
+                            className="w-6 h-6 flex items-center justify-center rounded text-xs font-mono bg-success/20 text-success"
                           >
                             {b.toString(16).toUpperCase().padStart(2, "0")}
                           </span>

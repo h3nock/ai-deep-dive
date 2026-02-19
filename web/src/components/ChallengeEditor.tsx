@@ -1093,16 +1093,16 @@ function ChallengeEditorContent({
                   {activeChallenge.title}
                 </h2>
                 {isSolved && (
-                  <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
                 )}
               </div>
               <span
                 className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                   activeChallenge.difficulty === "Easy"
-                    ? "bg-emerald-500/10 text-emerald-400"
+                    ? "bg-success/10 text-success"
                     : activeChallenge.difficulty === "Medium"
-                      ? "bg-amber-500/10 text-amber-400"
-                      : "bg-rose-500/10 text-rose-400"
+                      ? "bg-warning/10 text-warning"
+                      : "bg-error/10 text-error"
                 }`}
               >
                 {activeChallenge.difficulty || "Medium"}
@@ -1158,7 +1158,7 @@ function ChallengeEditorContent({
           <div
             className={`w-1.5 cursor-col-resize z-10 flex items-center justify-center group transition-colors duration-150 ${
               isDraggingLeft
-                ? "bg-emerald-500/50"
+                ? "bg-success/50"
                 : "bg-transparent hover:bg-border-hover"
             }`}
             onMouseDown={startResizingLeft}
@@ -1166,7 +1166,7 @@ function ChallengeEditorContent({
             <div
               className={`w-0.5 h-12 rounded-full transition-all duration-150 ${
                 isDraggingLeft
-                  ? "bg-emerald-400 h-16"
+                  ? "bg-success h-16"
                   : "bg-muted group-hover:bg-secondary group-hover:h-16"
               }`}
             />
@@ -1246,7 +1246,7 @@ function ChallengeEditorContent({
                   disabled={isRunning}
                   title={`Submit and run all tests (${submitShortcut})`}
                   aria-label={`Submit and run all tests, keyboard shortcut ${submitShortcut}`}
-                  className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/15 disabled:bg-transparent disabled:text-muted disabled:cursor-not-allowed text-emerald-400 text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-1.5 bg-success/10 hover:bg-success/15 disabled:bg-transparent disabled:text-muted disabled:cursor-not-allowed text-success text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning && lastRunMode === "submit" ? (
                     <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
@@ -1321,7 +1321,7 @@ function ChallengeEditorContent({
                 ref={resizerRef}
                 className={`h-2 flex-shrink-0 cursor-row-resize z-10 flex items-center justify-center border-t transition-colors duration-150 group ${
                   isDraggingBottom
-                    ? "bg-emerald-500/20 border-emerald-500/50"
+                    ? "bg-success/20 border-success/50"
                     : "bg-background border-border hover:bg-surface/50 hover:border-border-hover"
                 }`}
                 onMouseDown={startResizingBottom}
@@ -1329,7 +1329,7 @@ function ChallengeEditorContent({
                 <div
                   className={`h-0.5 rounded-full transition-all duration-150 ${
                     isDraggingBottom
-                      ? "w-16 bg-emerald-400"
+                      ? "w-16 bg-success"
                       : "w-8 bg-muted group-hover:w-12 group-hover:bg-secondary"
                   }`}
                 />
@@ -1474,7 +1474,7 @@ function ChallengeEditorContent({
                               Case {idx + 1}
                               {visibleTestCases.length > 1 && (
                                 <X
-                                  className="w-3 h-3 hover:text-rose-400"
+                                  className="w-3 h-3 hover:text-error"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setTestCases((prev) =>
@@ -1602,8 +1602,8 @@ function ChallengeEditorContent({
                                     <div className="flex flex-col gap-3">
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                                          <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
+                                            <CheckCircle2 className="w-5 h-5 text-success" />
                                           </div>
                                           <div>
                                             <h3 className="text-primary font-semibold">
@@ -1635,7 +1635,7 @@ function ChallengeEditorContent({
 
                                 return (
                                   <div className="flex items-center justify-between">
-                                    <h3 className="text-emerald-400 font-medium flex items-center gap-2">
+                                    <h3 className="text-success font-medium flex items-center gap-2">
                                       <CheckCircle2 className="w-4 h-4" />
                                       {summary.passed} / {summary.total} tests passed
                                     </h3>
@@ -1650,7 +1650,7 @@ function ChallengeEditorContent({
 
                               return (
                                 <div className="flex flex-col gap-2">
-                                  <h3 className="text-rose-400 font-medium flex items-center gap-2">
+                                  <h3 className="text-error font-medium flex items-center gap-2">
                                     <AlertCircle className="w-4 h-4" />
                                     {statusLabel}
                                   </h3>
@@ -1678,8 +1678,8 @@ function ChallengeEditorContent({
                                   <span
                                     className={`w-2 h-2 rounded-full ${
                                       r.status === "Accepted"
-                                        ? "bg-emerald-400"
-                                        : "bg-rose-400"
+                                        ? "bg-success"
+                                        : "bg-error"
                                     }`}
                                   />
                                   {r.hidden ? "Hidden Test" : `Case ${idx + 1}`}
@@ -1695,7 +1695,7 @@ function ChallengeEditorContent({
                               return (
                                 <div key={r.id} className="flex flex-col gap-3">
                                   {isErrorStatus(r.status) && r.stderr && (
-                                    <div className="p-3 bg-rose-500/5 border border-rose-500/20 rounded-lg text-error text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                    <div className="p-3 bg-error/5 border border-error/20 rounded-lg text-error text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
                                       {r.stderr}
                                     </div>
                                   )}
@@ -1730,7 +1730,7 @@ function ChallengeEditorContent({
                                           <div className={`p-3 rounded-lg text-[13px] font-mono whitespace-pre-wrap leading-relaxed ${
                                             r.status === "Accepted"
                                               ? "bg-surface text-secondary"
-                                              : "bg-rose-500/5 text-error border border-rose-500/20"
+                                              : "bg-error/5 text-error border border-error/20"
                                           }`}>
                                             {r.output || <span className="text-muted/60 italic">None</span>}
                                           </div>
@@ -1740,7 +1740,7 @@ function ChallengeEditorContent({
                                           <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
                                             Expected
                                           </label>
-                                          <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg text-success text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                          <div className="p-3 bg-success/5 border border-success/20 rounded-lg text-success text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
                                             {r.expected}
                                           </div>
                                         </div>

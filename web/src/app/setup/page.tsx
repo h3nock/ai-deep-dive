@@ -29,7 +29,7 @@ function CodeBlock({ children }: { children: string }) {
         className="absolute top-3 right-3 p-1.5 rounded bg-surface text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
       >
         {copied ? (
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <CheckCircle2 className="w-4 h-4 text-success" />
         ) : (
           <Copy className="w-4 h-4" />
         )}

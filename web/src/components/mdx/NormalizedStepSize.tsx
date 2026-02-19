@@ -92,7 +92,7 @@ export function NormalizedStepSize() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted">Step:</span>
-              <span className="font-mono text-amber-400 tabular-nums">{stepSize.toFixed(3)}</span>
+              <span className="font-mono text-accent-4 tabular-nums">{stepSize.toFixed(3)}</span>
             </div>
           </div>
         </div>
@@ -105,8 +105,8 @@ export function NormalizedStepSize() {
               className="absolute left-0 h-full flex flex-col items-center justify-end transition-all duration-200 ease-out"
               style={{ width: `${stepSize * 100}%` }}
             >
-              <span className="text-xs font-mono text-amber-400 mb-1">step</span>
-              <div className="w-full h-2.5 border-l-2 border-r-2 border-t-2 border-amber-400/80 rounded-t" />
+              <span className="text-xs font-mono text-accent-4 mb-1">step</span>
+              <div className="w-full h-2.5 border-l-2 border-r-2 border-t-2 border-accent-4/80 rounded-t" />
             </div>
           </div>
           

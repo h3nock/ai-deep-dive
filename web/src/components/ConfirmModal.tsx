@@ -72,14 +72,14 @@ export function ConfirmModal({
 
   const variantStyles = {
     danger: {
-      icon: "text-rose-400",
+      icon: "text-error",
       confirmButton:
-        "bg-rose-500/20 text-rose-400 border border-rose-400/50 hover:bg-rose-500/30 hover:border-rose-400",
+        "bg-error/20 text-error border border-error/50 hover:bg-error/30 hover:border-error",
     },
     warning: {
-      icon: "text-amber-400",
+      icon: "text-warning",
       confirmButton:
-        "bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:bg-amber-500/30 hover:border-amber-400",
+        "bg-warning/20 text-warning border border-warning/50 hover:bg-warning/30 hover:border-warning",
     },
     default: {
       icon: "text-secondary",

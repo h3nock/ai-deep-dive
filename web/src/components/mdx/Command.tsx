@@ -22,7 +22,7 @@ export function Command({
     <div className="group relative flex items-start gap-3 py-2 px-4 -mx-4 hover:bg-surface/50 rounded-lg transition-colors">
       {/* Prompt */}
       <div className="shrink-0 mt-1.5 text-muted select-none">
-        <span className="text-sky-400 font-bold">❯</span>
+        <span className="text-info font-bold">❯</span>
       </div>
 
       {/* Code & Comment */}
@@ -40,7 +40,7 @@ export function Command({
         aria-label="Copy command"
       >
         {copied ? (
-          <Check className="w-3.5 h-3.5 text-emerald-400" />
+          <Check className="w-3.5 h-3.5 text-success" />
         ) : (
           <Copy className="w-3.5 h-3.5" />
         )}

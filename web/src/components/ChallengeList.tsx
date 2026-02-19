@@ -100,17 +100,17 @@ export function ChallengeList({
                     <span className="text-secondary group-hover:text-primary transition-colors flex items-center gap-2">
                       {challenge.title}
                       {challengeSolved && (
-                        <CheckCircle2 className="w-4 h-4 text-green-400" />
+                        <CheckCircle2 className="w-4 h-4 text-success" />
                       )}
                     </span>
                   </div>
                   <span
                     className={`text-xs font-medium ${
                       challenge.difficulty === "Easy"
-                        ? "text-emerald-400"
+                        ? "text-success"
                         : challenge.difficulty === "Medium"
-                          ? "text-amber-400"
-                          : "text-rose-400"
+                          ? "text-warning"
+                          : "text-error"
                     }`}
                   >
                     {challenge.difficulty || "Medium"}

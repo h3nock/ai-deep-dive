@@ -16,10 +16,10 @@ const MAX_CHARS = 15;
  * COLOR JUSTIFICATION (per COLOR_GUIDE.md):
  * - text-secondary: Data values (decimal bytes) - standard body text
  * - text-muted: Labels, code points, hex values - meta info
- * - text-emerald-400: Total bytes count - success/positive outcome
+ * - text-success: Total bytes count - success/positive outcome
  * - bg-surface: Byte pills background - neutral container
- * - text-rose-400: Counter at limit - error state
- * - text-amber-400: Counter near limit - warning state
+ * - text-error: Counter at limit - error state
+ * - text-warning: Counter near limit - warning state
  */
 export function LiveByteInspector() {
   const [text, setText] = useState("Hi 👋");
@@ -59,8 +59,8 @@ export function LiveByteInspector() {
 
   // Counter color per COLOR_GUIDE: rose=error, amber=warning, muted=normal
   const getCounterColor = () => {
-    if (charCount >= MAX_CHARS) return "text-rose-400";
-    if (charCount >= 12) return "text-amber-400";
+    if (charCount >= MAX_CHARS) return "text-error";
+    if (charCount >= 12) return "text-warning";
     return "text-muted";
   };
 
@@ -101,7 +101,7 @@ export function LiveByteInspector() {
           </span>
           <span>→</span>
           <span>
-            <span className="text-emerald-400 font-semibold">{totalBytes}</span>{" "}
+            <span className="text-success font-semibold">{totalBytes}</span>{" "}
             bytes
           </span>
         </div>
