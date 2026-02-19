@@ -127,6 +127,8 @@ Environment variables:
 - Hidden tests are not bundled for the browser and are not publicly served from
   `/judge-tests/`. On submit, the first failing hidden test is returned for
   debugging.
+- `/result/{job_id}` includes `error_kind` (`user` or `internal`) so clients
+  can render user-facing failures without string parsing.
 - Production setup lives in `judge/deploy/`. See the deploy README for steps.
 - Daily timers run on the VM to prune old database rows and save database backups.
 
