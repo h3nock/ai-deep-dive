@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { CourseCard } from "@/components/CourseCard";
 import { courseList } from "@/lib/course-config";
@@ -30,11 +31,11 @@ export default async function Home() {
       <Navbar />
 
       <main>
-        {/* Hero Section */}
-        <section className="relative pt-20 pb-24 overflow-hidden">
+        {/* Hero Section — full viewport */}
+        <section className="relative min-h-[calc(100vh-3.5rem)] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-grid-pattern" />
           <div className="absolute inset-0 hero-gradient-mask" />
-          <div className="relative container mx-auto px-4 text-center max-w-3xl">
+          <div className="relative text-center max-w-3xl px-4">
             <h1 className="animate-fade-in-up text-3xl md:text-5xl font-bold tracking-tight mb-6 text-primary">
               Learn AI by Building It
             </h1>
@@ -60,12 +61,17 @@ export default async function Home() {
               </a>
             </div>
           </div>
+
+          {/* Scroll indicator */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce text-muted/30">
+            <ChevronDown className="w-5 h-5" />
+          </div>
         </section>
 
         {/* Course Catalog */}
         <section
           id="courses"
-          className="py-20 bg-surface border-y border-border"
+          className="py-24 bg-surface"
         >
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="mb-10">
@@ -94,55 +100,21 @@ export default async function Home() {
             </div>
           </div>
         </section>
-
-        {/* Approach - Simplified */}
-        <section className="py-20">
-          <div className="container mx-auto px-4 max-w-4xl">
-            <div className="mb-10">
-              <h2 className="text-2xl font-bold text-primary mb-2">
-                How It Works
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-              {/* Connector line between circles (desktop) */}
-              <div className="hidden md:block absolute top-5 left-[calc(16.67%+20px)] right-[calc(16.67%+20px)] h-px bg-border" />
-
-              <div className="flex flex-col items-center text-center space-y-4">
-                <div className="relative z-10 flex items-center justify-center w-10 h-10 rounded-full border border-border bg-background text-sm font-semibold text-muted">
-                  01
-                </div>
-                <h3 className="font-semibold text-primary">Theory First</h3>
-                <p className="text-sm text-secondary leading-relaxed">
-                  Understand the why before the how.
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center text-center space-y-4">
-                <div className="relative z-10 flex items-center justify-center w-10 h-10 rounded-full border border-border bg-background text-sm font-semibold text-muted">
-                  02
-                </div>
-                <h3 className="font-semibold text-primary">
-                  Build It Yourself
-                </h3>
-                <p className="text-sm text-secondary leading-relaxed">
-                  Write real PyTorch. No magic imports.
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center text-center space-y-4">
-                <div className="relative z-10 flex items-center justify-center w-10 h-10 rounded-full border border-border bg-background text-sm font-semibold text-muted">
-                  03
-                </div>
-                <h3 className="font-semibold text-primary">Make It Work</h3>
-                <p className="text-sm text-secondary leading-relaxed">
-                  Train on real data. End with something you can use.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
+
+      {/* Minimal footer */}
+      <footer className="py-12 text-center text-sm text-muted">
+        <a
+          href="https://github.com/h3nock/ai-deep-dive"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-primary transition-colors"
+        >
+          Open Source
+        </a>
+        <span className="mx-3 text-border">·</span>
+        <span>Built for learners</span>
+      </footer>
     </div>
   );
 }
