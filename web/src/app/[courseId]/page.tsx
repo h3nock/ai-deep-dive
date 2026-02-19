@@ -157,13 +157,8 @@ export default async function RoadmapPage({
           </div>
         </div>
 
-        {/* Prerequisites & What You'll Build - Inverted T Layout */}
-        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 pb-6 mb-12">
-          {/* Center vertical line (hidden on mobile) - connects to horizontal line */}
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-border" />
-
-          {/* Horizontal bottom line (the T's crossbar) */}
-          <div className="absolute left-0 right-0 bottom-0 h-px bg-border" />
+        {/* Prerequisites & What You'll Build */}
+        <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-border gap-8 md:gap-0 pb-6 mb-12 border-b border-border">
 
           {/* Prerequisites */}
           <div className="md:pr-8">
