@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { viz } from "@/lib/viz-colors";
+import { viz, grid, withAlpha } from "@/lib/viz-colors";
 
 interface EmbeddingSpaceProps {
   showArrows?: boolean;
@@ -87,7 +87,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
               refY="3.5"
               orient="auto"
             >
-              <polygon points="0 0, 10 3.5, 0 7" className="fill-amber-500" />
+              <polygon points="0 0, 10 3.5, 0 7" fill={viz.secondary} />
             </marker>
             <marker
               id="arrowhead-dark"
@@ -97,7 +97,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
               refY="3.5"
               orient="auto"
             >
-              <polygon points="0 0, 10 3.5, 0 7" className="fill-amber-400" />
+              <polygon points="0 0, 10 3.5, 0 7" fill={viz.secondaryLight} />
             </marker>
           </defs>
 
@@ -120,7 +120,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 y1={paddingTop}
                 x2={toSvgX(v)}
                 y2={height - paddingBottom}
-                className={v === 0 ? "stroke-zinc-600" : "stroke-zinc-800"}
+                stroke={v === 0 ? grid.axis : grid.line}
                 strokeWidth={v === 0 ? 2 : 1}
                 strokeDasharray={v === 0 ? "" : "4 4"}
               />
@@ -130,7 +130,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 y1={toSvgY(v)}
                 x2={width - paddingRight}
                 y2={toSvgY(v)}
-                className={v === 0 ? "stroke-zinc-600" : "stroke-zinc-800"}
+                stroke={v === 0 ? grid.axis : grid.line}
                 strokeWidth={v === 0 ? 2 : 1}
                 strokeDasharray={v === 0 ? "" : "4 4"}
               />
@@ -141,14 +141,16 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={width - paddingRight + 8}
             y={toSvgY(0) + 4}
-            className="fill-zinc-500 text-[10px]"
+            fill={grid.label}
+            className="text-[10px]"
           >
             Gender (+)
           </text>
           <text
             x={paddingLeft - 8}
             y={toSvgY(0) + 4}
-            className="fill-zinc-500 text-[10px]"
+            fill={grid.label}
+            className="text-[10px]"
             textAnchor="end"
           >
             Gender (-)
@@ -156,7 +158,8 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={toSvgX(0)}
             y={paddingTop - 10}
-            className="fill-zinc-500 text-[10px]"
+            fill={grid.label}
+            className="text-[10px]"
             textAnchor="middle"
           >
             Royalty (+)
@@ -164,7 +167,8 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={toSvgX(0)}
             y={height - paddingBottom + 20}
-            className="fill-zinc-500 text-[10px]"
+            fill={grid.label}
+            className="text-[10px]"
             textAnchor="middle"
           >
             Royalty (-)
@@ -200,7 +204,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                     y1={y1}
                     x2={x2}
                     y2={y2}
-                    className="stroke-amber-400/70"
+                    stroke={withAlpha(viz.secondary, 0.7)}
                     strokeWidth="2"
                     markerEnd="url(#arrowhead)"
                     strokeLinecap="round"
@@ -211,7 +215,8 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                       x={mx}
                       y={my - 12}
                       textAnchor="middle"
-                      className="fill-zinc-400 text-[10px]"
+                      fill={grid.labelLight}
+                      className="text-[10px]"
                     >
                       {arrow.label}
                     </text>
@@ -245,7 +250,8 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 x={toSvgX(point.x)}
                 y={toSvgY(point.y) + 42}
                 textAnchor="middle"
-                className="fill-zinc-300 text-[11px] font-medium"
+                fill={grid.text}
+                className="text-[11px] font-medium"
               >
                 {point.name}
               </text>
@@ -254,7 +260,8 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 x={toSvgX(point.x)}
                 y={toSvgY(point.y) + 54}
                 textAnchor="middle"
-                className="fill-zinc-500 text-[10px] font-mono"
+                fill={grid.label}
+                className="text-[10px] font-mono"
               >
                 [{point.y}, {point.x}]
               </text>
@@ -270,8 +277,14 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           style={{ marginTop: "var(--space-connected)" }}
         >
           <div className="flex items-center gap-2">
-            <div className="w-6 h-0.5 bg-amber-400/70 rounded-full relative">
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-l-4 border-l-amber-400/70 border-y-[3px] border-y-transparent"></div>
+            <div
+              className="w-6 h-0.5 rounded-full relative"
+              style={{ backgroundColor: withAlpha(viz.secondary, 0.7) }}
+            >
+              <div
+                className="absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-y-[3px] border-y-transparent border-l-4"
+                style={{ borderLeftColor: withAlpha(viz.secondary, 0.7) }}
+              />
             </div>
             <span className="text-xs text-muted">Same direction = Same concept</span>
           </div>

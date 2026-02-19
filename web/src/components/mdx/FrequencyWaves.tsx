@@ -154,8 +154,9 @@ export function FrequencyWaves() {
             </svg>
             {/* Thumb marker - same positioning logic as wave dots */}
             <div
-              className="absolute w-3 h-3 rounded-full bg-emerald-500"
+              className="absolute w-3 h-3 rounded-full"
               style={{
+                backgroundColor: viz.tertiary,
                 left: `${(position / MAX_POSITION) * 100}%`,
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
@@ -163,7 +164,7 @@ export function FrequencyWaves() {
             />
           </div>
 
-          <span className="text-lg font-mono text-emerald-400 w-14 text-right">
+          <span className="text-lg font-mono w-14 text-right" style={{ color: viz.tertiary }}>
             {Math.round(position)}
           </span>
         </div>

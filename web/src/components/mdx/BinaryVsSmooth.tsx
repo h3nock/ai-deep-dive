@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { grid } from "@/lib/viz-colors";
+import { viz, grid } from "@/lib/viz-colors";
 
 /**
  * BinaryVsSmooth - Animated visualization comparing discrete binary jumps
@@ -158,12 +158,12 @@ export function BinaryVsSmooth() {
           <div className="flex-1 grid grid-cols-[60px_1fr_1fr] gap-2 text-center">
             <div></div>
             <div>
-              <span className="text-[10px] font-semibold text-rose-400 uppercase tracking-wider">
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: viz.highlight }}>
                 Binary
               </span>
             </div>
             <div>
-              <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: viz.tertiary }}>
                 Smooth
               </span>
             </div>
@@ -204,8 +204,9 @@ export function BinaryVsSmooth() {
                   </svg>
                   {/* Marker as absolute div to maintain perfect circle shape */}
                   <div
-                    className="absolute w-2.5 h-2.5 rounded-full bg-rose-400"
+                    className="absolute w-2.5 h-2.5 rounded-full"
                     style={{
+                      backgroundColor: viz.highlight,
                       left: `calc(4px + ${(markerX / GRAPH_WIDTH) * 100}% * (1 - 8px / 100%))`,
                       top: `calc(4px + ${(binaryY / GRAPH_HEIGHT) * 100}% * (1 - 8px / 100%))`,
                       transform: 'translate(-50%, -50%)',
@@ -230,8 +231,9 @@ export function BinaryVsSmooth() {
                   </svg>
                   {/* Marker as absolute div to maintain perfect circle shape */}
                   <div
-                    className="absolute w-2.5 h-2.5 rounded-full bg-emerald-400"
+                    className="absolute w-2.5 h-2.5 rounded-full"
                     style={{
+                      backgroundColor: viz.tertiary,
                       left: `calc(4px + ${(markerX / GRAPH_WIDTH) * 100}% * (1 - 8px / 100%))`,
                       top: `calc(4px + ${(smoothY / GRAPH_HEIGHT) * 100}% * (1 - 8px / 100%))`,
                       transform: 'translate(-50%, -50%)',
