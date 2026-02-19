@@ -79,12 +79,13 @@
   --color-primary-hover: #E4E4E7;    /* Zinc-200 (Filled button hover) */
 
   /* Accent palette — ordinal tokens for illustrations/categorisation */
-  --color-accent-1: #34D399;         /* Emerald-400 */
+  --color-accent-1: #10B981;         /* Emerald-500 */
   --color-accent-2: #60A5FA;         /* Blue-400 */
   --color-accent-3: #FB7185;         /* Rose-400 */
   --color-accent-4: #FBBF24;         /* Amber-400 */
   --color-accent-5: #A855F7;         /* Purple-400 */
   --color-accent-6: #22D3EE;         /* Cyan-400 */
+  --color-on-accent: #09090B;        /* Dark text for solid accent fills */
   --color-foreground: var(--color-secondary);
 
   /* Typography */
@@ -117,6 +118,7 @@
   --color-accent-4: #d97706;         /* Amber-600 */
   --color-accent-5: #7c3aed;         /* Purple-600 */
   --color-accent-6: #0891b2;         /* Cyan-600 */
+  --color-on-accent: #ffffff;        /* White text for solid accent fills */
   --color-foreground: var(--color-secondary);
 }
 
