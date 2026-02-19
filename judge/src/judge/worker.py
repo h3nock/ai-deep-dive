@@ -1,11 +1,14 @@
 """Worker loop for executing judge jobs."""
 
+from __future__ import annotations
+
 import argparse
 import logging
 import time
-from typing import Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
-from judge.config import load_settings
+from judge.config import Settings, load_settings
 from judge.metrics import (
     job_finished,
     job_started,
@@ -14,12 +17,24 @@ from judge.metrics import (
     register_process_exit,
     worker_heartbeat,
 )
-from judge.problems import ProblemRepository
-from judge.queue import RedisQueue
-from judge.results import ResultsStore
-from judge.runner import IsolateConfig, run_problem
+from judge.runner import IsolateConfig
+from judge.services import WorkerExecutionService, WorkerJob
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from judge.problems import ProblemRepository
+    from judge.queue import RedisQueue
+    from judge.results import ResultsStore
+
+
+@dataclass(frozen=True)
+class WorkerDependencies:
+    settings: Settings
+    queue: RedisQueue
+    results: ResultsStore
+    problems: ProblemRepository
+    execution: WorkerExecutionService
 
 
 def _parse_args() -> argparse.Namespace:
@@ -85,26 +100,57 @@ def _parse_queue_message(fields: dict[str, str]) -> tuple[dict[str, Any], str | 
     }, None
 
 
+def build_worker_dependencies(
+    *,
+    stream: str,
+    consumer: str,
+    settings: Settings | None = None,
+) -> WorkerDependencies:
+    from judge.problems import ProblemRepository
+    from judge.queue import RedisQueue
+    from judge.results import ResultsStore
+
+    resolved_settings = settings or load_settings()
+    queue = RedisQueue(resolved_settings.redis_url)
+    results = ResultsStore(resolved_settings.results_db)
+    problems = ProblemRepository(resolved_settings.problems_root)
+    isolate = IsolateConfig(
+        executable=resolved_settings.isolate_bin,
+        box_id=_derive_isolate_box_id(stream, consumer),
+        use_cgroups=resolved_settings.isolate_use_cgroups,
+        process_limit=resolved_settings.isolate_process_limit,
+        wall_time_extra_s=resolved_settings.isolate_wall_time_extra_s,
+        timeout_grace_s=resolved_settings.isolate_timeout_grace_s,
+        fsize_kb=resolved_settings.isolate_fsize_kb,
+        python_bin=resolved_settings.python_bin,
+    )
+    execution = WorkerExecutionService(
+        results=results,
+        problems=problems,
+        isolate=isolate,
+        max_output_chars=resolved_settings.max_output_chars,
+        log=logger,
+    )
+    return WorkerDependencies(
+        settings=resolved_settings,
+        queue=queue,
+        results=results,
+        problems=problems,
+        execution=execution,
+    )
+
+
 def main() -> None:
     args = _parse_args()
-    settings = load_settings()
     register_process_exit()
 
-    queue = RedisQueue(settings.redis_url)
+    dependencies = build_worker_dependencies(stream=args.stream, consumer=args.consumer)
+    queue = dependencies.queue
+    results = dependencies.results
+    execution = dependencies.execution
+
     queue.ensure_group(args.stream, args.group)
 
-    results = ResultsStore(settings.results_db)
-    problems = ProblemRepository(settings.problems_root)
-    isolate = IsolateConfig(
-        executable=settings.isolate_bin,
-        box_id=_derive_isolate_box_id(args.stream, args.consumer),
-        use_cgroups=settings.isolate_use_cgroups,
-        process_limit=settings.isolate_process_limit,
-        wall_time_extra_s=settings.isolate_wall_time_extra_s,
-        timeout_grace_s=settings.isolate_timeout_grace_s,
-        fsize_kb=settings.isolate_fsize_kb,
-        python_bin=settings.python_bin,
-    )
     worker_profile = _profile_for_stream(args.stream)
     worker_heartbeat(worker_profile, args.consumer)
 
@@ -124,11 +170,18 @@ def main() -> None:
             job_id = fields.get("job_id", "").strip()
             if job_id:
                 try:
-                    results.mark_error(
+                    persisted = results.mark_error(
                         job_id,
                         f"Invalid queue payload: {parse_error}",
                         error_kind="internal",
                     )
+                    if not persisted:
+                        logger.error(
+                            "Failed to persist invalid queue payload error: row not updatable stream=%s msg_id=%s job_id=%s",
+                            args.stream,
+                            msg_id,
+                            job_id,
+                        )
                 except Exception:
                     logger.exception(
                         "Failed to persist invalid queue payload error: stream=%s msg_id=%s job_id=%s",
@@ -147,93 +200,44 @@ def main() -> None:
                 )
             return
 
-        job_id = parsed["job_id"]
-        problem_key = parsed["problem_key"]
-        kind = parsed["kind"]
-        code = parsed["code"]
+        job = WorkerJob(
+            job_id=parsed["job_id"],
+            problem_key=parsed["problem_key"],
+            kind=parsed["kind"],
+            code=parsed["code"],
+        )
         created_at = parsed["created_at"]
-        profile = worker_profile
 
-        started_at = time.perf_counter()
-        status = "error"
-        error_kind = "internal"
-        should_ack = False
-        executed = False
+        execution_started_at: float | None = None
 
-        try:
-            if not results.mark_running(job_id):
-                should_ack = True
-                return
+        def _on_started() -> None:
+            nonlocal execution_started_at
+            execution_started_at = time.perf_counter()
+            job_started(worker_profile, job.kind)
+            observe_job_queue_wait(worker_profile, created_at)
 
-            executed = True
-            job_started(profile, kind)
-            observe_job_queue_wait(profile, created_at)
+        outcome = execution.execute(job, on_started=_on_started)
 
-            if kind == "run":
-                problem = problems.get_for_run(problem_key)
-                include_hidden = False
-                detail_mode = "all"
-            else:
-                problem = problems.get_for_submit(problem_key)
-                include_hidden = True
-                detail_mode = "first_failure"
-            result = run_problem(
-                problem,
-                code,
-                settings.max_output_chars,
-                include_hidden=include_hidden,
-                detail_mode=detail_mode,
-                isolate=isolate,
-            )
-            if result.get("error"):
-                error_kind = result.get("error_kind", "internal")
-                results.mark_error(
-                    job_id,
-                    str(result["error"]),
-                    result,
-                    error_kind=error_kind,
-                )
-                should_ack = True
-            else:
-                status = "done"
-                error_kind = "none"
-                results.mark_done(job_id, result)
-                should_ack = True
-        except Exception as exc:
-            logger.exception(
-                "Worker failed while processing job: stream=%s msg_id=%s job_id=%s",
-                args.stream,
-                msg_id,
-                job_id,
-            )
+        if outcome.executed:
+            if execution_started_at is None:
+                execution_started_at = time.perf_counter()
+            duration = time.perf_counter() - execution_started_at
+            observe_job_duration(worker_profile, duration)
+            job_finished(worker_profile, outcome.status, outcome.error_kind)
+
+        worker_heartbeat(worker_profile, args.consumer)
+
+        if outcome.should_ack:
             try:
-                results.mark_error(job_id, f"Worker error: {exc}", error_kind="internal")
-                should_ack = True
+                queue.ack_and_delete(args.stream, args.group, msg_id)
             except Exception:
                 logger.exception(
-                    "Failed to persist worker error result: stream=%s msg_id=%s job_id=%s",
+                    "Failed to ack/delete processed message: stream=%s group=%s msg_id=%s job_id=%s",
                     args.stream,
+                    args.group,
                     msg_id,
-                    job_id,
+                    job.job_id,
                 )
-                should_ack = False
-        finally:
-            if executed:
-                duration = time.perf_counter() - started_at
-                observe_job_duration(profile, duration)
-                job_finished(profile, status, error_kind)
-            worker_heartbeat(worker_profile, args.consumer)
-            if should_ack:
-                try:
-                    queue.ack_and_delete(args.stream, args.group, msg_id)
-                except Exception:
-                    logger.exception(
-                        "Failed to ack/delete processed message: stream=%s group=%s msg_id=%s job_id=%s",
-                        args.stream,
-                        args.group,
-                        msg_id,
-                        job_id,
-                    )
 
     while True:
         worker_heartbeat(worker_profile, args.consumer)
@@ -243,8 +247,8 @@ def main() -> None:
                 args.stream,
                 args.group,
                 args.consumer,
-                min_idle_ms=settings.job_claim_idle_ms,
-                count=settings.job_claim_count,
+                min_idle_ms=dependencies.settings.job_claim_idle_ms,
+                count=dependencies.settings.job_claim_count,
             )
             for msg_id, fields in reclaimed:
                 process_entry(msg_id, fields)
