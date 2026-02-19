@@ -105,12 +105,12 @@ export function ChallengeList({
                     </span>
                   </div>
                   <span
-                    className={`text-xs font-medium ${
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       challenge.difficulty === "Easy"
-                        ? "text-success"
+                        ? "bg-success/10 text-success"
                         : challenge.difficulty === "Medium"
-                          ? "text-warning"
-                          : "text-error"
+                          ? "bg-warning/10 text-warning"
+                          : "bg-error/10 text-error"
                     }`}
                   >
                     {challenge.difficulty || "Medium"}

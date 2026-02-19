@@ -244,9 +244,9 @@ export function StepContainer({
                   <Link
                     href={guideHref}
                     prefetch
-                    className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
+                    className={`py-4 text-sm font-semibold tracking-wide border-b transition-colors ${
                       activeTab === "guide"
-                        ? "border-primary text-primary"
+                        ? "border-secondary text-primary"
                         : "border-transparent text-muted hover:text-secondary"
                     }`}
                   >
@@ -255,9 +255,9 @@ export function StepContainer({
                   <Link
                     href={challengesHref}
                     prefetch
-                    className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
+                    className={`py-4 text-sm font-semibold tracking-wide border-b transition-colors ${
                       activeTab === "challenges"
-                        ? "border-primary text-primary"
+                        ? "border-secondary text-primary"
                         : "border-transparent text-muted hover:text-secondary"
                     }`}
                   >
