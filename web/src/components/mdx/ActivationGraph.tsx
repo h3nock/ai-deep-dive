@@ -100,8 +100,8 @@ export function ActivationGraph() {
     <div className="my-6">
       <div className="p-4 rounded-lg border border-border bg-terminal">
         <div className="flex gap-4">
-          <Plot label="ReLU" path={curve(relu)} color={viz.blueLight} />
-          <Plot label="GELU" path={curve(gelu)} color={viz.amberLight} />
+          <Plot label="ReLU" path={curve(relu)} color={viz.primaryLight} />
+          <Plot label="GELU" path={curve(gelu)} color={viz.secondaryLight} />
         </div>
       </div>
     </div>

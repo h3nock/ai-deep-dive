@@ -82,8 +82,8 @@ export function FrequencyWaves() {
   };
   
   const getColor = (index: number): string => {
-    const colors = [viz.emerald, viz.amber, viz.blue, viz.purple];
-    return colors[index] || viz.emerald;
+    const colors = [viz.tertiary, viz.secondary, viz.primary, viz.quaternary];
+    return colors[index] || viz.tertiary;
   };
 
   const CLOCK_SIZE = 32;

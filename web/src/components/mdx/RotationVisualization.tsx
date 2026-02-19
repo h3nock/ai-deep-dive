@@ -118,7 +118,7 @@ export function RotationVisualization() {
                   orient="auto"
                   markerUnits="strokeWidth"
                 >
-                  <path d="M0,2 L0,8 L6,5 Z" fill={viz.blue} />
+                  <path d="M0,2 L0,8 L6,5 Z" fill={viz.primary} />
                 </marker>
               </defs>
 
@@ -130,24 +130,24 @@ export function RotationVisualization() {
                 <path
                   d={createRotationArc(inputAngleDegrees, rotationDegrees, arcRadius, CENTER)}
                   fill="none" 
-                  stroke={viz.blue}
-                  strokeWidth="2" 
+                  stroke={viz.primary}
+                  strokeWidth="2"
                   strokeLinecap="round"
                   markerEnd="url(#arrowMarker)"
                 />
               )}
 
-              <line x1={CENTER} y1={CENTER} x2={inputX} y2={inputY} stroke={viz.emerald} strokeWidth="2.5" />
-              <line x1={CENTER} y1={CENTER} x2={outputX} y2={outputY} stroke={viz.amber} strokeWidth="2.5" />
+              <line x1={CENTER} y1={CENTER} x2={inputX} y2={inputY} stroke={viz.tertiary} strokeWidth="2.5" />
+              <line x1={CENTER} y1={CENTER} x2={outputX} y2={outputY} stroke={viz.secondary} strokeWidth="2.5" />
 
-              <circle cx={inputX} cy={inputY} r="7" fill={viz.emerald} stroke={viz.emeraldDark} strokeWidth="1" />
-              <circle cx={outputX} cy={outputY} r="7" fill={viz.amber} stroke={viz.amberDark} strokeWidth="1" />
+              <circle cx={inputX} cy={inputY} r="7" fill={viz.tertiary} stroke={viz.tertiaryDark} strokeWidth="1" />
+              <circle cx={outputX} cy={outputY} r="7" fill={viz.secondary} stroke={viz.secondaryDark} strokeWidth="1" />
 
               <text x={CENTER + CIRCLE_RADIUS + 14} y={CENTER + 4} fill={grid.labelLight} fontSize="10" textAnchor="start">x (cos)</text>
               <text x={CENTER + 8} y={CENTER - CIRCLE_RADIUS - 14} fill={grid.labelLight} fontSize="10">y (sin)</text>
 
               {rotationDegrees > 0 && (
-                <text x={CENTER} y={220} fill={viz.blue} fontSize="11" textAnchor="middle" fontWeight="500">
+                <text x={CENTER} y={220} fill={viz.primary} fontSize="11" textAnchor="middle" fontWeight="500">
                   Rotation: {rotationDegrees}°
                 </text>
               )}

@@ -38,17 +38,17 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
   // X axis = Gender (+1 masculine, -1 feminine)
   // Y axis = Royalty (+1 royal, 0 common)
   const points = [
-    { name: "King", emoji: "👑", x: 1.0, y: 1.0, color: viz.blue },
-    { name: "Queen", emoji: "👸", x: -1.0, y: 1.0, color: viz.pink },
-    { name: "Man", emoji: "🧔", x: 1.0, y: 0.0, color: viz.blue },
-    { name: "Woman", emoji: "👩", x: -1.0, y: 0.0, color: viz.pink },
-    { name: "Apple", emoji: "🍎", x: 0.0, y: 0.0, color: viz.slate },
+    { name: "King", emoji: "👑", x: 1.0, y: 1.0, color: viz.primary },
+    { name: "Queen", emoji: "👸", x: -1.0, y: 1.0, color: viz.accent },
+    { name: "Man", emoji: "🧔", x: 1.0, y: 0.0, color: viz.primary },
+    { name: "Woman", emoji: "👩", x: -1.0, y: 0.0, color: viz.accent },
+    { name: "Apple", emoji: "🍎", x: 0.0, y: 0.0, color: viz.neutral },
   ];
 
   // Arrow definitions (from -> to)
   const arrows = [
-    { from: "King", to: "Queen", label: "Gender Flip", color: viz.amber },
-    { from: "Man", to: "Woman", label: "Gender Flip", color: viz.amber },
+    { from: "King", to: "Queen", label: "Gender Flip", color: viz.secondary },
+    { from: "Man", to: "Woman", label: "Gender Flip", color: viz.secondary },
   ];
 
   const getPoint = (name: string) => points.find((p) => p.name === name)!;

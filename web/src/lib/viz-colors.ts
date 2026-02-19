@@ -3,27 +3,32 @@
  *
  * SVG fill/stroke attributes cannot use CSS var(), so all visualization
  * hex values live here instead of in globals.css.
+ *
+ * Names are semantic (role-based), not literal colors. Each visualization
+ * component assigns its own meaning to these roles — e.g. "primary" might
+ * represent a rotation arc in one component and a ReLU curve in another.
+ * Changing a hex value here updates every visualization without renaming.
  */
 
 // ---------------------------------------------------------------------------
-// Accent palette – used for data points, lines, and highlights
+// Categorical accent palette — ordered by visual prominence
 // ---------------------------------------------------------------------------
 export const viz = {
-  blue: "#3b82f6",
-  blueLight: "#60a5fa",
-  amber: "#f59e0b",
-  amberDark: "#d97706",
-  amberLight: "#fbbf24",
-  pink: "#ec4899",
-  emerald: "#10b981",
-  emeraldDark: "#0d9668",
-  purple: "#a855f7",
-  rose: "#fb7185",
-  slate: "#64748b",
+  primary: "#3b82f6",
+  primaryLight: "#60a5fa",
+  secondary: "#f59e0b",
+  secondaryDark: "#d97706",
+  secondaryLight: "#fbbf24",
+  tertiary: "#10b981",
+  tertiaryDark: "#0d9668",
+  quaternary: "#a855f7",
+  accent: "#ec4899",
+  danger: "#fb7185",
+  neutral: "#64748b",
 } as const;
 
 // ---------------------------------------------------------------------------
-// Grid & axis colors – structural elements behind the data
+// Grid & axis colors — structural elements behind the data
 // ---------------------------------------------------------------------------
 export const grid = {
   line: "#3f3f46",
