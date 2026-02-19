@@ -37,7 +37,119 @@ description: "How residual connections and layer normalization enable deep netwo
   </div>
 
   <Description>
-    The forward pass also suffers from a related problem. Information from early layers must pass through every subsequent transformation to reach the output, and each layer's transformation can distort or overwrite the representations that earlier layers produced. Over enough layers, the representations that earlier layers produced are increasingly likely to be distorted or lost.
+
+<Step title="Residual Connections">
+  <Description>
+    Both problems trace back to the same structural cause. The layers form a sequential chain where each one receives the previous layer's output, transforms it into a new vector, and passes that vector as the next layer's entire input. This means whatever an early layer produces gets transformed by the next layer, then again by the layer after that, and so on through the rest of the stack. The information an early layer encodes can only reach the final output by surviving this entire sequence of transformations, and any transformation that distorts something useful passes that distortion forward to every layer that follows.
+  </Description>
+
+  <Description>
+    The gradient during the backward pass travels this same chain in reverse. For an early layer to update its weights, the loss signal must flow backward from the output through every intermediate layer, getting multiplied at each one by that layer's local derivatives. Over enough layers, these repeated multiplications might cause gradients to vanish or explode.
+  </Description>
+
+  <Description>
+    Residual connections solve both problems by adding each layer's output to its input instead of replacing it:
+  </Description>
+
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border">
+    <div className="text-center font-mono text-lg text-primary">
+      output = sublayer(x) + x
+    </div>
+  </div>
+
+  <div className="my-6 flex justify-center">
+    <svg viewBox="0 0 420 78" className="w-full" style={{ maxWidth: "420px", display: "block" }}>
+      <line x1="42" y1="18" x2="301" y2="18" stroke="#3F3F46" strokeWidth="1.5" />
+
+      <rect x="8" y="5" width="34" height="26" rx="4" fill="#18181B" stroke="#27272A" strokeWidth="1" />
+      <text x="25" y="22" textAnchor="middle" fill="#A1A1AA" fontSize="11" fontFamily="var(--font-mono)">x</text>
+
+      <path d="M 75 18 L 75 54 L 105 54" fill="none" stroke="#71717A" strokeWidth="1.5" />
+      <rect x="105" y="41" width="120" height="26" rx="4" fill="rgba(161,161,170,0.08)" stroke="rgba(161,161,170,0.2)" strokeWidth="1" />
+      <text x="165" y="58" textAnchor="middle" fill="#A1A1AA" fontSize="10" fontFamily="var(--font-mono)">sublayer(x)</text>
+      <path d="M 225 54 L 310 54 L 310 34" fill="none" stroke="#71717A" strokeWidth="1.5" />
+      <polygon points="306.5,34 310,27 313.5,34" fill="#71717A" />
+
+      <circle cx="310" cy="18" r="9" fill="#18181B" stroke="#71717A" strokeWidth="1.5" />
+      <text x="310" y="22" textAnchor="middle" fill="#D4D4D8" fontSize="12" fontWeight="bold">+</text>
+
+      <line x1="319" y1="18" x2="370" y2="18" stroke="#3F3F46" strokeWidth="1.5" />
+      <polygon points="364,14.5 372,18 364,21.5" fill="#3F3F46" />
+      <text x="382" y="22" textAnchor="start" fill="#A1A1AA" fontSize="10" fontFamily="var(--font-mono)">output</text>
+    </svg>
+  </div>
+
+  <Description>
+    The input x bypasses the sublayer entirely while the sublayer's output gets added to it. So the sublayer only needs to learn what to add rather than producing the full output from scratch. The change the sublayer learns to produce is called the **residual**, which is where the name comes from.
+  </Description>
+
+  <Description>
+    Starting from the token embeddings, information now flows along a pathway that runs through every layer in the model. Each layer taps into this pathway and adds its contribution, and because contributions are added rather than replaced, information from earlier layers can persist all the way to the end. This pathway is called the **residual stream**.
+  </Description>
+
+  <div className="my-6 flex justify-center overflow-x-auto">
+    <svg viewBox="0 0 580 115" className="w-full" style={{ maxWidth: "580px", display: "block" }}>
+      <line x1="30" y1="84" x2="550" y2="84" stroke="#3F3F46" strokeWidth="2" />
+
+      <rect x="8" y="69" width="44" height="30" rx="4" fill="#18181B" stroke="#27272A" strokeWidth="1" />
+      <text x="30" y="88" textAnchor="middle" fill="#A1A1AA" fontSize="11" fontFamily="var(--font-mono)">x</text>
+
+      {/* attn₁ */}
+      <line x1="86" y1="84" x2="86" y2="35" stroke="#3B82F6" strokeWidth="1.5" />
+      <polygon points="82.5,35 86,28 89.5,35" fill="#3B82F6" />
+      <rect x="75" y="4" width="56" height="24" rx="4" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" strokeWidth="1" />
+      <text x="103" y="20" textAnchor="middle" fill="#60A5FA" fontSize="10" fontFamily="var(--font-mono)">attn₁</text>
+      <line x1="122" y1="28" x2="122" y2="67" stroke="#3B82F6" strokeWidth="1.5" />
+      <polygon points="118.5,67 122,74 125.5,67" fill="#3B82F6" />
+      <circle cx="122" cy="84" r="9" fill="#18181B" stroke="#3B82F6" strokeWidth="1.5" />
+      <text x="122" y="88" textAnchor="middle" fill="#60A5FA" fontSize="12" fontWeight="bold">+</text>
+
+      {/* ffn₁ */}
+      <line x1="183" y1="84" x2="183" y2="35" stroke="#F59E0B" strokeWidth="1.5" />
+      <polygon points="179.5,35 183,28 186.5,35" fill="#F59E0B" />
+      <rect x="172" y="4" width="56" height="24" rx="4" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.3)" strokeWidth="1" />
+      <text x="200" y="20" textAnchor="middle" fill="#F59E0B" fontSize="10" fontFamily="var(--font-mono)">ffn₁</text>
+      <line x1="219" y1="28" x2="219" y2="67" stroke="#F59E0B" strokeWidth="1.5" />
+      <polygon points="215.5,67 219,74 222.5,67" fill="#F59E0B" />
+      <circle cx="219" cy="84" r="9" fill="#18181B" stroke="#F59E0B" strokeWidth="1.5" />
+      <text x="219" y="88" textAnchor="middle" fill="#F59E0B" fontSize="12" fontWeight="bold">+</text>
+
+      {/* attn₂ */}
+      <line x1="275" y1="84" x2="275" y2="35" stroke="#3B82F6" strokeWidth="1.5" />
+      <polygon points="271.5,35 275,28 278.5,35" fill="#3B82F6" />
+      <rect x="264" y="4" width="56" height="24" rx="4" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" strokeWidth="1" />
+      <text x="292" y="20" textAnchor="middle" fill="#60A5FA" fontSize="10" fontFamily="var(--font-mono)">attn₂</text>
+      <line x1="311" y1="28" x2="311" y2="67" stroke="#3B82F6" strokeWidth="1.5" />
+      <polygon points="307.5,67 311,74 314.5,67" fill="#3B82F6" />
+      <circle cx="311" cy="84" r="9" fill="#18181B" stroke="#3B82F6" strokeWidth="1.5" />
+      <text x="311" y="88" textAnchor="middle" fill="#60A5FA" fontSize="12" fontWeight="bold">+</text>
+
+      <text x="365" y="89" textAnchor="middle" fill="#71717A" fontSize="15">···</text>
+
+      {/* ffnₙ */}
+      <line x1="417" y1="84" x2="417" y2="35" stroke="#F59E0B" strokeWidth="1.5" />
+      <polygon points="413.5,35 417,28 420.5,35" fill="#F59E0B" />
+      <rect x="406" y="4" width="56" height="24" rx="4" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.3)" strokeWidth="1" />
+      <text x="434" y="20" textAnchor="middle" fill="#F59E0B" fontSize="10" fontFamily="var(--font-mono)">ffnₙ</text>
+      <line x1="453" y1="28" x2="453" y2="67" stroke="#F59E0B" strokeWidth="1.5" />
+      <polygon points="449.5,67 453,74 456.5,67" fill="#F59E0B" />
+      <circle cx="453" cy="84" r="9" fill="#18181B" stroke="#F59E0B" strokeWidth="1.5" />
+      <text x="453" y="88" textAnchor="middle" fill="#F59E0B" fontSize="12" fontWeight="bold">+</text>
+
+      <rect x="504" y="69" width="48" height="30" rx="4" fill="#18181B" stroke="#27272A" strokeWidth="1" />
+      <text x="528" y="88" textAnchor="middle" fill="#A1A1AA" fontSize="11" fontFamily="var(--font-mono)">out</text>
+
+      <text x="290" y="110" textAnchor="middle" fill="#52525B" fontSize="10" fontFamily="var(--font-mono)">residual stream</text>
+    </svg>
+  </div>
+
+  <Description>
+    Residual connections also provide a direct path for gradients in the backward direction. At each addition point, the gradient flows to both inputs of the sum. One path carries it back through the layer. The other bypasses the layer entirely, and the gradient passes through with a multiplier of exactly 1. This guarantees that every layer receives a usable learning signal from the output, regardless of what happens inside the layers themselves. These bypass paths also smooth the loss landscape (Li et al., 2018), making optimization reliable even at considerable depth.
+  </Description>
+
+</Step>
+
+
   </Description>
 </Step>
 
