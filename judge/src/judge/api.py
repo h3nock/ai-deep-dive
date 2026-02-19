@@ -69,13 +69,26 @@ async def metrics_middleware(request: Request, call_next):
 
 def _sanitize_job(job: dict[str, Any]) -> dict[str, Any]:
     sanitized = dict(job)
-    error_kind = sanitized.pop("error_kind", None)
+    error_kind = sanitized.get("error_kind")
+    if error_kind not in {"user", "internal"}:
+        error_kind = None
+        sanitized["error_kind"] = None
+
+    result = sanitized.get("result")
+    if isinstance(result, dict):
+        result = dict(result)
+        # Keep error kind at the top-level response only.
+        result.pop("error_kind", None)
+        if {"status", "summary", "tests"}.issubset(result.keys()):
+            sanitized["result"] = result
+        else:
+            result = None
+            sanitized["result"] = None
+
     if error_kind == "internal":
         if sanitized.get("error"):
             sanitized["error"] = "Internal judge error. Please retry."
-        result = sanitized.get("result")
         if isinstance(result, dict) and result.get("error"):
-            result = dict(result)
             result["error"] = "Internal judge error. Please retry."
             sanitized["result"] = result
     return sanitized
