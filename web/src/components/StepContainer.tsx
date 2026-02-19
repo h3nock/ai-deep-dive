@@ -4,7 +4,7 @@ import React, { useEffect, useCallback, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Map } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PostData } from "@/lib/posts";
 import { getCourseConfig } from "@/lib/course-config";
 import { CourseSidebar } from "./CourseSidebar";
@@ -306,41 +306,23 @@ export function StepContainer({
               <div className="mx-auto max-w-[75ch] px-6 lg:px-8">
                 {/* Header */}
                 <header className="animate-fade-in-up mb-12 pb-8 border-b border-border">
-                  <div className="flex items-center gap-3 mb-6 text-sm text-muted">
-                    <Link
-                      href={backLink.href}
-                      prefetch={true}
-                      className="hover:text-primary transition-colors flex items-center gap-1"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      {backLink.label}
-                    </Link>
-                    <span className="text-border">/</span>
-                    <span className="uppercase tracking-wider font-mono text-xs">
-                      Step {(post.step?.toString() || "0").padStart(2, "0")}
-                    </span>
-                  </div>
-
-                  <div className="flex items-start justify-between gap-6">
-                    <div className="flex-1 min-w-0">
-                      <h1 className="text-3xl md:text-4xl font-bold text-primary mb-4 tracking-tight">
-                        {post.title}
-                      </h1>
-                      <p className="text-lg text-muted leading-relaxed">
-                        {post.description}
-                      </p>
-                    </div>
-                    <div className="hidden md:flex items-center gap-2 shrink-0">
-                      <Link
-                        href={backLink.href}
-                        prefetch={true}
-                        className="flex items-center justify-center w-10 h-10 rounded-lg border border-border text-muted hover:text-primary hover:border-border-hover transition-colors"
-                        title={backLink.label}
-                      >
-                        <Map className="w-5 h-5" />
-                      </Link>
-                    </div>
-                  </div>
+                  <Link
+                    href={backLink.href}
+                    prefetch={true}
+                    className="text-sm text-muted hover:text-primary flex items-center gap-1 mb-6 transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    {backLink.label}
+                  </Link>
+                  <span className="text-7xl font-bold text-border/30 font-mono leading-none select-none">
+                    {(post.step?.toString() || "0").padStart(2, "0")}
+                  </span>
+                  <h1 className="text-3xl md:text-4xl font-bold text-primary mt-3 mb-4 tracking-tight">
+                    {post.title}
+                  </h1>
+                  <p className="text-lg text-muted leading-relaxed">
+                    {post.description}
+                  </p>
                 </header>
 
                 {/* Content - The Reading Rail */}
@@ -363,40 +345,34 @@ export function StepContainer({
                     />
                   </div>
 
-                  {/* Navigation */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Navigation — asymmetric: prev subtle, next prominent */}
+                  <div className="flex items-start justify-between gap-4">
                     {prevPost ? (
                       <Link
                         href={`/${collection}/${prevPost.slug}`}
                         prefetch={true}
-                        className="group flex flex-col p-5 rounded-xl border border-border hover:border-border-hover hover:bg-surface transition-all"
+                        className="group flex items-center gap-1.5 text-sm text-muted hover:text-primary transition-colors shrink-0"
                       >
-                        <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">
-                          <ChevronLeft className="w-3 h-3" /> Previous
-                        </span>
-                        <span className="font-medium text-primary group-hover:text-secondary transition-colors">
-                          {prevPost.title}
-                        </span>
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                        <span>{prevPost.title}</span>
                       </Link>
                     ) : (
                       <div />
                     )}
 
-                    {nextPost ? (
+                    {nextPost && (
                       <Link
                         href={`/${collection}/${nextPost.slug}`}
                         prefetch={true}
-                        className="group flex flex-col items-end text-right p-5 rounded-xl border border-border hover:border-border-hover hover:bg-surface transition-all"
+                        className="group flex flex-col items-end text-right p-5 rounded-xl bg-surface/50 border border-border hover:border-border-hover transition-all ml-auto max-w-xs"
                       >
                         <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">
-                          Next <ChevronRight className="w-3 h-3" />
+                          Next Chapter <ChevronRight className="w-3 h-3" />
                         </span>
                         <span className="font-medium text-primary group-hover:text-secondary transition-colors">
                           {nextPost.title}
                         </span>
                       </Link>
-                    ) : (
-                      <div />
                     )}
                   </div>
                 </footer>

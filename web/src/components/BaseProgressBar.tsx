@@ -50,7 +50,7 @@ export function BaseProgressBar({
         <div
           className={cn(
             "h-full rounded-full transition-all duration-500 ease-out",
-            percentage === 100 ? "bg-success" : "bg-secondary"
+            percentage === 100 ? "bg-success progress-shimmer" : "bg-secondary"
           )}
           style={{ width: isLoaded ? `${percentage}%` : "0%" }}
         />

@@ -773,3 +773,30 @@ section[style*="display: flex"][style*="justify-content: center"] {
     opacity: 0;
   }
 }
+
+/* ==========================================================================
+   Progress Bar Shimmer — celebratory shine at 100%
+   ========================================================================== */
+
+@keyframes progress-shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+.progress-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: progress-shimmer 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-shimmer {
+    animation: none;
+    background-image: none;
+  }
+}

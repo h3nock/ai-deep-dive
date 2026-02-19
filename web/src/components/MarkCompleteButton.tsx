@@ -45,7 +45,7 @@ export function MarkCompleteButton({
       className={cn(
         "group flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200",
         completed
-          ? "text-success"
+          ? "bg-success/10 border border-success/20 text-success"
           : "text-muted hover:text-secondary hover:bg-surface",
         className
       )}

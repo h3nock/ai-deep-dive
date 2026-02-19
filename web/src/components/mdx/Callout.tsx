@@ -14,26 +14,31 @@ interface CalloutProps {
 const styles = {
   note: {
     border: "border-border-hover",
+    bg: "",
     icon: "text-secondary",
     Icon: Info,
   },
   info: {
     border: "border-info/50",
+    bg: "bg-info/5",
     icon: "text-info",
     Icon: Info,
   },
   warning: {
     border: "border-warning/50",
+    bg: "bg-warning/5",
     icon: "text-warning",
     Icon: AlertTriangle,
   },
   tip: {
     border: "border-border-hover",
+    bg: "bg-success/5",
     icon: "text-secondary",
     Icon: Lightbulb,
   },
   success: {
     border: "border-success/50",
+    bg: "bg-success/5",
     icon: "text-success",
     Icon: Check,
   },
@@ -97,10 +102,12 @@ export function Callout({ type = "note", title, muted = false, children }: Callo
   // Connected to preceding content, provides reset after
   return (
     <div
-      className={`not-prose pl-6 border-l-2 ${style.border}`}
+      className={`not-prose pl-6 pr-6 border-l-2 rounded-r-lg ${style.border} ${style.bg}`}
       style={{
         marginTop: "var(--space-connected)",
         marginBottom: "var(--space-section)",
+        paddingTop: style.bg ? "1rem" : undefined,
+        paddingBottom: style.bg ? "1rem" : undefined,
       }}
     >
       {title && (
