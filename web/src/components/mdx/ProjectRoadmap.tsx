@@ -57,7 +57,7 @@ export function ProjectRoadmap({ courseId, prefix }: ProjectRoadmapProps) {
 
                   {/* Text Content (Stacked) */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-primary group-hover:text-white transition-colors">
+                    <h4 className="text-sm font-medium text-primary group-hover:text-primary transition-colors">
                       {post.title}
                     </h4>
                     <p className="text-xs text-muted line-clamp-1 mt-0.5 group-hover:text-zinc-400 transition-colors">

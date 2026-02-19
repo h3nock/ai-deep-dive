@@ -261,7 +261,7 @@ export default async function RoadmapPage({
 
                           {/* Text Content (Stacked) */}
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm md:text-base font-medium text-primary group-hover:text-white transition-colors">
+                            <h3 className="text-sm md:text-base font-medium text-primary group-hover:text-primary transition-colors">
                               {post.title}
                             </h3>
                             <p className="text-muted text-xs md:text-sm line-clamp-1 mt-0.5 group-hover:text-zinc-400 transition-colors">
