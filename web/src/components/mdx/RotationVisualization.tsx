@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { viz, grid, withAlpha } from "@/lib/viz-colors";
+import { useTheme } from "next-themes";
+import { viz, getGrid, withAlpha } from "@/lib/viz-colors";
 
 /**
  * RotationVisualization - Interactive demonstration of how rotation matrix transforms vectors
@@ -16,6 +17,9 @@ const CIRCLE_RADIUS = 85;
 const CENTER = 105;
 
 export function RotationVisualization() {
+  const { resolvedTheme } = useTheme();
+  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
+
   const [inputAngleDegrees, setInputAngleDegrees] = useState(0);
   const [rotationDegrees, setRotationDegrees] = useState(90);
   const [highlightRow, setHighlightRow] = useState<0 | 1 | null>(null);

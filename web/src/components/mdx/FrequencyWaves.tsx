@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { viz, grid } from "@/lib/viz-colors";
+import { useTheme } from "next-themes";
+import { viz, getGrid } from "@/lib/viz-colors";
 
 /**
  * FrequencyWaves - Interactive visualization of sinusoidal positional encoding
@@ -19,6 +20,9 @@ function computeSinusoidal(pos: number, dim: number, dModel: number): number {
 }
 
 export function FrequencyWaves() {
+  const { resolvedTheme } = useTheme();
+  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
+
   const [position, setPosition] = useState(25);
   const [isPlaying, setIsPlaying] = useState(false);
   const animationRef = useRef<number | null>(null);

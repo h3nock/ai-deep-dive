@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { viz, grid } from "@/lib/viz-colors";
+import { useTheme } from "next-themes";
+import { viz, getGrid } from "@/lib/viz-colors";
 
 /**
  * ActivationGraph - Side-by-side visualization comparing ReLU and GELU
@@ -45,7 +46,7 @@ function curve(fn: (x: number) => number): string {
   return pts.join(" ");
 }
 
-function Plot({ label, path, color }: { label: string; path: string; color: string }) {
+function Plot({ label, path, color, grid }: { label: string; path: string; color: string; grid: ReturnType<typeof getGrid> }) {
   const xAxisY = toY(0);
   const yAxisX = toX(0);
 
@@ -96,12 +97,15 @@ function Plot({ label, path, color }: { label: string; path: string; color: stri
 }
 
 export function ActivationGraph() {
+  const { resolvedTheme } = useTheme();
+  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
+
   return (
     <div className="my-6">
       <div className="p-4 rounded-lg border border-border bg-terminal">
         <div className="flex gap-4">
-          <Plot label="ReLU" path={curve(relu)} color={viz.primaryLight} />
-          <Plot label="GELU" path={curve(gelu)} color={viz.secondaryLight} />
+          <Plot label="ReLU" path={curve(relu)} color={viz.primaryLight} grid={grid} />
+          <Plot label="GELU" path={curve(gelu)} color={viz.secondaryLight} grid={grid} />
         </div>
       </div>
     </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { viz, grid, withAlpha } from "@/lib/viz-colors";
+import { useTheme } from "next-themes";
+import { viz, getGrid, withAlpha } from "@/lib/viz-colors";
 
 interface EmbeddingSpaceProps {
   showArrows?: boolean;
@@ -16,6 +17,9 @@ interface EmbeddingSpaceProps {
  * - Internal elements use Tier 1 (Atomic) for tight label-to-visual relationships
  */
 export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
+  const { resolvedTheme } = useTheme();
+  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
+
   // Grid configuration
   const width = 440;
   const height = 400;

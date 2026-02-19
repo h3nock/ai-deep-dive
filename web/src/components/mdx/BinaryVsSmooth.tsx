@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { viz, grid } from "@/lib/viz-colors";
+import { useTheme } from "next-themes";
+import { viz, getGrid } from "@/lib/viz-colors";
 
 /**
  * BinaryVsSmooth - Animated visualization comparing discrete binary jumps
@@ -28,6 +29,9 @@ const DIMENSIONS: DimensionConfig[] = [
 ];
 
 export function BinaryVsSmooth() {
+  const { resolvedTheme } = useTheme();
+  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
+
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const animationRef = useRef<number | null>(null);

@@ -16,6 +16,7 @@
 
 // ---------------------------------------------------------------------------
 // Categorical accent palette — ordered by visual prominence
+// Works on both dark and light backgrounds (saturated hues)
 // ---------------------------------------------------------------------------
 export const viz = {
   primary: "#3b82f6",
@@ -33,8 +34,20 @@ export const viz = {
 
 // ---------------------------------------------------------------------------
 // Grid & axis colors — structural elements behind the data
+// Dark and light variants for theme switching
 // ---------------------------------------------------------------------------
-export const grid = {
+type GridPalette = {
+  line: string;
+  subtle: string;
+  axis: string;
+  axisBold: string;
+  dot: string;
+  label: string;
+  labelLight: string;
+  text: string;
+};
+
+const darkGrid: GridPalette = {
   line: "#3f3f46",
   subtle: "#1c1c1e",
   axis: "#333333",
@@ -43,7 +56,26 @@ export const grid = {
   label: "#52525b",
   labelLight: "#555555",
   text: "#d4d4d8",
-} as const;
+};
+
+const lightGrid: GridPalette = {
+  line: "#d4d4d8",
+  subtle: "#f4f4f5",
+  axis: "#a1a1aa",
+  axisBold: "#71717a",
+  dot: "#a1a1aa",
+  label: "#71717a",
+  labelLight: "#a1a1aa",
+  text: "#3f3f46",
+};
+
+/** Default dark grid export (for non-reactive contexts like preload) */
+export const grid = darkGrid;
+
+/** Get theme-appropriate grid palette */
+export function getGrid(mode: "dark" | "light"): GridPalette {
+  return mode === "light" ? lightGrid : darkGrid;
+}
 
 // ---------------------------------------------------------------------------
 // Utility — apply alpha transparency to any palette hex
