@@ -184,13 +184,18 @@ body {
 /* Professional Grid Pattern */
 .bg-grid-pattern {
   background-size: 40px 40px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
 }
 
 .light .bg-grid-pattern {
   background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+}
+
+/* Hero gradient mask - fades grid at edges */
+.hero-gradient-mask {
+  background: radial-gradient(ellipse at center, transparent 0%, var(--color-background) 70%);
 }
 
 /* Subtle Gradient Animation */

@@ -31,8 +31,10 @@ export default async function Home() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative pt-20 pb-24">
-          <div className="container mx-auto px-4 text-center max-w-3xl">
+        <section className="relative pt-20 pb-24 overflow-hidden">
+          <div className="absolute inset-0 bg-grid-pattern" />
+          <div className="absolute inset-0 hero-gradient-mask" />
+          <div className="relative container mx-auto px-4 text-center max-w-3xl">
             <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 text-primary">
               Learn AI by Building It
             </h1>
