@@ -597,10 +597,10 @@ code[data-theme*=" "] span {
 
 /* ==========================================================================
    Monaco Editor Overrides
-   Ensures no white flash during editor loading
+   Ensures no background flash during editor loading
    ========================================================================== */
 
-/* Monaco editor wrapper - force dark background immediately */
+/* Monaco editor wrapper - force theme background immediately */
 .monaco-editor,
 .monaco-editor-background,
 .monaco-editor .overflow-guard {
@@ -612,7 +612,7 @@ section[style*="display: flex"][style*="justify-content: center"] {
   background-color: var(--color-background) !important;
 }
 
-/* Force all Monaco internal containers to use dark background */
+/* Force all Monaco internal containers to use theme background */
 .monaco-editor .margin,
 .monaco-editor .monaco-scrollable-element {
   background-color: var(--color-background) !important;
