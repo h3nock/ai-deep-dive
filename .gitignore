@@ -66,3 +66,4 @@ web/public/judge-tests/
 # agents config 
 .agent/
 .claude/
+screenshots/
