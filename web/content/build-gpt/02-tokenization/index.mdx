@@ -216,11 +216,11 @@ description: "How BPE compresses text into efficient tokens."
     <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">After Merge #1: (a, a) → Z</div>
     <div className="p-4 bg-terminal rounded-lg border border-border">
     <div className="flex flex-wrap gap-2">
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-accent-1 text-primary font-mono font-bold">Z</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-accent-1 text-on-accent font-mono font-bold">Z</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">b</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">d</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-accent-1 text-primary font-mono font-bold">Z</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-accent-1 text-on-accent font-mono font-bold">Z</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">b</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
@@ -246,10 +246,10 @@ description: "How BPE compresses text into efficient tokens."
     <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">After Merge #2: (a, b) → Y</div>
     <div className="p-4 bg-terminal rounded-lg border border-border">
     <div className="flex flex-wrap gap-2">
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-accent-1 text-primary font-mono font-bold">Z</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-accent-1 text-on-accent font-mono font-bold">Z</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-accent-1/20 border-2 border-accent-1 text-accent-1 font-mono font-bold">Y</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">d</div>
-      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-accent-1 text-primary font-mono font-bold">Z</div>
+      <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-accent-1 text-on-accent font-mono font-bold">Z</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-accent-1/20 border-2 border-accent-1 text-accent-1 font-mono font-bold">Y</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">a</div>
       <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface border-2 border-border font-mono font-bold text-primary">c</div>
@@ -534,7 +534,7 @@ def decode(ids: list[int], vocab: dict[int, list[int]]) -> str:
       </div>
       <div className="flex items-center gap-3">
         <div className="text-sm text-muted w-28">Decode UTF-8:</div>
-        <div className="px-3 py-2 bg-accent-1 text-primary rounded font-mono text-sm font-bold">"aabc"</div>
+        <div className="px-3 py-2 bg-accent-1 text-on-accent rounded font-mono text-sm font-bold">"aabc"</div>
       </div>
     </div>
     </div>
