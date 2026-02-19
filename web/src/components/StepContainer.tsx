@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Map } from "lucide-react";
 import { PostData } from "@/lib/posts";
+import { getCourseConfig } from "@/lib/course-config";
+import { CourseSidebar } from "./CourseSidebar";
 import { MarkCompleteButton } from "./MarkCompleteButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { CodeBlockCopyButtons } from "./CodeBlockCopyButton";
@@ -33,6 +35,7 @@ interface StepContainerProps {
   post: Omit<PostData, "content">;
   prevPost: Omit<PostData, "content"> | null;
   nextPost: Omit<PostData, "content"> | null;
+  allPosts: Omit<PostData, "content">[];
   children: React.ReactNode; // The rendered MDX guide
   collection: string;
   view: "guide" | "challenges";
@@ -62,6 +65,7 @@ export function StepContainer({
   post,
   prevPost,
   nextPost,
+  allPosts,
   children,
   collection,
   view,
@@ -231,23 +235,37 @@ export function StepContainer({
 
   const backLink = getBackLink();
 
+  const courseConfig = getCourseConfig(collection);
+  const phases = courseConfig?.phases ?? [];
+
   return (
     <div className="min-h-screen bg-background text-secondary font-sans selection:bg-muted/20">
       <div className="flex h-screen">
-        {/* Main Content Area - Full Width for Guide */}
+        {/* Sidebar — desktop only */}
+        <CourseSidebar
+          allPosts={allPosts}
+          collection={collection}
+          currentSlug={post.slug}
+          phases={phases}
+        />
+
+        {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto">
+          {/* Reading progress bar */}
+          <div className="reading-progress" />
+
           {/* Top Bar */}
           <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-6">
-            <div className="max-w-5xl mx-auto flex items-center">
+            <div className="max-w-5xl mx-auto flex items-center py-2">
               {hasChallenges ? (
-                <div className="flex gap-6">
+                <div className="inline-flex rounded-full border border-border p-1 bg-background">
                   <Link
                     href={guideHref}
                     prefetch
-                    className={`py-4 text-sm font-semibold tracking-wide border-b transition-colors ${
+                    className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
                       activeTab === "guide"
-                        ? "border-secondary text-primary"
-                        : "border-transparent text-muted hover:text-secondary"
+                        ? "bg-surface font-medium text-primary"
+                        : "text-muted hover:text-secondary"
                     }`}
                   >
                     Guide
@@ -255,26 +273,24 @@ export function StepContainer({
                   <Link
                     href={challengesHref}
                     prefetch
-                    className={`py-4 text-sm font-semibold tracking-wide border-b transition-colors ${
+                    className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
                       activeTab === "challenges"
-                        ? "border-secondary text-primary"
-                        : "border-transparent text-muted hover:text-secondary"
+                        ? "bg-surface font-medium text-primary"
+                        : "text-muted hover:text-secondary"
                     }`}
                   >
                     Challenges
                     <span className="ml-1.5 text-muted">
-                      (
                       {isChallengesLoaded
                         ? `${solvedChallenges}/${totalChallenges}`
                         : `0/${totalChallenges}`}
-                      )
                     </span>
                   </Link>
                 </div>
               ) : (
                 <div className="flex-1" />
               )}
-              <div className="ml-auto py-2">
+              <div className="ml-auto">
                 <ThemeToggle />
               </div>
             </div>
@@ -283,7 +299,7 @@ export function StepContainer({
           {activeTab === "guide" ? (
             <main className="flex-1 w-full py-12">
               {/* Centered Content Column with Responsive Gutter */}
-              <div className="mx-auto max-w-[85ch] px-6 lg:px-8">
+              <div className="mx-auto max-w-[75ch] px-6 lg:px-8">
                 {/* Header */}
                 <header className="animate-fade-in-up mb-12 pb-8 border-b border-border">
                   <div className="flex items-center gap-3 mb-6 text-sm text-muted">

@@ -10,6 +10,7 @@ interface LessonRouteShellProps {
   post: Omit<PostData, "content">;
   prevPost: Omit<PostData, "content"> | null;
   nextPost: Omit<PostData, "content"> | null;
+  allPosts: Omit<PostData, "content">[];
   collection: string;
   guideContent: React.ReactNode;
 }
@@ -26,6 +27,7 @@ export function LessonRouteShell({
   post,
   prevPost,
   nextPost,
+  allPosts,
   collection,
   guideContent,
 }: LessonRouteShellProps) {
@@ -54,6 +56,7 @@ export function LessonRouteShell({
       post={post}
       prevPost={prevPost}
       nextPost={nextPost}
+      allPosts={allPosts}
       collection={collection}
       view={view}
       challengeIndex={challengeIndex}

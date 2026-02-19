@@ -12,6 +12,7 @@ export interface LessonPageData {
   post: PostData;
   prevPost: Omit<PostData, "content"> | null;
   nextPost: Omit<PostData, "content"> | null;
+  allPosts: Omit<PostData, "content">[];
 }
 
 export interface LessonParams {
@@ -104,6 +105,7 @@ export async function getLessonPageData(
     post,
     prevPost,
     nextPost,
+    allPosts,
   };
 }
 

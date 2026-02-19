@@ -743,3 +743,33 @@ section[style*="display: flex"][style*="justify-content: center"] {
     transform: none;
   }
 }
+
+/* ==========================================================================
+   Reading Progress Bar — scroll-driven CSS animation
+   Progressive enhancement: works in Chrome/Edge, graceful no-op elsewhere
+   ========================================================================== */
+
+.reading-progress {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-primary);
+  transform-origin: left;
+  z-index: 50;
+  animation: reading-progress-grow linear;
+  animation-timeline: scroll(nearest);
+}
+
+@keyframes reading-progress-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reading-progress {
+    animation: none;
+    opacity: 0;
+  }
+}
