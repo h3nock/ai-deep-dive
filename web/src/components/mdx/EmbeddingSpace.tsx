@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { viz } from "@/lib/viz-colors";
 
 interface EmbeddingSpaceProps {
   showArrows?: boolean;
@@ -37,17 +38,17 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
   // X axis = Gender (+1 masculine, -1 feminine)
   // Y axis = Royalty (+1 royal, 0 common)
   const points = [
-    { name: "King", emoji: "👑", x: 1.0, y: 1.0, color: "#3b82f6" },
-    { name: "Queen", emoji: "👸", x: -1.0, y: 1.0, color: "#ec4899" },
-    { name: "Man", emoji: "🧔", x: 1.0, y: 0.0, color: "#3b82f6" },
-    { name: "Woman", emoji: "👩", x: -1.0, y: 0.0, color: "#ec4899" },
-    { name: "Apple", emoji: "🍎", x: 0.0, y: 0.0, color: "#64748b" },
+    { name: "King", emoji: "👑", x: 1.0, y: 1.0, color: viz.blue },
+    { name: "Queen", emoji: "👸", x: -1.0, y: 1.0, color: viz.pink },
+    { name: "Man", emoji: "🧔", x: 1.0, y: 0.0, color: viz.blue },
+    { name: "Woman", emoji: "👩", x: -1.0, y: 0.0, color: viz.pink },
+    { name: "Apple", emoji: "🍎", x: 0.0, y: 0.0, color: viz.slate },
   ];
 
   // Arrow definitions (from -> to)
   const arrows = [
-    { from: "King", to: "Queen", label: "Gender Flip", color: "#f59e0b" },
-    { from: "Man", to: "Woman", label: "Gender Flip", color: "#f59e0b" },
+    { from: "King", to: "Queen", label: "Gender Flip", color: viz.amber },
+    { from: "Man", to: "Woman", label: "Gender Flip", color: viz.amber },
   ];
 
   const getPoint = (name: string) => points.find((p) => p.name === name)!;

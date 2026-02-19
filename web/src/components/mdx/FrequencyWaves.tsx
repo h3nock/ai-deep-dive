@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { viz, grid } from "@/lib/viz-colors";
 
 /**
  * FrequencyWaves - Interactive visualization of sinusoidal positional encoding
@@ -81,8 +82,8 @@ export function FrequencyWaves() {
   };
   
   const getColor = (index: number): string => {
-    const colors = ["#10b981", "#f59e0b", "#3b82f6", "#a855f7"];
-    return colors[index] || "#10b981";
+    const colors = [viz.emerald, viz.amber, viz.blue, viz.purple];
+    return colors[index] || viz.emerald;
   };
 
   const CLOCK_SIZE = 32;
@@ -149,7 +150,7 @@ export function FrequencyWaves() {
               preserveAspectRatio="none"
             >
               {/* Track line */}
-              <line x1="0" y1="20" x2="200" y2="20" stroke="#3f3f46" strokeWidth="3" strokeLinecap="round" />
+              <line x1="0" y1="20" x2="200" y2="20" stroke={grid.line} strokeWidth="3" strokeLinecap="round" />
             </svg>
             {/* Thumb marker - same positioning logic as wave dots */}
             <div
@@ -179,8 +180,8 @@ export function FrequencyWaves() {
                 {/* Clock */}
                 <div className="shrink-0">
                   <svg width={CLOCK_SIZE} height={CLOCK_SIZE} viewBox={`0 0 ${CLOCK_SIZE} ${CLOCK_SIZE}`}>
-                    <circle cx={CLOCK_CENTER} cy={CLOCK_CENTER} r={CLOCK_RADIUS} fill="none" stroke="#333" strokeWidth="1.5" />
-                    <circle cx={CLOCK_CENTER} cy={CLOCK_CENTER} r="2" fill="#666" />
+                    <circle cx={CLOCK_CENTER} cy={CLOCK_CENTER} r={CLOCK_RADIUS} fill="none" stroke={grid.axis} strokeWidth="1.5" />
+                    <circle cx={CLOCK_CENTER} cy={CLOCK_CENTER} r="2" fill={grid.dot} />
                     <line 
                       x1={CLOCK_CENTER} y1={CLOCK_CENTER} 
                       x2={handX} y2={handY} 
@@ -206,7 +207,7 @@ export function FrequencyWaves() {
                     <path
                       d={generateWavePath(wave.dim, 200, 40)}
                       fill="none"
-                      stroke="#3f3f46"
+                      stroke={grid.line}
                       strokeWidth="1.5"
                     />
                   </svg>

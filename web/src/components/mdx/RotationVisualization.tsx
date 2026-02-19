@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { viz, grid } from "@/lib/viz-colors";
 
 /**
  * RotationVisualization - Interactive demonstration of how rotation matrix transforms vectors
@@ -117,36 +118,36 @@ export function RotationVisualization() {
                   orient="auto"
                   markerUnits="strokeWidth"
                 >
-                  <path d="M0,2 L0,8 L6,5 Z" fill="#3b82f6" />
+                  <path d="M0,2 L0,8 L6,5 Z" fill={viz.blue} />
                 </marker>
               </defs>
 
-              <line x1="10" y1={CENTER} x2="200" y2={CENTER} stroke="#333" strokeWidth="1" />
-              <line x1={CENTER} y1="10" x2={CENTER} y2="200" stroke="#333" strokeWidth="1" />
-              <circle cx={CENTER} cy={CENTER} r={CIRCLE_RADIUS} fill="none" stroke="#444" strokeWidth="1.5" />
+              <line x1="10" y1={CENTER} x2="200" y2={CENTER} stroke={grid.axis} strokeWidth="1" />
+              <line x1={CENTER} y1="10" x2={CENTER} y2="200" stroke={grid.axis} strokeWidth="1" />
+              <circle cx={CENTER} cy={CENTER} r={CIRCLE_RADIUS} fill="none" stroke={grid.axisBold} strokeWidth="1.5" />
               
               {rotationDegrees > 0 && (
                 <path
                   d={createRotationArc(inputAngleDegrees, rotationDegrees, arcRadius, CENTER)}
                   fill="none" 
-                  stroke="#3b82f6" 
+                  stroke={viz.blue}
                   strokeWidth="2" 
                   strokeLinecap="round"
                   markerEnd="url(#arrowMarker)"
                 />
               )}
 
-              <line x1={CENTER} y1={CENTER} x2={inputX} y2={inputY} stroke="#10b981" strokeWidth="2.5" />
-              <line x1={CENTER} y1={CENTER} x2={outputX} y2={outputY} stroke="#f59e0b" strokeWidth="2.5" />
+              <line x1={CENTER} y1={CENTER} x2={inputX} y2={inputY} stroke={viz.emerald} strokeWidth="2.5" />
+              <line x1={CENTER} y1={CENTER} x2={outputX} y2={outputY} stroke={viz.amber} strokeWidth="2.5" />
 
-              <circle cx={inputX} cy={inputY} r="7" fill="#10b981" stroke="#0d9668" strokeWidth="1" />
-              <circle cx={outputX} cy={outputY} r="7" fill="#f59e0b" stroke="#d97706" strokeWidth="1" />
+              <circle cx={inputX} cy={inputY} r="7" fill={viz.emerald} stroke={viz.emeraldDark} strokeWidth="1" />
+              <circle cx={outputX} cy={outputY} r="7" fill={viz.amber} stroke={viz.amberDark} strokeWidth="1" />
 
-              <text x={CENTER + CIRCLE_RADIUS + 14} y={CENTER + 4} fill="#555" fontSize="10" textAnchor="start">x (cos)</text>
-              <text x={CENTER + 8} y={CENTER - CIRCLE_RADIUS - 14} fill="#555" fontSize="10">y (sin)</text>
+              <text x={CENTER + CIRCLE_RADIUS + 14} y={CENTER + 4} fill={grid.labelLight} fontSize="10" textAnchor="start">x (cos)</text>
+              <text x={CENTER + 8} y={CENTER - CIRCLE_RADIUS - 14} fill={grid.labelLight} fontSize="10">y (sin)</text>
 
               {rotationDegrees > 0 && (
-                <text x={CENTER} y={220} fill="#3b82f6" fontSize="11" textAnchor="middle" fontWeight="500">
+                <text x={CENTER} y={220} fill={viz.blue} fontSize="11" textAnchor="middle" fontWeight="500">
                   Rotation: {rotationDegrees}°
                 </text>
               )}

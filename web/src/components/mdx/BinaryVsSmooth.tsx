@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { grid } from "@/lib/viz-colors";
 
 /**
  * BinaryVsSmooth - Animated visualization comparing discrete binary jumps
@@ -197,7 +198,7 @@ export function BinaryVsSmooth() {
                     <path
                       d={generateBinaryPath(dim.cycles)}
                       fill="none"
-                      stroke="#3f3f46"
+                      stroke={grid.line}
                       strokeWidth="1.5"
                     />
                   </svg>
@@ -223,7 +224,7 @@ export function BinaryVsSmooth() {
                     <path
                       d={generateSmoothPath(dim.cycles)}
                       fill="none"
-                      stroke="#3f3f46"
+                      stroke={grid.line}
                       strokeWidth="1.5"
                     />
                   </svg>

@@ -12,6 +12,7 @@ export const viz = {
   blue: "#3b82f6",
   blueLight: "#60a5fa",
   amber: "#f59e0b",
+  amberDark: "#d97706",
   amberLight: "#fbbf24",
   pink: "#ec4899",
   emerald: "#10b981",
