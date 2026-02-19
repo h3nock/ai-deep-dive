@@ -1,24 +1,7 @@
 import React, { useRef, useState } from "react";
 import Editor, { OnMount, BeforeMount } from "@monaco-editor/react";
 import type { editor as MonacoEditor } from "monaco-editor";
-
-// Custom Monaco Theme - Eye-Safe Zinc Dark (matches ChallengeWorkspace)
-const ZINC_DARK_THEME = {
-  base: "vs-dark" as const,
-  inherit: true,
-  rules: [],
-  colors: {
-    "editor.background": "#09090B",
-    "editor.foreground": "#D4D4D8",
-    "editor.lineHighlightBackground": "#18181B",
-    "editor.selectionBackground": "#27272A",
-    "editorGutter.background": "#09090B",
-    "editorCursor.foreground": "#D4D4D8",
-    "minimap.background": "#09090B",
-    "scrollbarSlider.background": "#27272A80",
-    "scrollbarSlider.hoverBackground": "#3f3f4680",
-  },
-};
+import { ZINC_DARK_THEME, MONACO_THEME_NAME } from "@/lib/monaco-theme";
 
 interface AutoResizingEditorProps {
   value: string;
@@ -40,7 +23,7 @@ export function AutoResizingEditor({
 
   const handleBeforeMount: BeforeMount = (monaco) => {
     // Define theme before mount to prevent flash
-    monaco.editor.defineTheme("zinc-dark", ZINC_DARK_THEME);
+    monaco.editor.defineTheme(MONACO_THEME_NAME, ZINC_DARK_THEME);
   };
 
   const handleEditorDidMount: OnMount = (editor) => {
@@ -74,7 +57,7 @@ export function AutoResizingEditor({
         defaultLanguage={language}
         value={value}
         onChange={onChange}
-        theme="zinc-dark"
+        theme={MONACO_THEME_NAME}
         beforeMount={handleBeforeMount}
         onMount={handleEditorDidMount}
         loading={<div className="w-full h-full bg-[#09090B]" />}

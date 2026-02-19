@@ -35,6 +35,7 @@ import { bundleToTestConfig, fetchPublicBundle } from "@/lib/judge-public-tests"
 import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
 import type { JudgeJobResult } from "@/lib/judge-client";
 import type { Challenge } from "@/lib/challenge-types";
+import { ZINC_DARK_THEME, MONACO_THEME_NAME } from "@/lib/monaco-theme";
 import { ConfirmModal } from "./ConfirmModal";
 import {
   getChallengeCode,
@@ -43,24 +44,6 @@ import {
   removeChallengeCode,
   setChallengeCode,
 } from "@/lib/challenge-storage";
-
-// Custom Monaco Theme - Eye-Safe Zinc Dark
-const ZINC_DARK_THEME = {
-  base: "vs-dark" as const,
-  inherit: true,
-  rules: [],
-  colors: {
-    "editor.background": "#09090B",
-    "editor.foreground": "#D4D4D8",
-    "editor.lineHighlightBackground": "#18181B",
-    "editor.selectionBackground": "#27272A",
-    "editorGutter.background": "#09090B",
-    "editorCursor.foreground": "#D4D4D8",
-    "minimap.background": "#09090B",
-    "scrollbarSlider.background": "#27272A80",
-    "scrollbarSlider.hoverBackground": "#3f3f4680",
-  },
-};
 
 interface TestCase {
   id: string;
@@ -642,7 +625,7 @@ function ChallengeEditorContent({
     editorRef.current = editor;
 
     // Theme is already defined in beforeMount, just ensure it's applied
-    monacoInstance.editor.setTheme("zinc-dark");
+    monacoInstance.editor.setTheme(MONACO_THEME_NAME);
 
     // Add Cmd+Enter / Ctrl+Enter shortcut to editor for Submit
     editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter, () => {
@@ -1278,11 +1261,11 @@ function ChallengeEditorContent({
                 defaultLanguage="python"
                 value={code}
                 onChange={(value) => setCode(value || "")}
-                theme="zinc-dark"
+                theme={MONACO_THEME_NAME}
                 onMount={handleEditorDidMount}
                 beforeMount={(monaco) => {
                   // Define theme before mount to prevent flash
-                  monaco.editor.defineTheme("zinc-dark", ZINC_DARK_THEME);
+                  monaco.editor.defineTheme(MONACO_THEME_NAME, ZINC_DARK_THEME);
                 }}
                 loading={
                   <div className="w-full h-full bg-[#09090B] pt-2 pl-4 font-mono text-sm leading-5">

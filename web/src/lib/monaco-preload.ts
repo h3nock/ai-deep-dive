@@ -3,27 +3,10 @@
 // This is a common best practice for browser-based editors
 
 import { loader } from "@monaco-editor/react";
+import { ZINC_DARK_THEME, MONACO_THEME_NAME } from "@/lib/monaco-theme";
 
 let isPreloading = false;
 let isLoaded = false;
-
-// Custom Monaco theme definition (must match ChallengeWorkspace)
-const ZINC_DARK_THEME = {
-  base: "vs-dark" as const,
-  inherit: true,
-  rules: [],
-  colors: {
-    "editor.background": "#09090B",
-    "editor.foreground": "#D4D4D8",
-    "editor.lineHighlightBackground": "#18181B",
-    "editor.selectionBackground": "#27272A",
-    "editorGutter.background": "#09090B",
-    "editorCursor.foreground": "#D4D4D8",
-    "minimap.background": "#09090B",
-    "scrollbarSlider.background": "#27272A80",
-    "scrollbarSlider.hoverBackground": "#3f3f4680",
-  },
-};
 
 /**
  * Preload Monaco editor in the background.
@@ -48,7 +31,7 @@ export async function preloadMonaco(): Promise<void> {
     const monaco = await loader.init();
 
     // Pre-define our custom theme so it's ready immediately when editor mounts
-    monaco.editor.defineTheme("zinc-dark", ZINC_DARK_THEME);
+    monaco.editor.defineTheme(MONACO_THEME_NAME, ZINC_DARK_THEME);
 
     isLoaded = true;
   } catch (error) {
