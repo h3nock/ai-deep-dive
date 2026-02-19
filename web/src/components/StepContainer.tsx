@@ -24,8 +24,12 @@ const ChallengeWorkspace = dynamic<ChallengeWorkspaceProps>(
   () => import("./ChallengeWorkspace").then((mod) => mod.ChallengeWorkspace),
   {
     loading: () => (
-      <div className="flex flex-1 items-center justify-center text-muted">
-        Loading workspace...
+      <div className="flex flex-1 items-center justify-center">
+        <div className="space-y-3 w-64">
+          <div className="h-3 bg-surface rounded animate-pulse" />
+          <div className="h-3 bg-surface rounded animate-pulse w-3/4" />
+          <div className="h-3 bg-surface rounded animate-pulse w-1/2" />
+        </div>
       </div>
     ),
   }
