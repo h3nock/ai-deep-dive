@@ -139,10 +139,8 @@ body {
   /* CODE BLOCKS - Deep Tech Terminal Style */
   pre {
     @apply text-[0.875rem];
-    background-color: #121212 !important;
-    /* Slightly lighter than page void */
-    border: 1px solid #27272A;
-    /* Zinc-800 - subtle edge */
+    background-color: var(--color-terminal) !important;
+    border: 1px solid var(--color-border);
     border-radius: 0.5rem;
   }
 
@@ -186,20 +184,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #09090B;
-  /* Matches --color-background */
+  background: var(--color-background);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272A;
-  /* Matches --color-border (Zinc-800) */
+  background: var(--color-border);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
-  /* Zinc-700 */
+  background: var(--color-border-hover);
 }
 
 /* Code Block Styling - rehype-pretty-code (Deep Tech Terminal Style)
@@ -215,10 +210,8 @@ body {
   overflow-x: auto;
   font-size: 0.875rem;
   line-height: 1.7;
-  background-color: #121212 !important;
-  /* Slightly lighter than page void */
-  border: 1px solid #27272A;
-  /* Zinc-800 - subtle edge */
+  background-color: var(--color-terminal) !important;
+  border: 1px solid var(--color-border);
 }
 
 [data-rehype-pretty-code-figure] code {
@@ -232,10 +225,9 @@ body {
   padding: 0.5rem 1rem;
   font-size: 0.75rem;
   font-family: var(--font-mono);
-  color: #71717A;
-  /* Zinc-500 (muted) */
-  background-color: #121212;
-  border: 1px solid #27272A;
+  color: var(--color-muted);
+  background-color: var(--color-terminal);
+  border: 1px solid var(--color-border);
   border-bottom: none;
   border-radius: 0.5rem 0.5rem 0 0;
 }
@@ -251,10 +243,8 @@ body {
   padding: 0.2em 0.4em;
   border-radius: 0.25rem;
   font-size: 0.875em;
-  background-color: #18181B;
-  /* Zinc-900 (surface) */
-  color: #D4D4D8;
-  /* Zinc-300 (secondary) */
+  background-color: var(--color-surface);
+  color: var(--color-primary);
 }
 
 /* ==========================================================================
@@ -263,38 +253,22 @@ body {
    ========================================================================== */
 
 .prose {
-  --tw-prose-body: #A1A1AA;
-  /* Zinc-400 */
-  --tw-prose-headings: #D4D4D8;
-  /* Zinc-300 (same as primary - no bright whites) */
-  --tw-prose-lead: #A1A1AA;
-  /* Zinc-400 */
-  --tw-prose-links: #D4D4D8;
-  /* Zinc-300 */
-  --tw-prose-bold: #D4D4D8;
-  /* Zinc-300 (matches headings - no bloom) */
-  --tw-prose-counters: #71717A;
-  /* Zinc-500 (muted) */
+  --tw-prose-body: var(--color-secondary);
+  --tw-prose-headings: var(--color-primary);
+  --tw-prose-lead: var(--color-secondary);
+  --tw-prose-links: var(--color-primary);
+  --tw-prose-bold: var(--color-primary);
+  --tw-prose-counters: var(--color-muted);
   --tw-prose-bullets: #52525B;
-  /* Zinc-600 */
-  --tw-prose-hr: #27272A;
-  /* Zinc-800 (border) */
-  --tw-prose-quotes: #A1A1AA;
-  /* Zinc-400 */
-  --tw-prose-quote-borders: #27272A;
-  /* Zinc-800 */
-  --tw-prose-captions: #71717A;
-  /* Zinc-500 (muted) */
-  --tw-prose-code: #A1A1AA;
-  /* Zinc-400 (same as body) */
-  --tw-prose-pre-code: #A1A1AA;
-  /* Zinc-400 */
-  --tw-prose-pre-bg: #121212;
-  /* Code void */
-  --tw-prose-th-borders: #27272A;
-  /* Zinc-800 */
-  --tw-prose-td-borders: #27272A;
-  /* Zinc-800 */
+  --tw-prose-hr: var(--color-border);
+  --tw-prose-quotes: var(--color-secondary);
+  --tw-prose-quote-borders: var(--color-border);
+  --tw-prose-captions: var(--color-muted);
+  --tw-prose-code: var(--color-secondary);
+  --tw-prose-pre-code: var(--color-secondary);
+  --tw-prose-pre-bg: var(--color-terminal);
+  --tw-prose-th-borders: var(--color-border);
+  --tw-prose-td-borders: var(--color-border);
 }
 
 /* Prose Paragraphs - Tier 3 (Flow) spacing */
@@ -351,24 +325,21 @@ body {
 }
 
 .prose thead {
-  background-color: #18181B;
-  /* Zinc-900 (surface) */
+  background-color: var(--color-surface);
 }
 
 .prose th {
   padding: 0.75rem 1rem;
   text-align: left;
   font-weight: 500;
-  color: #D4D4D8;
-  /* Primary */
-  border-bottom: 1px solid #27272A;
+  color: var(--color-primary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .prose td {
   padding: 0.75rem 1rem;
-  color: #A1A1AA;
-  /* Secondary */
-  border-bottom: 1px solid #27272A;
+  color: var(--color-secondary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .prose tbody tr:last-child td {
@@ -378,30 +349,28 @@ body {
 .prose table code {
   font-size: 0.8125rem;
   padding: 0.125rem 0.375rem;
-  background-color: #27272A;
-  /* Zinc-800 */
+  background-color: var(--color-border);
   border-radius: 0.25rem;
 }
 
 /* Override prose-invert since we're dark-only */
 .prose-invert {
-  --tw-prose-body: #A1A1AA;
-  --tw-prose-headings: #D4D4D8;
-  --tw-prose-lead: #A1A1AA;
-  --tw-prose-links: #D4D4D8;
-  --tw-prose-bold: #D4D4D8;
-  /* No bloom - same as headings */
-  --tw-prose-counters: #71717A;
+  --tw-prose-body: var(--color-secondary);
+  --tw-prose-headings: var(--color-primary);
+  --tw-prose-lead: var(--color-secondary);
+  --tw-prose-links: var(--color-primary);
+  --tw-prose-bold: var(--color-primary);
+  --tw-prose-counters: var(--color-muted);
   --tw-prose-bullets: #52525B;
-  --tw-prose-hr: #27272A;
-  --tw-prose-quotes: #A1A1AA;
-  --tw-prose-quote-borders: #27272A;
-  --tw-prose-captions: #71717A;
-  --tw-prose-code: #A1A1AA;
-  --tw-prose-pre-code: #A1A1AA;
-  --tw-prose-pre-bg: #121212;
-  --tw-prose-th-borders: #27272A;
-  --tw-prose-td-borders: #27272A;
+  --tw-prose-hr: var(--color-border);
+  --tw-prose-quotes: var(--color-secondary);
+  --tw-prose-quote-borders: var(--color-border);
+  --tw-prose-captions: var(--color-muted);
+  --tw-prose-code: var(--color-secondary);
+  --tw-prose-pre-code: var(--color-secondary);
+  --tw-prose-pre-bg: var(--color-terminal);
+  --tw-prose-th-borders: var(--color-border);
+  --tw-prose-td-borders: var(--color-border);
 }
 
 /* Inline code - slightly smaller than body text but readable */
@@ -409,8 +378,7 @@ body {
   font-size: 0.9375rem;
   /* 15px - close to body text */
   padding: 0.125rem 0.375rem;
-  background-color: #27272A;
-  /* Zinc-800 */
+  background-color: var(--color-border);
   border-radius: 0.25rem;
   font-feature-settings: normal;
 }
@@ -587,18 +555,18 @@ body {
 .monaco-editor,
 .monaco-editor-background,
 .monaco-editor .overflow-guard {
-  background-color: #09090B !important;
+  background-color: var(--color-background) !important;
 }
 
 /* Monaco loader wrapper (before editor is ready) */
 section[style*="display: flex"][style*="justify-content: center"] {
-  background-color: #09090B !important;
+  background-color: var(--color-background) !important;
 }
 
 /* Force all Monaco internal containers to use dark background */
 .monaco-editor .margin,
 .monaco-editor .monaco-scrollable-element {
-  background-color: #09090B !important;
+  background-color: var(--color-background) !important;
 }
 
 /* ==========================================================================
