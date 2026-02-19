@@ -191,25 +191,25 @@ description: "How computers represent language (Unicode & UTF-8)."
       <tbody className="font-mono text-xs">
         <tr className="border-t border-border">
           <td className="py-3 px-4 font-sans">1 byte</td>
-          <td className="py-3 px-4"><span className="text-emerald-400 font-semibold">0</span>xxxxxxx</td>
+          <td className="py-3 px-4"><span className="text-accent-1 font-semibold">0</span>xxxxxxx</td>
           <td className="py-3 px-4 text-muted">-</td>
           <td className="py-3 px-4 font-sans text-secondary">7 bits</td>
         </tr>
         <tr className="border-t border-border bg-surface">
           <td className="py-3 px-4 font-sans">2 bytes</td>
-          <td className="py-3 px-4"><span className="text-emerald-400 font-semibold">110</span>xxxxx</td>
+          <td className="py-3 px-4"><span className="text-accent-1 font-semibold">110</span>xxxxx</td>
           <td className="py-3 px-4"><span className="text-muted">10</span>xxxxxx</td>
           <td className="py-3 px-4 font-sans text-secondary">11 bits</td>
         </tr>
         <tr className="border-t border-border">
           <td className="py-3 px-4 font-sans">3 bytes</td>
-          <td className="py-3 px-4"><span className="text-emerald-400 font-semibold">1110</span>xxxx</td>
+          <td className="py-3 px-4"><span className="text-accent-1 font-semibold">1110</span>xxxx</td>
           <td className="py-3 px-4"><span className="text-muted">10</span>xxxxxx × 2</td>
           <td className="py-3 px-4 font-sans text-secondary">16 bits</td>
         </tr>
         <tr className="border-t border-border bg-surface">
           <td className="py-3 px-4 font-sans">4 bytes</td>
-          <td className="py-3 px-4"><span className="text-emerald-400 font-semibold">11110</span>xxx</td>
+          <td className="py-3 px-4"><span className="text-accent-1 font-semibold">11110</span>xxx</td>
           <td className="py-3 px-4"><span className="text-muted">10</span>xxxxxx × 3</td>
           <td className="py-3 px-4 font-sans text-secondary">21 bits</td>
         </tr>
@@ -236,7 +236,7 @@ description: "How computers represent language (Unicode & UTF-8)."
         <div className="text-secondary mb-1">
           <span className="font-semibold">41</span>
           <span className="mx-2">=</span>
-          <span className="text-emerald-400">0</span>1000001
+          <span className="text-accent-1">0</span>1000001
           <span className="text-muted text-xs ml-3">← starts with 0 → single byte</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted">
@@ -251,8 +251,8 @@ description: "How computers represent language (Unicode & UTF-8)."
           <div className="text-secondary">
             <span className="font-semibold">C3</span>
             <span className="mx-2">=</span>
-            <span className="text-emerald-400">110</span>00011
-            <span className="text-muted text-xs ml-3">← <span className="text-emerald-400">two</span> 1s → read 2 bytes</span>
+            <span className="text-accent-1">110</span>00011
+            <span className="text-muted text-xs ml-3">← <span className="text-accent-1">two</span> 1s → read 2 bytes</span>
           </div>
           <div className="text-secondary">
             <span className="font-semibold">A9</span>
@@ -273,8 +273,8 @@ description: "How computers represent language (Unicode & UTF-8)."
           <div className="text-secondary">
             <span className="font-semibold">E4</span>
             <span className="mx-2">=</span>
-            <span className="text-emerald-400">1110</span>0100
-            <span className="text-muted text-xs ml-3">← <span className="text-emerald-400">three</span> 1s → read 3 bytes</span>
+            <span className="text-accent-1">1110</span>0100
+            <span className="text-muted text-xs ml-3">← <span className="text-accent-1">three</span> 1s → read 3 bytes</span>
           </div>
           <div className="text-secondary">
             <span className="font-semibold">B8</span>
@@ -324,8 +324,8 @@ description: "How computers represent language (Unicode & UTF-8)."
         Each byte reserves some bits for the prefix, leaving the rest as "slots" for our actual data:
       </div>
       <div className="font-mono text-sm bg-terminal p-4 rounded-lg border border-border space-y-1">
-        <div className="text-muted">Byte 1: <span className="text-emerald-400">110</span>xxxxx → 5 data slots</div>
-        <div className="text-muted">Byte 2: <span className="text-emerald-400">10</span>xxxxxx → 6 data slots</div>
+        <div className="text-muted">Byte 1: <span className="text-accent-1">110</span>xxxxx → 5 data slots</div>
+        <div className="text-muted">Byte 2: <span className="text-accent-1">10</span>xxxxxx → 6 data slots</div>
         <div className="text-muted">Total: 5 + 6 = 11 data slots to fill</div>
       </div>
     </div>
@@ -345,8 +345,8 @@ description: "How computers represent language (Unicode & UTF-8)."
       </div>
       <div className="font-mono text-sm bg-terminal p-4 rounded-lg border border-border space-y-1">
         <div className="text-muted">Split from right: 00011 (5 bits) | 101001 (6 bits)</div>
-        <div className="mt-2">Byte 1: <span className="text-emerald-400">110</span> + 00011 = 11000011 = <span className="font-semibold">195 (0xC3)</span></div>
-        <div>Byte 2: <span className="text-emerald-400">10</span> + 101001 = 10101001 = <span className="font-semibold">169 (0xA9)</span></div>
+        <div className="mt-2">Byte 1: <span className="text-accent-1">110</span> + 00011 = 11000011 = <span className="font-semibold">195 (0xC3)</span></div>
+        <div>Byte 2: <span className="text-accent-1">10</span> + 101001 = 10101001 = <span className="font-semibold">169 (0xA9)</span></div>
       </div>
     </div>
     <div>

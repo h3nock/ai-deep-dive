@@ -25,25 +25,25 @@ description: "How the feed-forward network transforms each token independently."
       <text x="85" y="84" textAnchor="middle" fill="var(--color-muted)" fontSize="16">→</text>
 
       {/* W₁ - trapezoid expanding from small to large */}
-      <polygon points="100,55 160,20 160,140 100,105" rx="4" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" strokeWidth="1" />
-      <text x="125" y="76" textAnchor="middle" fill="#60a5fa" fontSize="10" fontFamily="var(--font-mono)">W₁</text>
-      <text x="125" y="92" textAnchor="middle" fill="#60a5fa" fontSize="11" fontFamily="var(--font-mono)">expand</text>
+      <polygon points="100,55 160,20 160,140 100,105" rx="4" fill="color-mix(in srgb, var(--color-accent-2) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-2) 30%, transparent)" strokeWidth="1" />
+      <text x="125" y="76" textAnchor="middle" fill="var(--color-accent-2)" fontSize="10" fontFamily="var(--font-mono)">W₁</text>
+      <text x="125" y="92" textAnchor="middle" fill="var(--color-accent-2)" fontSize="11" fontFamily="var(--font-mono)">expand</text>
 
       {/* Arrow */}
       <text x="175" y="84" textAnchor="middle" fill="var(--color-muted)" fontSize="16">→</text>
 
       {/* Activation box - d_ff (4x tall) */}
-      <rect x="190" y="20" width="70" height="120" rx="4" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.3)" strokeWidth="1" />
-      <text x="225" y="72" textAnchor="middle" fill="#f59e0b" fontSize="10" fontFamily="var(--font-mono)">activation</text>
-      <text x="225" y="90" textAnchor="middle" fill="#f59e0b" fontSize="12" fontWeight="600" fontFamily="var(--font-mono)">d_ff</text>
+      <rect x="190" y="20" width="70" height="120" rx="4" fill="color-mix(in srgb, var(--color-accent-4) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 30%, transparent)" strokeWidth="1" />
+      <text x="225" y="72" textAnchor="middle" fill="var(--color-accent-4)" fontSize="10" fontFamily="var(--font-mono)">activation</text>
+      <text x="225" y="90" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600" fontFamily="var(--font-mono)">d_ff</text>
 
       {/* Arrow */}
       <text x="275" y="84" textAnchor="middle" fill="var(--color-muted)" fontSize="16">→</text>
 
       {/* W₂ - trapezoid contracting from large to small */}
-      <polygon points="290,20 350,55 350,105 290,140" rx="4" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" strokeWidth="1" />
-      <text x="320" y="76" textAnchor="middle" fill="#60a5fa" fontSize="10" fontFamily="var(--font-mono)">W₂</text>
-      <text x="320" y="92" textAnchor="middle" fill="#60a5fa" fontSize="11" fontFamily="var(--font-mono)">contract</text>
+      <polygon points="290,20 350,55 350,105 290,140" rx="4" fill="color-mix(in srgb, var(--color-accent-2) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-2) 30%, transparent)" strokeWidth="1" />
+      <text x="320" y="76" textAnchor="middle" fill="var(--color-accent-2)" fontSize="10" fontFamily="var(--font-mono)">W₂</text>
+      <text x="320" y="92" textAnchor="middle" fill="var(--color-accent-2)" fontSize="11" fontFamily="var(--font-mono)">contract</text>
 
       {/* Arrow */}
       <text x="365" y="84" textAnchor="middle" fill="var(--color-muted)" fontSize="16">→</text>
