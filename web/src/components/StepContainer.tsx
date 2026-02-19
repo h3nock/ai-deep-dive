@@ -285,7 +285,7 @@ export function StepContainer({
               {/* Centered Content Column with Responsive Gutter */}
               <div className="mx-auto max-w-[85ch] px-6 lg:px-8">
                 {/* Header */}
-                <header className="mb-12 border-b border-border pb-8">
+                <header className="animate-fade-in-up mb-12 pb-8 border-b border-border">
                   <div className="flex items-center gap-3 mb-6 text-sm text-muted">
                     <Link
                       href={backLink.href}

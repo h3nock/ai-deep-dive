@@ -704,3 +704,42 @@ section[style*="display: flex"][style*="justify-content: center"] {
 .prose .katex .sqrt>.sqrt-line {
   border-top-color: var(--color-secondary) !important;
 }
+
+/* ==========================================================================
+   Entrance Animations - CSS only, reduced-motion aware
+   ========================================================================== */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out both;
+}
+
+.animate-delay-1 {
+  animation-delay: 100ms;
+}
+
+.animate-delay-2 {
+  animation-delay: 200ms;
+}
+
+.animate-delay-3 {
+  animation-delay: 300ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

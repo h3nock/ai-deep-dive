@@ -115,7 +115,7 @@ export default async function RoadmapPage({
             <ThemeToggle />
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-primary mb-3">
+          <h1 className="animate-fade-in-up text-3xl md:text-4xl font-bold text-primary mb-3">
             {metadata.title}
           </h1>
           <p className="text-lg text-muted max-w-2xl leading-relaxed">

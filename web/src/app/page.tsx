@@ -35,15 +35,15 @@ export default async function Home() {
           <div className="absolute inset-0 bg-grid-pattern" />
           <div className="absolute inset-0 hero-gradient-mask" />
           <div className="relative container mx-auto px-4 text-center max-w-3xl">
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 text-primary">
+            <h1 className="animate-fade-in-up text-3xl md:text-5xl font-bold tracking-tight mb-6 text-primary">
               Learn AI by Building It
             </h1>
 
-            <p className="text-base md:text-lg text-secondary max-w-xl mx-auto leading-relaxed mb-10">
+            <p className="animate-fade-in-up animate-delay-1 text-base md:text-lg text-secondary max-w-xl mx-auto leading-relaxed mb-10">
               The only way to truly understand AI is to build it.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="animate-fade-in-up animate-delay-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="#courses"
                 className="px-6 py-3 rounded-lg bg-primary hover:bg-primary-hover text-background font-medium transition-all hover:shadow-lg hover:shadow-muted/10"

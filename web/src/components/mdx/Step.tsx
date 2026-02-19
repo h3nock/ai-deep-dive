@@ -34,7 +34,7 @@ export function Step({ title, children }: StepProps) {
 
   return (
     <div
-      className="relative border-b border-border last:border-0"
+      className="border-b border-border last:border-0"
       style={{
         paddingTop: "var(--space-section)",
         paddingBottom: "var(--space-section)",
