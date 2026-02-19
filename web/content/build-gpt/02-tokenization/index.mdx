@@ -42,7 +42,7 @@ description: "How BPE compresses text into efficient tokens."
 
   <div className="my-6">
     <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">Common Patterns Learned</div>
-    <div className="bg-terminal rounded-lg border border-border divide-y divide-zinc-800">
+    <div className="bg-terminal rounded-lg border border-border divide-y divide-border">
       <div className="flex items-center gap-3 px-4 py-3">
         <span className="font-mono text-secondary">t + h</span>
         <span className="text-muted">→</span>
@@ -83,7 +83,7 @@ description: "How BPE compresses text into efficient tokens."
 
   <div className="content-attached flex flex-wrap justify-center gap-2">
     {['a', 'a', 'a', 'b', 'd', 'a', 'a', 'a', 'b', 'a', 'c'].map((char, i) => (
-      <span key={i} className="w-8 h-8 flex items-center justify-center font-mono text-sm text-primary bg-zinc-800 rounded">{char}</span>
+      <span key={i} className="w-8 h-8 flex items-center justify-center font-mono text-sm text-primary bg-surface rounded">{char}</span>
     ))}
   </div>
 
@@ -430,9 +430,9 @@ def train_bpe(text: str, num_merges: int) -> tuple[list[int], dict]:
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm text-secondary">After regex:</span>
         <div className="flex gap-1 flex-wrap">
-          <span className="font-mono bg-zinc-800 px-2 py-1 rounded text-primary">"dog"</span>
+          <span className="font-mono bg-surface px-2 py-1 rounded text-primary">"dog"</span>
           <span className="font-mono bg-surface px-2 py-1 rounded text-muted">"."</span>
-          <span className="font-mono bg-zinc-800 px-2 py-1 rounded text-primary">" dog"</span>
+          <span className="font-mono bg-surface px-2 py-1 rounded text-primary">" dog"</span>
           <span className="font-mono bg-surface px-2 py-1 rounded text-muted">"!"</span>
         </div>
       </div>
@@ -511,8 +511,8 @@ def decode(ids: list[int], vocab: dict[int, list[int]]) -> str:
       <div className="flex items-center gap-3">
         <div className="text-sm text-muted w-28">Token IDs:</div>
         <div className="flex gap-2">
-          <div className="px-3 py-2 bg-zinc-800 rounded font-mono text-sm">258</div>
-          <div className="px-3 py-2 bg-zinc-800 rounded font-mono text-sm">99</div>
+          <div className="px-3 py-2 bg-surface rounded font-mono text-sm">258</div>
+          <div className="px-3 py-2 bg-surface rounded font-mono text-sm">99</div>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -562,7 +562,7 @@ def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
   {/* Order comparison visual */}
   <div className="my-8">
     <p className="text-sm text-secondary mb-5">
-      For example, encoding "the" with merge rules <code className="font-mono text-xs bg-zinc-800 px-1.5 py-0.5 rounded">(116,104)→256</code> <span className="text-muted text-xs">(t,h→th)</span> and <code className="font-mono text-xs bg-zinc-800 px-1.5 py-0.5 rounded">(256,101)→257</code> <span className="text-muted text-xs">(th,e→the)</span>:
+      For example, encoding "the" with merge rules <code className="font-mono text-xs bg-surface px-1.5 py-0.5 rounded">(116,104)→256</code> <span className="text-muted text-xs">(t,h→th)</span> and <code className="font-mono text-xs bg-surface px-1.5 py-0.5 rounded">(256,101)→257</code> <span className="text-muted text-xs">(th,e→the)</span>:
     </p>
     
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

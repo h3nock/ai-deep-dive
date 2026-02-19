@@ -9,6 +9,7 @@ import { ChapterCheckbox } from "@/components/ChapterCheckbox";
 import { ContinueButton } from "@/components/ContinueButton";
 import { getCourseConfig } from "@/lib/course-config";
 import { isSafePathSegment } from "@/lib/path-safety";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import fs from "fs";
 import path from "path";
 
@@ -103,13 +104,16 @@ export default async function RoadmapPage({
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-10">
-          <Link
-            href="/"
-            className="inline-flex items-center text-sm text-muted hover:text-primary mb-8 transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Back to Courses
-          </Link>
+          <div className="flex items-center justify-between mb-8">
+            <Link
+              href="/"
+              className="inline-flex items-center text-sm text-muted hover:text-primary transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+              Back to Courses
+            </Link>
+            <ThemeToggle />
+          </div>
 
           <h1 className="text-3xl md:text-4xl font-bold text-primary mb-3">
             {metadata.title}

@@ -125,20 +125,20 @@ description: "How computers represent language (Unicode & UTF-8)."
     <div className="font-mono text-xs bg-terminal p-4 rounded-lg border border-border overflow-x-auto">
       <div className="text-muted mb-2">Byte stream for "Aé中":</div>
       <div className="flex flex-wrap gap-1 mb-3">
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">00</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">00</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">00</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">41</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">41</span>
         <span className="text-muted mx-1">|</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">00</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">00</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">00</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">E9</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">E9</span>
         <span className="text-muted mx-1">|</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">00</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">00</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">4E</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">2D</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">00</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">4E</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">2D</span>
       </div>
       <div className="text-muted">Every 4 bytes = 1 character.</div>
     </div>
@@ -153,12 +153,12 @@ description: "How computers represent language (Unicode & UTF-8)."
     <div className="font-mono text-xs bg-terminal p-4 rounded-lg border border-border overflow-x-auto">
       <div className="text-muted mb-2">Byte stream for "Aé中":</div>
       <div className="flex flex-wrap gap-1 mb-3">
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">41</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">C3</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">A9</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">E4</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">B8</span>
-        <span className="px-1.5 py-0.5 bg-zinc-800 rounded">AD</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">41</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">C3</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">A9</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">E4</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">B8</span>
+        <span className="px-1.5 py-0.5 bg-surface rounded">AD</span>
       </div>
       <div className="text-muted">6 bytes total, but which bytes belong to which character?</div>
     </div>
@@ -372,22 +372,22 @@ description: "How computers represent language (Unicode & UTF-8)."
           <li className="flex justify-between items-center">
             <span className="text-lg">H</span>
             <span className="font-mono text-primary">U+0048 (72)</span>
-            <span className="text-xs px-2 py-1 bg-zinc-800 text-muted rounded">1-byte</span>
+            <span className="text-xs px-2 py-1 bg-surface text-muted rounded">1-byte</span>
           </li>
           <li className="flex justify-between items-center">
             <span className="text-lg">i</span>
             <span className="font-mono text-primary">U+0069 (105)</span>
-            <span className="text-xs px-2 py-1 bg-zinc-800 text-muted rounded">1-byte</span>
+            <span className="text-xs px-2 py-1 bg-surface text-muted rounded">1-byte</span>
           </li>
           <li className="flex justify-between items-center">
             <span className="text-lg">(space)</span>
             <span className="font-mono text-primary">U+0020 (32)</span>
-            <span className="text-xs px-2 py-1 bg-zinc-800 text-muted rounded">1-byte</span>
+            <span className="text-xs px-2 py-1 bg-surface text-muted rounded">1-byte</span>
           </li>
           <li className="flex justify-between items-center">
             <span className="text-lg">👋</span>
             <span className="font-mono text-primary">U+1F44B (128075)</span>
-            <span className="text-xs px-2 py-1 bg-zinc-800 text-muted rounded">4-byte</span>
+            <span className="text-xs px-2 py-1 bg-surface text-muted rounded">4-byte</span>
           </li>
         </ul>
       </div>
@@ -464,14 +464,14 @@ description: "How computers represent language (Unicode & UTF-8)."
     <div className="bg-terminal p-4 rounded-lg border border-border space-y-2 font-mono text-sm">
       <div className="flex items-center gap-2">
         <span className="text-secondary">"Hello" →</span>
-        <span className="px-2 py-1 bg-zinc-800 text-primary rounded">[Hello]</span>
+        <span className="px-2 py-1 bg-surface text-primary rounded">[Hello]</span>
         <span className="text-muted text-xs">(1 token)</span>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-secondary">"Unbelievable" →</span>
-        <span className="px-2 py-1 bg-zinc-800 text-primary rounded">[Un]</span>
-        <span className="px-2 py-1 bg-zinc-800 text-primary rounded">[believ]</span>
-        <span className="px-2 py-1 bg-zinc-800 text-primary rounded">[able]</span>
+        <span className="px-2 py-1 bg-surface text-primary rounded">[Un]</span>
+        <span className="px-2 py-1 bg-surface text-primary rounded">[believ]</span>
+        <span className="px-2 py-1 bg-surface text-primary rounded">[able]</span>
         <span className="text-muted text-xs">(3 tokens)</span>
       </div>
     </div>

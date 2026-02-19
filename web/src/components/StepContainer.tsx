@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Map } from "lucide-react";
 import { PostData } from "@/lib/posts";
 import { MarkCompleteButton } from "./MarkCompleteButton";
+import { ThemeToggle } from "./ThemeToggle";
 import { useProgress } from "@/lib/progress-context";
 import { useChallengeProgress } from "@/lib/use-challenge-progress";
 import type { ChallengeWorkspaceProps } from "./ChallengeWorkspace";
@@ -215,42 +216,49 @@ export function StepContainer({
       <div className="flex h-screen">
         {/* Main Content Area - Full Width for Guide */}
         <div className="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto">
-          {/* Tab Header (Only if challenges exist) */}
-          {hasChallenges && (
-            <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-6">
-              <div className="max-w-5xl mx-auto flex gap-6">
-                <Link
-                  href={guideHref}
-                  prefetch
-                  className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
-                    activeTab === "guide"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted hover:text-secondary"
-                  }`}
-                >
-                  Guide
-                </Link>
-                <Link
-                  href={challengesHref}
-                  prefetch
-                  className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
-                    activeTab === "challenges"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted hover:text-secondary"
-                  }`}
-                >
-                  Challenges
-                  <span className="ml-1.5 text-muted">
-                    (
-                    {isChallengesLoaded
-                      ? `${solvedChallenges}/${totalChallenges}`
-                      : `0/${totalChallenges}`}
-                    )
-                  </span>
-                </Link>
+          {/* Top Bar */}
+          <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-6">
+            <div className="max-w-5xl mx-auto flex items-center">
+              {hasChallenges ? (
+                <div className="flex gap-6">
+                  <Link
+                    href={guideHref}
+                    prefetch
+                    className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
+                      activeTab === "guide"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted hover:text-secondary"
+                    }`}
+                  >
+                    Guide
+                  </Link>
+                  <Link
+                    href={challengesHref}
+                    prefetch
+                    className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
+                      activeTab === "challenges"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted hover:text-secondary"
+                    }`}
+                  >
+                    Challenges
+                    <span className="ml-1.5 text-muted">
+                      (
+                      {isChallengesLoaded
+                        ? `${solvedChallenges}/${totalChallenges}`
+                        : `0/${totalChallenges}`}
+                      )
+                    </span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex-1" />
+              )}
+              <div className="ml-auto py-2">
+                <ThemeToggle />
               </div>
             </div>
-          )}
+          </div>
 
           {activeTab === "guide" ? (
             <main className="flex-1 w-full py-12">
@@ -282,14 +290,16 @@ export function StepContainer({
                         {post.description}
                       </p>
                     </div>
-                    <Link
-                      href={backLink.href}
-                      prefetch={true}
-                      className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg border border-border text-muted hover:text-primary hover:border-border-hover transition-colors shrink-0"
-                      title={backLink.label}
-                    >
-                      <Map className="w-5 h-5" />
-                    </Link>
+                    <div className="hidden md:flex items-center gap-2 shrink-0">
+                      <Link
+                        href={backLink.href}
+                        prefetch={true}
+                        className="flex items-center justify-center w-10 h-10 rounded-lg border border-border text-muted hover:text-primary hover:border-border-hover transition-colors"
+                        title={backLink.label}
+                      >
+                        <Map className="w-5 h-5" />
+                      </Link>
+                    </div>
                   </div>
                 </header>
 
