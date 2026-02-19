@@ -28,7 +28,7 @@ export function ProjectRoadmap({ courseId, prefix }: ProjectRoadmapProps) {
   return (
     <div className="not-prose" style={{ marginTop: "var(--space-connected)" }}>
       {/* Navigation Timeline - matches Course Homepage pattern EXACTLY */}
-      <div className="relative ml-4 pl-4 border-l border-zinc-800">
+      <div className="relative ml-4 pl-4 border-l border-border">
         {projectSteps.map((post, index) => {
           const stepNumber = index + 1;
 

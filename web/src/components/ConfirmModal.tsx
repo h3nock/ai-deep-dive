@@ -106,7 +106,7 @@ export function ConfirmModal({
           aria-modal="true"
           aria-labelledby="modal-title"
           aria-describedby="modal-description"
-          className="w-full max-w-[340px] bg-surface border border-zinc-800 rounded-xl shadow-2xl shadow-black/60 animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+          className="w-full max-w-[340px] bg-surface border border-border rounded-xl shadow-2xl shadow-black/60 animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200"
         >
           {/* Content */}
           <div className="px-6 pt-5 pb-4">
@@ -135,7 +135,7 @@ export function ConfirmModal({
             <button
               ref={cancelButtonRef}
               onClick={onClose}
-              className="flex-1 h-9 text-sm font-medium rounded-lg text-muted bg-transparent border border-zinc-800 hover:text-secondary hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              className="flex-1 h-9 text-sm font-medium rounded-lg text-muted bg-transparent border border-border hover:text-secondary hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
             >
               {cancelText}
             </button>

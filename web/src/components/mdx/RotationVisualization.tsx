@@ -55,7 +55,7 @@ export function RotationVisualization() {
         Interactive: Matrix Multiplication in Action
       </div>
 
-      <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="p-4 bg-terminal rounded-lg border border-border">
         {/* Controls */}
         <div className="flex flex-wrap gap-4 mb-6 text-sm">
           <div className="flex items-center gap-3">

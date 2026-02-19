@@ -130,7 +130,7 @@ export default function SyncPage() {
               {viewModel.status === "success" ? viewModel.courseName : ""}
             </p>
 
-            <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800 mb-6 text-left">
+            <div className="p-4 bg-terminal rounded-lg border border-border mb-6 text-left">
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Newly synced</span>
                 <span

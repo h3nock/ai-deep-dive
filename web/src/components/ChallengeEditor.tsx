@@ -86,7 +86,7 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
     .join("\n");
 
   return (
-    <div className="p-3 bg-[#121212] rounded-md border border-zinc-800">
+    <div className="p-3 bg-terminal rounded-md border border-border">
       <div className="flex flex-col gap-2 font-mono text-[13px]">
         <div>
           <span className="text-muted text-xs uppercase tracking-wide">
@@ -108,7 +108,7 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
 
       {/* Explanation toggle */}
       {testCase.explanation && (
-        <div className="mt-3 pt-3 border-t border-zinc-800">
+        <div className="mt-3 pt-3 border-t border-border">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-1.5 text-xs text-muted hover:text-secondary transition-colors"
@@ -1244,7 +1244,7 @@ function ChallengeEditorContent({
             </div>
 
             {/* Editor Area */}
-            <div className="flex-1 relative min-h-0 overflow-hidden bg-[#09090B]">
+            <div className="flex-1 relative min-h-0 overflow-hidden bg-background">
               <Editor
                 height="100%"
                 defaultLanguage="python"
@@ -1257,7 +1257,7 @@ function ChallengeEditorContent({
                   monaco.editor.defineTheme(MONACO_THEME_NAME, ZINC_DARK_THEME);
                 }}
                 loading={
-                  <div className="w-full h-full bg-[#09090B] pt-2 pl-4 font-mono text-sm leading-5">
+                  <div className="w-full h-full bg-background pt-2 pl-4 font-mono text-sm leading-5">
                     <div className="space-y-0 animate-pulse">
                       <div className="flex items-center h-5">
                         <span className="text-zinc-700 w-8 text-right select-none pr-4">1</span>

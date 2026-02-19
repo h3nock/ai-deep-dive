@@ -97,7 +97,7 @@ function Plot({ label, path, color }: { label: string; path: string; color: stri
 export function ActivationGraph() {
   return (
     <div className="my-6">
-      <div className="p-4 rounded-lg border border-border bg-[#121212]">
+      <div className="p-4 rounded-lg border border-border bg-terminal">
         <div className="flex gap-4">
           <Plot label="ReLU" path={curve(relu)} color="#60a5fa" />
           <Plot label="GELU" path={curve(gelu)} color="#fbbf24" />

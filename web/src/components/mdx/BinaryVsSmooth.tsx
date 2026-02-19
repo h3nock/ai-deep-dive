@@ -128,7 +128,7 @@ export function BinaryVsSmooth() {
         3 Dimensions · Different Frequencies
       </div>
 
-      <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="p-4 bg-terminal rounded-lg border border-border">
         {/* Controls */}
         <div className="flex items-center gap-4 mb-4">
           <button
@@ -187,7 +187,7 @@ export function BinaryVsSmooth() {
                 </div>
 
                 {/* Binary graph */}
-                <div className="bg-zinc-900/50 rounded border border-zinc-800 p-1 relative">
+                <div className="bg-zinc-900/50 rounded border border-border p-1 relative">
                   <svg
                     className="w-full"
                     viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
@@ -213,7 +213,7 @@ export function BinaryVsSmooth() {
                 </div>
 
                 {/* Smooth graph */}
-                <div className="bg-zinc-900/50 rounded border border-zinc-800 p-1 relative">
+                <div className="bg-zinc-900/50 rounded border border-border p-1 relative">
                   <svg
                     className="w-full"
                     viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}

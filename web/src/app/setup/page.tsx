@@ -21,7 +21,7 @@ function CodeBlock({ children }: { children: string }) {
         marginBottom: "var(--space-flow)",
       }}
     >
-      <pre className="p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-secondary overflow-x-auto">
+      <pre className="p-4 bg-terminal rounded-lg border border-border font-mono text-sm text-secondary overflow-x-auto">
         {children}
       </pre>
       <button

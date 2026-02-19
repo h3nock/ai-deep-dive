@@ -233,7 +233,7 @@ export default async function RoadmapPage({
                 </div>
 
                 {/* Chapter Timeline */}
-                <div className="relative ml-4 pl-4 border-l border-zinc-800">
+                <div className="relative ml-4 pl-4 border-l border-border">
                   {phaseChapters.map((post) => {
                     const chapterChallengeIds = challengeIdsBySlug[post.slug] ?? [];
                     return (

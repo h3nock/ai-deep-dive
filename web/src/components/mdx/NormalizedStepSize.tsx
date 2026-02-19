@@ -49,7 +49,7 @@ export function NormalizedStepSize() {
 
   return (
     <div className="my-6">
-      <div className="p-5 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="p-5 bg-terminal rounded-lg border border-border">
         
         {/* Controls row */}
         <div className="flex items-center gap-4 mb-6">

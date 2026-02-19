@@ -43,7 +43,7 @@ export function CourseCard({
         "card-glow",
         isAvailable 
           ? "card-glow-interactive border-border" 
-          : "card-glow-disabled border-zinc-800/50 grayscale-[30%]"
+          : "card-glow-disabled border-border/50 grayscale-[30%]"
       )}
     >
       <div className="flex items-start justify-between mb-4">

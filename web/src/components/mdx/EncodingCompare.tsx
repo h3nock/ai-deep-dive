@@ -86,7 +86,7 @@ export function EncodingCompare() {
       </div>
 
       {/* Terminal-style container - per COMPONENT_GUIDE Pattern 1 */}
-      <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="p-4 bg-terminal rounded-lg border border-border">
         {/* Input row */}
         <div className="flex items-center justify-center gap-3 mb-4">
           <input

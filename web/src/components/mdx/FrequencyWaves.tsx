@@ -100,7 +100,7 @@ export function FrequencyWaves() {
         Multi-Frequency Encoding: Clocks + Waves
       </div>
 
-      <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="p-4 bg-terminal rounded-lg border border-border">
         {/* Controls - aligned with wave rows below */}
         <div className="flex items-center gap-3 mb-4">
           {/* Play/Pause Button - same size as clock container */}

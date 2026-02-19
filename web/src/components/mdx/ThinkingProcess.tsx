@@ -100,7 +100,7 @@ export function ThinkingProcess({
       >
         <button
           onClick={() => setIsAnswerOpen(!isAnswerOpen)}
-          className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-zinc-100 border border-zinc-800 hover:border-zinc-600 rounded-lg transition-all duration-200"
+          className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-zinc-100 border border-border hover:border-zinc-600 rounded-lg transition-all duration-200"
         >
           <ChevronDown
             className={`w-4 h-4 transition-transform duration-200 ${
@@ -113,7 +113,7 @@ export function ThinkingProcess({
 
       {/* Answer content - subtle left accent to mark the answer zone */}
       {isAnswerOpen && (
-        <div className="border-l-2 border-zinc-800 pl-5 animate-in fade-in slide-in-from-top-3 duration-300 prose prose-invert max-w-none [&>hr]:border-zinc-800 [&>hr]:my-8">
+        <div className="border-l-2 border-border pl-5 animate-in fade-in slide-in-from-top-3 duration-300 prose prose-invert max-w-none [&>hr]:border-border [&>hr]:my-8">
           {children}
         </div>
       )}

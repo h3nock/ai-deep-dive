@@ -50,7 +50,7 @@ export function AutoResizingEditor({
   return (
     <div
       style={{ height: height, transition: "height 0.1s ease-out" }}
-      className="w-full rounded-md overflow-hidden bg-[#09090B]"
+      className="w-full rounded-md overflow-hidden bg-background"
     >
       <Editor
         height={height}
@@ -60,7 +60,7 @@ export function AutoResizingEditor({
         theme={MONACO_THEME_NAME}
         beforeMount={handleBeforeMount}
         onMount={handleEditorDidMount}
-        loading={<div className="w-full h-full bg-[#09090B]" />}
+        loading={<div className="w-full h-full bg-background" />}
         options={{
           minimap: { enabled: false },
           fontSize: 14,
