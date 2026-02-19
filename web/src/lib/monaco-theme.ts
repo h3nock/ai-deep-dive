@@ -2,7 +2,9 @@ import type { editor } from "monaco-editor";
 
 export type ColorMode = "dark" | "light";
 
-export const MONACO_THEME_NAME = "zinc-dark";
+export function getMonacoThemeName(mode: ColorMode): string {
+  return mode === "light" ? "zinc-light" : "zinc-dark";
+}
 
 const DARK_COLORS: editor.IStandaloneThemeData["colors"] = {
   "editor.background": "#09090B",
@@ -16,10 +18,21 @@ const DARK_COLORS: editor.IStandaloneThemeData["colors"] = {
   "scrollbarSlider.hoverBackground": "#3f3f4680",
 };
 
+const LIGHT_COLORS: editor.IStandaloneThemeData["colors"] = {
+  "editor.background": "#ffffff",
+  "editor.foreground": "#3f3f46",
+  "editor.lineHighlightBackground": "#f4f4f5",
+  "editor.selectionBackground": "#d4d4d8",
+  "editorGutter.background": "#ffffff",
+  "editorCursor.foreground": "#18181B",
+  "minimap.background": "#ffffff",
+  "scrollbarSlider.background": "#d4d4d880",
+  "scrollbarSlider.hoverBackground": "#a1a1aa80",
+};
+
 export function createMonacoTheme(mode: ColorMode = "dark"): editor.IStandaloneThemeData {
   if (mode === "light") {
-    // Stub: returns dark values until light palette is defined in Group 6
-    return { base: "vs-dark", inherit: true, rules: [], colors: DARK_COLORS };
+    return { base: "vs", inherit: true, rules: [], colors: LIGHT_COLORS };
   }
   return { base: "vs-dark", inherit: true, rules: [], colors: DARK_COLORS };
 }

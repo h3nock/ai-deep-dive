@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useTheme } from "next-themes";
 import {
   Play,
   CheckCircle2,
@@ -35,7 +36,7 @@ import { bundleToTestConfig, fetchPublicBundle } from "@/lib/judge-public-tests"
 import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
 import type { JudgeJobResult } from "@/lib/judge-client";
 import type { Challenge } from "@/lib/challenge-types";
-import { createMonacoTheme, MONACO_THEME_NAME } from "@/lib/monaco-theme";
+import { createMonacoTheme, getMonacoThemeName } from "@/lib/monaco-theme";
 import type {
   TestCase,
   MonacoEditorInstance,
@@ -157,6 +158,10 @@ function ChallengeEditorContent({
   setActiveChallengeIndex,
   activeChallenge,
 }: ChallengeEditorContentProps) {
+  const { resolvedTheme } = useTheme();
+  const colorMode = resolvedTheme === "light" ? "light" as const : "dark" as const;
+  const monacoInstanceRef = useRef<MonacoInstance | null>(null);
+
   const [code, setCode] = useState("");
   const [isSolved, setIsSolved] = useState(false);
   const [lastRunMode, setLastRunMode] = useState<"run" | "submit" | null>(null);
@@ -393,6 +398,13 @@ function ChallengeEditorContent({
     }
   }, [activeChallenge]);
 
+  // React to theme changes
+  useEffect(() => {
+    if (monacoInstanceRef.current) {
+      monacoInstanceRef.current.editor.setTheme(getMonacoThemeName(colorMode));
+    }
+  }, [colorMode]);
+
   // Load code from localStorage or use initial code when challenge changes
   useEffect(() => {
     if (activeChallenge) {
@@ -613,8 +625,11 @@ function ChallengeEditorContent({
   ) => {
     editorRef.current = editor;
 
+    // Store monaco instance for theme switching
+    monacoInstanceRef.current = monacoInstance;
+
     // Theme is already defined in beforeMount, just ensure it's applied
-    monacoInstance.editor.setTheme(MONACO_THEME_NAME);
+    monacoInstance.editor.setTheme(getMonacoThemeName(colorMode));
 
     // Add Cmd+Enter / Ctrl+Enter shortcut to editor for Submit
     editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter, () => {
@@ -1250,11 +1265,12 @@ function ChallengeEditorContent({
                 defaultLanguage="python"
                 value={code}
                 onChange={(value) => setCode(value || "")}
-                theme={MONACO_THEME_NAME}
+                theme={getMonacoThemeName(colorMode)}
                 onMount={handleEditorDidMount}
                 beforeMount={(monaco) => {
-                  // Define theme before mount to prevent flash
-                  monaco.editor.defineTheme(MONACO_THEME_NAME, createMonacoTheme("dark"));
+                  // Define both themes before mount to prevent flash
+                  monaco.editor.defineTheme(getMonacoThemeName("dark"), createMonacoTheme("dark"));
+                  monaco.editor.defineTheme(getMonacoThemeName("light"), createMonacoTheme("light"));
                 }}
                 loading={
                   <div className="w-full h-full bg-background pt-2 pl-4 font-mono text-sm leading-5">

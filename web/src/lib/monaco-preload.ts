@@ -3,7 +3,7 @@
 // This is a common best practice for browser-based editors
 
 import { loader } from "@monaco-editor/react";
-import { createMonacoTheme, MONACO_THEME_NAME } from "@/lib/monaco-theme";
+import { createMonacoTheme, getMonacoThemeName } from "@/lib/monaco-theme";
 
 let isPreloading = false;
 let isLoaded = false;
@@ -30,8 +30,9 @@ export async function preloadMonaco(): Promise<void> {
     // Get the Monaco instance - this triggers the load
     const monaco = await loader.init();
 
-    // Pre-define our custom theme so it's ready immediately when editor mounts
-    monaco.editor.defineTheme(MONACO_THEME_NAME, createMonacoTheme("dark"));
+    // Pre-define both themes so they're ready immediately when editor mounts
+    monaco.editor.defineTheme(getMonacoThemeName("dark"), createMonacoTheme("dark"));
+    monaco.editor.defineTheme(getMonacoThemeName("light"), createMonacoTheme("light"));
 
     isLoaded = true;
   } catch (error) {

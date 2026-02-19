@@ -1,7 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Editor, { OnMount, BeforeMount } from "@monaco-editor/react";
 import type { editor as MonacoEditor } from "monaco-editor";
-import { createMonacoTheme, MONACO_THEME_NAME } from "@/lib/monaco-theme";
+import { createMonacoTheme, getMonacoThemeName } from "@/lib/monaco-theme";
+import { useTheme } from "next-themes";
 
 interface AutoResizingEditorProps {
   value: string;
@@ -20,14 +21,22 @@ export function AutoResizingEditor({
 }: AutoResizingEditorProps) {
   const [height, setHeight] = useState(minHeight);
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<typeof import("monaco-editor") | null>(null);
+  const { resolvedTheme } = useTheme();
+  const mode = resolvedTheme === "light" ? "light" : "dark";
 
   const handleBeforeMount: BeforeMount = (monaco) => {
-    // Define theme before mount to prevent flash
-    monaco.editor.defineTheme(MONACO_THEME_NAME, createMonacoTheme("dark"));
+    // Define both themes before mount to prevent flash
+    monaco.editor.defineTheme(getMonacoThemeName("dark"), createMonacoTheme("dark"));
+    monaco.editor.defineTheme(getMonacoThemeName("light"), createMonacoTheme("light"));
   };
 
-  const handleEditorDidMount: OnMount = (editor) => {
+  const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    monacoRef.current = monaco;
+
+    // Set theme to match current mode
+    monaco.editor.setTheme(getMonacoThemeName(mode));
 
     // Initial resize
     updateHeight();
@@ -37,6 +46,13 @@ export function AutoResizingEditor({
       updateHeight();
     });
   };
+
+  // React to theme changes
+  useEffect(() => {
+    if (monacoRef.current) {
+      monacoRef.current.editor.setTheme(getMonacoThemeName(mode));
+    }
+  }, [mode]);
 
   const updateHeight = () => {
     if (editorRef.current) {
@@ -57,7 +73,7 @@ export function AutoResizingEditor({
         defaultLanguage={language}
         value={value}
         onChange={onChange}
-        theme={MONACO_THEME_NAME}
+        theme={getMonacoThemeName(mode)}
         beforeMount={handleBeforeMount}
         onMount={handleEditorDidMount}
         loading={<div className="w-full h-full bg-background" />}
