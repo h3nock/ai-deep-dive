@@ -82,9 +82,9 @@ export function ConfirmModal({
         "bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:bg-amber-500/30 hover:border-amber-400",
     },
     default: {
-      icon: "text-zinc-400",
+      icon: "text-secondary",
       confirmButton:
-        "bg-zinc-800 text-secondary border border-zinc-700 hover:bg-zinc-700 hover:text-primary",
+        "bg-surface text-secondary border border-border-hover hover:bg-border-hover hover:text-primary",
     },
   };
 
@@ -135,7 +135,7 @@ export function ConfirmModal({
             <button
               ref={cancelButtonRef}
               onClick={onClose}
-              className="flex-1 h-9 text-sm font-medium rounded-lg text-muted bg-transparent border border-border hover:text-secondary hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              className="flex-1 h-9 text-sm font-medium rounded-lg text-muted bg-transparent border border-border hover:text-secondary hover:border-border-hover hover:bg-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-border-hover focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
             >
               {cancelText}
             </button>
@@ -145,7 +145,7 @@ export function ConfirmModal({
                 onConfirm();
                 onClose();
               }}
-              className={`flex-1 h-9 text-sm font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${styles.confirmButton}`}
+              className={`flex-1 h-9 text-sm font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-border-hover focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${styles.confirmButton}`}
             >
               {confirmText}
             </button>

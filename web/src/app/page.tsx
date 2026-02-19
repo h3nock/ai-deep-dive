@@ -44,7 +44,7 @@ export default async function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="#courses"
-                className="px-6 py-3 rounded-lg bg-primary hover:bg-zinc-200 text-background font-medium transition-all hover:shadow-lg hover:shadow-zinc-500/10"
+                className="px-6 py-3 rounded-lg bg-primary hover:bg-primary-hover text-background font-medium transition-all hover:shadow-lg hover:shadow-muted/10"
               >
                 Explore Courses
               </Link>
@@ -104,7 +104,7 @@ export default async function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-2">
-                <div className="text-4xl font-bold text-zinc-700">01</div>
+                <div className="text-4xl font-bold text-border-hover">01</div>
                 <h3 className="font-semibold text-primary">Theory First</h3>
                 <p className="text-sm text-secondary leading-relaxed">
                   Understand the why before the how.
@@ -112,7 +112,7 @@ export default async function Home() {
               </div>
 
               <div className="space-y-2">
-                <div className="text-4xl font-bold text-zinc-700">02</div>
+                <div className="text-4xl font-bold text-border-hover">02</div>
                 <h3 className="font-semibold text-primary">
                   Build It Yourself
                 </h3>
@@ -122,7 +122,7 @@ export default async function Home() {
               </div>
 
               <div className="space-y-2">
-                <div className="text-4xl font-bold text-zinc-700">03</div>
+                <div className="text-4xl font-bold text-border-hover">03</div>
                 <h3 className="font-semibold text-primary">Make It Work</h3>
                 <p className="text-sm text-secondary leading-relaxed">
                   Train on real data. End with something you can use.

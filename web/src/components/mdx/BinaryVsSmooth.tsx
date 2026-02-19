@@ -139,16 +139,16 @@ export function BinaryVsSmooth() {
                 startTimeRef.current = null;
               }
             }}
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors border border-zinc-700"
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface hover:bg-border-hover transition-colors border border-border-hover"
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
-              <svg className="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                 <rect x="6" y="4" width="4" height="16" />
                 <rect x="14" y="4" width="4" height="16" />
               </svg>
             ) : (
-              <svg className="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                 <polygon points="5,3 19,12 5,21" />
               </svg>
             )}
@@ -184,11 +184,11 @@ export function BinaryVsSmooth() {
                 {/* Label */}
                 <div className="text-right pr-1">
                   <div className="text-[11px] font-medium text-primary leading-tight">{dim.label}</div>
-                  <div className="text-[9px] text-zinc-500">{dim.speedLabel}</div>
+                  <div className="text-[9px] text-muted">{dim.speedLabel}</div>
                 </div>
 
                 {/* Binary graph */}
-                <div className="bg-zinc-900/50 rounded border border-border p-1 relative">
+                <div className="bg-background/50 rounded border border-border p-1 relative">
                   <svg
                     className="w-full"
                     viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
@@ -215,7 +215,7 @@ export function BinaryVsSmooth() {
                 </div>
 
                 {/* Smooth graph */}
-                <div className="bg-zinc-900/50 rounded border border-border p-1 relative">
+                <div className="bg-background/50 rounded border border-border p-1 relative">
                   <svg
                     className="w-full"
                     viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}

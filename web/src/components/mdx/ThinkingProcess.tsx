@@ -69,7 +69,7 @@ export function ThinkingProcess({
         <div style={{ marginBottom: "var(--space-flow)" }}>
           <button
             onClick={() => setIsHintOpen(!isHintOpen)}
-            className="group flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="group flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors"
           >
             <ChevronDown
               className={`w-4 h-4 transition-transform duration-200 ${
@@ -100,7 +100,7 @@ export function ThinkingProcess({
       >
         <button
           onClick={() => setIsAnswerOpen(!isAnswerOpen)}
-          className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-zinc-100 border border-border hover:border-zinc-600 rounded-lg transition-all duration-200"
+          className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-secondary hover:text-primary border border-border hover:border-border-hover rounded-lg transition-all duration-200"
         >
           <ChevronDown
             className={`w-4 h-4 transition-transform duration-200 ${

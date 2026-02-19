@@ -26,7 +26,7 @@ function CodeBlock({ children }: { children: string }) {
       </pre>
       <button
         onClick={handleCopy}
-        className="absolute top-3 right-3 p-1.5 rounded bg-zinc-800 text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-3 right-3 p-1.5 rounded bg-surface text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
       >
         {copied ? (
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />

@@ -13,8 +13,8 @@ interface CalloutProps {
 
 const styles = {
   note: {
-    border: "border-zinc-700",
-    icon: "text-zinc-400",
+    border: "border-border-hover",
+    icon: "text-secondary",
     Icon: Info,
   },
   info: {
@@ -28,8 +28,8 @@ const styles = {
     Icon: AlertTriangle,
   },
   tip: {
-    border: "border-zinc-700",
-    icon: "text-zinc-400",
+    border: "border-border-hover",
+    icon: "text-secondary",
     Icon: Lightbulb,
   },
   success: {

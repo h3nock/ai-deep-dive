@@ -16,8 +16,8 @@ const MAX_CHARS = 5;
  *
  * COLOR JUSTIFICATION (per COLOR_GUIDE.md):
  * - bg-emerald-500/20 + text-emerald-400: UTF-8 bytes - success (efficient encoding)
- * - bg-zinc-900 + text-zinc-700: Padding zeros - muted/disabled (wasted space)
- * - bg-zinc-800 + text-secondary: Non-zero UTF-32 bytes - neutral data
+ * - bg-background + text-border-hover: Padding zeros - muted/disabled (wasted space)
+ * - bg-surface + text-secondary: Non-zero UTF-32 bytes - neutral data
  * - text-sky-400: Savings percentage - info state
  * - text-muted: Labels, row headers - meta info
  * - text-rose-400: Counter at limit - error state
@@ -93,7 +93,7 @@ export function EncodingCompare() {
             type="text"
             value={text}
             onChange={handleChange}
-            className="w-36 bg-surface border border-border rounded-lg px-3 py-2 text-lg font-mono text-primary text-center focus:outline-none focus:border-zinc-600 transition-colors placeholder:text-muted"
+            className="w-36 bg-surface border border-border rounded-lg px-3 py-2 text-lg font-mono text-primary text-center focus:outline-none focus:border-border-hover transition-colors placeholder:text-muted"
             placeholder="Type..."
           />
           <span className={`text-xs font-mono ${getCounterColor()}`}>
@@ -161,8 +161,8 @@ export function EncodingCompare() {
                             key={idx}
                             className={`w-6 h-6 flex items-center justify-center rounded text-xs font-mono ${
                               b === 0
-                                ? "bg-zinc-900 text-zinc-700"
-                                : "bg-zinc-800 text-secondary"
+                                ? "bg-background text-border-hover"
+                                : "bg-surface text-secondary"
                             }`}
                           >
                             {b.toString(16).toUpperCase().padStart(2, "0")}

@@ -50,7 +50,7 @@ export function CourseCard({
         <div
           className={cn(
             "w-10 h-10 rounded-lg bg-surface flex items-center justify-center text-muted transition-colors duration-300",
-            isAvailable && "group-hover:bg-zinc-800 group-hover:text-primary"
+            isAvailable && "group-hover:bg-border group-hover:text-primary"
           )}
         >
           {icon}

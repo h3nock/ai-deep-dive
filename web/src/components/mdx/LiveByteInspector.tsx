@@ -17,7 +17,7 @@ const MAX_CHARS = 15;
  * - text-secondary: Data values (decimal bytes) - standard body text
  * - text-muted: Labels, code points, hex values - meta info
  * - text-emerald-400: Total bytes count - success/positive outcome
- * - bg-zinc-800: Byte pills background - neutral container
+ * - bg-surface: Byte pills background - neutral container
  * - text-rose-400: Counter at limit - error state
  * - text-amber-400: Counter near limit - warning state
  */
@@ -84,7 +84,7 @@ export function LiveByteInspector() {
             type="text"
             value={text}
             onChange={handleChange}
-            className="w-64 bg-surface border border-border rounded-lg px-4 py-2 text-xl font-mono text-primary text-center focus:outline-none focus:border-zinc-600 transition-colors placeholder:text-muted"
+            className="w-64 bg-surface border border-border rounded-lg px-4 py-2 text-xl font-mono text-primary text-center focus:outline-none focus:border-border-hover transition-colors placeholder:text-muted"
             placeholder="Type something..."
           />
           <span className={`text-xs font-mono ${getCounterColor()}`}>
@@ -132,7 +132,7 @@ export function LiveByteInspector() {
                     return (
                       <div key={idx} className="flex flex-col items-center">
                         {/* Decimal value */}
-                        <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-zinc-800 text-secondary font-mono text-sm font-medium">
+                        <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface text-secondary font-mono text-sm font-medium">
                           {b}
                         </div>
                         {/* Hex value */}

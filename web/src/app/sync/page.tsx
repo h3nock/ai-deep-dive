@@ -155,7 +155,7 @@ export default function SyncPage() {
               href={
                 viewModel.status === "success" ? `/${viewModel.courseId}` : "/"
               }
-              className="block w-full px-4 py-2 bg-surface border border-border rounded-lg text-primary hover:bg-zinc-800 transition-colors"
+              className="block w-full px-4 py-2 bg-surface border border-border rounded-lg text-primary hover:bg-border transition-colors"
             >
               Continue Course
             </Link>

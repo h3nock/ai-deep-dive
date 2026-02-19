@@ -122,7 +122,7 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
           </button>
 
           {isExpanded && (
-            <div className="mt-3 text-sm text-secondary font-sans prose prose-invert prose-sm max-w-none [&>p]:my-2 [&>ul]:my-2 [&>ol]:my-2 [&_code]:text-xs [&_code]:bg-zinc-800 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
+            <div className="mt-3 text-sm text-secondary font-sans prose prose-invert prose-sm max-w-none [&>p]:my-2 [&>ul]:my-2 [&>ol]:my-2 [&_code]:text-xs [&_code]:bg-surface [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
@@ -1057,7 +1057,7 @@ function ChallengeEditorContent({
       {/* Left Panel - Prose */}
       <div
         className={`flex flex-col bg-background overflow-hidden transition-colors border-r ${
-          activePane === "prose" ? "border-zinc-600" : "border-border"
+          activePane === "prose" ? "border-border-hover" : "border-border"
         }`}
         style={{ width: `${leftPanelWidth}%` }}
         onClick={() => setActivePane("prose")}
@@ -1105,7 +1105,7 @@ function ChallengeEditorContent({
             </ReactMarkdown>
 
             {activeChallenge.hint && (
-              <div className="mt-6 pl-4 border-l-2 border-zinc-600 not-prose">
+              <div className="mt-6 pl-4 border-l-2 border-border-hover not-prose">
                 <p className="text-xs font-medium text-muted uppercase tracking-wider mb-1">
                   Hint
                 </p>
@@ -1144,7 +1144,7 @@ function ChallengeEditorContent({
             className={`w-1.5 cursor-col-resize z-10 flex items-center justify-center group transition-colors duration-150 ${
               isDraggingLeft
                 ? "bg-emerald-500/50"
-                : "bg-transparent hover:bg-zinc-700"
+                : "bg-transparent hover:bg-border-hover"
             }`}
             onMouseDown={startResizingLeft}
           >
@@ -1152,7 +1152,7 @@ function ChallengeEditorContent({
               className={`w-0.5 h-12 rounded-full transition-all duration-150 ${
                 isDraggingLeft
                   ? "bg-emerald-400 h-16"
-                  : "bg-zinc-600 group-hover:bg-zinc-500 group-hover:h-16"
+                  : "bg-muted group-hover:bg-secondary group-hover:h-16"
               }`}
             />
           </div>
@@ -1161,7 +1161,7 @@ function ChallengeEditorContent({
           <div
             ref={rightPanelRef}
             className={`flex-1 flex flex-col bg-background min-w-[300px] border-l transition-colors overflow-hidden ${
-              activePane === "editor" ? "border-zinc-600" : "border-border"
+              activePane === "editor" ? "border-border-hover" : "border-border"
             }`}
             onClick={() => setActivePane("editor")}
           >
@@ -1181,8 +1181,8 @@ function ChallengeEditorContent({
                   onClick={() => setIsVimMode(!isVimMode)}
                   className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
                     isVimMode
-                      ? "text-secondary bg-zinc-800"
-                      : "text-muted hover:text-secondary hover:bg-zinc-800"
+                      ? "text-secondary bg-surface"
+                      : "text-muted hover:text-secondary hover:bg-surface"
                   }`}
                   title="Toggle Vim keybindings"
                   aria-label={isVimMode ? "Disable Vim mode" : "Enable Vim mode"}
@@ -1199,7 +1199,7 @@ function ChallengeEditorContent({
                   disabled={isRunning}
                   title="Reset to initial code"
                   aria-label="Reset code to initial template"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-secondary hover:text-primary hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-secondary hover:text-primary hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                   Reset
@@ -1213,7 +1213,7 @@ function ChallengeEditorContent({
                   disabled={isRunning}
                   title={`Run public tests (${runShortcut})`}
                   aria-label={`Run public tests, keyboard shortcut ${runShortcut}`}
-                  className="flex items-center gap-2 px-4 py-1.5 hover:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-secondary hover:text-primary text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-1.5 hover:bg-surface disabled:text-muted disabled:cursor-not-allowed text-secondary hover:text-primary text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning && lastRunMode === "run" ? (
                     <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
@@ -1260,24 +1260,24 @@ function ChallengeEditorContent({
                   <div className="w-full h-full bg-background pt-2 pl-4 font-mono text-sm leading-5">
                     <div className="space-y-0 animate-pulse">
                       <div className="flex items-center h-5">
-                        <span className="text-zinc-700 w-8 text-right select-none pr-4">1</span>
-                        <div className="h-3.5 bg-zinc-800/60 rounded w-56" />
+                        <span className="text-border-hover w-8 text-right select-none pr-4">1</span>
+                        <div className="h-3.5 bg-surface/60 rounded w-56" />
                       </div>
                       <div className="flex items-center h-5">
-                        <span className="text-zinc-700 w-8 text-right select-none pr-4">2</span>
-                        <div className="ml-6 h-3.5 bg-zinc-800/40 rounded w-72" />
+                        <span className="text-border-hover w-8 text-right select-none pr-4">2</span>
+                        <div className="ml-6 h-3.5 bg-surface/40 rounded w-72" />
                       </div>
                       <div className="flex items-center h-5">
-                        <span className="text-zinc-700 w-8 text-right select-none pr-4">3</span>
-                        <div className="ml-6 h-3.5 bg-zinc-800/60 rounded w-48" />
+                        <span className="text-border-hover w-8 text-right select-none pr-4">3</span>
+                        <div className="ml-6 h-3.5 bg-surface/60 rounded w-48" />
                       </div>
                       <div className="flex items-center h-5">
-                        <span className="text-zinc-700 w-8 text-right select-none pr-4">4</span>
-                        <div className="ml-6 h-3.5 bg-zinc-800/40 rounded w-80" />
+                        <span className="text-border-hover w-8 text-right select-none pr-4">4</span>
+                        <div className="ml-6 h-3.5 bg-surface/40 rounded w-80" />
                       </div>
                       <div className="flex items-center h-5">
-                        <span className="text-zinc-700 w-8 text-right select-none pr-4">5</span>
-                        <div className="ml-6 h-3.5 bg-zinc-800/60 rounded w-64" />
+                        <span className="text-border-hover w-8 text-right select-none pr-4">5</span>
+                        <div className="ml-6 h-3.5 bg-surface/60 rounded w-64" />
                       </div>
                     </div>
                   </div>
@@ -1306,7 +1306,7 @@ function ChallengeEditorContent({
                 className={`h-2 flex-shrink-0 cursor-row-resize z-10 flex items-center justify-center border-t transition-colors duration-150 group ${
                   isDraggingBottom
                     ? "bg-emerald-500/20 border-emerald-500/50"
-                    : "bg-background border-border hover:bg-zinc-800/50 hover:border-zinc-600"
+                    : "bg-background border-border hover:bg-surface/50 hover:border-border-hover"
                 }`}
                 onMouseDown={startResizingBottom}
               >
@@ -1314,7 +1314,7 @@ function ChallengeEditorContent({
                   className={`h-0.5 rounded-full transition-all duration-150 ${
                     isDraggingBottom
                       ? "w-16 bg-emerald-400"
-                      : "w-8 bg-zinc-600 group-hover:w-12 group-hover:bg-zinc-500"
+                      : "w-8 bg-muted group-hover:w-12 group-hover:bg-secondary"
                   }`}
                 />
               </div>
@@ -1606,7 +1606,7 @@ function ChallengeEditorContent({
                                                 activeChallengeIndex + 1
                                               )
                                             }
-                                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 text-secondary hover:text-primary rounded-md transition-colors group"
+                                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-surface hover:bg-border-hover text-secondary hover:text-primary rounded-md transition-colors group"
                                           >
                                             <span>Next Challenge</span>
                                             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

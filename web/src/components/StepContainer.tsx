@@ -211,7 +211,7 @@ export function StepContainer({
   const backLink = getBackLink();
 
   return (
-    <div className="min-h-screen bg-background text-secondary font-sans selection:bg-zinc-500/20">
+    <div className="min-h-screen bg-background text-secondary font-sans selection:bg-muted/20">
       <div className="flex h-screen">
         {/* Main Content Area - Full Width for Guide */}
         <div className="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto">
@@ -285,7 +285,7 @@ export function StepContainer({
                     <Link
                       href={backLink.href}
                       prefetch={true}
-                      className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg border border-border text-muted hover:text-primary hover:border-zinc-600 transition-colors shrink-0"
+                      className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg border border-border text-muted hover:text-primary hover:border-border-hover transition-colors shrink-0"
                       title={backLink.label}
                     >
                       <Map className="w-5 h-5" />
@@ -323,7 +323,7 @@ export function StepContainer({
                       <Link
                         href={`/${collection}/${prevPost.slug}`}
                         prefetch={true}
-                        className="group flex flex-col p-5 rounded-xl border border-border hover:border-zinc-600 hover:bg-surface transition-all"
+                        className="group flex flex-col p-5 rounded-xl border border-border hover:border-border-hover hover:bg-surface transition-all"
                       >
                         <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">
                           <ChevronLeft className="w-3 h-3" /> Previous
@@ -340,7 +340,7 @@ export function StepContainer({
                       <Link
                         href={`/${collection}/${nextPost.slug}`}
                         prefetch={true}
-                        className="group flex flex-col items-end text-right p-5 rounded-xl border border-border hover:border-zinc-600 hover:bg-surface transition-all"
+                        className="group flex flex-col items-end text-right p-5 rounded-xl border border-border hover:border-border-hover hover:bg-surface transition-all"
                       >
                         <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">
                           Next <ChevronRight className="w-3 h-3" />

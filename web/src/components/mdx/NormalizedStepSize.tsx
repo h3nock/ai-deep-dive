@@ -55,7 +55,7 @@ export function NormalizedStepSize() {
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="w-8 h-8 flex items-center justify-center rounded bg-zinc-800 hover:bg-zinc-700 transition-colors shrink-0"
+            className="w-8 h-8 flex items-center justify-center rounded bg-surface hover:bg-border-hover transition-colors shrink-0"
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
@@ -81,7 +81,7 @@ export function NormalizedStepSize() {
                 setLength(parseInt(e.target.value));
                 setIsPlaying(false);
               }}
-              className="w-full h-1 bg-zinc-700 rounded appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
+              className="w-full h-1 bg-border-hover rounded appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
             />
           </div>
           
@@ -113,7 +113,7 @@ export function NormalizedStepSize() {
           {/* Line and dots container */}
           <div className="relative h-12">
             {/* The line - absolute center */}
-            <div className="absolute top-[6px] left-0 right-0 h-[2px] bg-zinc-600 rounded-full" />
+            <div className="absolute top-[6px] left-0 right-0 h-[2px] bg-muted rounded-full" />
             
             {/* Dots and labels */}
             {ticks.map((value, i) => (
@@ -127,7 +127,7 @@ export function NormalizedStepSize() {
                 }}
               >
                 {/* Dot - 14px total (w-3.5 h-3.5), line at 6px from top passes through center (6 + 1 = 7px center) */}
-                <div className="w-3.5 h-3.5 rounded-full bg-zinc-800 border-2 border-zinc-500" />
+                <div className="w-3.5 h-3.5 rounded-full bg-surface border-2 border-muted" />
                 <span className="text-[10px] font-mono text-muted mt-1.5 tabular-nums">
                   {value.toFixed(2)}
                 </span>

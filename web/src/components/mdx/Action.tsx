@@ -24,9 +24,9 @@ export function Action({ children }: { children: React.ReactNode }) {
         {/* Terminal Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface">
           <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-zinc-700"></div>
-            <div className="w-3 h-3 rounded-full bg-zinc-700"></div>
-            <div className="w-3 h-3 rounded-full bg-zinc-700"></div>
+            <div className="w-3 h-3 rounded-full bg-border-hover"></div>
+            <div className="w-3 h-3 rounded-full bg-border-hover"></div>
+            <div className="w-3 h-3 rounded-full bg-border-hover"></div>
           </div>
           <div className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-2">
             <Terminal className="w-3 h-3" />

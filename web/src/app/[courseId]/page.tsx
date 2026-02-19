@@ -156,10 +156,10 @@ export default async function RoadmapPage({
         {/* Prerequisites & What You'll Build - Inverted T Layout */}
         <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 pb-6 mb-12">
           {/* Center vertical line (hidden on mobile) - connects to horizontal line */}
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-zinc-800" />
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-border" />
 
           {/* Horizontal bottom line (the T's crossbar) */}
-          <div className="absolute left-0 right-0 bottom-0 h-px bg-zinc-800" />
+          <div className="absolute left-0 right-0 bottom-0 h-px bg-border" />
 
           {/* Prerequisites */}
           <div className="md:pr-8">
@@ -172,7 +172,7 @@ export default async function RoadmapPage({
                   key={i}
                   className="flex items-start gap-3 text-base text-muted leading-relaxed"
                 >
-                  <span className="text-zinc-500 shrink-0 mt-[6px] text-[6px]">
+                  <span className="text-muted shrink-0 mt-[6px] text-[6px]">
                     ●
                   </span>
                   <span>{prereq}</span>
@@ -193,7 +193,7 @@ export default async function RoadmapPage({
                     key={i}
                     className="flex items-start gap-3 text-base text-muted leading-relaxed"
                   >
-                    <span className="text-zinc-500 shrink-0 mt-[6px] text-[6px]">
+                    <span className="text-muted shrink-0 mt-[6px] text-[6px]">
                       ●
                     </span>
                     <span>{item}</span>
@@ -252,7 +252,7 @@ export default async function RoadmapPage({
                       </div>
 
                       {/* Content Floating on Void - Inset from borders */}
-                      <div className="relative my-1 py-2 px-4 rounded-lg transition-all duration-150 hover:bg-zinc-900/50 group-hover:translate-x-0.5">
+                      <div className="relative my-1 py-2 px-4 rounded-lg transition-all duration-150 hover:bg-surface/50 group-hover:translate-x-0.5">
                         <div className="flex items-center gap-4">
                           {/* Step Number - Subtle */}
                           <div className="shrink-0 w-8 h-8 flex items-center justify-center text-muted/50 font-mono text-sm group-hover:text-primary transition-colors">
@@ -264,7 +264,7 @@ export default async function RoadmapPage({
                             <h3 className="text-sm md:text-base font-medium text-primary group-hover:text-primary transition-colors">
                               {post.title}
                             </h3>
-                            <p className="text-muted text-xs md:text-sm line-clamp-1 mt-0.5 group-hover:text-zinc-400 transition-colors">
+                            <p className="text-muted text-xs md:text-sm line-clamp-1 mt-0.5 group-hover:text-secondary transition-colors">
                               {post.description}
                             </p>
                           </div>
@@ -277,7 +277,7 @@ export default async function RoadmapPage({
                                 challengeIds={chapterChallengeIds}
                               />
                             )}
-                            <div className="text-zinc-700 group-hover:text-primary group-hover:translate-x-1 transition-all duration-150">
+                            <div className="text-border-hover group-hover:text-primary group-hover:translate-x-1 transition-all duration-150">
                               <ArrowRight className="w-4 h-4" />
                             </div>
                           </div>

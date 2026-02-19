@@ -43,14 +43,14 @@ export function BaseProgressBar({
       )}
       <div
         className={cn(
-          "w-full bg-zinc-800 rounded-full overflow-hidden",
+          "w-full bg-surface rounded-full overflow-hidden",
           size === "sm" ? "h-0.5" : "h-1"
         )}
       >
         <div
           className={cn(
             "h-full rounded-full transition-all duration-500 ease-out",
-            percentage === 100 ? "bg-emerald-400" : "bg-zinc-400"
+            percentage === 100 ? "bg-success" : "bg-secondary"
           )}
           style={{ width: isLoaded ? `${percentage}%` : "0%" }}
         />

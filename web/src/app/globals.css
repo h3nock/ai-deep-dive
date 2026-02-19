@@ -81,6 +81,8 @@
   /* Emerald-400 */
   --color-error: #FB7185;
   /* Rose-400 */
+  --color-primary-hover: #E4E4E7;
+  /* Zinc-200 (Filled button hover) */
 
   /* Legacy support */
   --color-foreground: var(--color-secondary);
@@ -114,6 +116,8 @@
   /* Emerald-600 */
   --color-error: #e11d48;
   /* Rose-600 */
+  --color-primary-hover: #27272A;
+  /* Zinc-800 (Filled button hover) */
   --color-foreground: var(--color-secondary);
 }
 
@@ -181,6 +185,11 @@ body {
   background-size: 40px 40px;
   background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+.light .bg-grid-pattern {
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
 }
 
 /* Subtle Gradient Animation */

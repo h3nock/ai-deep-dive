@@ -76,7 +76,7 @@ export function RotationVisualization() {
                     className={`px-2 py-1 text-xs rounded border transition-colors ${
                       isActive
                         ? ''
-                        : 'bg-zinc-800 hover:bg-zinc-700 border-zinc-600 text-secondary'
+                        : 'bg-surface hover:bg-border-hover border-border-hover text-secondary'
                     }`}
                     style={isActive ? {
                       backgroundColor: withAlpha(viz.tertiary, 0.2),
@@ -94,7 +94,7 @@ export function RotationVisualization() {
             </span>
           </div>
 
-          <div className="w-px bg-zinc-700 hidden sm:block" />
+          <div className="w-px bg-border-hover hidden sm:block" />
 
           <div className="flex items-center gap-3">
             <span className="text-secondary">Rotate by:</span>
@@ -108,7 +108,7 @@ export function RotationVisualization() {
                     className={`px-2 py-1 text-xs rounded border transition-colors ${
                       isActive
                         ? ''
-                        : 'bg-zinc-800 hover:bg-zinc-700 border-zinc-600 text-secondary'
+                        : 'bg-surface hover:bg-border-hover border-border-hover text-secondary'
                     }`}
                     style={isActive ? {
                       backgroundColor: withAlpha(viz.primary, 0.2),

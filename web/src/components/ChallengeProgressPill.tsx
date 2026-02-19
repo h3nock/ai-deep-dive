@@ -33,7 +33,7 @@ export function ChallengeProgressPill({
     ? "bg-emerald-400/55"
     : isInProgress
       ? "bg-amber-400/50"
-      : "bg-zinc-600/35";
+      : "bg-muted/35";
 
   const textClass =
     isLoaded && solvedCount > 0 ? "text-secondary" : "text-muted";

@@ -55,7 +55,7 @@ export function MarkCompleteButton({
           "w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all duration-200",
           completed
             ? "border-emerald-400/50"
-            : "border-border group-hover:border-zinc-600"
+            : "border-border group-hover:border-border-hover"
         )}
       >
         {completed && (
