@@ -140,6 +140,101 @@ def build_worker_dependencies(
     )
 
 
+def _process_queue_entry(
+    *,
+    stream: str,
+    group: str,
+    consumer: str,
+    worker_profile: str,
+    msg_id: str,
+    fields: dict[str, str],
+    queue: RedisQueue,
+    results: ResultsStore,
+    execution: WorkerExecutionService,
+) -> None:
+    worker_heartbeat(worker_profile, consumer)
+    parsed, parse_error = _parse_queue_message(fields)
+    if parse_error:
+        logger.error(
+            "Invalid queue message: stream=%s group=%s msg_id=%s error=%s",
+            stream,
+            group,
+            msg_id,
+            parse_error,
+        )
+        job_id = fields.get("job_id", "").strip()
+        if job_id:
+            try:
+                persisted = results.mark_error(
+                    job_id,
+                    f"Invalid queue payload: {parse_error}",
+                    error_kind="internal",
+                )
+                if not persisted:
+                    logger.error(
+                        "Failed to persist invalid queue payload error: row not updatable stream=%s msg_id=%s job_id=%s",
+                        stream,
+                        msg_id,
+                        job_id,
+                    )
+            except Exception:
+                logger.exception(
+                    "Failed to persist invalid queue payload error: stream=%s msg_id=%s job_id=%s",
+                    stream,
+                    msg_id,
+                    job_id,
+                )
+        try:
+            queue.ack_and_delete(stream, group, msg_id)
+        except Exception:
+            logger.exception(
+                "Failed to ack/delete invalid queue message: stream=%s group=%s msg_id=%s",
+                stream,
+                group,
+                msg_id,
+            )
+        return
+
+    job = WorkerJob(
+        job_id=parsed["job_id"],
+        problem_key=parsed["problem_key"],
+        kind=parsed["kind"],
+        code=parsed["code"],
+    )
+    created_at = parsed["created_at"]
+
+    execution_started_at: float | None = None
+
+    def _on_started() -> None:
+        nonlocal execution_started_at
+        execution_started_at = time.perf_counter()
+        job_started(worker_profile, job.kind)
+        observe_job_queue_wait(worker_profile, created_at)
+
+    outcome = execution.execute(job, on_started=_on_started)
+
+    if outcome.executed:
+        if execution_started_at is None:
+            execution_started_at = time.perf_counter()
+        duration = time.perf_counter() - execution_started_at
+        observe_job_duration(worker_profile, duration)
+        job_finished(worker_profile, outcome.status, outcome.error_kind)
+
+    worker_heartbeat(worker_profile, consumer)
+
+    if outcome.should_ack:
+        try:
+            queue.ack_and_delete(stream, group, msg_id)
+        except Exception:
+            logger.exception(
+                "Failed to ack/delete processed message: stream=%s group=%s msg_id=%s job_id=%s",
+                stream,
+                group,
+                msg_id,
+                job.job_id,
+            )
+
+
 def main() -> None:
     args = _parse_args()
     register_process_exit()
@@ -156,89 +251,6 @@ def main() -> None:
 
     last_reclaim = 0.0
 
-    def process_entry(msg_id: str, fields: dict[str, str]) -> None:
-        worker_heartbeat(worker_profile, args.consumer)
-        parsed, parse_error = _parse_queue_message(fields)
-        if parse_error:
-            logger.error(
-                "Invalid queue message: stream=%s group=%s msg_id=%s error=%s",
-                args.stream,
-                args.group,
-                msg_id,
-                parse_error,
-            )
-            job_id = fields.get("job_id", "").strip()
-            if job_id:
-                try:
-                    persisted = results.mark_error(
-                        job_id,
-                        f"Invalid queue payload: {parse_error}",
-                        error_kind="internal",
-                    )
-                    if not persisted:
-                        logger.error(
-                            "Failed to persist invalid queue payload error: row not updatable stream=%s msg_id=%s job_id=%s",
-                            args.stream,
-                            msg_id,
-                            job_id,
-                        )
-                except Exception:
-                    logger.exception(
-                        "Failed to persist invalid queue payload error: stream=%s msg_id=%s job_id=%s",
-                        args.stream,
-                        msg_id,
-                        job_id,
-                    )
-            try:
-                queue.ack_and_delete(args.stream, args.group, msg_id)
-            except Exception:
-                logger.exception(
-                    "Failed to ack/delete invalid queue message: stream=%s group=%s msg_id=%s",
-                    args.stream,
-                    args.group,
-                    msg_id,
-                )
-            return
-
-        job = WorkerJob(
-            job_id=parsed["job_id"],
-            problem_key=parsed["problem_key"],
-            kind=parsed["kind"],
-            code=parsed["code"],
-        )
-        created_at = parsed["created_at"]
-
-        execution_started_at: float | None = None
-
-        def _on_started() -> None:
-            nonlocal execution_started_at
-            execution_started_at = time.perf_counter()
-            job_started(worker_profile, job.kind)
-            observe_job_queue_wait(worker_profile, created_at)
-
-        outcome = execution.execute(job, on_started=_on_started)
-
-        if outcome.executed:
-            if execution_started_at is None:
-                execution_started_at = time.perf_counter()
-            duration = time.perf_counter() - execution_started_at
-            observe_job_duration(worker_profile, duration)
-            job_finished(worker_profile, outcome.status, outcome.error_kind)
-
-        worker_heartbeat(worker_profile, args.consumer)
-
-        if outcome.should_ack:
-            try:
-                queue.ack_and_delete(args.stream, args.group, msg_id)
-            except Exception:
-                logger.exception(
-                    "Failed to ack/delete processed message: stream=%s group=%s msg_id=%s job_id=%s",
-                    args.stream,
-                    args.group,
-                    msg_id,
-                    job.job_id,
-                )
-
     while True:
         worker_heartbeat(worker_profile, args.consumer)
         now = time.time()
@@ -251,7 +263,17 @@ def main() -> None:
                 count=dependencies.settings.job_claim_count,
             )
             for msg_id, fields in reclaimed:
-                process_entry(msg_id, fields)
+                _process_queue_entry(
+                    stream=args.stream,
+                    group=args.group,
+                    consumer=args.consumer,
+                    worker_profile=worker_profile,
+                    msg_id=msg_id,
+                    fields=fields,
+                    queue=queue,
+                    results=results,
+                    execution=execution,
+                )
             last_reclaim = now
 
         entry = queue.read(args.stream, args.group, args.consumer)
@@ -259,7 +281,17 @@ def main() -> None:
             continue
 
         msg_id, fields = entry
-        process_entry(msg_id, fields)
+        _process_queue_entry(
+            stream=args.stream,
+            group=args.group,
+            consumer=args.consumer,
+            worker_profile=worker_profile,
+            msg_id=msg_id,
+            fields=fields,
+            queue=queue,
+            results=results,
+            execution=execution,
+        )
 
 
 if __name__ == "__main__":
