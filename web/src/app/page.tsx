@@ -104,17 +104,24 @@ export default async function Home() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="space-y-2">
-                <div className="text-4xl font-bold text-border-hover">01</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+              {/* Connector line between circles (desktop) */}
+              <div className="hidden md:block absolute top-5 left-[calc(16.67%+20px)] right-[calc(16.67%+20px)] h-px bg-border" />
+
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="relative z-10 flex items-center justify-center w-10 h-10 rounded-full border border-border bg-background text-sm font-semibold text-muted">
+                  01
+                </div>
                 <h3 className="font-semibold text-primary">Theory First</h3>
                 <p className="text-sm text-secondary leading-relaxed">
                   Understand the why before the how.
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <div className="text-4xl font-bold text-border-hover">02</div>
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="relative z-10 flex items-center justify-center w-10 h-10 rounded-full border border-border bg-background text-sm font-semibold text-muted">
+                  02
+                </div>
                 <h3 className="font-semibold text-primary">
                   Build It Yourself
                 </h3>
@@ -123,8 +130,10 @@ export default async function Home() {
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <div className="text-4xl font-bold text-border-hover">03</div>
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="relative z-10 flex items-center justify-center w-10 h-10 rounded-full border border-border bg-background text-sm font-semibold text-muted">
+                  03
+                </div>
                 <h3 className="font-semibold text-primary">Make It Work</h3>
                 <p className="text-sm text-secondary leading-relaxed">
                   Train on real data. End with something you can use.
