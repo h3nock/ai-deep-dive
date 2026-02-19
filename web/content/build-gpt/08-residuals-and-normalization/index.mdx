@@ -37,6 +37,10 @@ description: "How residual connections and layer normalization enable deep netwo
   </div>
 
   <Description>
+    The forward pass also suffers from a related problem. Information from early layers must pass through every subsequent transformation to reach the output, and each layer's transformation can distort or overwrite the representations that earlier layers produced. Over enough layers, the representations that earlier layers produced are increasingly likely to be distorted or lost.
+  </Description>
+</Step>
+
 
 <Step title="Residual Connections">
   <Description>
