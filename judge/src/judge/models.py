@@ -67,6 +67,22 @@ class JobResult(BaseModel):
     error_kind: Literal["user", "internal"] | None = None
 
 
+class ReadinessCheck(BaseModel):
+    ok: bool
+    detail: str
+
+
+class ReadinessChecks(BaseModel):
+    redis: ReadinessCheck
+    db: ReadinessCheck
+    problems: ReadinessCheck
+
+
+class ReadinessResponse(BaseModel):
+    status: Literal["ready", "not_ready"]
+    checks: ReadinessChecks
+
+
 class ProblemInfo(BaseModel):
     id: str
     version: str

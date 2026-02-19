@@ -3,10 +3,12 @@
 import logging
 import time
 import uuid
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from judge.config import load_settings
 from judge.metrics import (
@@ -15,7 +17,15 @@ from judge.metrics import (
     render_metrics,
     update_runtime_metrics,
 )
-from judge.models import JobResult, ProblemInfo, SubmitRequest, SubmitResponse
+from judge.models import (
+    JobResult,
+    ProblemInfo,
+    ReadinessCheck,
+    ReadinessChecks,
+    ReadinessResponse,
+    SubmitRequest,
+    SubmitResponse,
+)
 from judge.problems import ProblemRepository
 from judge.queue import RedisQueue
 from judge.results import ResultsStore
@@ -94,9 +104,63 @@ def _sanitize_job(job: dict[str, Any]) -> dict[str, Any]:
     return sanitized
 
 
+def _check_redis_ready() -> ReadinessCheck:
+    try:
+        queue.client.ping()
+    except Exception:
+        logger.exception("Readiness check failed: redis unavailable")
+        return ReadinessCheck(ok=False, detail="unavailable")
+    return ReadinessCheck(ok=True, detail="ok")
+
+
+def _check_db_ready() -> ReadinessCheck:
+    try:
+        results.ping()
+    except Exception:
+        logger.exception("Readiness check failed: database unavailable")
+        return ReadinessCheck(ok=False, detail="unavailable")
+    return ReadinessCheck(ok=True, detail="ok")
+
+
+def _problem_manifests_available(root: Path) -> bool:
+    try:
+        return any(root.rglob("manifest.json"))
+    except OSError:
+        logger.exception("Readiness check failed: problem repository scan failed")
+        return False
+
+
+def _check_problems_ready() -> ReadinessCheck:
+    root = problems.root
+    if not root.exists():
+        return ReadinessCheck(ok=False, detail="missing")
+    if not root.is_dir():
+        return ReadinessCheck(ok=False, detail="invalid")
+    if not _problem_manifests_available(root):
+        return ReadinessCheck(ok=False, detail="empty")
+    return ReadinessCheck(ok=True, detail="ok")
+
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/ready", response_model=ReadinessResponse)
+def ready() -> ReadinessResponse | JSONResponse:
+    checks = ReadinessChecks(
+        redis=_check_redis_ready(),
+        db=_check_db_ready(),
+        problems=_check_problems_ready(),
+    )
+    is_ready = checks.redis.ok and checks.db.ok and checks.problems.ok
+    payload = ReadinessResponse(
+        status="ready" if is_ready else "not_ready",
+        checks=checks,
+    )
+    if is_ready:
+        return payload
+    return JSONResponse(status_code=503, content=payload.model_dump())
 
 
 @app.get("/metrics")
