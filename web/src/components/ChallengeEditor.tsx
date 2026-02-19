@@ -36,6 +36,13 @@ import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
 import type { JudgeJobResult } from "@/lib/judge-client";
 import type { Challenge } from "@/lib/challenge-types";
 import { ZINC_DARK_THEME, MONACO_THEME_NAME } from "@/lib/monaco-theme";
+import type {
+  TestCase,
+  MonacoEditorInstance,
+  MonacoInstance,
+  MonacoVimSession,
+  MonacoVimModule,
+} from "@/types/challenge-editor";
 import { ConfirmModal } from "./ConfirmModal";
 import {
   getChallengeCode,
@@ -44,24 +51,6 @@ import {
   removeChallengeCode,
   setChallengeCode,
 } from "@/lib/challenge-storage";
-
-interface TestCase {
-  id: string;
-  inputs: Record<string, string>;
-  expected: string;
-  explanation?: string;
-}
-
-type EditorOnMount = NonNullable<React.ComponentProps<typeof Editor>["onMount"]>;
-type MonacoEditorInstance = Parameters<EditorOnMount>[0];
-type MonacoInstance = Parameters<EditorOnMount>[1];
-type MonacoVimSession = { dispose: () => void };
-type MonacoVimModule = {
-  initVimMode: (
-    editor: MonacoEditorInstance,
-    statusNode?: HTMLElement | null
-  ) => MonacoVimSession;
-};
 
 let monacoVimModulePromise: Promise<MonacoVimModule> | null = null;
 
