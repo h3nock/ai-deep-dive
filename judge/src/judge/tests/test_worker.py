@@ -2,16 +2,11 @@
 
 from __future__ import annotations
 
-import importlib.util
 from unittest import TestCase
-
-HAS_REDIS = importlib.util.find_spec("redis") is not None
 
 
 class WorkerMessageParsingTests(TestCase):
     def _parse(self, fields: dict[str, str]) -> tuple[dict[str, object], str | None]:
-        if not HAS_REDIS:
-            self.skipTest("redis dependency not installed")
         from judge.worker import _parse_queue_message
 
         return _parse_queue_message(fields)

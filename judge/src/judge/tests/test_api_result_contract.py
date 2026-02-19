@@ -6,15 +6,14 @@ import importlib.util
 from unittest import TestCase
 
 HAS_FASTAPI = importlib.util.find_spec("fastapi") is not None
-HAS_REDIS = importlib.util.find_spec("redis") is not None
 
 _INTERNAL_ERROR_MSG = "Internal judge error. Please retry."
 
 
 class ApiResultContractTests(TestCase):
     def setUp(self) -> None:
-        if not HAS_FASTAPI or not HAS_REDIS:
-            self.skipTest("fastapi/redis dependencies not installed")
+        if not HAS_FASTAPI:
+            self.skipTest("fastapi dependency not installed")
         from judge.api import _sanitize_job
 
         self.sanitize_job = _sanitize_job

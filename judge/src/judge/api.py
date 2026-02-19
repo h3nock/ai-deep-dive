@@ -1,16 +1,19 @@
 """FastAPI service for the judge."""
 
+from __future__ import annotations
+
 import logging
 import time
-import uuid
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from judge.config import load_settings
+from judge.config import Settings, load_settings
 from judge.metrics import (
     record_http_request,
     register_process_exit,
@@ -26,55 +29,63 @@ from judge.models import (
     SubmitRequest,
     SubmitResponse,
 )
-from judge.problems import ProblemRepository
-from judge.queue import RedisQueue
-from judge.results import ResultsStore
+from judge.services import (
+    DEFAULT_STREAM_ROUTING,
+    InvalidProblemError,
+    ProblemNotFoundError,
+    QueueFullError,
+    QueueUnavailableError,
+    StreamRouting,
+    SubmissionService,
+)
 
 logger = logging.getLogger(__name__)
 
-settings = load_settings()
-register_process_exit()
-queue = RedisQueue(settings.redis_url)
-results = ResultsStore(settings.results_db)
-problems = ProblemRepository(settings.problems_root)
+if TYPE_CHECKING:
+    from judge.problems import ProblemRepository
+    from judge.queue import RedisQueue
+    from judge.results import ResultsStore
 
-STREAMS = {
-    "light": "queue:light",
-    "torch": "queue:torch",
-}
-STREAM_GROUPS = {
-    "queue:light": "workers-light",
-    "queue:torch": "workers-torch",
-}
 
-app = FastAPI(title="AI Deep Dive Judge")
-if settings.allowed_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.allowed_origins,
-        allow_methods=["*"],
-        allow_headers=["*"],
+@dataclass(frozen=True)
+class ApiDependencies:
+    settings: Settings
+    queue: RedisQueue
+    results: ResultsStore
+    problems: ProblemRepository
+    submission: SubmissionService
+    stream_routing: StreamRouting
+
+
+def build_api_dependencies(
+    *,
+    settings: Settings | None = None,
+    stream_routing: StreamRouting = DEFAULT_STREAM_ROUTING,
+) -> ApiDependencies:
+    from judge.problems import ProblemRepository
+    from judge.queue import RedisQueue
+    from judge.results import ResultsStore
+
+    resolved_settings = settings or load_settings()
+    queue = RedisQueue(resolved_settings.redis_url)
+    results = ResultsStore(resolved_settings.results_db)
+    problems = ProblemRepository(resolved_settings.problems_root)
+    submission = SubmissionService(
+        queue=queue,
+        results=results,
+        problems=problems,
+        queue_maxlen=resolved_settings.queue_maxlen,
+        stream_routing=stream_routing,
+        log=logger,
     )
-
-
-@app.middleware("http")
-async def metrics_middleware(request: Request, call_next):
-    if request.url.path == "/metrics":
-        return await call_next(request)
-
-    start = time.perf_counter()
-    try:
-        response = await call_next(request)
-    except Exception:
-        duration = time.perf_counter() - start
-        record_http_request(request.method, request.url.path, 500, duration)
-        raise
-
-    duration = time.perf_counter() - start
-    route = request.scope.get("route")
-    path = getattr(route, "path", request.url.path)
-    record_http_request(request.method, path, response.status_code, duration)
-    return response
+    return ApiDependencies(
+        settings=resolved_settings,
+        queue=queue,
+        results=results,
+        problems=problems,
+        submission=submission,
+        stream_routing=stream_routing,
+    )
 
 
 def _sanitize_job(job: dict[str, Any]) -> dict[str, Any]:
@@ -104,18 +115,18 @@ def _sanitize_job(job: dict[str, Any]) -> dict[str, Any]:
     return sanitized
 
 
-def _check_redis_ready() -> ReadinessCheck:
+def _check_redis_ready(dependencies: ApiDependencies) -> ReadinessCheck:
     try:
-        queue.client.ping()
+        dependencies.queue.client.ping()
     except Exception:
         logger.exception("Readiness check failed: redis unavailable")
         return ReadinessCheck(ok=False, detail="unavailable")
     return ReadinessCheck(ok=True, detail="ok")
 
 
-def _check_db_ready() -> ReadinessCheck:
+def _check_db_ready(dependencies: ApiDependencies) -> ReadinessCheck:
     try:
-        results.ping()
+        dependencies.results.ping()
     except Exception:
         logger.exception("Readiness check failed: database unavailable")
         return ReadinessCheck(ok=False, detail="unavailable")
@@ -130,8 +141,8 @@ def _problem_manifests_available(root: Path) -> bool:
         return False
 
 
-def _check_problems_ready() -> ReadinessCheck:
-    root = problems.root
+def _check_problems_ready(dependencies: ApiDependencies) -> ReadinessCheck:
+    root = dependencies.problems.root
     if not root.exists():
         return ReadinessCheck(ok=False, detail="missing")
     if not root.is_dir():
@@ -141,110 +152,139 @@ def _check_problems_ready() -> ReadinessCheck:
     return ReadinessCheck(ok=True, detail="ok")
 
 
-@app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+def create_app(
+    dependencies: ApiDependencies | None = None,
+    *,
+    register_metrics_exit_hook: bool = False,
+) -> FastAPI:
+    deps: ApiDependencies | None = dependencies
+    settings = dependencies.settings if dependencies is not None else load_settings()
 
+    def _deps() -> ApiDependencies:
+        nonlocal deps
+        if deps is None:
+            deps = build_api_dependencies(settings=settings)
+        return deps
 
-@app.get("/ready", response_model=ReadinessResponse)
-def ready() -> ReadinessResponse | JSONResponse:
-    checks = ReadinessChecks(
-        redis=_check_redis_ready(),
-        db=_check_db_ready(),
-        problems=_check_problems_ready(),
-    )
-    is_ready = checks.redis.ok and checks.db.ok and checks.problems.ok
-    payload = ReadinessResponse(
-        status="ready" if is_ready else "not_ready",
-        checks=checks,
-    )
-    if is_ready:
-        return payload
-    return JSONResponse(status_code=503, content=payload.model_dump())
-
-
-@app.get("/metrics")
-def metrics() -> Response:
-    update_runtime_metrics(queue.client, results, STREAMS.values(), STREAM_GROUPS)
-    data, content_type = render_metrics()
-    return Response(content=data, media_type=content_type)
-
-
-@app.get("/problems/{problem_id:path}", response_model=ProblemInfo)
-def get_problem(problem_id: str) -> ProblemInfo:
-    try:
-        problem = problems.get_route_info(problem_id)
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Problem not found")
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid problem id")
-    return ProblemInfo(
-        id=problem.id,
-        version=problem.version,
-        requires_torch=problem.requires_torch,
-        time_limit_s=problem.time_limit_s,
-        memory_mb=problem.memory_mb,
-    )
-
-
-@app.post("/submit", response_model=SubmitResponse)
-def submit(request: SubmitRequest) -> SubmitResponse:
-    try:
-        problem = problems.get_route_info(request.problem_id)
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Problem not found")
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid problem id")
-
-    profile = "torch" if problem.requires_torch else "light"
-    stream = STREAMS[profile]
-    group = STREAM_GROUPS[stream]
-
-    if settings.queue_maxlen > 0:
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        nonlocal deps
+        if deps is None:
+            deps = build_api_dependencies(settings=settings)
+        if register_metrics_exit_hook:
+            register_process_exit()
         try:
-            stream_backlog = queue.backlog(stream, group)
-        except Exception as exc:
-            raise HTTPException(status_code=503, detail="Judge queue unavailable") from exc
+            yield
+        finally:
+            deps = None
 
-        if stream_backlog >= settings.queue_maxlen:
-            raise HTTPException(status_code=503, detail="Judge queue is full. Please retry.")
+    app = FastAPI(title="AI Deep Dive Judge", lifespan=lifespan)
+    if settings.allowed_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.allowed_origins,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
-    job_id = str(uuid.uuid4())
-    created_at = int(time.time())
-    results.create_job(job_id, problem.id, profile, request.kind, created_at=created_at)
+    @app.middleware("http")
+    async def metrics_middleware(request: Request, call_next):
+        if request.url.path == "/metrics":
+            return await call_next(request)
 
-    payload = {
-        "job_id": job_id,
-        "problem_id": problem.id,
-        "problem_key": request.problem_id,
-        "profile": profile,
-        "kind": request.kind,
-        "code": request.code,
-        "created_at": created_at,
-    }
-    try:
-        queue.enqueue(stream, payload)
-    except Exception as exc:
+        start = time.perf_counter()
         try:
-            results.mark_error(
-                job_id,
-                "Failed to enqueue job",
-                error_kind="internal",
-            )
+            response = await call_next(request)
         except Exception:
-            logger.exception(
-                "Failed to persist enqueue failure result: job_id=%s stream=%s",
-                job_id,
-                stream,
+            duration = time.perf_counter() - start
+            record_http_request(request.method, request.url.path, 500, duration)
+            raise
+
+        duration = time.perf_counter() - start
+        route = request.scope.get("route")
+        path = getattr(route, "path", request.url.path)
+        record_http_request(request.method, path, response.status_code, duration)
+        return response
+
+    @app.get("/health")
+    async def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    @app.get("/ready", response_model=ReadinessResponse)
+    def ready() -> ReadinessResponse | JSONResponse:
+        deps = _deps()
+        checks = ReadinessChecks(
+            redis=_check_redis_ready(deps),
+            db=_check_db_ready(deps),
+            problems=_check_problems_ready(deps),
+        )
+        is_ready = checks.redis.ok and checks.db.ok and checks.problems.ok
+        payload = ReadinessResponse(
+            status="ready" if is_ready else "not_ready",
+            checks=checks,
+        )
+        if is_ready:
+            return payload
+        return JSONResponse(status_code=503, content=payload.model_dump())
+
+    @app.get("/metrics")
+    def metrics() -> Response:
+        deps = _deps()
+        update_runtime_metrics(
+            deps.queue.client,
+            deps.results,
+            deps.stream_routing.by_profile.values(),
+            dict(deps.stream_routing.by_stream_group),
+        )
+        data, content_type = render_metrics()
+        return Response(content=data, media_type=content_type)
+
+    @app.get("/problems/{problem_id:path}", response_model=ProblemInfo)
+    def get_problem(problem_id: str) -> ProblemInfo:
+        deps = _deps()
+        try:
+            problem = deps.problems.get_route_info(problem_id)
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Problem not found")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid problem id")
+        return ProblemInfo(
+            id=problem.id,
+            version=problem.version,
+            requires_torch=problem.requires_torch,
+            time_limit_s=problem.time_limit_s,
+            memory_mb=problem.memory_mb,
+        )
+
+    @app.post("/submit", response_model=SubmitResponse)
+    def submit(request: SubmitRequest) -> SubmitResponse:
+        deps = _deps()
+        try:
+            queued = deps.submission.submit(
+                problem_key=request.problem_id,
+                kind=request.kind,
+                code=request.code,
             )
-        raise HTTPException(status_code=503, detail="Judge queue unavailable") from exc
+        except ProblemNotFoundError:
+            raise HTTPException(status_code=404, detail="Problem not found")
+        except InvalidProblemError:
+            raise HTTPException(status_code=400, detail="Invalid problem id")
+        except QueueFullError as exc:
+            raise HTTPException(status_code=503, detail=str(exc))
+        except QueueUnavailableError as exc:
+            raise HTTPException(status_code=503, detail=str(exc))
 
-    return SubmitResponse(job_id=job_id, status="queued")
+        return SubmitResponse(job_id=queued.job_id, status=queued.status)
+
+    @app.get("/result/{job_id}", response_model=JobResult)
+    def get_result(job_id: str) -> JobResult:
+        deps = _deps()
+        job = deps.results.get_job(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        return JobResult(**_sanitize_job(job))
+
+    return app
 
 
-@app.get("/result/{job_id}", response_model=JobResult)
-def get_result(job_id: str) -> JobResult:
-    job = results.get_job(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return JobResult(**_sanitize_job(job))
+app = create_app(register_metrics_exit_hook=True)
