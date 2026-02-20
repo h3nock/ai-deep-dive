@@ -189,7 +189,7 @@ export default async function Home() {
             <div className="mb-10">
               <h2 className="text-2xl font-bold text-primary mb-2">Courses</h2>
               <p className="text-secondary">
-                Guided paths from first principles to working code.
+                Guided paths from first principles to working systems.
               </p>
             </div>
 
