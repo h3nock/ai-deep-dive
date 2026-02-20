@@ -2,8 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllPosts, listCollections } from "@/lib/posts";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { ProgressBar } from "@/components/ProgressBar";
-import { ChallengeProgressBar } from "@/components/ChallengeProgressBar";
+import { ProgressStatCards } from "@/components/ProgressStatCards";
 import { ChallengeProgressPill } from "@/components/ChallengeProgressPill";
 import { ChapterCheckbox } from "@/components/ChapterCheckbox";
 import { ContinueButton } from "@/components/ContinueButton";
@@ -122,39 +121,12 @@ export default async function RoadmapPage({
             {metadata.description}
           </p>
 
-          {/* Stats — mini cards */}
-          <div className="mt-6 flex gap-3 flex-wrap">
-            <div className="bg-surface rounded-xl px-4 py-3">
-              <span className="text-xl font-bold text-primary">{mainChapterSteps.length}</span>
-              <span className="block text-xs text-muted mt-0.5">chapters</span>
-            </div>
-            {allChallengeIds.length > 0 && (
-              <div className="bg-surface rounded-xl px-4 py-3">
-                <span className="text-xl font-bold text-primary">{allChallengeIds.length}</span>
-                <span className="block text-xs text-muted mt-0.5">problems</span>
-              </div>
-            )}
-            <div className="bg-surface rounded-xl px-4 py-3">
-              <span className="text-xl font-bold text-primary">~120</span>
-              <span className="block text-xs text-muted mt-0.5">hours</span>
-            </div>
-          </div>
-
-          {/* Progress Bars */}
-          <div className="mt-6">
-            <ProgressBar
-              courseId={courseId}
-              totalSteps={mainChapterSteps.length}
-            />
-            {allChallengeIds.length > 0 && (
-              <div className="mt-3">
-                <ChallengeProgressBar
-                  courseId={courseId}
-                  challengeIds={allChallengeIds}
-                />
-              </div>
-            )}
-          </div>
+          {/* Stats with integrated progress */}
+          <ProgressStatCards
+            courseId={courseId}
+            totalChapters={mainChapterSteps.length}
+            challengeIds={allChallengeIds}
+          />
         </div>
 
         {/* Prerequisites & What You'll Build — card pair */}
