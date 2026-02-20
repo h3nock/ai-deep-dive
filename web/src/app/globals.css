@@ -752,12 +752,11 @@ section[style*="display: flex"][style*="justify-content: center"] {
 .reading-progress {
   position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   height: 2px;
   background: var(--color-primary);
+  transform: scaleX(0);
   transform-origin: left;
-  z-index: 50;
+  z-index: 10;
   animation: reading-progress-grow linear;
   animation-timeline: scroll(nearest);
 }
