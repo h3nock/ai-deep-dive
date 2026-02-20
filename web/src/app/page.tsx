@@ -218,6 +218,8 @@ export default async function Home() {
       <footer className="py-12 text-center text-sm text-muted">
         <span>&copy; {new Date().getFullYear()} AI Deep Dive</span>
         <span className="mx-3 text-border">&middot;</span>
+        <span>MIT License</span>
+        <span className="mx-3 text-border">&middot;</span>
         <a
           href="https://github.com/h3nock/ai-deep-dive"
           target="_blank"
