@@ -7,7 +7,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PostData } from "@/lib/posts";
 import { getCourseConfig } from "@/lib/course-config";
-import { CourseSidebar } from "./CourseSidebar";
+import { CourseSidebar, SidebarExpandButton } from "./CourseSidebar";
 import { MarkCompleteButton } from "./MarkCompleteButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { CodeBlockCopyButtons } from "./CodeBlockCopyButton";
@@ -242,15 +242,30 @@ export function StepContainer({
   const courseConfig = getCourseConfig(collection);
   const phases = courseConfig?.phases ?? [];
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("sidebar-collapsed") === "true";
+  });
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sidebar-collapsed", String(next));
+      return next;
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-secondary font-sans selection:bg-muted/20">
       <div className="flex h-screen">
-        {/* Sidebar — desktop only */}
+        {/* Sidebar — desktop only, collapsible */}
         <CourseSidebar
           allPosts={allPosts}
           collection={collection}
           currentSlug={post.slug}
           phases={phases}
+          collapsed={sidebarCollapsed}
+          onToggle={toggleSidebar}
         />
 
         {/* Main Content Area */}
@@ -261,6 +276,9 @@ export function StepContainer({
           {/* Top Bar */}
           <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-6">
             <div className="max-w-5xl mx-auto flex items-center py-2">
+              {sidebarCollapsed && (
+                <SidebarExpandButton onToggle={toggleSidebar} />
+              )}
               {hasChallenges ? (
                 <div className="inline-flex rounded-full border border-border p-1 bg-background">
                   <Link
