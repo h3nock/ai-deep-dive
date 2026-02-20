@@ -4,8 +4,9 @@ import React, { useEffect, useCallback, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelLeftClose } from "lucide-react";
 import { PostData } from "@/lib/posts";
+import { cn } from "@/lib/utils";
 import { getCourseConfig } from "@/lib/course-config";
 import { CourseSidebar, SidebarExpandButton } from "./CourseSidebar";
 import { MarkCompleteButton } from "./MarkCompleteButton";
@@ -256,68 +257,93 @@ export function StepContainer({
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-secondary font-sans selection:bg-muted/20">
-      <div className="flex h-screen">
-        {/* Sidebar — desktop only, collapsible */}
+    <div className="h-screen flex flex-col bg-background text-secondary font-sans selection:bg-muted/20">
+      {/* Unified top bar — single border-b eliminates sidebar/content alignment issues */}
+      <div className="shrink-0 z-40 bg-background border-b border-border flex items-stretch">
+        {/* Sidebar portion — collapses in sync with sidebar nav */}
+        <div
+          className={cn(
+            "hidden lg:flex items-center shrink-0 border-r border-border px-4 transition-[width,border-color,padding] duration-200 ease-out overflow-hidden",
+            sidebarCollapsed ? "w-0 border-r-0 px-0" : "w-64"
+          )}
+        >
+          <div className={cn("flex items-center justify-between gap-2 w-full min-w-[14rem]", sidebarCollapsed && "invisible")}>
+            <Link
+              href={`/${collection}`}
+              prefetch={true}
+              className="text-sm text-muted hover:text-primary flex items-center gap-1 transition-colors"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              Roadmap
+            </Link>
+            <button
+              onClick={toggleSidebar}
+              className="p-1 text-muted hover:text-primary transition-colors rounded"
+              aria-label="Collapse sidebar"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content portion — tabs and theme toggle */}
+        <div className="flex-1 min-w-0">
+          <div className="mx-auto max-w-[75ch] px-6 lg:px-8 flex items-center py-2">
+            {sidebarCollapsed && (
+              <SidebarExpandButton onToggle={toggleSidebar} />
+            )}
+            {hasChallenges ? (
+              <div className="inline-flex rounded-full border border-border p-1 bg-background">
+                <Link
+                  href={guideHref}
+                  prefetch
+                  className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
+                    activeTab === "guide"
+                      ? "bg-surface font-medium text-primary"
+                      : "text-muted hover:text-secondary"
+                  }`}
+                >
+                  Guide
+                </Link>
+                <Link
+                  href={challengesHref}
+                  prefetch
+                  className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
+                    activeTab === "challenges"
+                      ? "bg-surface font-medium text-primary"
+                      : "text-muted hover:text-secondary"
+                  }`}
+                >
+                  Challenges
+                  <span className="ml-1.5 text-muted">
+                    {isChallengesLoaded
+                      ? `${solvedChallenges}/${totalChallenges}`
+                      : `0/${totalChallenges}`}
+                  </span>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex-1" />
+            )}
+            <div className="ml-auto">
+              <ThemeToggle />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar nav + content */}
+      <div className="flex flex-1 min-h-0">
         <CourseSidebar
           allPosts={allPosts}
           collection={collection}
           currentSlug={post.slug}
           phases={phases}
           collapsed={sidebarCollapsed}
-          onToggle={toggleSidebar}
         />
 
-        {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto">
-          {/* Reading progress bar */}
           <div className="reading-progress" />
-
-          {/* Top Bar */}
-          <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
-            <div className="mx-auto max-w-[75ch] px-6 lg:px-8 flex items-center py-2">
-              {sidebarCollapsed && (
-                <SidebarExpandButton onToggle={toggleSidebar} />
-              )}
-              {hasChallenges ? (
-                <div className="inline-flex rounded-full border border-border p-1 bg-background">
-                  <Link
-                    href={guideHref}
-                    prefetch
-                    className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
-                      activeTab === "guide"
-                        ? "bg-surface font-medium text-primary"
-                        : "text-muted hover:text-secondary"
-                    }`}
-                  >
-                    Guide
-                  </Link>
-                  <Link
-                    href={challengesHref}
-                    prefetch
-                    className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
-                      activeTab === "challenges"
-                        ? "bg-surface font-medium text-primary"
-                        : "text-muted hover:text-secondary"
-                    }`}
-                  >
-                    Challenges
-                    <span className="ml-1.5 text-muted">
-                      {isChallengesLoaded
-                        ? `${solvedChallenges}/${totalChallenges}`
-                        : `0/${totalChallenges}`}
-                    </span>
-                  </Link>
-                </div>
-              ) : (
-                <div className="flex-1" />
-              )}
-              <div className="ml-auto">
-                <ThemeToggle />
-              </div>
-            </div>
-          </div>
-
           {activeTab === "guide" ? (
             <main className="flex-1 w-full py-12">
               {/* Centered Content Column with Responsive Gutter */}

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { ChevronLeft, PanelLeftClose, PanelLeft } from "lucide-react";
+import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChapterCheckbox } from "./ChapterCheckbox";
 import type { PostData } from "@/lib/posts";
@@ -14,7 +14,6 @@ interface CourseSidebarProps {
   currentSlug: string;
   phases: CoursePhase[];
   collapsed: boolean;
-  onToggle: () => void;
 }
 
 export function CourseSidebar({
@@ -23,7 +22,6 @@ export function CourseSidebar({
   currentSlug,
   phases,
   collapsed,
-  onToggle,
 }: CourseSidebarProps) {
   const currentRef = useRef<HTMLAnchorElement>(null);
 
@@ -43,24 +41,6 @@ export function CourseSidebar({
       )}
     >
       <div className={cn("flex flex-col min-w-[16rem]", collapsed && "invisible")}>
-        {/* Back to roadmap + collapse toggle */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <Link
-            href={`/${collection}`}
-            className="text-sm text-muted hover:text-primary flex items-center gap-1 transition-colors"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            Roadmap
-          </Link>
-          <button
-            onClick={onToggle}
-            className="p-1 text-muted hover:text-primary transition-colors rounded"
-            aria-label="Collapse sidebar"
-          >
-            <PanelLeftClose className="w-4 h-4" />
-          </button>
-        </div>
-
         {/* Chapter list grouped by phase */}
         <nav className="flex-1 py-3 overflow-y-auto">
           {phases.map((phase, phaseIndex) => {
