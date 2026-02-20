@@ -52,19 +52,16 @@ export default async function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_22rem] gap-12 lg:gap-16 items-start">
               {/* Left: copy */}
               <div>
-                <p className="animate-fade-in-up font-mono text-xs text-muted tracking-widest uppercase mb-6">
-                  Open-source course
-                </p>
-                <h1 className="animate-fade-in-up animate-delay-1 text-4xl sm:text-5xl md:text-6xl font-bold text-primary tracking-tight leading-[1.08] mb-6">
+                <h1 className="animate-fade-in-up text-4xl sm:text-5xl md:text-6xl font-bold text-primary tracking-tight leading-[1.08] mb-6">
                   Learn AI by{" "}
                   <br className="hidden sm:block" />
                   Building It
                 </h1>
-                <p className="animate-fade-in-up animate-delay-2 text-lg text-secondary leading-relaxed mb-10 max-w-lg">
-                  Understand transformers by implementing every layer
-                  from scratch. No shortcuts, no magic imports.
+                <p className="animate-fade-in-up animate-delay-1 text-lg text-secondary leading-relaxed mb-10 max-w-lg">
+                  Hands-on courses from first principles to working
+                  systems. You build everything yourself.
                 </p>
-                <div className="animate-fade-in-up animate-delay-3 flex flex-wrap gap-3">
+                <div className="animate-fade-in-up animate-delay-2 flex flex-wrap gap-3">
                   <Link
                     href="#courses"
                     className="group inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary hover:bg-primary-hover text-background font-medium transition-all hover:shadow-lg hover:shadow-muted/10"
@@ -227,8 +224,6 @@ export default async function Home() {
         >
           Open Source
         </a>
-        <span className="mx-3 text-border">&middot;</span>
-        <span>Built for learners</span>
       </footer>
     </div>
   );
