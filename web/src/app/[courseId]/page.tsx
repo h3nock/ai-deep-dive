@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllPosts, listCollections } from "@/lib/posts";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ProgressBar } from "@/components/ProgressBar";
 import { ChallengeProgressBar } from "@/components/ChallengeProgressBar";
 import { ChallengeProgressPill } from "@/components/ChallengeProgressPill";
@@ -204,7 +204,7 @@ export default async function RoadmapPage({
           </div>
         </div>
 
-        {/* Course Content by Phase — card grid */}
+        {/* Course Content by Phase — timeline */}
         <div>
           {metadata.phases.map((phase, phaseIndex) => {
             const [min, max] = phase.stepRange;
@@ -217,45 +217,58 @@ export default async function RoadmapPage({
               <div key={phaseIndex}>
                 {/* Phase Header */}
                 <div className="flex items-center gap-3 mt-10 mb-4">
-                  <span className="text-xs font-mono text-muted uppercase tracking-wider">Phase {phaseIndex + 1}</span>
-                  <span className="text-sm font-semibold text-primary">{phase.title}</span>
+                  <span className="text-xs font-mono text-muted uppercase tracking-wider">
+                    Phase {phaseIndex + 1}
+                  </span>
+                  <span className="text-sm font-semibold text-primary">
+                    {phase.title}
+                  </span>
                   <div className="flex-1 border-t border-border" />
                 </div>
 
-                {/* Chapter Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Chapter Timeline */}
+                <div className="relative ml-3 pl-6 border-l border-border">
                   {phaseChapters.map((post) => {
-                    const chapterChallengeIds = challengeIdsBySlug[post.slug] ?? [];
+                    const chapterChallengeIds =
+                      challengeIdsBySlug[post.slug] ?? [];
                     return (
                       <Link
                         key={post.slug}
                         href={`/${courseId}/${post.slug}`}
-                        className="group block bg-surface/50 rounded-xl border border-border hover:border-border-hover p-5 transition-all"
+                        className="group relative block py-3 first:pt-1 last:pb-1"
                       >
-                        <div className="flex items-start justify-between mb-3">
-                          <span className="font-mono text-2xl font-bold text-border/50">
-                            {String(post.step).padStart(2, "0")}
-                          </span>
+                        {/* Timeline node */}
+                        <div className="absolute -left-[31px] top-1/2 -translate-y-1/2 bg-background ring-4 ring-background">
                           <ChapterCheckbox
                             courseId={courseId}
                             step={post.step}
                             size="sm"
                           />
                         </div>
-                        <h3 className="font-semibold text-primary group-hover:text-secondary transition-colors mb-1">
-                          {post.title}
-                        </h3>
-                        <p className="text-sm text-muted line-clamp-2 mb-3">
-                          {post.description}
-                        </p>
-                        {chapterChallengeIds.length > 0 && (
-                          <div className="pt-3 border-t border-border">
-                            <ChallengeProgressPill
-                              courseId={courseId}
-                              challengeIds={chapterChallengeIds}
-                            />
+
+                        {/* Row content */}
+                        <div className="flex items-center gap-4 rounded-lg px-4 py-2.5 transition-colors hover:bg-surface/50">
+                          <span className="shrink-0 w-7 font-mono text-sm text-muted/50 group-hover:text-primary transition-colors">
+                            {String(post.step).padStart(2, "0")}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm md:text-base font-medium text-primary group-hover:text-secondary transition-colors">
+                              {post.title}
+                            </h3>
+                            <p className="text-xs md:text-sm text-muted line-clamp-1 mt-0.5">
+                              {post.description}
+                            </p>
                           </div>
-                        )}
+                          <div className="shrink-0 flex items-center gap-3">
+                            {chapterChallengeIds.length > 0 && (
+                              <ChallengeProgressPill
+                                courseId={courseId}
+                                challengeIds={chapterChallengeIds}
+                              />
+                            )}
+                            <ArrowRight className="w-4 h-4 text-border group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                        </div>
                       </Link>
                     );
                   })}
