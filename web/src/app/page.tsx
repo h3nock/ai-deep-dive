@@ -48,8 +48,8 @@ export default async function Home() {
           <div className="absolute inset-0 bg-grid-pattern" />
           <div className="absolute inset-0 hero-gradient-mask" />
 
-          <div className="relative max-w-6xl mx-auto px-6 pt-20 md:pt-32 pb-20 md:pb-28">
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_22rem] gap-12 lg:gap-16 items-start">
+          <div className="relative max-w-4xl mx-auto px-6 pt-20 md:pt-32 pb-20 md:pb-28">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-12 lg:gap-10 items-center">
               {/* Left: copy */}
               <div>
                 <h1 className="animate-fade-in-up text-4xl sm:text-5xl md:text-6xl font-bold text-primary tracking-tight leading-[1.08] mb-6">
