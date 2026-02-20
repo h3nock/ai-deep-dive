@@ -257,7 +257,7 @@ export function StepContainer({
   }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-background text-secondary font-sans selection:bg-muted/20">
+    <div className="h-screen flex flex-col overflow-hidden bg-background text-secondary font-sans selection:bg-muted/20">
       {/* Unified top bar — single border-b eliminates sidebar/content alignment issues */}
       <div className="shrink-0 z-40 bg-background border-b border-border flex items-stretch">
         {/* Sidebar portion — collapses in sync with sidebar nav */}
@@ -342,8 +342,8 @@ export function StepContainer({
           collapsed={sidebarCollapsed}
         />
 
-        <div className="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto">
-          <div className="reading-progress" />
+        <div className={`flex-1 flex flex-col min-w-0 bg-background ${activeTab === "guide" ? "overflow-y-auto" : "overflow-hidden"}`}>
+          {activeTab === "guide" && <div className="reading-progress" />}
           {activeTab === "guide" ? (
             <main className="flex-1 w-full py-12">
               {/* Centered Content Column with Responsive Gutter */}

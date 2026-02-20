@@ -80,7 +80,7 @@ export function ChallengeWorkspace({
 
       {editorMounted && editorChallengeIndex !== null && (
         <div
-          className={`flex-1 ${showList ? "hidden" : ""}`}
+          className={`flex-1 flex flex-col min-h-0 ${showList ? "hidden" : ""}`}
           aria-hidden={showList}
         >
           <ChallengeEditor
