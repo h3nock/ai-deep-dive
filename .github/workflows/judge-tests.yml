@@ -1,0 +1,58 @@
+name: judge tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  judge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            'ruff>=0.1.0' \
+            'fastapi>=0.110.0' \
+            'httpx>=0.27.0' \
+            'redis>=5.0.0' \
+            'pydantic>=2.6.0' \
+            'numpy>=1.26.0' \
+            'prometheus_client>=0.20.0' \
+            'uvicorn>=0.29.0'
+
+      - name: lint judge
+        run: |
+          cd judge
+          python -m ruff check src
+
+      - name: run judge tests
+        env:
+          JUDGE_TEST_REDIS_URL: redis://localhost:6379/15
+        run: |
+          cd judge
+          PYTHONPATH=src python -m unittest discover -s src/judge/tests -v
