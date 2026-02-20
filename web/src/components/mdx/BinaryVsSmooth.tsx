@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
+import { viz, getGrid } from "@/lib/viz-colors";
 
 /**
  * BinaryVsSmooth - Animated visualization comparing discrete binary jumps
@@ -27,6 +29,9 @@ const DIMENSIONS: DimensionConfig[] = [
 ];
 
 export function BinaryVsSmooth() {
+  const { resolvedTheme } = useTheme();
+  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
+
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const animationRef = useRef<number | null>(null);
@@ -128,7 +133,7 @@ export function BinaryVsSmooth() {
         3 Dimensions · Different Frequencies
       </div>
 
-      <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="p-4 bg-terminal rounded-lg border border-border">
         {/* Controls */}
         <div className="flex items-center gap-4 mb-4">
           <button
@@ -138,16 +143,16 @@ export function BinaryVsSmooth() {
                 startTimeRef.current = null;
               }
             }}
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors border border-zinc-700"
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface hover:bg-border-hover transition-colors border border-border-hover"
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
-              <svg className="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                 <rect x="6" y="4" width="4" height="16" />
                 <rect x="14" y="4" width="4" height="16" />
               </svg>
             ) : (
-              <svg className="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                 <polygon points="5,3 19,12 5,21" />
               </svg>
             )}
@@ -157,12 +162,12 @@ export function BinaryVsSmooth() {
           <div className="flex-1 grid grid-cols-[60px_1fr_1fr] gap-2 text-center">
             <div></div>
             <div>
-              <span className="text-[10px] font-semibold text-rose-400 uppercase tracking-wider">
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: viz.highlight }}>
                 Binary
               </span>
             </div>
             <div>
-              <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: viz.tertiary }}>
                 Smooth
               </span>
             </div>
@@ -183,11 +188,11 @@ export function BinaryVsSmooth() {
                 {/* Label */}
                 <div className="text-right pr-1">
                   <div className="text-[11px] font-medium text-primary leading-tight">{dim.label}</div>
-                  <div className="text-[9px] text-zinc-500">{dim.speedLabel}</div>
+                  <div className="text-[9px] text-muted">{dim.speedLabel}</div>
                 </div>
 
                 {/* Binary graph */}
-                <div className="bg-zinc-900/50 rounded border border-zinc-800 p-1 relative">
+                <div className="bg-background/50 rounded border border-border p-1 relative">
                   <svg
                     className="w-full"
                     viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
@@ -197,14 +202,15 @@ export function BinaryVsSmooth() {
                     <path
                       d={generateBinaryPath(dim.cycles)}
                       fill="none"
-                      stroke="#3f3f46"
+                      stroke={grid.line}
                       strokeWidth="1.5"
                     />
                   </svg>
                   {/* Marker as absolute div to maintain perfect circle shape */}
                   <div
-                    className="absolute w-2.5 h-2.5 rounded-full bg-rose-400"
+                    className="absolute w-2.5 h-2.5 rounded-full"
                     style={{
+                      backgroundColor: viz.highlight,
                       left: `calc(4px + ${(markerX / GRAPH_WIDTH) * 100}% * (1 - 8px / 100%))`,
                       top: `calc(4px + ${(binaryY / GRAPH_HEIGHT) * 100}% * (1 - 8px / 100%))`,
                       transform: 'translate(-50%, -50%)',
@@ -213,7 +219,7 @@ export function BinaryVsSmooth() {
                 </div>
 
                 {/* Smooth graph */}
-                <div className="bg-zinc-900/50 rounded border border-zinc-800 p-1 relative">
+                <div className="bg-background/50 rounded border border-border p-1 relative">
                   <svg
                     className="w-full"
                     viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
@@ -223,14 +229,15 @@ export function BinaryVsSmooth() {
                     <path
                       d={generateSmoothPath(dim.cycles)}
                       fill="none"
-                      stroke="#3f3f46"
+                      stroke={grid.line}
                       strokeWidth="1.5"
                     />
                   </svg>
                   {/* Marker as absolute div to maintain perfect circle shape */}
                   <div
-                    className="absolute w-2.5 h-2.5 rounded-full bg-emerald-400"
+                    className="absolute w-2.5 h-2.5 rounded-full"
                     style={{
+                      backgroundColor: viz.tertiary,
                       left: `calc(4px + ${(markerX / GRAPH_WIDTH) * 100}% * (1 - 8px / 100%))`,
                       top: `calc(4px + ${(smoothY / GRAPH_HEIGHT) * 100}% * (1 - 8px / 100%))`,
                       transform: 'translate(-50%, -50%)',

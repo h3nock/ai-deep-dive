@@ -21,15 +21,15 @@ function CodeBlock({ children }: { children: string }) {
         marginBottom: "var(--space-flow)",
       }}
     >
-      <pre className="p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm text-secondary overflow-x-auto">
+      <pre className="p-4 bg-terminal rounded-lg border border-border font-mono text-sm text-secondary overflow-x-auto">
         {children}
       </pre>
       <button
         onClick={handleCopy}
-        className="absolute top-3 right-3 p-1.5 rounded bg-zinc-800 text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-3 right-3 p-1.5 rounded bg-surface text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
       >
         {copied ? (
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <CheckCircle2 className="w-4 h-4 text-success" />
         ) : (
           <Copy className="w-4 h-4" />
         )}

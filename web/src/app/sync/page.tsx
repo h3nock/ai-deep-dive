@@ -98,8 +98,8 @@ export default function SyncPage() {
 
         {status === "error" && (
           <>
-            <div className="w-16 h-16 rounded-full bg-rose-500/20 border border-rose-400/50 flex items-center justify-center mx-auto mb-4">
-              <XCircle className="w-8 h-8 text-rose-400" />
+            <div className="w-16 h-16 rounded-full bg-error/20 border border-error/50 flex items-center justify-center mx-auto mb-4">
+              <XCircle className="w-8 h-8 text-error" />
             </div>
             <h1 className="text-xl font-semibold text-primary mb-2">
               Sync Failed
@@ -118,8 +118,8 @@ export default function SyncPage() {
 
         {status === "success" && (
           <>
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+            <div className="w-16 h-16 rounded-full bg-success/20 border border-success/50 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 text-success" />
             </div>
             <h1 className="text-xl font-semibold text-primary mb-2">
               {viewModel.status === "success" && viewModel.newlySynced > 0
@@ -130,13 +130,13 @@ export default function SyncPage() {
               {viewModel.status === "success" ? viewModel.courseName : ""}
             </p>
 
-            <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800 mb-6 text-left">
+            <div className="p-4 bg-terminal rounded-lg border border-border mb-6 text-left">
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Newly synced</span>
                 <span
                   className={
                     viewModel.status === "success" && viewModel.newlySynced > 0
-                      ? "text-emerald-400"
+                      ? "text-success"
                       : "text-muted"
                   }
                 >
@@ -155,7 +155,7 @@ export default function SyncPage() {
               href={
                 viewModel.status === "success" ? `/${viewModel.courseId}` : "/"
               }
-              className="block w-full px-4 py-2 bg-surface border border-border rounded-lg text-primary hover:bg-zinc-800 transition-colors"
+              className="block w-full px-4 py-2 bg-surface border border-border rounded-lg text-primary hover:bg-border transition-colors"
             >
               Continue Course
             </Link>

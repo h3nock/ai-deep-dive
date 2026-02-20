@@ -39,7 +39,7 @@ description: "How to encode sequence order into token embeddings."
     Both problems in Attempt 1 stem from unbounded or mismatched scales. A natural fix is to normalize by dividing the position index by the sequence length, keeping every value strictly between 0 and 1.
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm">
     Position = index / sequence_length
   </div>
 
@@ -149,7 +149,7 @@ description: "How to encode sequence order into token embeddings."
     **What if we only stored sine?** Suppose our encoding is just sin(ω · pos) for a given frequency. What happens when we shift to position `pos + k`? From high school trigonometry, we can expand sin(ω(pos + k)) using the angle addition formula:
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border">
     <div className="font-mono text-sm text-center text-primary">
       sin(ω · (pos + k)) = sin(ω · pos) · cos(ω · k) + cos(ω · pos) · sin(ω · k)
     </div>
@@ -163,7 +163,7 @@ description: "How to encode sequence order into token embeddings."
     **Pairing sine with cosine** for each frequency ω, we store both sin(ω · pos) and cos(ω · pos) as a 2D pair:
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 text-center">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border text-center">
     <span className="font-mono text-primary">PE(pos) = [ sin(ω · pos), cos(ω · pos) ]</span>
   </div>
 
@@ -171,28 +171,28 @@ description: "How to encode sequence order into token embeddings."
     With cosine now available, here's how the shift looks for both components:
   </Description>
 
-  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 space-y-2">
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border space-y-2">
     <div className="font-mono text-sm text-center">
-      <span className="text-amber-400">sin(ω(pos + k))</span>
+      <span className="text-accent-4">sin(ω(pos + k))</span>
       <span className="text-muted"> = </span>
-      <span className="text-blue-400">cos(ω·k)</span>
+      <span className="text-accent-2">cos(ω·k)</span>
       <span className="text-muted"> · </span>
-      <span className="text-emerald-400">sin(ω·pos)</span>
+      <span className="text-accent-1">sin(ω·pos)</span>
       <span className="text-muted"> + </span>
-      <span className="text-blue-400">sin(ω·k)</span>
+      <span className="text-accent-2">sin(ω·k)</span>
       <span className="text-muted"> · </span>
-      <span className="text-emerald-400">cos(ω·pos)</span>
+      <span className="text-accent-1">cos(ω·pos)</span>
     </div>
     <div className="font-mono text-sm text-center">
-      <span className="text-amber-400">cos(ω(pos + k))</span>
+      <span className="text-accent-4">cos(ω(pos + k))</span>
       <span className="text-muted"> = </span>
-      <span className="text-blue-400">cos(ω·k)</span>
+      <span className="text-accent-2">cos(ω·k)</span>
       <span className="text-muted"> · </span>
-      <span className="text-emerald-400">cos(ω·pos)</span>
+      <span className="text-accent-1">cos(ω·pos)</span>
       <span className="text-muted"> - </span>
-      <span className="text-blue-400">sin(ω·k)</span>
+      <span className="text-accent-2">sin(ω·k)</span>
       <span className="text-muted"> · </span>
-      <span className="text-emerald-400">sin(ω·pos)</span>
+      <span className="text-accent-1">sin(ω·pos)</span>
     </div>
   </div>
 
@@ -203,31 +203,31 @@ description: "How to encode sequence order into token embeddings."
   <div className="my-6 p-5 bg-surface rounded-lg border border-border overflow-x-auto">
     <div className="flex items-center justify-center gap-3 font-mono text-sm">
       {/* Target Vector */}
-      <div className="flex flex-col gap-1 p-2 border-l-2 border-r-2 border-amber-500/50 rounded shrink-0">
-        <span className="text-amber-400 whitespace-nowrap">sin(ω(pos+k))</span>
-        <span className="text-amber-400 whitespace-nowrap">cos(ω(pos+k))</span>
+      <div className="flex flex-col gap-1 p-2 border-l-2 border-r-2 border-accent-4/50 rounded shrink-0">
+        <span className="text-accent-4 whitespace-nowrap">sin(ω(pos+k))</span>
+        <span className="text-accent-4 whitespace-nowrap">cos(ω(pos+k))</span>
       </div>
       
       <span className="text-muted shrink-0">=</span>
 
       {/* Rotation Matrix */}
-      <div className="flex flex-col gap-1 p-2 border-l-2 border-r-2 border-blue-500/50 rounded bg-[#121212] shrink-0">
+      <div className="flex flex-col gap-1 p-2 border-l-2 border-r-2 border-accent-2/50 rounded bg-terminal shrink-0">
         <div className="flex gap-4">
-          <span className="min-w-[70px] text-center text-blue-400 whitespace-nowrap">cos(ω·k)</span>
-          <span className="min-w-[70px] text-center text-blue-400 whitespace-nowrap">sin(ω·k)</span>
+          <span className="min-w-[70px] text-center text-accent-2 whitespace-nowrap">cos(ω·k)</span>
+          <span className="min-w-[70px] text-center text-accent-2 whitespace-nowrap">sin(ω·k)</span>
         </div>
         <div className="flex gap-4">
-          <span className="min-w-[70px] text-center text-blue-400 whitespace-nowrap">-sin(ω·k)</span>
-          <span className="min-w-[70px] text-center text-blue-400 whitespace-nowrap">cos(ω·k)</span>
+          <span className="min-w-[70px] text-center text-accent-2 whitespace-nowrap">-sin(ω·k)</span>
+          <span className="min-w-[70px] text-center text-accent-2 whitespace-nowrap">cos(ω·k)</span>
         </div>
       </div>
 
       <span className="text-muted shrink-0">×</span>
 
       {/* Current Vector */}
-      <div className="flex flex-col gap-1 p-2 border-l-2 border-r-2 border-emerald-500/50 rounded shrink-0">
-        <span className="text-emerald-400 whitespace-nowrap">sin(ω·pos)</span>
-        <span className="text-emerald-400 whitespace-nowrap">cos(ω·pos)</span>
+      <div className="flex flex-col gap-1 p-2 border-l-2 border-r-2 border-accent-1/50 rounded shrink-0">
+        <span className="text-accent-1 whitespace-nowrap">sin(ω·pos)</span>
+        <span className="text-accent-1 whitespace-nowrap">cos(ω·pos)</span>
       </div>
     </div>
   </div>

@@ -1,8 +1,22 @@
 import Link from "next/link";
+import { ArrowRight, Star } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { CourseCard } from "@/components/CourseCard";
 import { courseList } from "@/lib/course-config";
 import { getAllPosts } from "@/lib/posts";
+
+const TOKENS = ["The", "cat", "sat", "on", "the", "mat"];
+
+const ATTENTION_WEIGHTS = [
+  0.9, 0.12, 0.0, 0.0, 0.08, 0.0,
+  0.1, 0.8, 0.08, 0.0, 0.0, 0.0,
+  0.0, 0.12, 0.7, 0.18, 0.0, 0.0,
+  0.0, 0.0, 0.2, 0.55, 0.12, 0.1,
+  0.1, 0.0, 0.0, 0.08, 0.8, 0.0,
+  0.0, 0.0, 0.05, 0.1, 0.08, 0.8,
+];
+
+const PIPELINE_STAGES = ["text", "tokens", "vectors", "attention", "GPT"];
 
 export default async function Home() {
   const courses = await Promise.all(
@@ -12,7 +26,6 @@ export default async function Home() {
         ? getAllPosts(course.id).filter((post) => !post.hidden)
         : [];
 
-      // Only count main chapters (whole numbers) for progress tracking
       const mainChapterSteps = visiblePosts
         .filter((post) => Number.isInteger(post.step))
         .map((post) => post.step);
@@ -30,46 +43,153 @@ export default async function Home() {
       <Navbar />
 
       <main>
-        {/* Hero Section */}
-        <section className="relative pt-20 pb-24">
-          <div className="container mx-auto px-4 text-center max-w-3xl">
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 text-primary">
-              Learn AI by Building It
-            </h1>
+        {/* Hero — asymmetric split */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-grid-pattern" />
+          <div className="absolute inset-0 hero-gradient-mask" />
 
-            <p className="text-base md:text-lg text-secondary max-w-xl mx-auto leading-relaxed mb-10">
-              The only way to truly understand AI is to build it.
-            </p>
+          <div className="relative max-w-4xl mx-auto px-6 pt-20 md:pt-32 pb-20 md:pb-28">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-12 lg:gap-10 items-center">
+              {/* Left: copy */}
+              <div>
+                <h1 className="animate-fade-in-up text-4xl sm:text-5xl md:text-6xl font-bold text-primary tracking-tight leading-[1.08] mb-6">
+                  Learn AI by{" "}
+                  <br className="hidden sm:block" />
+                  Building It
+                </h1>
+                <p className="animate-fade-in-up animate-delay-1 text-lg text-secondary leading-relaxed mb-10 max-w-lg italic">
+                  &ldquo;What I cannot create, I do not understand.&rdquo;
+                  <span className="not-italic text-muted text-base ml-1">&mdash; Richard Feynman</span>
+                </p>
+                <div className="animate-fade-in-up animate-delay-2 flex flex-wrap gap-3">
+                  <Link
+                    href="#courses"
+                    className="group inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary hover:bg-primary-hover text-background font-medium transition-all hover:shadow-lg hover:shadow-muted/10"
+                  >
+                    Start Building
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                  <a
+                    href="https://github.com/h3nock/ai-deep-dive"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-3 rounded-lg border border-border hover:bg-surface text-secondary font-medium transition-colors"
+                  >
+                    View Source
+                  </a>
+                </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                href="#courses"
-                className="px-6 py-3 rounded-lg bg-primary hover:bg-zinc-200 text-background font-medium transition-all hover:shadow-lg hover:shadow-zinc-500/10"
-              >
-                Explore Courses
-              </Link>
-              <a
-                href="https://github.com/h3nock/ai-deep-dive"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 rounded-lg border border-border hover:bg-surface text-secondary font-medium transition-colors"
-              >
-                View Source
-              </a>
+                {/* Mobile: compact pipeline flow */}
+                <div className="flex items-center gap-2 flex-wrap lg:hidden mt-12">
+                  {PIPELINE_STAGES.map((stage, i) => (
+                    <div
+                      key={stage}
+                      className="pipeline-stage flex items-center gap-2"
+                      style={{ animationDelay: `${0.6 + i * 0.15}s` }}
+                    >
+                      {i > 0 && <span className="text-border text-xs">&rarr;</span>}
+                      <span
+                        className={`px-2.5 py-1 rounded-md bg-surface border border-border text-xs font-mono ${
+                          stage === "GPT"
+                            ? "text-primary font-medium"
+                            : "text-muted"
+                        }`}
+                      >
+                        {stage}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right: pipeline visualization (desktop) */}
+              <div className="hidden lg:block">
+                <div className="font-mono text-sm border border-border rounded-xl bg-terminal overflow-hidden">
+                  {/* Terminal header */}
+                  <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border">
+                    <div className="w-2.5 h-2.5 rounded-full bg-border" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-border" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-border" />
+                    <span className="ml-2 text-[10px] text-muted">transformer.py</span>
+                  </div>
+
+                  <div className="p-5 space-y-5">
+                    {/* Input */}
+                    <div className="pipeline-stage" style={{ animationDelay: "0.6s" }}>
+                      <span className="text-[10px] text-muted uppercase tracking-widest">input</span>
+                      <p className="text-secondary mt-1.5">
+                        &quot;The cat sat on the mat&quot;
+                        <span className="pipeline-cursor">|</span>
+                      </p>
+                    </div>
+
+                    {/* Connector */}
+                    <div
+                      className="pipeline-stage flex items-center gap-2"
+                      style={{ animationDelay: "0.9s" }}
+                    >
+                      <div className="flex-1 border-t border-border border-dashed" />
+                      <span className="text-[10px] text-muted">&darr;</span>
+                      <div className="flex-1 border-t border-border border-dashed" />
+                    </div>
+
+                    {/* Tokenize */}
+                    <div className="pipeline-stage" style={{ animationDelay: "1.2s" }}>
+                      <span className="text-[10px] text-muted uppercase tracking-widest">tokenize</span>
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {TOKENS.map((token) => (
+                          <span
+                            key={token}
+                            className="px-2 py-0.5 rounded bg-surface border border-border text-primary text-xs"
+                          >
+                            {token}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Embed */}
+                    <div className="pipeline-stage" style={{ animationDelay: "1.8s" }}>
+                      <span className="text-[10px] text-muted uppercase tracking-widest">embed</span>
+                      <div className="mt-1.5 text-[11px] text-muted whitespace-pre leading-relaxed">
+{`[ 0.82, -0.31,  0.67, ...]
+[-0.45,  0.91,  0.23, ...]`}
+                      </div>
+                    </div>
+
+                    {/* Self-Attention */}
+                    <div className="pipeline-stage" style={{ animationDelay: "2.4s" }}>
+                      <span className="text-[10px] text-muted uppercase tracking-widest">self-attention</span>
+                      <div className="grid grid-cols-6 gap-[3px] mt-1.5 w-fit">
+                        {ATTENTION_WEIGHTS.map((weight, i) => (
+                          <div
+                            key={i}
+                            className="w-3.5 h-3.5 rounded-[2px] bg-primary"
+                            style={{ opacity: Math.max(weight, 0.06) }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Generate */}
+                    <div className="pipeline-stage" style={{ animationDelay: "3s" }}>
+                      <span className="text-[10px] text-muted uppercase tracking-widest">generate</span>
+                      <p className="text-primary mt-1.5">&quot;...and purred softly.&quot;</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* Course Catalog */}
-        <section
-          id="courses"
-          className="py-20 bg-surface border-y border-border"
-        >
-          <div className="container mx-auto px-4 max-w-4xl">
+        <section id="courses" className="py-24 bg-surface/50">
+          <div className="max-w-4xl mx-auto px-6">
             <div className="mb-10">
               <h2 className="text-2xl font-bold text-primary mb-2">Courses</h2>
               <p className="text-secondary">
-                Guided paths from first principles to working code.
+                Guided paths from first principles to working systems.
               </p>
             </div>
 
@@ -92,46 +212,24 @@ export default async function Home() {
             </div>
           </div>
         </section>
-
-        {/* Approach - Simplified */}
-        <section className="py-20">
-          <div className="container mx-auto px-4 max-w-4xl">
-            <div className="mb-10">
-              <h2 className="text-2xl font-bold text-primary mb-2">
-                How It Works
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="space-y-2">
-                <div className="text-4xl font-bold text-zinc-700">01</div>
-                <h3 className="font-semibold text-primary">Theory First</h3>
-                <p className="text-sm text-secondary leading-relaxed">
-                  Understand the why before the how.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="text-4xl font-bold text-zinc-700">02</div>
-                <h3 className="font-semibold text-primary">
-                  Build It Yourself
-                </h3>
-                <p className="text-sm text-secondary leading-relaxed">
-                  Write real PyTorch. No magic imports.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="text-4xl font-bold text-zinc-700">03</div>
-                <h3 className="font-semibold text-primary">Make It Work</h3>
-                <p className="text-sm text-secondary leading-relaxed">
-                  Train on real data. End with something you can use.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
+
+      {/* Footer */}
+      <footer className="py-12 text-center text-sm text-muted">
+        <span>&copy; {new Date().getFullYear()} AI Deep Dive</span>
+        <span className="mx-3 text-border">&middot;</span>
+        <span>MIT License</span>
+        <span className="mx-3 text-border">&middot;</span>
+        <a
+          href="https://github.com/h3nock/ai-deep-dive"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-primary transition-colors"
+        >
+          Star on GitHub
+          <Star className="inline w-3.5 h-3.5 ml-1 -mt-0.5" />
+        </a>
+      </footer>
     </div>
   );
 }

@@ -45,7 +45,7 @@ export function MarkCompleteButton({
       className={cn(
         "group flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200",
         completed
-          ? "text-emerald-400"
+          ? "bg-success/10 border border-success/20 text-success"
           : "text-muted hover:text-secondary hover:bg-surface",
         className
       )}
@@ -54,12 +54,12 @@ export function MarkCompleteButton({
         className={cn(
           "w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all duration-200",
           completed
-            ? "border-emerald-400/50"
-            : "border-border group-hover:border-zinc-600"
+            ? "border-success/50"
+            : "border-border group-hover:border-border-hover"
         )}
       >
         {completed && (
-          <Check className="w-3 h-3 text-emerald-400" strokeWidth={3} />
+          <Check className="w-3 h-3 text-success" strokeWidth={3} />
         )}
       </div>
       <span className={cn("transition-colors", completed && "font-medium")}>

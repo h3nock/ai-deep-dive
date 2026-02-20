@@ -14,7 +14,7 @@ export default async function LessonLayout({
   params: Promise<{ courseId: string; slug: string }>;
 }) {
   const { courseId, slug } = await params;
-  const { post, prevPost, nextPost } = await getLessonPageData(courseId, slug);
+  const { post, prevPost, nextPost, allPosts } = await getLessonPageData(courseId, slug);
   const { content, ...postMeta } = post;
 
   return (
@@ -24,6 +24,7 @@ export default async function LessonLayout({
         post={postMeta}
         prevPost={prevPost}
         nextPost={nextPost}
+        allPosts={allPosts}
         collection={courseId}
         guideContent={<LessonGuideContent source={content} />}
       />

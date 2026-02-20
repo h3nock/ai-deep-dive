@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "katex/dist/katex.min.css";
 import { ProgressProvider } from "@/lib/progress-context";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import UmamiAnalytics from "@/components/analytics/UmamiAnalytics";
 
 const geistSans = Geist({
@@ -34,7 +35,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#09090B",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#09090B" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+  ],
 };
 
 export default function RootLayout({
@@ -45,28 +49,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className="dark"
-      style={{ colorScheme: "dark" }}
       suppressHydrationWarning
     >
       <head>
         {/* Preconnect to CDNs for faster resource loading */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" />
         <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-        {/* Force dark mode - prevent any light mode flash */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              document.documentElement.classList.add('dark');
-              document.documentElement.style.colorScheme = 'dark';
-            `,
-          }}
-        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-secondary`}
       >
-        <ProgressProvider>{children}</ProgressProvider>
+        <ThemeProvider>
+          <ProgressProvider>{children}</ProgressProvider>
+        </ThemeProvider>
         <UmamiAnalytics />
       </body>
     </html>

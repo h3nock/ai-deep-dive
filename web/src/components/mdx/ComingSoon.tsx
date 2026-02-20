@@ -3,9 +3,9 @@ import React from "react";
 export function ComingSoon() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="mb-6 rounded-full bg-sky-500/20 p-4">
+      <div className="mb-6 rounded-full bg-info/20 p-4">
         <svg
-          className="h-8 w-8 text-sky-400"
+          className="h-8 w-8 text-info"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

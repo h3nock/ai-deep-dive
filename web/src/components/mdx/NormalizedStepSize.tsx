@@ -49,13 +49,13 @@ export function NormalizedStepSize() {
 
   return (
     <div className="my-6">
-      <div className="p-5 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="p-5 bg-terminal rounded-lg border border-border">
         
         {/* Controls row */}
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="w-8 h-8 flex items-center justify-center rounded bg-zinc-800 hover:bg-zinc-700 transition-colors shrink-0"
+            className="w-8 h-8 flex items-center justify-center rounded bg-surface hover:bg-border-hover transition-colors shrink-0"
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
@@ -81,7 +81,7 @@ export function NormalizedStepSize() {
                 setLength(parseInt(e.target.value));
                 setIsPlaying(false);
               }}
-              className="w-full h-1 bg-zinc-700 rounded appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
+              className="w-full h-1 bg-border-hover rounded appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
             />
           </div>
           
@@ -92,7 +92,7 @@ export function NormalizedStepSize() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted">Step:</span>
-              <span className="font-mono text-amber-400 tabular-nums">{stepSize.toFixed(3)}</span>
+              <span className="font-mono text-accent-4 tabular-nums">{stepSize.toFixed(3)}</span>
             </div>
           </div>
         </div>
@@ -105,15 +105,15 @@ export function NormalizedStepSize() {
               className="absolute left-0 h-full flex flex-col items-center justify-end transition-all duration-200 ease-out"
               style={{ width: `${stepSize * 100}%` }}
             >
-              <span className="text-xs font-mono text-amber-400 mb-1">step</span>
-              <div className="w-full h-2.5 border-l-2 border-r-2 border-t-2 border-amber-400/80 rounded-t" />
+              <span className="text-xs font-mono text-accent-4 mb-1">step</span>
+              <div className="w-full h-2.5 border-l-2 border-r-2 border-t-2 border-accent-4/80 rounded-t" />
             </div>
           </div>
           
           {/* Line and dots container */}
           <div className="relative h-12">
             {/* The line - absolute center */}
-            <div className="absolute top-[6px] left-0 right-0 h-[2px] bg-zinc-600 rounded-full" />
+            <div className="absolute top-[6px] left-0 right-0 h-[2px] bg-muted rounded-full" />
             
             {/* Dots and labels */}
             {ticks.map((value, i) => (
@@ -127,7 +127,7 @@ export function NormalizedStepSize() {
                 }}
               >
                 {/* Dot - 14px total (w-3.5 h-3.5), line at 6px from top passes through center (6 + 1 = 7px center) */}
-                <div className="w-3.5 h-3.5 rounded-full bg-zinc-800 border-2 border-zinc-500" />
+                <div className="w-3.5 h-3.5 rounded-full bg-surface border-2 border-muted" />
                 <span className="text-[10px] font-mono text-muted mt-1.5 tabular-nums">
                   {value.toFixed(2)}
                 </span>

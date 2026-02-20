@@ -61,62 +61,61 @@ export function ChallengeList({
 
   useEffect(() => cancelHoverPrefetch, [cancelHoverPrefetch]);
 
+  const statusMessage = !isProgressLoaded
+    ? `${totalChallenges} ${totalChallenges === 1 ? "problem" : "problems"}`
+    : solvedCount === 0
+      ? `${totalChallenges} ${totalChallenges === 1 ? "problem" : "problems"} to solve`
+      : solvedCount === totalChallenges
+        ? "All challenges completed!"
+        : `${solvedCount} of ${totalChallenges} completed`;
+
   return (
     <div className="flex flex-col h-full overflow-y-auto py-12">
-      <div className="mx-auto w-full max-w-[85ch] px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[75ch] px-6 lg:px-8">
         <header className="mb-8">
-          <p className="text-muted text-sm">
-            {!isProgressLoaded
-              ? `${totalChallenges} ${
-                  totalChallenges === 1 ? "problem" : "problems"
-                }`
-              : solvedCount === 0
-                ? `${totalChallenges} ${
-                    totalChallenges === 1 ? "problem" : "problems"
-                  } to solve`
-                : solvedCount === totalChallenges
-                  ? "All challenges completed!"
-                  : `${solvedCount} of ${totalChallenges} completed`}
-          </p>
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className="text-2xl font-bold text-primary">
+              {isProgressLoaded ? solvedCount : 0}
+            </span>
+            <span className="text-lg text-muted">/ {totalChallenges}</span>
+          </div>
+          <p className="text-sm text-muted">{statusMessage}</p>
         </header>
 
-        <div className="-mx-4 divide-y divide-border">
+        <div className="grid grid-cols-1 gap-3">
           {challenges.map((challenge, idx) => {
             const challengeSolved =
               isProgressLoaded && isChallengeSolved(courseId, challenge.id);
             return (
-              <div key={challenge.id} className="py-1">
-                <button
-                  onPointerEnter={() => scheduleHoverPrefetch(idx)}
-                  onPointerLeave={cancelHoverPrefetch}
-                  onFocus={() => prefetchChallengeRoute(idx)}
-                  onClick={() => onSelectIndex(idx)}
-                  className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-zinc-900/50 rounded-lg transition-all group"
+              <button
+                key={challenge.id}
+                onPointerEnter={() => scheduleHoverPrefetch(idx)}
+                onPointerLeave={cancelHoverPrefetch}
+                onFocus={() => prefetchChallengeRoute(idx)}
+                onClick={() => onSelectIndex(idx)}
+                className="w-full text-left bg-surface/30 hover:bg-surface/50 rounded-xl border border-border hover:border-border-hover p-4 flex items-center gap-4 transition-all group"
+              >
+                <span className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center text-muted font-mono text-sm shrink-0">
+                  {String(idx + 1).padStart(2, "0")}
+                </span>
+                <span className="flex-1 text-secondary group-hover:text-primary transition-colors flex items-center gap-2">
+                  {challenge.title}
+                  {challengeSolved && (
+                    <CheckCircle2 className="w-4 h-4 text-success" />
+                  )}
+                </span>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    challenge.difficulty === "Easy"
+                      ? "bg-success/10 text-success"
+                      : challenge.difficulty === "Medium"
+                        ? "bg-warning/10 text-warning"
+                        : "bg-error/10 text-error"
+                  }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <span className="text-muted/60 text-sm font-mono w-6">
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <span className="text-secondary group-hover:text-primary transition-colors flex items-center gap-2">
-                      {challenge.title}
-                      {challengeSolved && (
-                        <CheckCircle2 className="w-4 h-4 text-green-400" />
-                      )}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-xs font-medium ${
-                      challenge.difficulty === "Easy"
-                        ? "text-emerald-400"
-                        : challenge.difficulty === "Medium"
-                          ? "text-amber-400"
-                          : "text-rose-400"
-                    }`}
-                  >
-                    {challenge.difficulty || "Medium"}
-                  </span>
-                </button>
-              </div>
+                  {challenge.difficulty || "Medium"}
+                </span>
+              </button>
             );
           })}
         </div>

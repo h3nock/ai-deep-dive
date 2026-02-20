@@ -34,7 +34,7 @@ export function ProcessTimeline({ steps }: ProcessTimelineProps) {
         marginBottom: "var(--space-connected)",
       }}
     >
-      <div className="absolute left-4 top-0 bottom-0 w-px bg-zinc-800"></div>
+      <div className="absolute left-4 top-0 bottom-0 w-px bg-border"></div>
 
       <div className="space-y-6">
         {steps.map((step, index) => (

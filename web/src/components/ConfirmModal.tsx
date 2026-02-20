@@ -72,19 +72,19 @@ export function ConfirmModal({
 
   const variantStyles = {
     danger: {
-      icon: "text-rose-400",
+      icon: "text-error",
       confirmButton:
-        "bg-rose-500/20 text-rose-400 border border-rose-400/50 hover:bg-rose-500/30 hover:border-rose-400",
+        "bg-error/20 text-error border border-error/50 hover:bg-error/30 hover:border-error",
     },
     warning: {
-      icon: "text-amber-400",
+      icon: "text-warning",
       confirmButton:
-        "bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:bg-amber-500/30 hover:border-amber-400",
+        "bg-warning/20 text-warning border border-warning/50 hover:bg-warning/30 hover:border-warning",
     },
     default: {
-      icon: "text-zinc-400",
+      icon: "text-secondary",
       confirmButton:
-        "bg-zinc-800 text-secondary border border-zinc-700 hover:bg-zinc-700 hover:text-primary",
+        "bg-surface text-secondary border border-border-hover hover:bg-border-hover hover:text-primary",
     },
   };
 
@@ -106,7 +106,7 @@ export function ConfirmModal({
           aria-modal="true"
           aria-labelledby="modal-title"
           aria-describedby="modal-description"
-          className="w-full max-w-[340px] bg-surface border border-zinc-800 rounded-xl shadow-2xl shadow-black/60 animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+          className="w-full max-w-[340px] bg-surface border border-border rounded-xl shadow-2xl shadow-black/60 animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200"
         >
           {/* Content */}
           <div className="px-6 pt-5 pb-4">
@@ -135,7 +135,7 @@ export function ConfirmModal({
             <button
               ref={cancelButtonRef}
               onClick={onClose}
-              className="flex-1 h-9 text-sm font-medium rounded-lg text-muted bg-transparent border border-zinc-800 hover:text-secondary hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              className="flex-1 h-9 text-sm font-medium rounded-lg text-muted bg-transparent border border-border hover:text-secondary hover:border-border-hover hover:bg-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-border-hover focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
             >
               {cancelText}
             </button>
@@ -145,7 +145,7 @@ export function ConfirmModal({
                 onConfirm();
                 onClose();
               }}
-              className={`flex-1 h-9 text-sm font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${styles.confirmButton}`}
+              className={`flex-1 h-9 text-sm font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-border-hover focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${styles.confirmButton}`}
             >
               {confirmText}
             </button>

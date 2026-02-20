@@ -43,14 +43,14 @@ export function CourseCard({
         "card-glow",
         isAvailable 
           ? "card-glow-interactive border-border" 
-          : "card-glow-disabled border-zinc-800/50 grayscale-[30%]"
+          : "card-glow-disabled border-border/50 grayscale-[30%]"
       )}
     >
       <div className="flex items-start justify-between mb-4">
         <div
           className={cn(
             "w-10 h-10 rounded-lg bg-surface flex items-center justify-center text-muted transition-colors duration-300",
-            isAvailable && "group-hover:bg-zinc-800 group-hover:text-primary"
+            isAvailable && "group-hover:bg-border group-hover:text-primary"
           )}
         >
           {icon}

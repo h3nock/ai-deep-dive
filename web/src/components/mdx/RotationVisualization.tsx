@@ -1,15 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTheme } from "next-themes";
+import { viz, getGrid, withAlpha } from "@/lib/viz-colors";
 
 /**
  * RotationVisualization - Interactive demonstration of how rotation matrix transforms vectors
+ *
+ * Color roles (all derived from viz-colors.ts):
+ *   viz.tertiary  → input vector
+ *   viz.secondary → output vector
+ *   viz.primary   → rotation arc / matrix
  */
 
 const CIRCLE_RADIUS = 85;
 const CENTER = 105;
 
 export function RotationVisualization() {
+  const { resolvedTheme } = useTheme();
+  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
+
   const [inputAngleDegrees, setInputAngleDegrees] = useState(0);
   const [rotationDegrees, setRotationDegrees] = useState(90);
   const [highlightRow, setHighlightRow] = useState<0 | 1 | null>(null);
@@ -17,11 +27,11 @@ export function RotationVisualization() {
   const inputAngleRadians = (inputAngleDegrees * Math.PI) / 180;
   const sinInput = Math.sin(inputAngleRadians);
   const cosInput = Math.cos(inputAngleRadians);
-  
+
   const rotationRadians = (rotationDegrees * Math.PI) / 180;
   const cosTheta = Math.cos(rotationRadians);
   const sinTheta = Math.sin(rotationRadians);
-  
+
   const cosOutput = cosTheta * cosInput - sinTheta * sinInput;
   const sinOutput = sinTheta * cosInput + cosTheta * sinInput;
 
@@ -46,7 +56,7 @@ export function RotationVisualization() {
     { name: "Bottom", angle: 270 },
   ];
 
-  const highlightBg = "rgba(63, 63, 70, 0.6)";
+  const highlightBg = withAlpha(grid.line, 0.6);
   const arcRadius = CIRCLE_RADIUS * 0.45;
 
   return (
@@ -55,49 +65,65 @@ export function RotationVisualization() {
         Interactive: Matrix Multiplication in Action
       </div>
 
-      <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="p-4 bg-terminal rounded-lg border border-border">
         {/* Controls */}
         <div className="flex flex-wrap gap-4 mb-6 text-sm">
           <div className="flex items-center gap-3">
             <span className="text-secondary">Start at:</span>
             <div className="flex gap-1">
-              {positionPresets.map((p) => (
-                <button
-                  key={p.name}
-                  onClick={() => setInputAngleDegrees(p.angle)}
-                  className={`px-2 py-1 text-xs rounded border transition-colors ${
-                    inputAngleDegrees === p.angle
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                      : 'bg-zinc-800 hover:bg-zinc-700 border-zinc-600 text-secondary'
-                  }`}
-                >
-                  {p.name}
-                </button>
-              ))}
+              {positionPresets.map((p) => {
+                const isActive = inputAngleDegrees === p.angle;
+                return (
+                  <button
+                    key={p.name}
+                    onClick={() => setInputAngleDegrees(p.angle)}
+                    className={`px-2 py-1 text-xs rounded border transition-colors ${
+                      isActive
+                        ? ''
+                        : 'bg-surface hover:bg-border-hover border-border-hover text-secondary'
+                    }`}
+                    style={isActive ? {
+                      backgroundColor: withAlpha(viz.tertiary, 0.2),
+                      borderColor: withAlpha(viz.tertiary, 0.5),
+                      color: viz.tertiary,
+                    } : undefined}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
             </div>
-            <span className="text-emerald-400 font-mono text-xs">
+            <span className="font-mono text-xs" style={{ color: viz.tertiary }}>
               [{fmt(cosInput)}, {fmt(sinInput)}]
             </span>
           </div>
 
-          <div className="w-px bg-zinc-700 hidden sm:block" />
+          <div className="w-px bg-border-hover hidden sm:block" />
 
           <div className="flex items-center gap-3">
             <span className="text-secondary">Rotate by:</span>
             <div className="flex gap-1">
-              {[30, 45, 60, 90].map((deg) => (
-                <button
-                  key={deg}
-                  onClick={() => setRotationDegrees(deg)}
-                  className={`px-2 py-1 text-xs rounded border transition-colors ${
-                    rotationDegrees === deg 
-                      ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' 
-                      : 'bg-zinc-800 hover:bg-zinc-700 border-zinc-600 text-secondary'
-                  }`}
-                >
-                  {deg}°
-                </button>
-              ))}
+              {[30, 45, 60, 90].map((deg) => {
+                const isActive = rotationDegrees === deg;
+                return (
+                  <button
+                    key={deg}
+                    onClick={() => setRotationDegrees(deg)}
+                    className={`px-2 py-1 text-xs rounded border transition-colors ${
+                      isActive
+                        ? ''
+                        : 'bg-surface hover:bg-border-hover border-border-hover text-secondary'
+                    }`}
+                    style={isActive ? {
+                      backgroundColor: withAlpha(viz.primary, 0.2),
+                      borderColor: withAlpha(viz.primary, 0.5),
+                      color: viz.primary,
+                    } : undefined}
+                  >
+                    {deg}°
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -117,36 +143,36 @@ export function RotationVisualization() {
                   orient="auto"
                   markerUnits="strokeWidth"
                 >
-                  <path d="M0,2 L0,8 L6,5 Z" fill="#3b82f6" />
+                  <path d="M0,2 L0,8 L6,5 Z" fill={viz.primary} />
                 </marker>
               </defs>
 
-              <line x1="10" y1={CENTER} x2="200" y2={CENTER} stroke="#333" strokeWidth="1" />
-              <line x1={CENTER} y1="10" x2={CENTER} y2="200" stroke="#333" strokeWidth="1" />
-              <circle cx={CENTER} cy={CENTER} r={CIRCLE_RADIUS} fill="none" stroke="#444" strokeWidth="1.5" />
-              
+              <line x1="10" y1={CENTER} x2="200" y2={CENTER} stroke={grid.axis} strokeWidth="1" />
+              <line x1={CENTER} y1="10" x2={CENTER} y2="200" stroke={grid.axis} strokeWidth="1" />
+              <circle cx={CENTER} cy={CENTER} r={CIRCLE_RADIUS} fill="none" stroke={grid.axisBold} strokeWidth="1.5" />
+
               {rotationDegrees > 0 && (
                 <path
                   d={createRotationArc(inputAngleDegrees, rotationDegrees, arcRadius, CENTER)}
-                  fill="none" 
-                  stroke="#3b82f6" 
-                  strokeWidth="2" 
+                  fill="none"
+                  stroke={viz.primary}
+                  strokeWidth="2"
                   strokeLinecap="round"
                   markerEnd="url(#arrowMarker)"
                 />
               )}
 
-              <line x1={CENTER} y1={CENTER} x2={inputX} y2={inputY} stroke="#10b981" strokeWidth="2.5" />
-              <line x1={CENTER} y1={CENTER} x2={outputX} y2={outputY} stroke="#f59e0b" strokeWidth="2.5" />
+              <line x1={CENTER} y1={CENTER} x2={inputX} y2={inputY} stroke={viz.tertiary} strokeWidth="2.5" />
+              <line x1={CENTER} y1={CENTER} x2={outputX} y2={outputY} stroke={viz.secondary} strokeWidth="2.5" />
 
-              <circle cx={inputX} cy={inputY} r="7" fill="#10b981" stroke="#0d9668" strokeWidth="1" />
-              <circle cx={outputX} cy={outputY} r="7" fill="#f59e0b" stroke="#d97706" strokeWidth="1" />
+              <circle cx={inputX} cy={inputY} r="7" fill={viz.tertiary} stroke={viz.tertiaryDark} strokeWidth="1" />
+              <circle cx={outputX} cy={outputY} r="7" fill={viz.secondary} stroke={viz.secondaryDark} strokeWidth="1" />
 
-              <text x={CENTER + CIRCLE_RADIUS + 14} y={CENTER + 4} fill="#555" fontSize="10" textAnchor="start">x (cos)</text>
-              <text x={CENTER + 8} y={CENTER - CIRCLE_RADIUS - 14} fill="#555" fontSize="10">y (sin)</text>
+              <text x={CENTER + CIRCLE_RADIUS + 14} y={CENTER + 4} fill={grid.labelLight} fontSize="10" textAnchor="start">x (cos)</text>
+              <text x={CENTER + 8} y={CENTER - CIRCLE_RADIUS - 14} fill={grid.labelLight} fontSize="10">y (sin)</text>
 
               {rotationDegrees > 0 && (
-                <text x={CENTER} y={220} fill="#3b82f6" fontSize="11" textAnchor="middle" fontWeight="500">
+                <text x={CENTER} y={220} fill={viz.primary} fontSize="11" textAnchor="middle" fontWeight="500">
                   Rotation: {rotationDegrees}°
                 </text>
               )}
@@ -154,11 +180,11 @@ export function RotationVisualization() {
 
             <div className="flex gap-4 text-xs">
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: viz.tertiary }} />
                 <span className="text-secondary">Input</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: viz.secondary }} />
                 <span className="text-secondary">Output</span>
               </div>
             </div>
@@ -167,73 +193,88 @@ export function RotationVisualization() {
           {/* Matrix Equation - margin-bottom aligns with circle's horizontal centerline */}
           <div className="flex items-center gap-2 font-mono text-sm flex-wrap flex-1" style={{ marginBottom: '55px' }}>
             {/* Output vector */}
-            <div className="flex flex-col p-2 border-l-2 border-r-2 border-amber-500 rounded bg-amber-500/10 shrink-0">
-              <span className="text-amber-400 font-bold text-center px-2">{fmt(cosOutput)}</span>
-              <span className="text-amber-400 font-bold text-center px-2">{fmt(sinOutput)}</span>
+            <div
+              className="flex flex-col p-2 border-l-2 border-r-2 rounded shrink-0"
+              style={{
+                borderColor: viz.secondary,
+                backgroundColor: withAlpha(viz.secondary, 0.1),
+              }}
+            >
+              <span className="font-bold text-center px-2" style={{ color: viz.secondary }}>{fmt(cosOutput)}</span>
+              <span className="font-bold text-center px-2" style={{ color: viz.secondary }}>{fmt(sinOutput)}</span>
             </div>
-            
+
             <span className="text-muted">=</span>
 
             {/* Rotation matrix */}
-            <div className="flex flex-col p-2 border-l-2 border-r-2 border-blue-500 rounded bg-blue-500/10 shrink-0">
-              <div 
+            <div
+              className="flex flex-col p-2 border-l-2 border-r-2 rounded shrink-0"
+              style={{
+                borderColor: viz.primary,
+                backgroundColor: withAlpha(viz.primary, 0.1),
+              }}
+            >
+              <div
                 className="flex py-0.5 px-1 rounded transition-colors"
                 style={{ backgroundColor: highlightRow === 0 ? highlightBg : 'transparent' }}
               >
-                <span className="w-14 text-center text-blue-400 shrink-0">{fmt(cosTheta)}</span>
-                <span className="w-14 text-center text-blue-400 shrink-0">{fmt(-sinTheta)}</span>
+                <span className="w-14 text-center shrink-0" style={{ color: viz.primary }}>{fmt(cosTheta)}</span>
+                <span className="w-14 text-center shrink-0" style={{ color: viz.primary }}>{fmt(-sinTheta)}</span>
               </div>
-              <div 
+              <div
                 className="flex py-0.5 px-1 rounded transition-colors"
                 style={{ backgroundColor: highlightRow === 1 ? highlightBg : 'transparent' }}
               >
-                <span className="w-14 text-center text-blue-400 shrink-0">{fmt(sinTheta)}</span>
-                <span className="w-14 text-center text-blue-400 shrink-0">{fmt(cosTheta)}</span>
+                <span className="w-14 text-center shrink-0" style={{ color: viz.primary }}>{fmt(sinTheta)}</span>
+                <span className="w-14 text-center shrink-0" style={{ color: viz.primary }}>{fmt(cosTheta)}</span>
               </div>
             </div>
 
             <span className="text-muted">×</span>
 
             {/* Input vector */}
-            <div 
-              className="flex flex-col p-2 border-l-2 border-r-2 border-emerald-500 rounded transition-colors shrink-0"
-              style={{ backgroundColor: highlightRow !== null ? highlightBg : 'rgba(16, 185, 129, 0.1)' }}
+            <div
+              className="flex flex-col p-2 border-l-2 border-r-2 rounded transition-colors shrink-0"
+              style={{
+                borderColor: viz.tertiary,
+                backgroundColor: highlightRow !== null ? highlightBg : withAlpha(viz.tertiary, 0.1),
+              }}
             >
-              <span className="text-emerald-400 font-bold text-center px-2">{fmt(cosInput)}</span>
-              <span className="text-emerald-400 font-bold text-center px-2">{fmt(sinInput)}</span>
+              <span className="font-bold text-center px-2" style={{ color: viz.tertiary }}>{fmt(cosInput)}</span>
+              <span className="font-bold text-center px-2" style={{ color: viz.tertiary }}>{fmt(sinInput)}</span>
             </div>
 
             <span className="text-muted">=</span>
 
             {/* Expanded calculations */}
             <div className="flex flex-col shrink-0">
-              <div 
+              <div
                 className="py-1 px-2 rounded cursor-pointer transition-colors text-xs whitespace-nowrap"
                 style={{ backgroundColor: highlightRow === 0 ? highlightBg : 'transparent' }}
                 onMouseEnter={() => setHighlightRow(0)}
                 onMouseLeave={() => setHighlightRow(null)}
               >
-                <span className="text-blue-400">{fmt(cosTheta)}</span>
-                <span className="text-zinc-500">×</span>
-                <span className="text-emerald-400">{fmt(cosInput)}</span>
-                <span className="text-zinc-500"> + </span>
-                <span className="text-blue-400">{fmt(-sinTheta)}</span>
-                <span className="text-zinc-500">×</span>
-                <span className="text-emerald-400">{fmt(sinInput)}</span>
+                <span style={{ color: viz.primary }}>{fmt(cosTheta)}</span>
+                <span style={{ color: grid.label }}>×</span>
+                <span style={{ color: viz.tertiary }}>{fmt(cosInput)}</span>
+                <span style={{ color: grid.label }}> + </span>
+                <span style={{ color: viz.primary }}>{fmt(-sinTheta)}</span>
+                <span style={{ color: grid.label }}>×</span>
+                <span style={{ color: viz.tertiary }}>{fmt(sinInput)}</span>
               </div>
-              <div 
+              <div
                 className="py-1 px-2 rounded cursor-pointer transition-colors text-xs whitespace-nowrap"
                 style={{ backgroundColor: highlightRow === 1 ? highlightBg : 'transparent' }}
                 onMouseEnter={() => setHighlightRow(1)}
                 onMouseLeave={() => setHighlightRow(null)}
               >
-                <span className="text-blue-400">{fmt(sinTheta)}</span>
-                <span className="text-zinc-500">×</span>
-                <span className="text-emerald-400">{fmt(cosInput)}</span>
-                <span className="text-zinc-500"> + </span>
-                <span className="text-blue-400">{fmt(cosTheta)}</span>
-                <span className="text-zinc-500">×</span>
-                <span className="text-emerald-400">{fmt(sinInput)}</span>
+                <span style={{ color: viz.primary }}>{fmt(sinTheta)}</span>
+                <span style={{ color: grid.label }}>×</span>
+                <span style={{ color: viz.tertiary }}>{fmt(cosInput)}</span>
+                <span style={{ color: grid.label }}> + </span>
+                <span style={{ color: viz.primary }}>{fmt(cosTheta)}</span>
+                <span style={{ color: grid.label }}>×</span>
+                <span style={{ color: viz.tertiary }}>{fmt(sinInput)}</span>
               </div>
             </div>
           </div>
@@ -249,18 +290,18 @@ function createRotationArc(inputAngleDeg: number, rotationDeg: number, radius: n
   // So we negate angles for SVG
   const startAngle = -inputAngleDeg;
   const endAngle = -(inputAngleDeg + rotationDeg);
-  
+
   const startRad = (startAngle * Math.PI) / 180;
   const endRad = (endAngle * Math.PI) / 180;
-  
+
   const startX = center + radius * Math.cos(startRad);
   const startY = center + radius * Math.sin(startRad);
   const endX = center + radius * Math.cos(endRad);
   const endY = center + radius * Math.sin(endRad);
-  
+
   const largeArcFlag = Math.abs(rotationDeg) > 180 ? 1 : 0;
   // sweepFlag = 0 for counterclockwise in SVG (which is our positive direction)
   const sweepFlag = 0;
-  
+
   return `M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${endX} ${endY}`;
 }

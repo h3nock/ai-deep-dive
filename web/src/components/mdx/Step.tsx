@@ -34,14 +34,15 @@ export function Step({ title, children }: StepProps) {
 
   return (
     <div
-      className="relative border-b border-border last:border-0"
+      className="border-b border-border last:border-0"
       style={{
         paddingTop: "var(--space-section)",
         paddingBottom: "var(--space-section)",
       }}
     >
       <h3
-        className="text-2xl font-bold text-primary"
+        id={title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}
+        className="text-2xl font-bold text-primary tracking-tight"
         style={{ marginBottom: "var(--space-connected)" }}
       >
         {title}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Navbar() {
   return (
@@ -11,7 +12,7 @@ export function Navbar() {
           <span className="font-semibold text-primary">Deep Dive</span>
         </Link>
 
-        <div className="flex items-center gap-6 text-sm text-muted">
+        <div className="flex items-center gap-4 text-sm text-muted">
           <a
             href="https://github.com/h3nock/ai-deep-dive"
             target="_blank"
@@ -20,6 +21,7 @@ export function Navbar() {
           >
             GitHub
           </a>
+          <ThemeToggle />
         </div>
       </div>
     </nav>

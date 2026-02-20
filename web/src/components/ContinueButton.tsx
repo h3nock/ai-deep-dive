@@ -46,8 +46,8 @@ export function ContinueButton({
   if (isAllComplete) {
     return (
       <div className="flex flex-col items-center gap-3">
-        <div className="flex items-center gap-2 text-emerald-400">
-          <div className="w-5 h-5 rounded-full border border-emerald-400/50 flex items-center justify-center">
+        <div className="flex items-center gap-2 text-success">
+          <div className="w-5 h-5 rounded-full border border-success/50 flex items-center justify-center">
             <Check className="w-3 h-3" strokeWidth={3} />
           </div>
           <span className="font-medium">Course completed</span>
@@ -74,7 +74,7 @@ export function ContinueButton({
       href={`/${courseId}/${slug}`}
       prefetch={true}
       className={cn(
-        "inline-flex items-center px-6 py-3 rounded-lg bg-primary hover:bg-zinc-200 text-background font-medium transition-colors",
+        "inline-flex items-center px-6 py-3 rounded-lg bg-primary hover:bg-primary-hover text-background font-medium transition-colors",
         className
       )}
     >

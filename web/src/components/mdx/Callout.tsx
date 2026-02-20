@@ -13,28 +13,33 @@ interface CalloutProps {
 
 const styles = {
   note: {
-    border: "border-zinc-700",
-    icon: "text-zinc-400",
+    border: "border-border-hover",
+    bg: "",
+    icon: "text-secondary",
     Icon: Info,
   },
   info: {
-    border: "border-sky-500/50",
-    icon: "text-sky-400",
+    border: "border-info/50",
+    bg: "bg-info/5",
+    icon: "text-info",
     Icon: Info,
   },
   warning: {
-    border: "border-amber-500/50",
-    icon: "text-amber-400",
+    border: "border-warning/50",
+    bg: "bg-warning/5",
+    icon: "text-warning",
     Icon: AlertTriangle,
   },
   tip: {
-    border: "border-zinc-700",
-    icon: "text-zinc-400",
+    border: "border-border-hover",
+    bg: "bg-success/5",
+    icon: "text-secondary",
     Icon: Lightbulb,
   },
   success: {
-    border: "border-emerald-400/50",
-    icon: "text-emerald-400",
+    border: "border-success/50",
+    bg: "bg-success/5",
+    icon: "text-success",
     Icon: Check,
   },
 };
@@ -77,13 +82,13 @@ export function Callout({ type = "note", title, muted = false, children }: Callo
           className="flex items-center gap-2 pl-6"
           style={{ marginBottom: "var(--space-connected)" }}
         >
-          <Check className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2.5} />
+          <Check className="w-4 h-4 text-success shrink-0" strokeWidth={2.5} />
           <span className="font-semibold text-primary text-base leading-none">{title}</span>
         </div>
         {/* Content with emerald bullets - use pseudo-element for precise line positioning */}
-        <div className="relative pl-6 text-secondary text-base leading-relaxed [&>ul]:list-none [&>ul]:p-0 [&>ul]:m-0 [&>ul]:space-y-3 [&>ul>li]:relative [&>ul>li]:pl-5 [&>ul>li]:before:content-[''] [&>ul>li]:before:absolute [&>ul>li]:before:left-0 [&>ul>li]:before:top-[0.6em] [&>ul>li]:before:w-1.5 [&>ul>li]:before:h-1.5 [&>ul>li]:before:rounded-full [&>ul>li]:before:bg-emerald-400 [&>ul>li>strong]:text-primary [&>ul>li>strong]:font-medium [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
+        <div className="relative pl-6 text-secondary text-base leading-relaxed [&>ul]:list-none [&>ul]:p-0 [&>ul]:m-0 [&>ul]:space-y-3 [&>ul>li]:relative [&>ul>li]:pl-5 [&>ul>li]:before:content-[''] [&>ul>li]:before:absolute [&>ul>li]:before:left-0 [&>ul>li]:before:top-[0.6em] [&>ul>li]:before:w-1.5 [&>ul>li]:before:h-1.5 [&>ul>li]:before:rounded-full [&>ul>li]:before:bg-success [&>ul>li>strong]:text-primary [&>ul>li>strong]:font-medium [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
           {/* Vertical line - starts at first bullet center, ends at last bullet center */}
-          <div className="absolute left-0 top-[0.6em] bottom-[0.6em] w-0.5 bg-emerald-400/50"></div>
+          <div className="absolute left-0 top-[0.6em] bottom-[0.6em] w-0.5 bg-success/50"></div>
           {children}
         </div>
       </div>
@@ -97,10 +102,12 @@ export function Callout({ type = "note", title, muted = false, children }: Callo
   // Connected to preceding content, provides reset after
   return (
     <div
-      className={`not-prose pl-6 border-l-2 ${style.border}`}
+      className={`not-prose pl-6 pr-6 border-l-2 rounded-r-lg ${style.border} ${style.bg}`}
       style={{
         marginTop: "var(--space-connected)",
         marginBottom: "var(--space-section)",
+        paddingTop: style.bg ? "1rem" : undefined,
+        paddingBottom: style.bg ? "1rem" : undefined,
       }}
     >
       {title && (

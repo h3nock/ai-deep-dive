@@ -1,24 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Editor, { OnMount, BeforeMount } from "@monaco-editor/react";
 import type { editor as MonacoEditor } from "monaco-editor";
-
-// Custom Monaco Theme - Eye-Safe Zinc Dark (matches ChallengeWorkspace)
-const ZINC_DARK_THEME = {
-  base: "vs-dark" as const,
-  inherit: true,
-  rules: [],
-  colors: {
-    "editor.background": "#09090B",
-    "editor.foreground": "#D4D4D8",
-    "editor.lineHighlightBackground": "#18181B",
-    "editor.selectionBackground": "#27272A",
-    "editorGutter.background": "#09090B",
-    "editorCursor.foreground": "#D4D4D8",
-    "minimap.background": "#09090B",
-    "scrollbarSlider.background": "#27272A80",
-    "scrollbarSlider.hoverBackground": "#3f3f4680",
-  },
-};
+import { createMonacoTheme, getMonacoThemeName } from "@/lib/monaco-theme";
+import { useTheme } from "next-themes";
 
 interface AutoResizingEditorProps {
   value: string;
@@ -37,14 +21,22 @@ export function AutoResizingEditor({
 }: AutoResizingEditorProps) {
   const [height, setHeight] = useState(minHeight);
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<typeof import("monaco-editor") | null>(null);
+  const { resolvedTheme } = useTheme();
+  const mode = resolvedTheme === "light" ? "light" : "dark";
 
   const handleBeforeMount: BeforeMount = (monaco) => {
-    // Define theme before mount to prevent flash
-    monaco.editor.defineTheme("zinc-dark", ZINC_DARK_THEME);
+    // Define both themes before mount to prevent flash
+    monaco.editor.defineTheme(getMonacoThemeName("dark"), createMonacoTheme("dark"));
+    monaco.editor.defineTheme(getMonacoThemeName("light"), createMonacoTheme("light"));
   };
 
-  const handleEditorDidMount: OnMount = (editor) => {
+  const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    monacoRef.current = monaco;
+
+    // Set theme to match current mode
+    monaco.editor.setTheme(getMonacoThemeName(mode));
 
     // Initial resize
     updateHeight();
@@ -54,6 +46,13 @@ export function AutoResizingEditor({
       updateHeight();
     });
   };
+
+  // React to theme changes
+  useEffect(() => {
+    if (monacoRef.current) {
+      monacoRef.current.editor.setTheme(getMonacoThemeName(mode));
+    }
+  }, [mode]);
 
   const updateHeight = () => {
     if (editorRef.current) {
@@ -67,17 +66,17 @@ export function AutoResizingEditor({
   return (
     <div
       style={{ height: height, transition: "height 0.1s ease-out" }}
-      className="w-full rounded-md overflow-hidden bg-[#09090B]"
+      className="w-full rounded-md overflow-hidden bg-background"
     >
       <Editor
         height={height}
         defaultLanguage={language}
         value={value}
         onChange={onChange}
-        theme="zinc-dark"
+        theme={getMonacoThemeName(mode)}
         beforeMount={handleBeforeMount}
         onMount={handleEditorDidMount}
-        loading={<div className="w-full h-full bg-[#09090B]" />}
+        loading={<div className="w-full h-full bg-background" />}
         options={{
           minimap: { enabled: false },
           fontSize: 14,

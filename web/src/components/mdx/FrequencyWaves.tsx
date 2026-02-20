@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
+import { viz, getGrid } from "@/lib/viz-colors";
 
 /**
  * FrequencyWaves - Interactive visualization of sinusoidal positional encoding
@@ -18,6 +20,9 @@ function computeSinusoidal(pos: number, dim: number, dModel: number): number {
 }
 
 export function FrequencyWaves() {
+  const { resolvedTheme } = useTheme();
+  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
+
   const [position, setPosition] = useState(25);
   const [isPlaying, setIsPlaying] = useState(false);
   const animationRef = useRef<number | null>(null);
@@ -81,8 +86,8 @@ export function FrequencyWaves() {
   };
   
   const getColor = (index: number): string => {
-    const colors = ["#10b981", "#f59e0b", "#3b82f6", "#a855f7"];
-    return colors[index] || "#10b981";
+    const colors = [viz.tertiary, viz.secondary, viz.primary, viz.quaternary];
+    return colors[index] || viz.tertiary;
   };
 
   const CLOCK_SIZE = 32;
@@ -100,23 +105,23 @@ export function FrequencyWaves() {
         Multi-Frequency Encoding: Clocks + Waves
       </div>
 
-      <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="p-4 bg-terminal rounded-lg border border-border">
         {/* Controls - aligned with wave rows below */}
         <div className="flex items-center gap-3 mb-4">
           {/* Play/Pause Button - same size as clock container */}
           <div className="shrink-0">
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors border border-zinc-700"
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface hover:bg-border-hover transition-colors border border-border-hover"
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
-                <svg className="w-3.5 h-3.5 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                   <rect x="6" y="4" width="4" height="16" />
                   <rect x="14" y="4" width="4" height="16" />
                 </svg>
               ) : (
-                <svg className="w-3.5 h-3.5 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                   <polygon points="5,3 19,12 5,21" />
                 </svg>
               )}
@@ -149,12 +154,13 @@ export function FrequencyWaves() {
               preserveAspectRatio="none"
             >
               {/* Track line */}
-              <line x1="0" y1="20" x2="200" y2="20" stroke="#3f3f46" strokeWidth="3" strokeLinecap="round" />
+              <line x1="0" y1="20" x2="200" y2="20" stroke={grid.line} strokeWidth="3" strokeLinecap="round" />
             </svg>
             {/* Thumb marker - same positioning logic as wave dots */}
             <div
-              className="absolute w-3 h-3 rounded-full bg-emerald-500"
+              className="absolute w-3 h-3 rounded-full"
               style={{
+                backgroundColor: viz.tertiary,
                 left: `${(position / MAX_POSITION) * 100}%`,
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
@@ -162,7 +168,7 @@ export function FrequencyWaves() {
             />
           </div>
 
-          <span className="text-lg font-mono text-emerald-400 w-14 text-right">
+          <span className="text-lg font-mono w-14 text-right" style={{ color: viz.tertiary }}>
             {Math.round(position)}
           </span>
         </div>
@@ -179,8 +185,8 @@ export function FrequencyWaves() {
                 {/* Clock */}
                 <div className="shrink-0">
                   <svg width={CLOCK_SIZE} height={CLOCK_SIZE} viewBox={`0 0 ${CLOCK_SIZE} ${CLOCK_SIZE}`}>
-                    <circle cx={CLOCK_CENTER} cy={CLOCK_CENTER} r={CLOCK_RADIUS} fill="none" stroke="#333" strokeWidth="1.5" />
-                    <circle cx={CLOCK_CENTER} cy={CLOCK_CENTER} r="2" fill="#666" />
+                    <circle cx={CLOCK_CENTER} cy={CLOCK_CENTER} r={CLOCK_RADIUS} fill="none" stroke={grid.axis} strokeWidth="1.5" />
+                    <circle cx={CLOCK_CENTER} cy={CLOCK_CENTER} r="2" fill={grid.dot} />
                     <line 
                       x1={CLOCK_CENTER} y1={CLOCK_CENTER} 
                       x2={handX} y2={handY} 
@@ -206,7 +212,7 @@ export function FrequencyWaves() {
                     <path
                       d={generateWavePath(wave.dim, 200, 40)}
                       fill="none"
-                      stroke="#3f3f46"
+                      stroke={grid.line}
                       strokeWidth="1.5"
                     />
                   </svg>

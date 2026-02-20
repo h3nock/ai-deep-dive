@@ -44,7 +44,7 @@ export function TableBody(
 }
 
 export function TableRow(props: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className="transition-colors hover:bg-zinc-800/30" {...props} />;
+  return <tr className="transition-colors hover:bg-surface/30" {...props} />;
 }
 
 export function TableHeader(

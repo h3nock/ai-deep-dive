@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllPosts, listCollections } from "@/lib/posts";
-import { ArrowRight, ArrowLeft, Clock, BookOpen, Code2 } from "lucide-react";
-import { ProgressBar } from "@/components/ProgressBar";
-import { ChallengeProgressBar } from "@/components/ChallengeProgressBar";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ProgressStatCards } from "@/components/ProgressStatCards";
 import { ChallengeProgressPill } from "@/components/ChallengeProgressPill";
 import { ChapterCheckbox } from "@/components/ChapterCheckbox";
 import { ContinueButton } from "@/components/ContinueButton";
 import { getCourseConfig } from "@/lib/course-config";
 import { isSafePathSegment } from "@/lib/path-safety";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import fs from "fs";
 import path from "path";
 
@@ -100,69 +100,38 @@ export default async function RoadmapPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-10">
-          <Link
-            href="/"
-            className="inline-flex items-center text-sm text-muted hover:text-primary mb-8 transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Back to Courses
-          </Link>
+          <div className="flex items-center justify-between mb-8">
+            <Link
+              href="/"
+              className="inline-flex items-center text-sm text-muted hover:text-primary transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+              Back to Courses
+            </Link>
+            <ThemeToggle />
+          </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-primary mb-3">
+          <h1 className="animate-fade-in-up text-3xl md:text-4xl font-bold text-primary mb-3">
             {metadata.title}
           </h1>
           <p className="text-lg text-muted max-w-2xl leading-relaxed">
             {metadata.description}
           </p>
 
-          {/* Stats */}
-          <div className="mt-6 flex items-center gap-6 text-sm text-muted">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              <span>{mainChapterSteps.length} chapters</span>
-            </div>
-            {allChallengeIds.length > 0 && (
-              <div className="flex items-center gap-2">
-                <Code2 className="w-4 h-4" />
-                <span>{allChallengeIds.length} problems</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              <span>~120 hours</span>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mt-6">
-            <ProgressBar
-              courseId={courseId}
-              totalSteps={mainChapterSteps.length}
-            />
-            {allChallengeIds.length > 0 && (
-              <div className="mt-3">
-                <ChallengeProgressBar
-                  courseId={courseId}
-                  challengeIds={allChallengeIds}
-                />
-              </div>
-            )}
-          </div>
+          {/* Stats with integrated progress */}
+          <ProgressStatCards
+            courseId={courseId}
+            totalChapters={mainChapterSteps.length}
+            challengeIds={allChallengeIds}
+          />
         </div>
 
-        {/* Prerequisites & What You'll Build - Inverted T Layout */}
-        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 pb-6 mb-12">
-          {/* Center vertical line (hidden on mobile) - connects to horizontal line */}
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-zinc-800" />
-
-          {/* Horizontal bottom line (the T's crossbar) */}
-          <div className="absolute left-0 right-0 bottom-0 h-px bg-zinc-800" />
-
-          {/* Prerequisites */}
-          <div className="md:pr-8">
+        {/* Prerequisites & What You'll Build — card pair */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+          <div className="bg-surface rounded-xl p-5">
             <h3 className="text-sm font-medium text-secondary uppercase tracking-wider mb-4">
               Prerequisites
             </h3>
@@ -172,7 +141,7 @@ export default async function RoadmapPage({
                   key={i}
                   className="flex items-start gap-3 text-base text-muted leading-relaxed"
                 >
-                  <span className="text-zinc-500 shrink-0 mt-[6px] text-[6px]">
+                  <span className="text-muted shrink-0 mt-[6px] text-[6px]">
                     ●
                   </span>
                   <span>{prereq}</span>
@@ -181,8 +150,7 @@ export default async function RoadmapPage({
             </ul>
           </div>
 
-          {/* What You'll Build */}
-          <div className="md:pl-8">
+          <div className="bg-surface rounded-xl p-5">
             <h3 className="text-sm font-medium text-secondary uppercase tracking-wider mb-4">
               What You&apos;ll Build
             </h3>
@@ -193,7 +161,7 @@ export default async function RoadmapPage({
                     key={i}
                     className="flex items-start gap-3 text-base text-muted leading-relaxed"
                   >
-                    <span className="text-zinc-500 shrink-0 mt-[6px] text-[6px]">
+                    <span className="text-muted shrink-0 mt-[6px] text-[6px]">
                       ●
                     </span>
                     <span>{item}</span>
@@ -208,8 +176,8 @@ export default async function RoadmapPage({
           </div>
         </div>
 
-        {/* Course Content by Phase */}
-        <div className="space-y-8">
+        {/* Course Content by Phase — timeline */}
+        <div>
           {metadata.phases.map((phase, phaseIndex) => {
             const [min, max] = phase.stepRange;
             const phaseChapters = visiblePosts.filter(
@@ -220,70 +188,60 @@ export default async function RoadmapPage({
             return (
               <div key={phaseIndex}>
                 {/* Phase Header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center text-muted">
-                    {phase.icon}
-                  </div>
-                  <div>
-                    <h2 className="font-semibold text-primary">
-                      {phase.title}
-                    </h2>
-                    <p className="text-sm font-medium text-muted">{phase.description}</p>
-                  </div>
+                <div className="flex items-center gap-3 mt-10 mb-4">
+                  <span className="text-xs font-mono text-muted uppercase tracking-wider">
+                    Phase {phaseIndex + 1}
+                  </span>
+                  <span className="text-sm font-semibold text-primary">
+                    {phase.title}
+                  </span>
+                  <div className="flex-1 border-t border-border" />
                 </div>
 
                 {/* Chapter Timeline */}
-                <div className="relative ml-4 pl-4 border-l border-zinc-800">
+                <div className="relative ml-3 pl-6 border-l border-border">
                   {phaseChapters.map((post) => {
-                    const chapterChallengeIds = challengeIdsBySlug[post.slug] ?? [];
+                    const chapterChallengeIds =
+                      challengeIdsBySlug[post.slug] ?? [];
                     return (
                       <Link
                         key={post.slug}
                         href={`/${courseId}/${post.slug}`}
-                        className="group block relative border-b border-border last:border-0"
+                        className="group relative block py-3 first:pt-1 last:pb-1 border-b border-border/30 last:border-0"
                       >
-                      {/* Timeline Node (Checkbox) */}
-                      <div className="absolute -left-[24.5px] top-1/2 -translate-y-1/2 z-10 bg-background ring-4 ring-background">
-                        <ChapterCheckbox
-                          courseId={courseId}
-                          step={post.step}
-                          size="sm"
-                        />
-                      </div>
+                        {/* Timeline node */}
+                        <div className="absolute -left-[31px] top-1/2 -translate-y-1/2 bg-background ring-4 ring-background">
+                          <ChapterCheckbox
+                            courseId={courseId}
+                            step={post.step}
+                            size="sm"
+                          />
+                        </div>
 
-                      {/* Content Floating on Void - Inset from borders */}
-                      <div className="relative my-1 py-2 px-4 rounded-lg transition-all duration-150 hover:bg-zinc-900/50 group-hover:translate-x-0.5">
-                        <div className="flex items-center gap-4">
-                          {/* Step Number - Subtle */}
-                          <div className="shrink-0 w-8 h-8 flex items-center justify-center text-muted/50 font-mono text-sm group-hover:text-primary transition-colors">
+                        {/* Row content */}
+                        <div className="flex items-center gap-4 rounded-lg px-4 py-2.5 transition-colors hover:bg-surface/50">
+                          <span className="shrink-0 w-7 font-mono text-sm text-muted/50 group-hover:text-primary transition-colors">
                             {String(post.step).padStart(2, "0")}
-                          </div>
-
-                          {/* Text Content (Stacked) */}
+                          </span>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm md:text-base font-medium text-primary group-hover:text-white transition-colors">
+                            <h3 className="text-sm md:text-base font-medium text-primary group-hover:text-secondary transition-colors">
                               {post.title}
                             </h3>
-                            <p className="text-muted text-xs md:text-sm line-clamp-1 mt-0.5 group-hover:text-zinc-400 transition-colors">
+                            <p className="text-xs md:text-sm text-muted line-clamp-1 mt-0.5">
                               {post.description}
                             </p>
                           </div>
-
-                          {/* Arrow - Always visible for balance */}
-                          <div className="shrink-0 flex items-center gap-2 ml-auto">
+                          <div className="shrink-0 flex items-center gap-3">
                             {chapterChallengeIds.length > 0 && (
                               <ChallengeProgressPill
                                 courseId={courseId}
                                 challengeIds={chapterChallengeIds}
                               />
                             )}
-                            <div className="text-zinc-700 group-hover:text-primary group-hover:translate-x-1 transition-all duration-150">
-                              <ArrowRight className="w-4 h-4" />
-                            </div>
+                            <ArrowRight className="w-4 h-4 text-border group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                           </div>
                         </div>
-                      </div>
-                    </Link>
+                      </Link>
                     );
                   })}
                 </div>

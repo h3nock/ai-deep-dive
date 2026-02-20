@@ -1,12 +1,17 @@
 "use client";
 
-import React, { useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useCallback, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Map } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelLeftClose } from "lucide-react";
 import { PostData } from "@/lib/posts";
+import { cn } from "@/lib/utils";
+import { getCourseConfig } from "@/lib/course-config";
+import { CourseSidebar, SidebarExpandButton } from "./CourseSidebar";
 import { MarkCompleteButton } from "./MarkCompleteButton";
+import { ThemeToggle } from "./ThemeToggle";
+import { CodeBlockCopyButtons } from "./CodeBlockCopyButton";
 import { useProgress } from "@/lib/progress-context";
 import { useChallengeProgress } from "@/lib/use-challenge-progress";
 import type { ChallengeWorkspaceProps } from "./ChallengeWorkspace";
@@ -20,8 +25,12 @@ const ChallengeWorkspace = dynamic<ChallengeWorkspaceProps>(
   () => import("./ChallengeWorkspace").then((mod) => mod.ChallengeWorkspace),
   {
     loading: () => (
-      <div className="flex flex-1 items-center justify-center text-muted">
-        Loading workspace...
+      <div className="flex flex-1 items-center justify-center">
+        <div className="space-y-3 w-64">
+          <div className="h-3 bg-surface rounded animate-pulse" />
+          <div className="h-3 bg-surface rounded animate-pulse w-3/4" />
+          <div className="h-3 bg-surface rounded animate-pulse w-1/2" />
+        </div>
       </div>
     ),
   }
@@ -31,16 +40,37 @@ interface StepContainerProps {
   post: Omit<PostData, "content">;
   prevPost: Omit<PostData, "content"> | null;
   nextPost: Omit<PostData, "content"> | null;
+  allPosts: Omit<PostData, "content">[];
   children: React.ReactNode; // The rendered MDX guide
   collection: string;
   view: "guide" | "challenges";
   challengeIndex: number | null;
 }
 
+function ArticleWithCopyButtons({ children }: { children: React.ReactNode }) {
+  const articleRef = useRef<HTMLElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <article
+      ref={articleRef}
+      className="prose prose-lg prose-invert max-w-none [&_table]:w-full"
+    >
+      {children}
+      {mounted && <CodeBlockCopyButtons containerRef={articleRef} />}
+    </article>
+  );
+}
+
 export function StepContainer({
   post,
   prevPost,
   nextPost,
+  allPosts,
   children,
   collection,
   view,
@@ -210,22 +240,67 @@ export function StepContainer({
 
   const backLink = getBackLink();
 
+  const courseConfig = getCourseConfig(collection);
+  const phases = courseConfig?.phases ?? [];
+
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("sidebar-collapsed") === "true";
+  });
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sidebar-collapsed", String(next));
+      return next;
+    });
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background text-secondary font-sans selection:bg-zinc-500/20">
-      <div className="flex h-screen">
-        {/* Main Content Area - Full Width for Guide */}
-        <div className="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto">
-          {/* Tab Header (Only if challenges exist) */}
-          {hasChallenges && (
-            <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-6">
-              <div className="max-w-5xl mx-auto flex gap-6">
+    <div className="h-screen flex flex-col bg-background text-secondary font-sans selection:bg-muted/20">
+      {/* Unified top bar — single border-b eliminates sidebar/content alignment issues */}
+      <div className="shrink-0 z-40 bg-background border-b border-border flex items-stretch">
+        {/* Sidebar portion — collapses in sync with sidebar nav */}
+        <div
+          className={cn(
+            "hidden lg:flex items-center shrink-0 border-r border-border px-4 transition-[width,border-color,padding] duration-200 ease-out overflow-hidden",
+            sidebarCollapsed ? "w-0 border-r-0 px-0" : "w-64"
+          )}
+        >
+          <div className={cn("flex items-center justify-between gap-2 w-full min-w-[14rem]", sidebarCollapsed && "invisible")}>
+            <Link
+              href={`/${collection}`}
+              prefetch={true}
+              className="text-sm text-muted hover:text-primary flex items-center gap-1 transition-colors"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              Roadmap
+            </Link>
+            <button
+              onClick={toggleSidebar}
+              className="p-1 text-muted hover:text-primary transition-colors rounded"
+              aria-label="Collapse sidebar"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content portion — tabs and theme toggle */}
+        <div className="flex-1 min-w-0">
+          <div className="mx-auto max-w-[75ch] px-6 lg:px-8 flex items-center py-2">
+            {sidebarCollapsed && (
+              <SidebarExpandButton onToggle={toggleSidebar} />
+            )}
+            {hasChallenges ? (
+              <div className="inline-flex rounded-full border border-border p-1 bg-background">
                 <Link
                   href={guideHref}
                   prefetch
-                  className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
+                  className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
                     activeTab === "guide"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted hover:text-secondary"
+                      ? "bg-surface font-medium text-primary"
+                      : "text-muted hover:text-secondary"
                   }`}
                 >
                   Guide
@@ -233,74 +308,71 @@ export function StepContainer({
                 <Link
                   href={challengesHref}
                   prefetch
-                  className={`py-4 text-sm font-semibold tracking-wide border-b-2 transition-colors ${
+                  className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
                     activeTab === "challenges"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted hover:text-secondary"
+                      ? "bg-surface font-medium text-primary"
+                      : "text-muted hover:text-secondary"
                   }`}
                 >
                   Challenges
                   <span className="ml-1.5 text-muted">
-                    (
                     {isChallengesLoaded
                       ? `${solvedChallenges}/${totalChallenges}`
                       : `0/${totalChallenges}`}
-                    )
                   </span>
                 </Link>
               </div>
+            ) : (
+              <div className="flex-1" />
+            )}
+            <div className="ml-auto">
+              <ThemeToggle />
             </div>
-          )}
+          </div>
+        </div>
+      </div>
 
+      {/* Sidebar nav + content */}
+      <div className="flex flex-1 min-h-0">
+        <CourseSidebar
+          allPosts={allPosts}
+          collection={collection}
+          currentSlug={post.slug}
+          phases={phases}
+          collapsed={sidebarCollapsed}
+        />
+
+        <div className="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto">
+          <div className="reading-progress" />
           {activeTab === "guide" ? (
             <main className="flex-1 w-full py-12">
               {/* Centered Content Column with Responsive Gutter */}
-              <div className="mx-auto max-w-[85ch] px-6 lg:px-8">
+              <div className="mx-auto max-w-[75ch] px-6 lg:px-8">
                 {/* Header */}
-                <header className="mb-12 border-b border-border pb-8">
-                  <div className="flex items-center gap-3 mb-6 text-sm text-muted">
-                    <Link
-                      href={backLink.href}
-                      prefetch={true}
-                      className="hover:text-primary transition-colors flex items-center gap-1"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      {backLink.label}
-                    </Link>
-                    <span className="text-border">/</span>
-                    <span className="uppercase tracking-wider font-mono text-xs">
-                      Step {(post.step?.toString() || "0").padStart(2, "0")}
-                    </span>
-                  </div>
-
-                  <div className="flex items-start justify-between gap-6">
-                    <div className="flex-1 min-w-0">
-                      <h1 className="text-3xl md:text-4xl font-bold text-primary mb-4 tracking-tight">
-                        {post.title}
-                      </h1>
-                      <p className="text-lg text-muted leading-relaxed">
-                        {post.description}
-                      </p>
-                    </div>
-                    <Link
-                      href={backLink.href}
-                      prefetch={true}
-                      className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg border border-border text-muted hover:text-primary hover:border-zinc-600 transition-colors shrink-0"
-                      title={backLink.label}
-                    >
-                      <Map className="w-5 h-5" />
-                    </Link>
-                  </div>
+                <header className="animate-fade-in-up mb-12 pb-8 border-b border-border">
+                  <Link
+                    href={backLink.href}
+                    prefetch={true}
+                    className="text-sm text-muted hover:text-primary flex items-center gap-1 mb-6 transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    {backLink.label}
+                  </Link>
+                  <span className="text-7xl font-bold text-border/30 font-mono leading-none select-none">
+                    {(post.step?.toString() || "0").padStart(2, "0")}
+                  </span>
+                  <h1 className="text-3xl md:text-4xl font-bold text-primary mt-3 mb-4 tracking-tight">
+                    {post.title}
+                  </h1>
+                  <p className="text-lg text-muted leading-relaxed">
+                    {post.description}
+                  </p>
                 </header>
 
                 {/* Content - The Reading Rail */}
-                <article
-                  className="prose prose-lg prose-invert max-w-none
-                  [&_table]:w-full
-                "
-                >
+                <ArticleWithCopyButtons>
                   {children}
-                </article>
+                </ArticleWithCopyButtons>
 
                 {/* Footer: Mark Complete + Navigation */}
                 <footer className="mt-12 pt-8 border-t border-border">
@@ -317,40 +389,34 @@ export function StepContainer({
                     />
                   </div>
 
-                  {/* Navigation */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Navigation — asymmetric: prev subtle, next prominent */}
+                  <div className="flex items-start justify-between gap-4">
                     {prevPost ? (
                       <Link
                         href={`/${collection}/${prevPost.slug}`}
                         prefetch={true}
-                        className="group flex flex-col p-5 rounded-xl border border-border hover:border-zinc-600 hover:bg-surface transition-all"
+                        className="group flex items-center gap-1.5 text-sm text-muted hover:text-primary transition-colors shrink-0"
                       >
-                        <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">
-                          <ChevronLeft className="w-3 h-3" /> Previous
-                        </span>
-                        <span className="font-medium text-primary group-hover:text-secondary transition-colors">
-                          {prevPost.title}
-                        </span>
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                        <span>{prevPost.title}</span>
                       </Link>
                     ) : (
                       <div />
                     )}
 
-                    {nextPost ? (
+                    {nextPost && (
                       <Link
                         href={`/${collection}/${nextPost.slug}`}
                         prefetch={true}
-                        className="group flex flex-col items-end text-right p-5 rounded-xl border border-border hover:border-zinc-600 hover:bg-surface transition-all"
+                        className="group flex flex-col items-end text-right p-5 rounded-xl bg-surface/50 border border-border hover:border-border-hover transition-all ml-auto max-w-xs"
                       >
                         <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">
-                          Next <ChevronRight className="w-3 h-3" />
+                          Next Chapter <ChevronRight className="w-3 h-3" />
                         </span>
                         <span className="font-medium text-primary group-hover:text-secondary transition-colors">
                           {nextPost.title}
                         </span>
                       </Link>
-                    ) : (
-                      <div />
                     )}
                   </div>
                 </footer>

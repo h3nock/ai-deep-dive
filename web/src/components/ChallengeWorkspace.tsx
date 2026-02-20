@@ -65,7 +65,7 @@ export function ChallengeWorkspace({
   const showList = activeChallengeIndex === null;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background border-t border-border overflow-hidden">
+    <div className="flex flex-1 min-h-0 overflow-hidden">
       {/* Challenge List - shown when no challenge selected */}
       {showList && (
         <div className="flex-1 overflow-hidden">

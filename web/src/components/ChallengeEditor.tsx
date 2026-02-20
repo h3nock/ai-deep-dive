@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useTheme } from "next-themes";
 import {
   Play,
   CheckCircle2,
@@ -35,6 +36,14 @@ import { bundleToTestConfig, fetchPublicBundle } from "@/lib/judge-public-tests"
 import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
 import type { JudgeJobResult } from "@/lib/judge-client";
 import type { Challenge } from "@/lib/challenge-types";
+import { createMonacoTheme, getMonacoThemeName } from "@/lib/monaco-theme";
+import type {
+  TestCase,
+  MonacoEditorInstance,
+  MonacoInstance,
+  MonacoVimSession,
+  MonacoVimModule,
+} from "@/types/challenge-editor";
 import { ConfirmModal } from "./ConfirmModal";
 import {
   getChallengeCode,
@@ -43,42 +52,6 @@ import {
   removeChallengeCode,
   setChallengeCode,
 } from "@/lib/challenge-storage";
-
-// Custom Monaco Theme - Eye-Safe Zinc Dark
-const ZINC_DARK_THEME = {
-  base: "vs-dark" as const,
-  inherit: true,
-  rules: [],
-  colors: {
-    "editor.background": "#09090B",
-    "editor.foreground": "#D4D4D8",
-    "editor.lineHighlightBackground": "#18181B",
-    "editor.selectionBackground": "#27272A",
-    "editorGutter.background": "#09090B",
-    "editorCursor.foreground": "#D4D4D8",
-    "minimap.background": "#09090B",
-    "scrollbarSlider.background": "#27272A80",
-    "scrollbarSlider.hoverBackground": "#3f3f4680",
-  },
-};
-
-interface TestCase {
-  id: string;
-  inputs: Record<string, string>;
-  expected: string;
-  explanation?: string;
-}
-
-type EditorOnMount = NonNullable<React.ComponentProps<typeof Editor>["onMount"]>;
-type MonacoEditorInstance = Parameters<EditorOnMount>[0];
-type MonacoInstance = Parameters<EditorOnMount>[1];
-type MonacoVimSession = { dispose: () => void };
-type MonacoVimModule = {
-  initVimMode: (
-    editor: MonacoEditorInstance,
-    statusNode?: HTMLElement | null
-  ) => MonacoVimSession;
-};
 
 let monacoVimModulePromise: Promise<MonacoVimModule> | null = null;
 
@@ -114,7 +87,7 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
     .join("\n");
 
   return (
-    <div className="p-3 bg-[#121212] rounded-md border border-zinc-800">
+    <div className="p-3 bg-terminal rounded-md border border-border">
       <div className="flex flex-col gap-2 font-mono text-[13px]">
         <div>
           <span className="text-muted text-xs uppercase tracking-wide">
@@ -136,7 +109,7 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
 
       {/* Explanation toggle */}
       {testCase.explanation && (
-        <div className="mt-3 pt-3 border-t border-zinc-800">
+        <div className="mt-3 pt-3 border-t border-border">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-1.5 text-xs text-muted hover:text-secondary transition-colors"
@@ -150,7 +123,7 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
           </button>
 
           {isExpanded && (
-            <div className="mt-3 text-sm text-secondary font-sans prose prose-invert prose-sm max-w-none [&>p]:my-2 [&>ul]:my-2 [&>ol]:my-2 [&_code]:text-xs [&_code]:bg-zinc-800 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
+            <div className="mt-3 text-sm text-secondary font-sans prose prose-invert prose-sm max-w-none [&>p]:my-2 [&>ul]:my-2 [&>ol]:my-2 [&_code]:text-xs [&_code]:bg-surface [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
@@ -185,6 +158,10 @@ function ChallengeEditorContent({
   setActiveChallengeIndex,
   activeChallenge,
 }: ChallengeEditorContentProps) {
+  const { resolvedTheme } = useTheme();
+  const colorMode = resolvedTheme === "light" ? "light" as const : "dark" as const;
+  const monacoInstanceRef = useRef<MonacoInstance | null>(null);
+
   const [code, setCode] = useState("");
   const [isSolved, setIsSolved] = useState(false);
   const [lastRunMode, setLastRunMode] = useState<"run" | "submit" | null>(null);
@@ -421,6 +398,13 @@ function ChallengeEditorContent({
     }
   }, [activeChallenge]);
 
+  // React to theme changes
+  useEffect(() => {
+    if (monacoInstanceRef.current) {
+      monacoInstanceRef.current.editor.setTheme(getMonacoThemeName(colorMode));
+    }
+  }, [colorMode]);
+
   // Load code from localStorage or use initial code when challenge changes
   useEffect(() => {
     if (activeChallenge) {
@@ -641,8 +625,11 @@ function ChallengeEditorContent({
   ) => {
     editorRef.current = editor;
 
+    // Store monaco instance for theme switching
+    monacoInstanceRef.current = monacoInstance;
+
     // Theme is already defined in beforeMount, just ensure it's applied
-    monacoInstance.editor.setTheme("zinc-dark");
+    monacoInstance.editor.setTheme(getMonacoThemeName(colorMode));
 
     // Add Cmd+Enter / Ctrl+Enter shortcut to editor for Submit
     editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Enter, () => {
@@ -1085,7 +1072,7 @@ function ChallengeEditorContent({
       {/* Left Panel - Prose */}
       <div
         className={`flex flex-col bg-background overflow-hidden transition-colors border-r ${
-          activePane === "prose" ? "border-zinc-600" : "border-border"
+          activePane === "prose" ? "border-border-hover" : "border-border"
         }`}
         style={{ width: `${leftPanelWidth}%` }}
         onClick={() => setActivePane("prose")}
@@ -1106,16 +1093,16 @@ function ChallengeEditorContent({
                   {activeChallenge.title}
                 </h2>
                 {isSolved && (
-                  <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
                 )}
               </div>
               <span
                 className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                   activeChallenge.difficulty === "Easy"
-                    ? "bg-emerald-500/10 text-emerald-400"
+                    ? "bg-success/10 text-success"
                     : activeChallenge.difficulty === "Medium"
-                      ? "bg-amber-500/10 text-amber-400"
-                      : "bg-rose-500/10 text-rose-400"
+                      ? "bg-warning/10 text-warning"
+                      : "bg-error/10 text-error"
                 }`}
               >
                 {activeChallenge.difficulty || "Medium"}
@@ -1133,7 +1120,7 @@ function ChallengeEditorContent({
             </ReactMarkdown>
 
             {activeChallenge.hint && (
-              <div className="mt-6 pl-4 border-l-2 border-zinc-600 not-prose">
+              <div className="mt-6 pl-4 border-l-2 border-border-hover not-prose">
                 <p className="text-xs font-medium text-muted uppercase tracking-wider mb-1">
                   Hint
                 </p>
@@ -1171,16 +1158,16 @@ function ChallengeEditorContent({
           <div
             className={`w-1.5 cursor-col-resize z-10 flex items-center justify-center group transition-colors duration-150 ${
               isDraggingLeft
-                ? "bg-emerald-500/50"
-                : "bg-transparent hover:bg-zinc-700"
+                ? "bg-success/50"
+                : "bg-transparent hover:bg-border-hover"
             }`}
             onMouseDown={startResizingLeft}
           >
             <div
               className={`w-0.5 h-12 rounded-full transition-all duration-150 ${
                 isDraggingLeft
-                  ? "bg-emerald-400 h-16"
-                  : "bg-zinc-600 group-hover:bg-zinc-500 group-hover:h-16"
+                  ? "bg-success h-16"
+                  : "bg-muted group-hover:bg-secondary group-hover:h-16"
               }`}
             />
           </div>
@@ -1189,7 +1176,7 @@ function ChallengeEditorContent({
           <div
             ref={rightPanelRef}
             className={`flex-1 flex flex-col bg-background min-w-[300px] border-l transition-colors overflow-hidden ${
-              activePane === "editor" ? "border-zinc-600" : "border-border"
+              activePane === "editor" ? "border-border-hover" : "border-border"
             }`}
             onClick={() => setActivePane("editor")}
           >
@@ -1209,8 +1196,8 @@ function ChallengeEditorContent({
                   onClick={() => setIsVimMode(!isVimMode)}
                   className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
                     isVimMode
-                      ? "text-secondary bg-zinc-800"
-                      : "text-muted hover:text-secondary hover:bg-zinc-800"
+                      ? "text-secondary bg-surface"
+                      : "text-muted hover:text-secondary hover:bg-surface"
                   }`}
                   title="Toggle Vim keybindings"
                   aria-label={isVimMode ? "Disable Vim mode" : "Enable Vim mode"}
@@ -1227,7 +1214,7 @@ function ChallengeEditorContent({
                   disabled={isRunning}
                   title="Reset to initial code"
                   aria-label="Reset code to initial template"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-secondary hover:text-primary hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-secondary hover:text-primary hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                   Reset
@@ -1241,7 +1228,7 @@ function ChallengeEditorContent({
                   disabled={isRunning}
                   title={`Run public tests (${runShortcut})`}
                   aria-label={`Run public tests, keyboard shortcut ${runShortcut}`}
-                  className="flex items-center gap-2 px-4 py-1.5 hover:bg-zinc-800 disabled:text-muted disabled:cursor-not-allowed text-secondary hover:text-primary text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-1.5 hover:bg-surface disabled:text-muted disabled:cursor-not-allowed text-secondary hover:text-primary text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning && lastRunMode === "run" ? (
                     <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
@@ -1259,7 +1246,7 @@ function ChallengeEditorContent({
                   disabled={isRunning}
                   title={`Submit and run all tests (${submitShortcut})`}
                   aria-label={`Submit and run all tests, keyboard shortcut ${submitShortcut}`}
-                  className="flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/15 disabled:bg-transparent disabled:text-muted disabled:cursor-not-allowed text-emerald-400 text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-1.5 bg-success/10 hover:bg-success/15 disabled:bg-transparent disabled:text-muted disabled:cursor-not-allowed text-success text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning && lastRunMode === "submit" ? (
                     <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
@@ -1272,40 +1259,41 @@ function ChallengeEditorContent({
             </div>
 
             {/* Editor Area */}
-            <div className="flex-1 relative min-h-0 overflow-hidden bg-[#09090B]">
+            <div className="flex-1 relative min-h-0 overflow-hidden bg-background">
               <Editor
                 height="100%"
                 defaultLanguage="python"
                 value={code}
                 onChange={(value) => setCode(value || "")}
-                theme="zinc-dark"
+                theme={getMonacoThemeName(colorMode)}
                 onMount={handleEditorDidMount}
                 beforeMount={(monaco) => {
-                  // Define theme before mount to prevent flash
-                  monaco.editor.defineTheme("zinc-dark", ZINC_DARK_THEME);
+                  // Define both themes before mount to prevent flash
+                  monaco.editor.defineTheme(getMonacoThemeName("dark"), createMonacoTheme("dark"));
+                  monaco.editor.defineTheme(getMonacoThemeName("light"), createMonacoTheme("light"));
                 }}
                 loading={
-                  <div className="w-full h-full bg-[#09090B] pt-2 pl-4 font-mono text-sm leading-5">
+                  <div className="w-full h-full bg-background pt-2 pl-4 font-mono text-sm leading-5">
                     <div className="space-y-0 animate-pulse">
                       <div className="flex items-center h-5">
-                        <span className="text-zinc-700 w-8 text-right select-none pr-4">1</span>
-                        <div className="h-3.5 bg-zinc-800/60 rounded w-56" />
+                        <span className="text-border-hover w-8 text-right select-none pr-4">1</span>
+                        <div className="h-3.5 bg-surface/60 rounded w-56" />
                       </div>
                       <div className="flex items-center h-5">
-                        <span className="text-zinc-700 w-8 text-right select-none pr-4">2</span>
-                        <div className="ml-6 h-3.5 bg-zinc-800/40 rounded w-72" />
+                        <span className="text-border-hover w-8 text-right select-none pr-4">2</span>
+                        <div className="ml-6 h-3.5 bg-surface/40 rounded w-72" />
                       </div>
                       <div className="flex items-center h-5">
-                        <span className="text-zinc-700 w-8 text-right select-none pr-4">3</span>
-                        <div className="ml-6 h-3.5 bg-zinc-800/60 rounded w-48" />
+                        <span className="text-border-hover w-8 text-right select-none pr-4">3</span>
+                        <div className="ml-6 h-3.5 bg-surface/60 rounded w-48" />
                       </div>
                       <div className="flex items-center h-5">
-                        <span className="text-zinc-700 w-8 text-right select-none pr-4">4</span>
-                        <div className="ml-6 h-3.5 bg-zinc-800/40 rounded w-80" />
+                        <span className="text-border-hover w-8 text-right select-none pr-4">4</span>
+                        <div className="ml-6 h-3.5 bg-surface/40 rounded w-80" />
                       </div>
                       <div className="flex items-center h-5">
-                        <span className="text-zinc-700 w-8 text-right select-none pr-4">5</span>
-                        <div className="ml-6 h-3.5 bg-zinc-800/60 rounded w-64" />
+                        <span className="text-border-hover w-8 text-right select-none pr-4">5</span>
+                        <div className="ml-6 h-3.5 bg-surface/60 rounded w-64" />
                       </div>
                     </div>
                   </div>
@@ -1333,16 +1321,16 @@ function ChallengeEditorContent({
                 ref={resizerRef}
                 className={`h-2 flex-shrink-0 cursor-row-resize z-10 flex items-center justify-center border-t transition-colors duration-150 group ${
                   isDraggingBottom
-                    ? "bg-emerald-500/20 border-emerald-500/50"
-                    : "bg-background border-border hover:bg-zinc-800/50 hover:border-zinc-600"
+                    ? "bg-success/20 border-success/50"
+                    : "bg-background border-border hover:bg-surface/50 hover:border-border-hover"
                 }`}
                 onMouseDown={startResizingBottom}
               >
                 <div
                   className={`h-0.5 rounded-full transition-all duration-150 ${
                     isDraggingBottom
-                      ? "w-16 bg-emerald-400"
-                      : "w-8 bg-zinc-600 group-hover:w-12 group-hover:bg-zinc-500"
+                      ? "w-16 bg-success"
+                      : "w-8 bg-muted group-hover:w-12 group-hover:bg-secondary"
                   }`}
                 />
               </div>
@@ -1486,7 +1474,7 @@ function ChallengeEditorContent({
                               Case {idx + 1}
                               {visibleTestCases.length > 1 && (
                                 <X
-                                  className="w-3 h-3 hover:text-rose-400"
+                                  className="w-3 h-3 hover:text-error"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setTestCases((prev) =>
@@ -1614,8 +1602,8 @@ function ChallengeEditorContent({
                                     <div className="flex flex-col gap-3">
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                                          <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
+                                            <CheckCircle2 className="w-5 h-5 text-success" />
                                           </div>
                                           <div>
                                             <h3 className="text-primary font-semibold">
@@ -1634,7 +1622,7 @@ function ChallengeEditorContent({
                                                 activeChallengeIndex + 1
                                               )
                                             }
-                                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 text-secondary hover:text-primary rounded-md transition-colors group"
+                                            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-surface hover:bg-border-hover text-secondary hover:text-primary rounded-md transition-colors group"
                                           >
                                             <span>Next Challenge</span>
                                             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -1647,7 +1635,7 @@ function ChallengeEditorContent({
 
                                 return (
                                   <div className="flex items-center justify-between">
-                                    <h3 className="text-emerald-400 font-medium flex items-center gap-2">
+                                    <h3 className="text-success font-medium flex items-center gap-2">
                                       <CheckCircle2 className="w-4 h-4" />
                                       {summary.passed} / {summary.total} tests passed
                                     </h3>
@@ -1662,7 +1650,7 @@ function ChallengeEditorContent({
 
                               return (
                                 <div className="flex flex-col gap-2">
-                                  <h3 className="text-rose-400 font-medium flex items-center gap-2">
+                                  <h3 className="text-error font-medium flex items-center gap-2">
                                     <AlertCircle className="w-4 h-4" />
                                     {statusLabel}
                                   </h3>
@@ -1690,8 +1678,8 @@ function ChallengeEditorContent({
                                   <span
                                     className={`w-2 h-2 rounded-full ${
                                       r.status === "Accepted"
-                                        ? "bg-emerald-400"
-                                        : "bg-rose-400"
+                                        ? "bg-success"
+                                        : "bg-error"
                                     }`}
                                   />
                                   {r.hidden ? "Hidden Test" : `Case ${idx + 1}`}
@@ -1707,7 +1695,7 @@ function ChallengeEditorContent({
                               return (
                                 <div key={r.id} className="flex flex-col gap-3">
                                   {isErrorStatus(r.status) && r.stderr && (
-                                    <div className="p-3 bg-rose-500/5 border border-rose-500/20 rounded-lg text-rose-300 text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                    <div className="p-3 bg-error/5 border border-error/20 rounded-lg text-error text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
                                       {r.stderr}
                                     </div>
                                   )}
@@ -1742,7 +1730,7 @@ function ChallengeEditorContent({
                                           <div className={`p-3 rounded-lg text-[13px] font-mono whitespace-pre-wrap leading-relaxed ${
                                             r.status === "Accepted"
                                               ? "bg-surface text-secondary"
-                                              : "bg-rose-500/5 text-rose-300 border border-rose-500/20"
+                                              : "bg-error/5 text-error border border-error/20"
                                           }`}>
                                             {r.output || <span className="text-muted/60 italic">None</span>}
                                           </div>
@@ -1752,7 +1740,7 @@ function ChallengeEditorContent({
                                           <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
                                             Expected
                                           </label>
-                                          <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg text-emerald-300 text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                          <div className="p-3 bg-success/5 border border-success/20 rounded-lg text-success text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
                                             {r.expected}
                                           </div>
                                         </div>
