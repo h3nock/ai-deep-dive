@@ -753,6 +753,7 @@ section[style*="display: flex"][style*="justify-content: center"] {
   position: sticky;
   top: 0;
   height: 2px;
+  flex-shrink: 0;
   background: var(--color-primary);
   transform: scaleX(0);
   transform-origin: left;
