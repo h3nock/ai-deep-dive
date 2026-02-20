@@ -1060,7 +1060,7 @@ function ChallengeEditorContent({
 
   return (
     <div
-      className={`flex h-[calc(100vh-4rem)] bg-background border-t border-border overflow-hidden ${
+      className={`flex flex-1 min-h-0 bg-background overflow-hidden ${
         isDragging ? "cursor-grabbing" : ""
       }`}
       style={{
@@ -1079,7 +1079,7 @@ function ChallengeEditorContent({
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center gap-3 p-4 border-b border-border">
+          <div className="h-11 flex items-center gap-3 px-4 border-b border-border">
             <button
               onClick={() => setActiveChallengeIndexWithWarmup(null)}
               className="flex items-center gap-1 px-2 py-1 hover:bg-surface rounded-md text-muted text-sm font-medium transition-colors"
@@ -1111,7 +1111,7 @@ function ChallengeEditorContent({
           </div>
 
           {/* Description - prose handles typography, custom overrides via Tailwind */}
-          <div className="flex-1 overflow-y-auto p-6 prose prose-invert max-w-none">
+          <div className="flex-1 overflow-y-auto thin-scrollbar p-6 prose prose-invert max-w-none">
             <ReactMarkdown
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}

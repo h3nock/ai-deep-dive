@@ -238,6 +238,17 @@ body {
   background: var(--color-border-hover);
 }
 
+/* Thin scrollbar for embedded panels (editor split panes) */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar {
+  scrollbar-width: thin;
+}
+
 /* ==========================================================================
    Shiki Multi-Theme Toggle
    rehype-pretty-code generates --shiki-dark and --shiki-light on each span.
