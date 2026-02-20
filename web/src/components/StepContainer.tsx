@@ -200,6 +200,16 @@ export function StepContainer({
     }
   }, [collection, post.step, setCurrentStep]);
 
+  // Prevent viewport-level scroll caused by Next.js injected siblings
+  // (route announcer, Monaco aria containers) extending past the viewport.
+  // Lesson pages use internal scroll containers — body itself must not scroll.
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   useEffect(() => {
     if (activeTab !== "challenges" || !hasChallenges) return;
     warmChallengeTabResources("idle");
