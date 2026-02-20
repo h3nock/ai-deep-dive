@@ -235,7 +235,7 @@ export default async function RoadmapPage({
                       <Link
                         key={post.slug}
                         href={`/${courseId}/${post.slug}`}
-                        className="group relative block py-3 first:pt-1 last:pb-1"
+                        className="group relative block py-3 first:pt-1 last:pb-1 border-b border-border/30 last:border-0"
                       >
                         {/* Timeline node */}
                         <div className="absolute -left-[31px] top-1/2 -translate-y-1/2 bg-background ring-4 ring-background">
