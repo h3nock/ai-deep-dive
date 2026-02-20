@@ -800,3 +800,36 @@ section[style*="display: flex"][style*="justify-content: center"] {
     background-image: none;
   }
 }
+
+/* ==========================================================================
+   Pipeline Visualization — homepage transformer preview
+   ========================================================================== */
+
+.pipeline-stage {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.pipeline-cursor {
+  animation: cursor-blink 1s steps(1) infinite;
+  color: var(--color-muted);
+  margin-left: 1px;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pipeline-stage {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .pipeline-cursor {
+    animation: none;
+    display: none;
+  }
+}
