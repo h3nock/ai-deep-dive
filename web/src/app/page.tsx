@@ -57,9 +57,9 @@ export default async function Home() {
                   <br className="hidden sm:block" />
                   Building It
                 </h1>
-                <p className="animate-fade-in-up animate-delay-1 text-lg text-secondary leading-relaxed mb-10 max-w-lg">
-                  Hands-on courses from first principles to working
-                  systems. You build everything yourself.
+                <p className="animate-fade-in-up animate-delay-1 text-lg text-secondary leading-relaxed mb-10 max-w-lg italic">
+                  &ldquo;What I cannot create, I do not understand.&rdquo;
+                  <span className="not-italic text-muted text-base ml-1">&mdash; Richard Feynman</span>
                 </p>
                 <div className="animate-fade-in-up animate-delay-2 flex flex-wrap gap-3">
                   <Link
