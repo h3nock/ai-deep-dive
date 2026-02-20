@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { CourseCard } from "@/components/CourseCard";
 import { courseList } from "@/lib/course-config";
@@ -216,13 +216,16 @@ export default async function Home() {
 
       {/* Footer */}
       <footer className="py-12 text-center text-sm text-muted">
+        <span>&copy; {new Date().getFullYear()} AI Deep Dive</span>
+        <span className="mx-3 text-border">&middot;</span>
         <a
           href="https://github.com/h3nock/ai-deep-dive"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-primary transition-colors"
         >
-          Open Source
+          Star on GitHub
+          <Star className="inline w-3.5 h-3.5 ml-1 -mt-0.5" />
         </a>
       </footer>
     </div>
