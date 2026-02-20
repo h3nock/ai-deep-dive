@@ -274,8 +274,8 @@ export function StepContainer({
           <div className="reading-progress" />
 
           {/* Top Bar */}
-          <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-6">
-            <div className="max-w-5xl mx-auto flex items-center py-2">
+          <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
+            <div className="mx-auto max-w-[75ch] px-6 lg:px-8 flex items-center py-2">
               {sidebarCollapsed && (
                 <SidebarExpandButton onToggle={toggleSidebar} />
               )}
