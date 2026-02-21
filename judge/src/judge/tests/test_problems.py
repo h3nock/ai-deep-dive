@@ -13,9 +13,9 @@ class ProblemCaseParsingTests(TestCase):
             {
                 "id": "case-1",
                 "inputs": {
-                    "text": "Hello",
-                    "count": 3,
-                    "enabled": True,
+                    "text": "'Hello'",
+                    "count": "3",
+                    "enabled": "True",
                 },
                 "expected": 123,
             }
@@ -32,6 +32,16 @@ class ProblemCaseParsingTests(TestCase):
                 {
                     "id": "case-1",
                     "inputs": {"not-valid-name": "value"},
+                    "expected": 1,
+                }
+            )
+
+    def test_non_string_input_value_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "must be a string"):
+            _case_from_raw(
+                {
+                    "id": "case-1",
+                    "inputs": {"count": 3},
                     "expected": 1,
                 }
             )
