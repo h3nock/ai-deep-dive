@@ -121,7 +121,7 @@ def main() -> None:
         enable_seccomp=True,
         seccomp_fail_closed=True,
         clear_env=True,
-        deny_file_open=True,
+        deny_filesystem=True,
         allow_root=False,
         preload_torch=True,
     )
@@ -158,6 +158,18 @@ def main() -> None:
             "        return 'blocked'\n",
         ),
         (
+            "metadata_exists_hidden_tests",
+            "probe()",
+            "import os\n"
+            "def probe():\n"
+            "    p='/opt/ai-deep-dive/judge/problems/"
+            "build-gpt/06-multi-head-attention/01-multi-head-causal-attention/hidden_tests.json'\n"
+            "    try:\n"
+            "        return 'leaked' if os.path.exists(p) else 'blocked'\n"
+            "    except Exception:\n"
+            "        return 'blocked'\n",
+        ),
+        (
             "judge_db_write",
             "probe()",
             "def probe():\n"
@@ -188,6 +200,18 @@ def main() -> None:
             "    try:\n"
             "        subprocess.run(['id'], check=True)\n"
             "        return 'executed'\n"
+            "    except Exception:\n"
+            "        return 'blocked'\n",
+        ),
+        (
+            "prlimit_parent",
+            "probe()",
+            "import os\n"
+            "import resource\n"
+            "def probe():\n"
+            "    try:\n"
+            "        resource.prlimit(os.getppid(), resource.RLIMIT_NOFILE)\n"
+            "        return 'leaked'\n"
             "    except Exception:\n"
             "        return 'blocked'\n",
         ),
