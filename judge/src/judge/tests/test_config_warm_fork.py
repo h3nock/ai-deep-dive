@@ -22,6 +22,8 @@ class WarmForkSettingsTests(TestCase):
         self.assertTrue(settings.warm_fork_deny_filesystem)
         self.assertFalse(settings.warm_fork_allow_root)
         self.assertEqual(settings.warm_fork_child_nofile, 64)
+        self.assertTrue(settings.warm_fork_enable_cgroup)
+        self.assertEqual(settings.warm_fork_max_jobs, 0)
 
     def test_explicit_warm_fork_settings_parse(self) -> None:
         with patch.dict(
@@ -35,6 +37,8 @@ class WarmForkSettingsTests(TestCase):
                 "JUDGE_WARM_FORK_DENY_FILESYSTEM": "0",
                 "JUDGE_WARM_FORK_ALLOW_ROOT": "1",
                 "JUDGE_WARM_FORK_CHILD_NOFILE": "128",
+                "JUDGE_WARM_FORK_ENABLE_CGROUP": "0",
+                "JUDGE_WARM_FORK_MAX_JOBS": "500",
             },
             clear=True,
         ):
@@ -48,6 +52,8 @@ class WarmForkSettingsTests(TestCase):
         self.assertFalse(settings.warm_fork_deny_filesystem)
         self.assertTrue(settings.warm_fork_allow_root)
         self.assertEqual(settings.warm_fork_child_nofile, 128)
+        self.assertFalse(settings.warm_fork_enable_cgroup)
+        self.assertEqual(settings.warm_fork_max_jobs, 500)
 
     def test_invalid_torch_execution_mode_is_rejected(self) -> None:
         with patch.dict(

@@ -30,6 +30,8 @@ class Settings:
     warm_fork_deny_filesystem: bool
     warm_fork_allow_root: bool
     warm_fork_child_nofile: int
+    warm_fork_enable_cgroup: bool
+    warm_fork_max_jobs: int
     allowed_origins: list[str]
 
 
@@ -80,6 +82,9 @@ def load_settings() -> Settings:
     warm_allow_root_raw = os.getenv("JUDGE_WARM_FORK_ALLOW_ROOT", "0").strip().lower()
     warm_fork_allow_root = warm_allow_root_raw not in {"0", "false", "no", "off"}
     warm_fork_child_nofile = int(os.getenv("JUDGE_WARM_FORK_CHILD_NOFILE", "64"))
+    warm_enable_cgroup_raw = os.getenv("JUDGE_WARM_FORK_ENABLE_CGROUP", "1").strip().lower()
+    warm_fork_enable_cgroup = warm_enable_cgroup_raw not in {"0", "false", "no", "off"}
+    warm_fork_max_jobs = int(os.getenv("JUDGE_WARM_FORK_MAX_JOBS", "0"))
 
     if isolate_process_limit < 1:
         raise ValueError("JUDGE_ISOLATE_PROCESSES must be >= 1")
@@ -101,6 +106,8 @@ def load_settings() -> Settings:
         )
     if warm_fork_child_nofile < 16:
         raise ValueError("JUDGE_WARM_FORK_CHILD_NOFILE must be >= 16")
+    if warm_fork_max_jobs < 0:
+        raise ValueError("JUDGE_WARM_FORK_MAX_JOBS must be >= 0")
 
     origins_raw = os.getenv("JUDGE_ALLOWED_ORIGINS", "")
     allowed_origins = [origin.strip() for origin in origins_raw.split(",") if origin.strip()]
@@ -128,5 +135,7 @@ def load_settings() -> Settings:
         warm_fork_deny_filesystem=warm_fork_deny_filesystem,
         warm_fork_allow_root=warm_fork_allow_root,
         warm_fork_child_nofile=warm_fork_child_nofile,
+        warm_fork_enable_cgroup=warm_fork_enable_cgroup,
+        warm_fork_max_jobs=warm_fork_max_jobs,
         allowed_origins=allowed_origins,
     )

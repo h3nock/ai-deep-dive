@@ -13,7 +13,7 @@ from judge.runner import run_problem
 from judge.worker import build_worker_dependencies
 
 
-def _settings(*, torch_execution_mode: str) -> Settings:
+def _settings(*, torch_execution_mode: str, warm_fork_max_jobs: int = 0) -> Settings:
     return Settings(
         redis_url="redis://localhost:6379/0",
         results_db=Path("/tmp/judge-deps-test.db"),
@@ -37,6 +37,8 @@ def _settings(*, torch_execution_mode: str) -> Settings:
         warm_fork_deny_filesystem=True,
         warm_fork_allow_root=False,
         warm_fork_child_nofile=64,
+        warm_fork_enable_cgroup=True,
+        warm_fork_max_jobs=warm_fork_max_jobs,
         allowed_origins=[],
     )
 
@@ -84,7 +86,7 @@ class WorkerDependencyWiringTests(TestCase):
             deps = build_worker_dependencies(
                 stream="queue:torch",
                 consumer="torch-1",
-                settings=_settings(torch_execution_mode="warm_fork"),
+                settings=_settings(torch_execution_mode="warm_fork", warm_fork_max_jobs=500),
             )
 
         warm_cls.assert_called_once_with(
@@ -95,8 +97,11 @@ class WorkerDependencyWiringTests(TestCase):
             deny_filesystem=True,
             allow_root=False,
             child_nofile_limit=64,
+            enable_cgroup=True,
+            max_jobs=500,
         )
         self.assertIs(deps.execution.run_problem_fn, warm_executor_instance.run_problem)
+        self.assertIs(deps.warm_executor, warm_executor_instance)
 
     def test_torch_stream_defaults_to_isolate_executor(self) -> None:
         queue_obj = Mock()
@@ -122,6 +127,7 @@ class WorkerDependencyWiringTests(TestCase):
 
         warm_cls.assert_not_called()
         self.assertIs(deps.execution.run_problem_fn, run_problem)
+        self.assertIsNone(deps.warm_executor)
 
     def test_light_stream_never_uses_warm_executor(self) -> None:
         queue_obj = Mock()
@@ -147,3 +153,4 @@ class WorkerDependencyWiringTests(TestCase):
 
         warm_cls.assert_not_called()
         self.assertIs(deps.execution.run_problem_fn, run_problem)
+        self.assertIsNone(deps.warm_executor)
