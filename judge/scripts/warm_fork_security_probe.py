@@ -122,7 +122,7 @@ def main() -> None:
         seccomp_fail_closed=True,
         clear_env=True,
         deny_filesystem=True,
-        allow_root=False,
+        allow_root=True,
         preload_torch=True,
     )
 

@@ -73,13 +73,27 @@ def _env_problem() -> Problem:
     )
 
 
+def _executor(**overrides: object) -> WarmForkExecutor:
+    """Create an executor with test defaults.
+
+    Tests run as root on the production VM, so allow_root is on by
+    default.  Torch preloading and no-new-privs are disabled to keep
+    the test harness lightweight and portable.
+    """
+    defaults: dict[str, object] = {
+        "enable_no_new_privs": False,
+        "enable_seccomp": False,
+        "allow_root": True,
+        "child_nofile_limit": 64,
+        "preload_torch": False,
+    }
+    defaults.update(overrides)
+    return WarmForkExecutor(**defaults)
+
+
 class WarmForkExecutorTests(TestCase):
     def test_run_problem_returns_accepted_for_valid_solution(self) -> None:
-        executor = WarmForkExecutor(
-            enable_no_new_privs=False,
-            child_nofile_limit=64,
-            preload_torch=False,
-        )
+        executor = _executor()
 
         result = executor.run_problem(
             _problem(),
@@ -96,11 +110,7 @@ class WarmForkExecutorTests(TestCase):
         self.assertEqual(result.get("summary", {}).get("failed"), 0)
 
     def test_run_problem_times_out_for_slow_solution(self) -> None:
-        executor = WarmForkExecutor(
-            enable_no_new_privs=False,
-            child_nofile_limit=64,
-            preload_torch=False,
-        )
+        executor = _executor()
 
         result = executor.run_problem(
             _problem(time_limit_s=1),
@@ -119,11 +129,7 @@ class WarmForkExecutorTests(TestCase):
         self.assertIn("Time Limit Exceeded", result.get("error", ""))
 
     def test_abrupt_child_exit_is_reported_as_user_runtime_error(self) -> None:
-        executor = WarmForkExecutor(
-            enable_no_new_privs=False,
-            child_nofile_limit=64,
-            preload_torch=False,
-        )
+        executor = _executor()
 
         result = executor.run_problem(
             _problem(time_limit_s=1),
@@ -140,13 +146,7 @@ class WarmForkExecutorTests(TestCase):
         self.assertEqual(result.get("error_kind"), "user")
 
     def test_run_problem_does_not_expose_parent_env(self) -> None:
-        executor = WarmForkExecutor(
-            enable_no_new_privs=False,
-            enable_seccomp=False,
-            clear_env=True,
-            child_nofile_limit=64,
-            preload_torch=False,
-        )
+        executor = _executor(enable_seccomp=False, clear_env=True)
         with patch.dict(os.environ, {"JUDGE_SECRET_TOKEN": "should-not-leak"}, clear=False):
             result = executor.run_problem(
                 _env_problem(),
@@ -169,11 +169,7 @@ class WarmForkExecutorTests(TestCase):
             ValueError,
             "enable_no_new_privs must be true when enable_seccomp is true",
         ):
-            WarmForkExecutor(
-                enable_no_new_privs=False,
-                enable_seccomp=True,
-                preload_torch=False,
-            )
+            _executor(enable_no_new_privs=False, enable_seccomp=True)
 
     def test_constructor_rejects_root_execution_by_default(self) -> None:
         with patch("judge.warm_executor.os.geteuid", return_value=0):
@@ -189,14 +185,12 @@ class WarmForkExecutorTests(TestCase):
         if ctypes.util.find_library("seccomp") is None:
             self.skipTest("libseccomp not available")
 
-        executor = WarmForkExecutor(
+        executor = _executor(
             enable_no_new_privs=True,
             enable_seccomp=True,
             seccomp_fail_closed=True,
             clear_env=True,
             deny_filesystem=True,
-            allow_root=True,
-            preload_torch=False,
         )
 
         result = executor.run_problem(
@@ -224,13 +218,11 @@ class WarmForkExecutorTests(TestCase):
         self.assertIn("newfstatat", _SECCOMP_DENY_FILE_METADATA_SYSCALLS)
 
     def test_prepare_child_sandbox_applies_limits_before_seccomp(self) -> None:
-        executor = WarmForkExecutor(
+        executor = _executor(
             enable_no_new_privs=True,
             enable_seccomp=True,
             seccomp_fail_closed=False,
             clear_env=True,
-            allow_root=True,
-            preload_torch=False,
         )
         calls: list[str] = []
 
@@ -261,11 +253,7 @@ class WarmForkExecutorTests(TestCase):
         self.assertEqual(calls, ["nnp", "limits", "seccomp", "fds"])
 
     def test_job_count_increments_per_execution(self) -> None:
-        executor = WarmForkExecutor(
-            enable_no_new_privs=False,
-            child_nofile_limit=64,
-            preload_torch=False,
-        )
+        executor = _executor()
         self.assertEqual(executor.job_count, 0)
 
         executor.run_problem(
@@ -279,12 +267,7 @@ class WarmForkExecutorTests(TestCase):
         self.assertEqual(executor.job_count, 1)
 
     def test_needs_recycle_false_when_unlimited(self) -> None:
-        executor = WarmForkExecutor(
-            enable_no_new_privs=False,
-            child_nofile_limit=64,
-            max_jobs=0,
-            preload_torch=False,
-        )
+        executor = _executor(max_jobs=0)
         self.assertFalse(executor.needs_recycle)
 
         executor.run_problem(
@@ -298,12 +281,7 @@ class WarmForkExecutorTests(TestCase):
         self.assertFalse(executor.needs_recycle)
 
     def test_needs_recycle_true_after_max_jobs_reached(self) -> None:
-        executor = WarmForkExecutor(
-            enable_no_new_privs=False,
-            child_nofile_limit=64,
-            max_jobs=2,
-            preload_torch=False,
-        )
+        executor = _executor(max_jobs=2)
         self.assertFalse(executor.needs_recycle)
 
         for _ in range(2):
@@ -319,11 +297,7 @@ class WarmForkExecutorTests(TestCase):
         self.assertEqual(executor.job_count, 2)
 
     def test_multiple_sequential_jobs_all_succeed(self) -> None:
-        executor = WarmForkExecutor(
-            enable_no_new_privs=False,
-            child_nofile_limit=64,
-            preload_torch=False,
-        )
+        executor = _executor()
 
         for i in range(3):
             result = executor.run_problem(

@@ -316,10 +316,15 @@ class WarmForkExecutor:
         max_jobs: int = 0,
         preload_torch: bool = True,
     ) -> None:
+        # Parameter validation (pure logic, no environment dependency).
         if child_nofile_limit < 16:
             raise ValueError("child_nofile_limit must be >= 16")
         if max_jobs < 0:
             raise ValueError("max_jobs must be >= 0")
+        if enable_seccomp and sys.platform.startswith("linux") and not enable_no_new_privs:
+            raise ValueError("enable_no_new_privs must be true when enable_seccomp is true")
+
+        # Environment guards.
         if os.name != "posix" or not hasattr(os, "fork"):
             raise WarmForkUnavailableError("warm fork executor requires POSIX fork support")
         if hasattr(os, "geteuid") and os.geteuid() == 0 and not allow_root:
@@ -339,12 +344,6 @@ class WarmForkExecutor:
         self._job_seq = 0
         self._max_jobs = max_jobs
 
-        if (
-            self.enable_seccomp
-            and sys.platform.startswith("linux")
-            and not self.enable_no_new_privs
-        ):
-            raise ValueError("enable_no_new_privs must be true when enable_seccomp is true")
         if self.enable_seccomp and sys.platform.startswith("linux"):
             self._seccomp_lib = self._load_seccomp_lib()
         self._harden_parent_process()
