@@ -4,4 +4,358 @@ step: 8
 description: "How residual connections and layer normalization enable deep networks."
 ---
 
-<ComingSoon />
+<div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
+<Description noMargin>
+  We now have all the core components, from embeddings and positional encoding to multi-head attention and feed-forward networks. But a single pass through one attention layer and one FFN isn't enough to capture the full complexity of language. So, the model needs to refine its representations through multiple rounds of processing, and the way to do this is **stacking**. By repeating the same attention-then-FFN block many times in sequence, the model develops increasingly abstract patterns at each level.
+</Description>
+
+<Description>
+  GPT-2 stacks this block **12 times**, and GPT-3 stacks it **96 times**. That kind of depth is what gives these models their power, but it also creates serious training problems. This chapter explores what goes wrong and introduces the two techniques that fix it, **residual connections** and **layer normalization**.
+</Description>
+</div>
+
+
+<Step title="Why Deep Stacks Break">
+  <Description>
+    Each layer applies its own transformation, and stacking means those transformations compound through every subsequent one.
+  </Description>
+
+  <Description>
+    During backpropagation, the gradient flows backward through every layer, multiplied at each one by that layer's local derivatives. In GPT-2, that's twelve multiplications in sequence. If those multipliers average below 1.0, the gradient shrinks at every step until early layers receive almost no learning signal, a problem known as **vanishing gradients**. If the multipliers average above 1.0, the gradient grows instead, eventually destabilizing training until it diverges. This is called **exploding gradients**.
+  </Description>
+
+  <div className="my-6 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-3">
+    <div>
+      <div className="text-zinc-400">0.7 × 0.7 × 0.7 × ... = 0.7<sup>12</sup> = <strong className="text-zinc-200">0.014</strong></div>
+      <div className="text-xs text-zinc-500 mt-1">A multiplier of 0.7 leaves only 1.4% of the gradient after 12 layers</div>
+    </div>
+    <div className="border-t border-zinc-800" />
+    <div>
+      <div className="text-zinc-400">1.3 × 1.3 × 1.3 × ... = 1.3<sup>12</sup> = <strong className="text-zinc-200">23.3</strong></div>
+      <div className="text-xs text-zinc-500 mt-1">A multiplier of 1.3 amplifies the gradient 23× over 12 layers</div>
+    </div>
+  </div>
+
+  <Description>
+    The forward pass also suffers from a related problem. Information from early layers must pass through every subsequent transformation to reach the output, and each layer's transformation can distort or overwrite this information. Over enough layers, the representations that earlier layers produced are increasingly likely to be degraded or lost entirely.
+  </Description>
+</Step>
+
+
+<Step title="Residual Connections">
+  <Description>
+    Both problems trace back to the same structural cause. The layers form a sequential chain where each one receives the previous layer's output, transforms it into a new vector, and passes that vector as the next layer's entire input. This means whatever an early layer produces gets transformed by the next layer, then again by the layer after that, and so on through the rest of the stack. The information an early layer encodes can only reach the final output by surviving this entire sequence of transformations, and any transformation that distorts something useful passes that distortion forward to every layer that follows.
+  </Description>
+
+  <Description>
+    The gradient during the backward pass travels this same chain in reverse. For an early layer to update its weights, the loss signal must flow backward from the output through every intermediate layer, getting multiplied at each one by that layer's local derivatives. Over enough layers, these repeated multiplications might cause gradients to vanish or explode.
+  </Description>
+
+  <Description>
+    Residual connections solve both problems by adding each layer's output to its input instead of replacing it:
+  </Description>
+
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border">
+    <div className="text-center font-mono text-lg text-primary">
+      output = sublayer(x) + x
+    </div>
+  </div>
+
+  <div className="my-6 flex justify-center">
+    <svg viewBox="0 0 420 78" className="w-full" style={{ maxWidth: "420px", display: "block" }}>
+      <line x1="42" y1="18" x2="301" y2="18" stroke="#3F3F46" strokeWidth="1.5" />
+
+      <rect x="8" y="5" width="34" height="26" rx="4" fill="#18181B" stroke="#27272A" strokeWidth="1" />
+      <text x="25" y="22" textAnchor="middle" fill="#A1A1AA" fontSize="11" fontFamily="var(--font-mono)">x</text>
+
+      <path d="M 75 18 L 75 54 L 105 54" fill="none" stroke="#71717A" strokeWidth="1.5" />
+      <rect x="105" y="41" width="120" height="26" rx="4" fill="rgba(161,161,170,0.08)" stroke="rgba(161,161,170,0.2)" strokeWidth="1" />
+      <text x="165" y="58" textAnchor="middle" fill="#A1A1AA" fontSize="10" fontFamily="var(--font-mono)">sublayer(x)</text>
+      <path d="M 225 54 L 310 54 L 310 34" fill="none" stroke="#71717A" strokeWidth="1.5" />
+      <polygon points="306.5,34 310,27 313.5,34" fill="#71717A" />
+
+      <circle cx="310" cy="18" r="9" fill="#18181B" stroke="#71717A" strokeWidth="1.5" />
+      <text x="310" y="22" textAnchor="middle" fill="#D4D4D8" fontSize="12" fontWeight="bold">+</text>
+
+      <line x1="319" y1="18" x2="370" y2="18" stroke="#3F3F46" strokeWidth="1.5" />
+      <polygon points="364,14.5 372,18 364,21.5" fill="#3F3F46" />
+      <text x="382" y="22" textAnchor="start" fill="#A1A1AA" fontSize="10" fontFamily="var(--font-mono)">output</text>
+    </svg>
+  </div>
+
+  <Description>
+    The input x bypasses the sublayer entirely while the sublayer's output gets added to it. So the sublayer only needs to learn what to add rather than producing the full output from scratch. The change the sublayer learns to produce is called the **residual**, which is where the name comes from.
+  </Description>
+
+  <Description>
+    Starting from the token embeddings, information now flows along a pathway that runs through every layer in the model. Each layer taps into this pathway and adds its contribution, and because contributions are added rather than replaced, information from earlier layers can persist all the way to the end. This pathway is called the **residual stream**.
+  </Description>
+
+  <div className="my-6 flex justify-center overflow-x-auto">
+    <svg viewBox="0 0 580 115" className="w-full" style={{ maxWidth: "580px", display: "block" }}>
+      <line x1="30" y1="84" x2="550" y2="84" stroke="#3F3F46" strokeWidth="2" />
+
+      <rect x="8" y="69" width="44" height="30" rx="4" fill="#18181B" stroke="#27272A" strokeWidth="1" />
+      <text x="30" y="88" textAnchor="middle" fill="#A1A1AA" fontSize="11" fontFamily="var(--font-mono)">x</text>
+
+      {/* attn₁ */}
+      <line x1="86" y1="84" x2="86" y2="35" stroke="#3B82F6" strokeWidth="1.5" />
+      <polygon points="82.5,35 86,28 89.5,35" fill="#3B82F6" />
+      <rect x="75" y="4" width="56" height="24" rx="4" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" strokeWidth="1" />
+      <text x="103" y="20" textAnchor="middle" fill="#60A5FA" fontSize="10" fontFamily="var(--font-mono)">attn₁</text>
+      <line x1="122" y1="28" x2="122" y2="67" stroke="#3B82F6" strokeWidth="1.5" />
+      <polygon points="118.5,67 122,74 125.5,67" fill="#3B82F6" />
+      <circle cx="122" cy="84" r="9" fill="#18181B" stroke="#3B82F6" strokeWidth="1.5" />
+      <text x="122" y="88" textAnchor="middle" fill="#60A5FA" fontSize="12" fontWeight="bold">+</text>
+
+      {/* ffn₁ */}
+      <line x1="183" y1="84" x2="183" y2="35" stroke="#F59E0B" strokeWidth="1.5" />
+      <polygon points="179.5,35 183,28 186.5,35" fill="#F59E0B" />
+      <rect x="172" y="4" width="56" height="24" rx="4" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.3)" strokeWidth="1" />
+      <text x="200" y="20" textAnchor="middle" fill="#F59E0B" fontSize="10" fontFamily="var(--font-mono)">ffn₁</text>
+      <line x1="219" y1="28" x2="219" y2="67" stroke="#F59E0B" strokeWidth="1.5" />
+      <polygon points="215.5,67 219,74 222.5,67" fill="#F59E0B" />
+      <circle cx="219" cy="84" r="9" fill="#18181B" stroke="#F59E0B" strokeWidth="1.5" />
+      <text x="219" y="88" textAnchor="middle" fill="#F59E0B" fontSize="12" fontWeight="bold">+</text>
+
+      {/* attn₂ */}
+      <line x1="275" y1="84" x2="275" y2="35" stroke="#3B82F6" strokeWidth="1.5" />
+      <polygon points="271.5,35 275,28 278.5,35" fill="#3B82F6" />
+      <rect x="264" y="4" width="56" height="24" rx="4" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" strokeWidth="1" />
+      <text x="292" y="20" textAnchor="middle" fill="#60A5FA" fontSize="10" fontFamily="var(--font-mono)">attn₂</text>
+      <line x1="311" y1="28" x2="311" y2="67" stroke="#3B82F6" strokeWidth="1.5" />
+      <polygon points="307.5,67 311,74 314.5,67" fill="#3B82F6" />
+      <circle cx="311" cy="84" r="9" fill="#18181B" stroke="#3B82F6" strokeWidth="1.5" />
+      <text x="311" y="88" textAnchor="middle" fill="#60A5FA" fontSize="12" fontWeight="bold">+</text>
+
+      <text x="365" y="89" textAnchor="middle" fill="#71717A" fontSize="15">···</text>
+
+      {/* ffnₙ */}
+      <line x1="417" y1="84" x2="417" y2="35" stroke="#F59E0B" strokeWidth="1.5" />
+      <polygon points="413.5,35 417,28 420.5,35" fill="#F59E0B" />
+      <rect x="406" y="4" width="56" height="24" rx="4" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.3)" strokeWidth="1" />
+      <text x="434" y="20" textAnchor="middle" fill="#F59E0B" fontSize="10" fontFamily="var(--font-mono)">ffnₙ</text>
+      <line x1="453" y1="28" x2="453" y2="67" stroke="#F59E0B" strokeWidth="1.5" />
+      <polygon points="449.5,67 453,74 456.5,67" fill="#F59E0B" />
+      <circle cx="453" cy="84" r="9" fill="#18181B" stroke="#F59E0B" strokeWidth="1.5" />
+      <text x="453" y="88" textAnchor="middle" fill="#F59E0B" fontSize="12" fontWeight="bold">+</text>
+
+      <rect x="504" y="69" width="48" height="30" rx="4" fill="#18181B" stroke="#27272A" strokeWidth="1" />
+      <text x="528" y="88" textAnchor="middle" fill="#A1A1AA" fontSize="11" fontFamily="var(--font-mono)">out</text>
+
+      <text x="290" y="110" textAnchor="middle" fill="#52525B" fontSize="10" fontFamily="var(--font-mono)">residual stream</text>
+    </svg>
+  </div>
+
+  <Description>
+    Residual connections also provide a direct path for gradients in the backward direction. At each addition point, the gradient flows to both inputs of the sum. One path carries it back through the layer. The other bypasses the layer entirely, and the gradient passes through with a multiplier of exactly 1. This guarantees that every layer receives a usable learning signal from the output, regardless of what happens inside the layers themselves. These bypass paths also smooth the loss landscape (Li et al., 2018), making optimization reliable even at considerable depth.
+  </Description>
+
+</Step>
+
+
+<Step title="Layer Normalization">
+  <Description>
+    In a deep network, the distribution of each layer's inputs changes during training as the parameters of earlier layers update. This forces each layer to continuously readjust to new input distributions rather than learning a stable mapping. Layer normalization addresses this by standardizing each layer's inputs to a consistent scale, neutralizing the distribution shifts that earlier layers introduce.
+  </Description>
+
+  <Description>
+    The core idea is to reduce each token's vector to just its underlying structure by subtracting the mean across the `d_model` values to remove any overall offset, and dividing by the standard deviation to remove differences in scale.
+  </Description>
+
+  <div className="my-6 p-5 bg-surface rounded-lg border border-border space-y-3">
+    <div className="text-center font-mono text-lg text-primary">
+      LayerNorm(x) = γ ⊙ <span className="inline-block" style={{ verticalAlign: "middle" }}><span className="inline-flex flex-col items-center"><span className="border-b border-current px-2">x − μ</span><span className="px-2">√(σ² + ε)</span></span></span> + β
+    </div>
+    <div className="text-center text-sm text-muted">
+      ⊙ = element-wise multiply&ensp;&ensp;ε = small constant for numerical stability&ensp;&ensp;γ = learned scale&ensp;&ensp;β = learned shift
+    </div>
+  </div>
+
+  <Description>
+    The small constant ε (typically 10⁻⁵) prevents division by zero when the variance is near zero. To make this concrete, consider a token whose vector has `d_model` = 4, with values [2, 4, 6, 8]:
+  </Description>
+
+  <div className="my-6 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-3">
+    <div>
+      <span className="text-zinc-500">Step 1: Mean</span>
+      <div className="text-zinc-500 mt-2 text-xs flex items-center gap-1.5">
+        μ = <span className="inline-flex flex-col items-center"><span className="border-b border-zinc-600 px-1.5">x₁ + x₂ + ... + x_d</span><span className="px-1.5">d</span></span>
+      </div>
+      <div className="text-zinc-300 mt-2">μ = (2 + 4 + 6 + 8) / 4 = <strong>5.0</strong></div>
+    </div>
+    <div className="border-t border-zinc-800" />
+    <div>
+      <span className="text-zinc-500">Step 2: Variance</span>
+      <div className="text-zinc-500 mt-2 text-xs flex items-center gap-1.5">
+        σ² = <span className="inline-flex flex-col items-center"><span className="border-b border-zinc-600 px-1.5">(x₁ − μ)² + (x₂ − μ)² + ... + (x_d − μ)²</span><span className="px-1.5">d</span></span>
+      </div>
+      <div className="text-zinc-300 mt-2">σ² = ((2−5)² + (4−5)² + (6−5)² + (8−5)²) / 4 = (9+1+1+9) / 4 = <strong>5.0</strong></div>
+    </div>
+    <div className="border-t border-zinc-800" />
+    <div>
+      <span className="text-zinc-500">Step 3: Normalize</span>
+      <div className="text-zinc-500 mt-2 text-xs flex items-center gap-1.5">
+        x̂ = <span className="inline-flex flex-col items-center"><span className="border-b border-zinc-600 px-1.5">x − μ</span><span className="px-1.5">√(σ² + ε)</span></span>
+      </div>
+      <div className="text-zinc-300 mt-2">x̂ = [(2−5), (4−5), (6−5), (8−5)] / √5.0</div>
+      <div className="text-zinc-300 mt-1">= [−3, −1, 1, 3] / 2.236 = [<strong>−1.342, −0.447, 0.447, 1.342</strong>]</div>
+    </div>
+    <div className="border-t border-zinc-800" />
+    <div>
+      <span className="text-zinc-500">Step 4: Scale and shift</span>
+      <div className="text-zinc-500 mt-2 text-xs">LayerNorm(x) = γ ⊙ x̂ + β</div>
+      <div className="text-zinc-300 mt-2">[γ₁, γ₂, γ₃, γ₄] ⊙ [−1.342, −0.447, 0.447, 1.342] + [β₁, β₂, β₃, β₄]</div>
+      <div className="text-xs text-zinc-500 mt-1">γ = [γ₁, γ₂, ..., γ_d] and β = [β₁, β₂, ..., β_d] are learned vectors, one value per dimension</div>
+    </div>
+  </div>
+
+  <Description>
+    The learned parameters γ (scale) and β (shift), each of size `d_model`, let the network adjust or even undo the normalization for each dimension independently. Since different dimensions encode different features, they may need different scales. The difference from having no normalization at all is that the final output range becomes a deliberate, learned choice rather than uncontrolled drift from earlier layers.
+  </Description>
+
+</Step>
+
+
+<Step title="Pre-Norm vs Post-Norm">
+  <Description>
+    We now have residual connections to preserve information across depth and layer normalization to stabilize magnitudes. The final step is determining how to arrange these two mechanisms around each sublayer. The specific ordering of these operations directly affects how stably the model trains.
+  </Description>
+
+  <Description>
+    The original Transformer architecture (Vaswani et al., 2017) applies normalization **after** the residual addition. This arrangement is known as **Post-Norm**:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-1">
+    <div className="text-zinc-500"># Post-Norm</div>
+    <div className="text-zinc-300">x = LayerNorm(x + sublayer(x))</div>
+  </div>
+
+  <Description>
+    Most modern language models use the alternative approach of applying normalization **before** the sublayer. By placing LayerNorm directly inside the residual branch, we get what is called **Pre-Norm**:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-1">
+    <div className="text-zinc-500"># Pre-Norm</div>
+    <div className="text-zinc-300">x = x + sublayer(LayerNorm(x))</div>
+  </div>
+
+  <Description>
+    The fundamental difference between these approaches is how they affect the identity path. In Post-Norm, the combined output passes through LayerNorm before moving to the next layer. This introduces a nonlinear operation directly on the identity path, which modifies the gradient and disrupts the clean information flow that residual connections are designed to provide.
+  </Description>
+
+  <Description>
+    Pre-Norm avoids this issue by keeping the residual stream entirely clean. Since LayerNorm is isolated within the sublayer branch, the identity path remains an uninterrupted chain of addition operations. The input vector flows straight through without any additional transformation, ensuring that gradients can flow backward with a consistent multiplier of 1 at every step.
+  </Description>
+
+  {/* Pre-Norm vs Post-Norm identity path visual */}
+  <div className="my-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+    {/* Post-Norm */}
+    <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="text-center text-sm font-semibold text-zinc-400 mb-3">Post-Norm</div>
+      <div className="flex justify-center">
+        <svg viewBox="0 0 220 260" className="w-full" style={{ maxWidth: "220px" }}>
+          {/* Branch (drawn first = behind identity path) */}
+          <path d="M 65 55 L 158 55 L 158 76" fill="none" stroke="#27272A" strokeWidth="1.5" />
+          <rect x="120" y="76" width="76" height="30" rx="5" fill="rgba(161,161,170,0.04)" stroke="rgba(161,161,170,0.15)" strokeWidth="1" />
+          <text x="158" y="95" textAnchor="middle" fill="#71717A" fontSize="10" fontFamily="var(--font-mono)">sublayer</text>
+          <path d="M 158 106 L 158 162 L 77 162" fill="none" stroke="#27272A" strokeWidth="1.5" />
+          <polygon points="77,158.5 69,162 77,165.5" fill="#27272A" />
+
+          {/* Identity path: x → + (bright neutral) */}
+          <line x1="65" y1="32" x2="65" y2="150" stroke="#A1A1AA" strokeWidth="2.5" />
+          {/* Flow arrow on identity path */}
+          <polygon points="61.5,90 65,97 68.5,90" fill="#A1A1AA" />
+          {/* Identity path: + → LayerNorm → out (RED = disrupted) */}
+          <line x1="65" y1="174" x2="65" y2="192" stroke="#EF4444" strokeWidth="2.5" strokeOpacity="0.8" />
+          <line x1="65" y1="220" x2="65" y2="234" stroke="#EF4444" strokeWidth="2.5" strokeOpacity="0.8" />
+
+          {/* Input */}
+          <rect x="43" y="8" width="44" height="24" rx="5" fill="#18181B" stroke="#3F3F46" strokeWidth="1" />
+          <text x="65" y="24" textAnchor="middle" fill="#D4D4D8" fontSize="11" fontFamily="var(--font-mono)">x</text>
+
+          {/* Fork point */}
+          <circle cx="65" cy="55" r="3.5" fill="#A1A1AA" />
+
+          {/* + node */}
+          <circle cx="65" cy="162" r="12" fill="#18181B" stroke="#A1A1AA" strokeWidth="1.5" />
+          <text x="65" y="167" textAnchor="middle" fill="#D4D4D8" fontSize="14" fontWeight="bold">+</text>
+
+          {/* LayerNorm on identity path (RED) */}
+          <rect x="18" y="192" width="94" height="28" rx="5" fill="rgba(239,68,68,0.1)" stroke="rgba(239,68,68,0.5)" strokeWidth="1.2" />
+          <text x="65" y="210" textAnchor="middle" fill="#F87171" fontSize="10" fontFamily="var(--font-mono)">LayerNorm</text>
+
+          {/* Output */}
+          <rect x="43" y="234" width="44" height="24" rx="5" fill="#18181B" stroke="#3F3F46" strokeWidth="1" />
+          <text x="65" y="250" textAnchor="middle" fill="#D4D4D8" fontSize="11" fontFamily="var(--font-mono)">out</text>
+        </svg>
+      </div>
+      <div className="text-center text-xs text-red-400/70 mt-3">identity path passes through LayerNorm</div>
+    </div>
+
+    {/* Pre-Norm */}
+    <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="text-center text-sm font-semibold text-zinc-400 mb-3">Pre-Norm</div>
+      <div className="flex justify-center">
+        <svg viewBox="0 0 220 260" className="w-full" style={{ maxWidth: "220px" }}>
+          {/* Branch (drawn first = behind identity path) */}
+          <path d="M 65 55 L 158 55 L 158 68" fill="none" stroke="#27272A" strokeWidth="1.5" />
+          <rect x="115" y="68" width="86" height="26" rx="5" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.25)" strokeWidth="1" />
+          <text x="158" y="85" textAnchor="middle" fill="#6EE7B7" fontSize="9" fontFamily="var(--font-mono)">LayerNorm</text>
+          <line x1="158" y1="94" x2="158" y2="106" stroke="#27272A" strokeWidth="1.5" />
+          <rect x="120" y="106" width="76" height="30" rx="5" fill="rgba(161,161,170,0.04)" stroke="rgba(161,161,170,0.15)" strokeWidth="1" />
+          <text x="158" y="125" textAnchor="middle" fill="#71717A" fontSize="10" fontFamily="var(--font-mono)">sublayer</text>
+          <path d="M 158 136 L 158 162 L 77 162" fill="none" stroke="#27272A" strokeWidth="1.5" />
+          <polygon points="77,158.5 69,162 77,165.5" fill="#27272A" />
+
+          {/* Identity path: x → + → out (emerald, clean) */}
+          <line x1="65" y1="32" x2="65" y2="150" stroke="#34D399" strokeWidth="2.5" strokeOpacity="0.85" />
+          {/* Flow arrow on identity path */}
+          <polygon points="61.5,90 65,97 68.5,90" fill="#34D399" fillOpacity="0.85" />
+          <line x1="65" y1="174" x2="65" y2="234" stroke="#34D399" strokeWidth="2.5" strokeOpacity="0.85" />
+          {/* Flow arrow below + */}
+          <polygon points="61.5,198 65,205 68.5,198" fill="#34D399" fillOpacity="0.85" />
+
+          {/* Input */}
+          <rect x="43" y="8" width="44" height="24" rx="5" fill="#18181B" stroke="#3F3F46" strokeWidth="1" />
+          <text x="65" y="24" textAnchor="middle" fill="#D4D4D8" fontSize="11" fontFamily="var(--font-mono)">x</text>
+
+          {/* Fork point */}
+          <circle cx="65" cy="55" r="3.5" fill="#34D399" />
+
+          {/* + node */}
+          <circle cx="65" cy="162" r="12" fill="#18181B" stroke="#34D399" strokeWidth="1.5" strokeOpacity="0.85" />
+          <text x="65" y="167" textAnchor="middle" fill="#6EE7B7" fontSize="14" fontWeight="bold">+</text>
+
+          {/* Output */}
+          <rect x="43" y="234" width="44" height="24" rx="5" fill="#18181B" stroke="#3F3F46" strokeWidth="1" />
+          <text x="65" y="250" textAnchor="middle" fill="#D4D4D8" fontSize="11" fontFamily="var(--font-mono)">out</text>
+        </svg>
+      </div>
+      <div className="text-center text-xs text-emerald-400/70 mt-3">identity path is completely clean</div>
+    </div>
+  </div>
+
+  <Description>
+    As a result, Post-Norm models can be difficult to train at scale. They typically require careful learning rate warmup schedules and can diverge entirely in deeper networks. Pre-Norm avoids these complications and trains much more stably. This is why it quickly became the standard approach for nearly all large language models.
+  </Description>
+
+  <Description>
+    Because Pre-Norm applies normalization before each sublayer, the final sublayer in the very last transformer block adds its output into the residual stream unnormalized. To account for this, Pre-Norm architectures include one final layer normalization step at the end of the model to stabilize these values. In many codebases, including GPT-2, this is referred to as `ln_f`.
+  </Description>
+</Step>
+
+
+<Callout type="success" title="Summary">
+  * Deep networks can be difficult to train because sequential layers repeatedly multiply the error signal during backpropagation, which can cause **vanishing or exploding gradients**
+  * During the **forward pass**, information from earlier layers can be degraded or overwritten as it passes through successive sublayers
+  * **Residual connections** add a bypass pathway (`output = sublayer(x) + x`), preserving forward information and providing a direct path for gradients with a multiplier of 1
+  * **Layer normalization** standardizes vectors to zero mean and unit variance, using learned parameters ($\gamma$ and $\beta$) to ensure sublayers receive data at a consistent scale
+  * **Post-Norm** applies normalization *after* the residual addition, placing a nonlinear operation on the identity path which can complicate training at greater depths
+  * **Pre-Norm** applies normalization *inside* the sublayer branch, keeping the identity path clean and generally enabling more stable training for modern language models
+</Callout>
+
+<Description>
+  With residual connections preserving information and layer normalization stabilizing the scale, we finally have all the pieces we need. In the next chapter, we will combine embeddings, attention, feed-forward networks, and these two stabilization mechanisms to build the repeatable **Transformer block** that forms the core of the architecture.
+</Description>
+
