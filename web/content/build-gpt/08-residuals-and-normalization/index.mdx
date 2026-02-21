@@ -291,6 +291,16 @@ description: "How residual connections and layer normalization enable deep netwo
   </Description>
 </Step>
 
+
+<Callout type="success" title="Summary">
+  * Deep networks can be difficult to train because sequential layers repeatedly multiply the error signal during backpropagation, which can cause **vanishing or exploding gradients**
+  * During the **forward pass**, information from earlier layers can be degraded or overwritten as it passes through successive sublayers
+  * **Residual connections** add a bypass pathway (`output = sublayer(x) + x`), preserving forward information and providing a direct path for gradients with a multiplier of 1
+  * **Layer normalization** standardizes vectors to zero mean and unit variance, using learned parameters ($\gamma$ and $\beta$) to ensure sublayers receive data at a consistent scale
+  * **Post-Norm** applies normalization *after* the residual addition, placing a nonlinear operation on the identity path which can complicate training at greater depths
+  * **Pre-Norm** applies normalization *inside* the sublayer branch, keeping the identity path clean and generally enabling more stable training for modern language models
+</Callout>
+
 <Description>
   With residual connections preserving information and layer normalization stabilizing the scale, we finally have all the pieces we need. In the next chapter, we will combine embeddings, attention, feed-forward networks, and these two stabilization mechanisms to build the repeatable **Transformer block** that forms the core of the architecture.
 </Description>
