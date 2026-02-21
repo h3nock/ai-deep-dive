@@ -72,6 +72,14 @@ function withJitter(baseMs: number, ratio = 0.1): number {
   return Math.max(100, baseMs + offset);
 }
 
+function defaultInputCode(
+  args: Challenge["arguments"] | undefined
+): string {
+  if (!args || args.length === 0) {
+    return "";
+  }
+  return `${args.map((arg) => `${arg.name} =`).join("\n")}\n`;
+}
 
 export interface ChallengeEditorProps {
   courseId: string;
@@ -83,9 +91,7 @@ export interface ChallengeEditorProps {
 // ExampleCard component for displaying test cases with optional explanations
 function ExampleCard({ testCase }: { testCase: TestCase }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const inputLines = Object.entries(testCase.inputs)
-    .map(([key, value]) => `${key} = ${value}`)
-    .join("\n");
+  const inputLines = testCase.input_code.trim();
 
   return (
     <div className="p-3 bg-terminal rounded-md border border-border">
@@ -423,13 +429,11 @@ function ChallengeEditorContent({
       setActiveTestCaseId("");
 
       const buildEmptyCase = () => {
-        const initialInputs: Record<string, string> = {};
-        if (activeChallenge.arguments) {
-          activeChallenge.arguments.forEach((arg) => {
-            initialInputs[arg.name] = "";
-          });
-        }
-        return { id: "case1", inputs: initialInputs, expected: "" } as TestCase;
+        return {
+          id: "case1",
+          input_code: defaultInputCode(activeChallenge.arguments),
+          expected: "",
+        } as TestCase;
       };
 
       if (activeChallenge.problemId) {
@@ -447,7 +451,7 @@ function ChallengeEditorContent({
                   : JSON.stringify(tc.expected);
               return {
                 id: tc.id,
-                inputs: tc.inputs || {},
+                input_code: tc.input_code || "",
                 expected,
               } as TestCase;
             });
@@ -710,13 +714,9 @@ function ChallengeEditorContent({
 
           const fallbackConfig = () => {
             const formattedCases = casesToRun.map((tc) => {
-              let inputCode = "";
-              Object.entries(tc.inputs).forEach(([key, value]) => {
-                inputCode += `${key} = ${value}\n`;
-              });
               return {
                 id: tc.id,
-                input: inputCode,
+                input: tc.input_code,
                 expected: tc.expected,
               };
             });
@@ -1352,17 +1352,11 @@ function ChallengeEditorContent({
                             const newId = Math.random()
                               .toString(36)
                               .substr(2, 9);
-                            const initialInputs: Record<string, string> = {};
-                            if (activeChallenge?.arguments) {
-                              activeChallenge.arguments.forEach((arg) => {
-                                initialInputs[arg.name] = "";
-                              });
-                            }
                             setTestCases([
                               ...testCases,
                               {
                                 id: newId,
-                                inputs: initialInputs,
+                                input_code: defaultInputCode(activeChallenge?.arguments),
                                 expected: "",
                               },
                             ]);
@@ -1380,37 +1374,23 @@ function ChallengeEditorContent({
                           if (tc.id !== activeTestCaseId) return null;
                           return (
                             <div key={tc.id} className="flex flex-col gap-6">
-                              {activeChallenge?.arguments?.map((arg) => (
-                                <div
-                                  key={arg.name}
-                                  className="flex flex-col gap-2"
-                                >
-                                  <label className="text-xs font-medium text-muted">
-                                    {arg.name}{" "}
-                                    <span className="text-muted/60">
-                                      ({arg.type})
-                                    </span>
-                                  </label>
-                                  <AutoResizingEditor
-                                    value={tc.inputs[arg.name] || ""}
-                                    onChange={(val) => {
-                                      setTestCases((prev) =>
-                                        prev.map((c) =>
-                                          c.id === tc.id
-                                            ? {
-                                                ...c,
-                                                inputs: {
-                                                  ...c.inputs,
-                                                  [arg.name]: val || "",
-                                                },
-                                              }
-                                            : c
-                                        )
-                                      );
-                                    }}
-                                  />
-                                </div>
-                              ))}
+                              <div className="flex flex-col gap-2">
+                                <label className="text-xs font-medium text-muted">
+                                  Input Setup <span className="text-muted/60">(Python)</span>
+                                </label>
+                                <AutoResizingEditor
+                                  value={tc.input_code}
+                                  onChange={(val) => {
+                                    setTestCases((prev) =>
+                                      prev.map((c) =>
+                                        c.id === tc.id
+                                          ? { ...c, input_code: val || "" }
+                                          : c
+                                      )
+                                    );
+                                  }}
+                                />
+                              </div>
                               <div className="flex flex-col gap-2">
                                 <label className="text-xs font-medium text-muted">
                                   Expected Output
