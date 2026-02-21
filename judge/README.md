@@ -129,7 +129,7 @@ Environment variables:
 - `JUDGE_WARM_FORK_ENABLE_SECCOMP` (default: `1`)
 - `JUDGE_WARM_FORK_SECCOMP_FAIL_CLOSED` (default: `1`)
 - `JUDGE_WARM_FORK_CLEAR_ENV` (default: `1`)
-- `JUDGE_WARM_FORK_DENY_FILE_OPEN` (default: `1`)
+- `JUDGE_WARM_FORK_DENY_FILESYSTEM` (default: `1`)
 - `JUDGE_WARM_FORK_ALLOW_ROOT` (default: `0`, keep disabled in production)
 - `JUDGE_WARM_FORK_CHILD_NOFILE` (default: `64`)
 - `PROMETHEUS_MULTIPROC_DIR` (optional, for API + worker metric aggregation)
