@@ -22,11 +22,10 @@ resolve_redis_service() {
   fail "No usable Redis unit found (expected redis-server.service or redis.service)."
 }
 
-gpu_torch=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --gpu)
-      gpu_torch=1
+      fail "GPU torch is not supported in this deployment profile. This judge VM is CPU-only."
       ;;
     *)
       fail "Unknown argument: $1"
@@ -149,18 +148,50 @@ pip_install() {
   fi
 }
 
+torch_variant() {
+  sudo -u "$JUDGE_USER" "$VENV_PY" - <<'PY'
+import importlib.util
+
+if importlib.util.find_spec("torch") is None:
+    print("missing")
+    raise SystemExit(0)
+
+try:
+    import torch
+except Exception:
+    print("broken")
+    raise SystemExit(0)
+
+print("cuda" if getattr(torch.version, "cuda", None) else "cpu")
+PY
+}
+
+ensure_cpu_torch() {
+  local variant
+  variant=$(torch_variant)
+
+  if [[ "$variant" == "cpu" ]]; then
+    info "PyTorch CPU wheel already installed"
+    return
+  fi
+
+  if [[ "$variant" == "cuda" ]]; then
+    info "Replacing CUDA PyTorch wheel with CPU-only wheel"
+  else
+    info "Installing PyTorch CPU wheel"
+  fi
+
+  pip_install --upgrade --force-reinstall --index-url https://download.pytorch.org/whl/cpu "torch>=2.2,<3"
+  variant=$(torch_variant)
+  if [[ "$variant" != "cpu" ]]; then
+    fail "Failed to enforce CPU-only PyTorch (detected: $variant)."
+  fi
+}
+
 info "Installing judge dependencies"
 pip_install --upgrade pip
 
-if ! sudo -u "$JUDGE_USER" "$VENV_PY" -c "import torch" >/dev/null 2>&1; then
-  if (( gpu_torch == 1 )); then
-    info "Installing PyTorch (GPU/default wheels)"
-    pip_install --upgrade "torch>=2.2,<3"
-  else
-    info "Installing PyTorch (CPU wheels)"
-    pip_install --upgrade --index-url https://download.pytorch.org/whl/cpu "torch>=2.2,<3"
-  fi
-fi
+ensure_cpu_torch
 pip_install -e "$JUDGE_DIR"
 
 if [[ ! -f /etc/redis/redis.conf ]]; then

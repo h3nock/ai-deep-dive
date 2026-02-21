@@ -17,6 +17,7 @@ JUDGE_CERT_DIR=${JUDGE_CERT_DIR:-/etc/letsencrypt/live/$JUDGE_DOMAIN}
 JUDGE_TESTS_ROOT=${JUDGE_TESTS_ROOT:-/opt/ai-deep-dive/judge/tests}
 
 ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
+JUDGE_USER=${JUDGE_USER:-judge}
 
 validate_non_negative_int() {
   local value="$1"
@@ -66,6 +67,71 @@ reconcile_worker_units() {
   done
 }
 
+pip_install_for_judge() {
+  local venv_python="$1"
+  shift
+  local venv_pip
+  venv_pip="$(dirname "$venv_python")/pip"
+
+  if command -v uv >/dev/null 2>&1; then
+    sudo -u "$JUDGE_USER" uv pip install --python "$venv_python" "$@"
+    return
+  fi
+
+  if [[ ! -x "$venv_pip" ]]; then
+    echo "pip not found for judge interpreter: $venv_pip" >&2
+    exit 1
+  fi
+  sudo -u "$JUDGE_USER" "$venv_pip" install "$@"
+}
+
+torch_variant_for_judge() {
+  local venv_python="$1"
+  sudo -u "$JUDGE_USER" "$venv_python" - <<'PY'
+import importlib.util
+
+if importlib.util.find_spec("torch") is None:
+    print("missing")
+    raise SystemExit(0)
+
+try:
+    import torch
+except Exception:
+    print("broken")
+    raise SystemExit(0)
+
+print("cuda" if getattr(torch.version, "cuda", None) else "cpu")
+PY
+}
+
+ensure_cpu_torch_for_judge() {
+  local venv_python="$1"
+  if [[ ! -x "$venv_python" ]]; then
+    echo "Judge python interpreter not found: $venv_python" >&2
+    exit 1
+  fi
+
+  local variant
+  variant=$(torch_variant_for_judge "$venv_python")
+  if [[ "$variant" == "cpu" ]]; then
+    echo "PyTorch CPU wheel already installed."
+    return
+  fi
+
+  if [[ "$variant" == "cuda" ]]; then
+    echo "Replacing CUDA PyTorch wheel with CPU-only wheel." >&2
+  else
+    echo "Installing PyTorch CPU wheel." >&2
+  fi
+
+  pip_install_for_judge "$venv_python" --upgrade --force-reinstall --index-url https://download.pytorch.org/whl/cpu "torch>=2.2,<3"
+  variant=$(torch_variant_for_judge "$venv_python")
+  if [[ "$variant" != "cpu" ]]; then
+    echo "Failed to enforce CPU-only PyTorch (detected: $variant)." >&2
+    exit 1
+  fi
+}
+
 # Load /etc/judge/judge.env if present.
 if [[ -f /etc/judge/judge.env ]]; then
   chown root:root /etc/judge/judge.env
@@ -75,6 +141,9 @@ if [[ -f /etc/judge/judge.env ]]; then
   source /etc/judge/judge.env
   set +a
 fi
+
+JUDGE_PYTHON_BIN=${JUDGE_PYTHON_BIN:-$ROOT_DIR/.venv/bin/python}
+ensure_cpu_torch_for_judge "$JUDGE_PYTHON_BIN"
 
 if [[ -z "${PROMETHEUS_MULTIPROC_DIR+x}" ]]; then
   PROMETHEUS_MULTIPROC_DIR=/var/lib/judge/prometheus-multiproc

@@ -75,6 +75,32 @@ for key in JUDGE_API_WORKERS JUDGE_LIGHT_WORKERS JUDGE_TORCH_WORKERS; do
   fi
 done
 
+judge_python_bin=${JUDGE_PYTHON_BIN:-/opt/ai-deep-dive/judge/.venv/bin/python}
+if [[ ! -x "$judge_python_bin" ]]; then
+  fail "Judge python interpreter not found: $judge_python_bin"
+fi
+
+torch_variant=$("$judge_python_bin" - <<'PY'
+import importlib.util
+
+if importlib.util.find_spec("torch") is None:
+    print("missing")
+    raise SystemExit(0)
+
+try:
+    import torch
+except Exception:
+    print("broken")
+    raise SystemExit(0)
+
+print("cuda" if getattr(torch.version, "cuda", None) else "cpu")
+PY
+)
+if [[ "$torch_variant" != "cpu" ]]; then
+  fail "PyTorch must be CPU-only on this VM profile (detected: $torch_variant). Re-run deploy/bootstrap.sh to enforce CPU wheels."
+fi
+pass "PyTorch CPU wheel is installed"
+
 redis_service=$(resolve_redis_service)
 systemctl is-active --quiet "$redis_service" || fail "Redis service is not active: $redis_service"
 
@@ -144,7 +170,7 @@ default_smoke_code=$'def add(a, b):\n    return a + b\n'
 smoke_code=${JUDGE_VERIFY_SMOKE_CODE:-$default_smoke_code}
 smoke_expected_status=${JUDGE_VERIFY_SMOKE_EXPECTED_STATUS:-Accepted}
 
-smoke_manifest="${JUDGE_PROBLEMS_ROOT%/}/${smoke_problem_id}/problem.json"
+smoke_manifest="${JUDGE_PROBLEMS_ROOT%/}/${smoke_problem_id}/manifest.json"
 if [[ ! -f "$smoke_manifest" ]]; then
   fail "Smoke problem not found at ${smoke_manifest}. Set JUDGE_VERIFY_SMOKE_PROBLEM_ID/JUDGE_VERIFY_SMOKE_CODE for your corpus."
 fi

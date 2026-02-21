@@ -139,6 +139,7 @@ Environment variables:
 - `light` profile always executes inside isolate.
 - `torch` profile executes inside isolate by default, or with the warm fork
   executor when `JUDGE_TORCH_EXECUTION_MODE=warm_fork`.
+- VM deployment scripts enforce CPU-only PyTorch wheels for judge workers.
 - Warm fork hardening defaults:
   `no_new_privs=on`, `seccomp=on`, `clear_env=on`.
 - Worker consumer names must follow the template services (`light-%i`, `torch-%i`).
