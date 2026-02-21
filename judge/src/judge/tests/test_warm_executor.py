@@ -11,7 +11,11 @@ from unittest.mock import patch
 from judge.problems import Comparison, Problem
 from judge.problems import TestCase as ProblemTestCase
 from judge.runner import IsolateConfig
-from judge.warm_executor import WarmForkExecutor, WarmForkUnavailableError
+from judge.warm_executor import (
+    WarmForkExecutor,
+    WarmForkUnavailableError,
+    _SECCOMP_DENY_SYSCALLS,
+)
 
 
 def _problem(*, time_limit_s: int = 1) -> Problem:
@@ -206,3 +210,9 @@ class WarmForkExecutorTests(TestCase):
             isolate=_isolate_config(),
         )
         self.assertEqual(result.get("status"), "Accepted")
+
+    def test_seccomp_profile_covers_cross_process_escape_syscalls(self) -> None:
+        self.assertIn("process_vm_readv", _SECCOMP_DENY_SYSCALLS)
+        self.assertIn("process_vm_writev", _SECCOMP_DENY_SYSCALLS)
+        self.assertIn("pidfd_open", _SECCOMP_DENY_SYSCALLS)
+        self.assertIn("pidfd_getfd", _SECCOMP_DENY_SYSCALLS)

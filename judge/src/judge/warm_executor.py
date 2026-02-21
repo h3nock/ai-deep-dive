@@ -55,7 +55,7 @@ _PR_SET_NO_NEW_PRIVS = 38
 _PR_SET_DUMPABLE = 4
 _SCMP_ACT_ALLOW = 0x7FFF0000
 _SCMP_ACT_ERRNO_BASE = 0x00050000
-_SECCOMP_DENY_SYSCALLS = (
+_SECCOMP_DENY_NETWORK_SYSCALLS = (
     # Network egress and local socket creation.
     "socket",
     "socketpair",
@@ -73,6 +73,8 @@ _SECCOMP_DENY_SYSCALLS = (
     "getsockopt",
     "setsockopt",
     "shutdown",
+)
+_SECCOMP_DENY_PROCESS_CONTROL_SYSCALLS = (
     # Process execution / tracing / namespace manipulation.
     "execve",
     "execveat",
@@ -83,6 +85,19 @@ _SECCOMP_DENY_SYSCALLS = (
     "umount2",
     "pivot_root",
     "chroot",
+    # Prevent signaling other processes owned by the same UID.
+    "kill",
+    "tkill",
+    "tgkill",
+    "pidfd_send_signal",
+    # Block direct cross-process memory/file-descriptor access attempts.
+    "process_vm_readv",
+    "process_vm_writev",
+    "pidfd_open",
+    "pidfd_getfd",
+    "kcmp",
+)
+_SECCOMP_DENY_HIGH_RISK_KERNEL_SURFACE = (
     # Kernel attack surface that user submissions never need.
     "bpf",
     "keyctl",
@@ -93,11 +108,17 @@ _SECCOMP_DENY_SYSCALLS = (
     "delete_module",
     "kexec_load",
     "open_by_handle_at",
-    # Prevent signaling other processes owned by the same UID.
-    "kill",
-    "tkill",
-    "tgkill",
-    "pidfd_send_signal",
+    # Additional kernel interfaces with a high exploit history.
+    "io_uring_setup",
+    "io_uring_enter",
+    "io_uring_register",
+    "userfaultfd",
+    "perf_event_open",
+)
+_SECCOMP_DENY_SYSCALLS = (
+    *_SECCOMP_DENY_NETWORK_SYSCALLS,
+    *_SECCOMP_DENY_PROCESS_CONTROL_SYSCALLS,
+    *_SECCOMP_DENY_HIGH_RISK_KERNEL_SURFACE,
 )
 _SECCOMP_DENY_FILE_OPEN_SYSCALLS = (
     # Disallow opening arbitrary host paths from untrusted submissions.
