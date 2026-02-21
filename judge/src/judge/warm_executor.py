@@ -153,6 +153,9 @@ _SECCOMP_DENY_FILE_METADATA_SYSCALLS = (
     "getdents",
     "getdents64",
 )
+# Maximum bytes the parent will buffer from child stdout+stderr combined.
+# Beyond this limit the parent stops reading (but keeps waiting for exit).
+_MAX_CHILD_OUTPUT_BYTES = 2 * 1024 * 1024  # 2 MB
 # Interval between retry attempts during cgroup teardown.
 _CGROUP_DESTROY_POLL_S = 0.005
 _CGROUP_DESTROY_ATTEMPTS = 10
@@ -228,13 +231,24 @@ class _CgroupV2Sandbox:
         child = self._root / name
         try:
             child.mkdir()
-        except OSError:
+        except FileExistsError:
+            # Stale dir from a previous crash — reclaim it.
+            logger.warning("cgroup child %s already exists, reclaiming", child)
+            self.destroy(child)
+            try:
+                child.mkdir()
+            except OSError as exc:
+                logger.error("cgroup child mkdir failed after reclaim: %s", exc)
+                return None
+        except OSError as exc:
+            logger.error("cgroup child mkdir failed: %s", exc)
             return None
 
         try:
             (child / "memory.max").write_text(str(memory_bytes))
             (child / "pids.max").write_text(str(pids_max))
-        except OSError:
+        except OSError as exc:
+            logger.error("cgroup child config failed: %s", exc)
             self.destroy(child)
             return None
 
@@ -292,6 +306,7 @@ class _ChildRunResult:
     stderr: str
     timed_out: bool
     oom_killed: bool = False
+    output_truncated: bool = False
     signum: int | None = None
 
 
@@ -347,6 +362,11 @@ class WarmForkExecutor:
         if self.enable_seccomp and sys.platform.startswith("linux"):
             self._seccomp_lib = self._load_seccomp_lib()
         self._harden_parent_process()
+        if enable_cgroup and not deny_filesystem:
+            logger.warning(
+                "enable_cgroup=True with deny_filesystem=False: "
+                "child processes can write to cgroup control files"
+            )
         self._cgroup = _CgroupV2Sandbox(enabled=enable_cgroup)
 
         if preload_torch:
@@ -431,6 +451,16 @@ class WarmForkExecutor:
                 "error_kind": error_kind,
             }
 
+        if child.output_truncated:
+            cap_mb = _MAX_CHILD_OUTPUT_BYTES // (1024 * 1024)
+            return {
+                "status": "Runtime Error",
+                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "tests": [],
+                "error": f"Output Limit Exceeded ({cap_mb}MB)",
+                "error_kind": "user",
+            }
+
         try:
             tests_raw = json.loads(child.stdout)
         except json.JSONDecodeError:
@@ -492,7 +522,15 @@ class WarmForkExecutor:
         sys.stdout.flush()
         sys.stderr.flush()
 
-        pid = os.fork()
+        try:
+            pid = os.fork()
+        except OSError:
+            for fd in (devnull_fd, stdout_r, stdout_w, stderr_r, stderr_w):
+                os.close(fd)
+            if cgroup_path is not None:
+                self._cgroup.destroy(cgroup_path)
+            raise
+
         if pid == 0:
             os.close(stdout_r)
             os.close(stderr_r)
@@ -664,7 +702,7 @@ class WarmForkExecutor:
     ) -> _ChildRunResult:
         pidfd = self._open_pidfd(pid)
         try:
-            stdout_chunks, stderr_chunks, timed_out = self._poll_child_io(
+            stdout_chunks, stderr_chunks, timed_out, output_truncated = self._poll_child_io(
                 pid=pid,
                 pidfd=pidfd,
                 stdout_fd=stdout_fd,
@@ -681,8 +719,9 @@ class WarmForkExecutor:
         _, status = os.waitpid(pid, 0)
 
         # Drain any data written between the last poll and child exit.
-        stdout_chunks.extend(self._drain_fd(stdout_fd))
-        stderr_chunks.extend(self._drain_fd(stderr_fd))
+        if not output_truncated:
+            stdout_chunks.extend(self._drain_fd(stdout_fd))
+            stderr_chunks.extend(self._drain_fd(stderr_fd))
 
         oom_killed = (
             cgroup_path is not None
@@ -698,6 +737,7 @@ class WarmForkExecutor:
             stderr=stderr,
             timed_out=timed_out,
             oom_killed=oom_killed,
+            output_truncated=output_truncated,
         )
 
     def _poll_child_io(
@@ -708,7 +748,8 @@ class WarmForkExecutor:
         stdout_fd: int,
         stderr_fd: int,
         timeout_s: float,
-    ) -> tuple[list[bytes], list[bytes], bool]:
+    ) -> tuple[list[bytes], list[bytes], bool, bool]:
+        """Returns (stdout_chunks, stderr_chunks, timed_out, output_truncated)."""
         poller = select.poll()
         if pidfd >= 0:
             poller.register(pidfd, select.POLLIN)
@@ -717,21 +758,23 @@ class WarmForkExecutor:
 
         stdout_chunks: list[bytes] = []
         stderr_chunks: list[bytes] = []
+        total_bytes = 0
+        truncated = False
         active_pipes = {stdout_fd, stderr_fd}
         deadline = time.monotonic() + max(timeout_s, 1)
 
         while True:
             remaining_ms = int((deadline - time.monotonic()) * 1000)
             if remaining_ms <= 0:
-                return stdout_chunks, stderr_chunks, True
+                return stdout_chunks, stderr_chunks, True, truncated
 
             events = poller.poll(remaining_ms)
             if not events:
-                return stdout_chunks, stderr_chunks, True
+                return stdout_chunks, stderr_chunks, True, truncated
 
             for fd, event in events:
                 if fd == pidfd:
-                    return stdout_chunks, stderr_chunks, False
+                    return stdout_chunks, stderr_chunks, False, truncated
 
                 chunks = stdout_chunks if fd == stdout_fd else stderr_chunks
                 if event & (select.POLLIN | select.POLLHUP):
@@ -740,7 +783,11 @@ class WarmForkExecutor:
                     except OSError:
                         data = b""
                     if data:
-                        chunks.append(data)
+                        total_bytes += len(data)
+                        if total_bytes <= _MAX_CHILD_OUTPUT_BYTES:
+                            chunks.append(data)
+                        else:
+                            truncated = True
                     if not data or event & select.POLLHUP:
                         poller.unregister(fd)
                         active_pipes.discard(fd)
@@ -750,7 +797,7 @@ class WarmForkExecutor:
 
             # Without pidfd, infer child exit when both pipes reach EOF.
             if pidfd < 0 and not active_pipes:
-                return stdout_chunks, stderr_chunks, False
+                return stdout_chunks, stderr_chunks, False, truncated
 
     def _open_pidfd(self, pid: int) -> int:
         if not _HAS_PIDFD:
@@ -781,6 +828,7 @@ class WarmForkExecutor:
         stderr: str,
         timed_out: bool,
         oom_killed: bool,
+        output_truncated: bool = False,
     ) -> _ChildRunResult:
         if timed_out:
             return _ChildRunResult(
@@ -789,6 +837,7 @@ class WarmForkExecutor:
                 stderr=stderr,
                 timed_out=True,
                 oom_killed=oom_killed,
+                output_truncated=output_truncated,
             )
 
         if os.WIFEXITED(status):
@@ -798,6 +847,7 @@ class WarmForkExecutor:
                 stderr=stderr,
                 timed_out=False,
                 oom_killed=oom_killed,
+                output_truncated=output_truncated,
             )
 
         if os.WIFSIGNALED(status):
@@ -808,6 +858,7 @@ class WarmForkExecutor:
                 stderr=stderr,
                 timed_out=False,
                 oom_killed=oom_killed,
+                output_truncated=output_truncated,
                 signum=signum,
             )
 
@@ -817,6 +868,7 @@ class WarmForkExecutor:
             stderr=stderr,
             timed_out=False,
             oom_killed=oom_killed,
+            output_truncated=output_truncated,
         )
 
     # ------------------------------------------------------------------
