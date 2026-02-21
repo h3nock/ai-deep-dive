@@ -19,6 +19,7 @@ from judge.metrics import (
 )
 from judge.runner import IsolateConfig
 from judge.services import WorkerExecutionService, WorkerJob
+from judge.warm_executor import WarmForkExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -124,12 +125,35 @@ def build_worker_dependencies(
         fsize_kb=resolved_settings.isolate_fsize_kb,
         python_bin=resolved_settings.python_bin,
     )
+
+    run_problem_fn = None
+    if stream == "queue:torch" and resolved_settings.torch_execution_mode == "warm_fork":
+        warm_executor = WarmForkExecutor(
+            enable_no_new_privs=resolved_settings.warm_fork_enable_no_new_privs,
+            enable_seccomp=resolved_settings.warm_fork_enable_seccomp,
+            seccomp_fail_closed=resolved_settings.warm_fork_seccomp_fail_closed,
+            clear_env=resolved_settings.warm_fork_clear_env,
+            deny_file_open=resolved_settings.warm_fork_deny_file_open,
+            allow_root=resolved_settings.warm_fork_allow_root,
+            child_nofile_limit=resolved_settings.warm_fork_child_nofile,
+        )
+        run_problem_fn = warm_executor.run_problem
+        logger.info(
+            "Torch worker execution mode enabled: warm_fork (consumer=%s)",
+            consumer,
+        )
+
+    execution_kwargs: dict[str, Any] = {}
+    if run_problem_fn is not None:
+        execution_kwargs["run_problem_fn"] = run_problem_fn
+
     execution = WorkerExecutionService(
         results=results,
         problems=problems,
         isolate=isolate,
         max_output_chars=resolved_settings.max_output_chars,
         log=logger,
+        **execution_kwargs,
     )
     return WorkerDependencies(
         settings=resolved_settings,

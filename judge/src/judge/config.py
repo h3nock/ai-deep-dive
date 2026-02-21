@@ -22,6 +22,14 @@ class Settings:
     isolate_timeout_grace_s: int
     isolate_fsize_kb: int
     python_bin: str
+    torch_execution_mode: str
+    warm_fork_enable_no_new_privs: bool
+    warm_fork_enable_seccomp: bool
+    warm_fork_seccomp_fail_closed: bool
+    warm_fork_clear_env: bool
+    warm_fork_deny_file_open: bool
+    warm_fork_allow_root: bool
+    warm_fork_child_nofile: int
     allowed_origins: list[str]
 
 
@@ -50,6 +58,29 @@ def load_settings() -> Settings:
     isolate_timeout_grace_s = int(os.getenv("JUDGE_ISOLATE_TIMEOUT_GRACE_S", "5"))
     isolate_fsize_kb = int(os.getenv("JUDGE_ISOLATE_FSIZE_KB", "1024"))
     python_bin = os.getenv("JUDGE_PYTHON_BIN", sys.executable).strip()
+    torch_execution_mode = os.getenv("JUDGE_TORCH_EXECUTION_MODE", "isolate").strip().lower()
+    warm_no_new_privs_raw = os.getenv("JUDGE_WARM_FORK_ENABLE_NO_NEW_PRIVS", "1").strip().lower()
+    warm_fork_enable_no_new_privs = warm_no_new_privs_raw not in {"0", "false", "no", "off"}
+    warm_enable_seccomp_raw = os.getenv("JUDGE_WARM_FORK_ENABLE_SECCOMP", "1").strip().lower()
+    warm_fork_enable_seccomp = warm_enable_seccomp_raw not in {"0", "false", "no", "off"}
+    warm_seccomp_fail_closed_raw = os.getenv(
+        "JUDGE_WARM_FORK_SECCOMP_FAIL_CLOSED",
+        "1",
+    ).strip().lower()
+    warm_fork_seccomp_fail_closed = warm_seccomp_fail_closed_raw not in {
+        "0",
+        "false",
+        "no",
+        "off",
+    }
+    warm_clear_env_raw = os.getenv("JUDGE_WARM_FORK_CLEAR_ENV", "1").strip().lower()
+    warm_fork_clear_env = warm_clear_env_raw not in {"0", "false", "no", "off"}
+    warm_deny_file_open_raw = os.getenv("JUDGE_WARM_FORK_DENY_FILE_OPEN", "1").strip().lower()
+    warm_fork_deny_file_open = warm_deny_file_open_raw not in {"0", "false", "no", "off"}
+    warm_allow_root_raw = os.getenv("JUDGE_WARM_FORK_ALLOW_ROOT", "0").strip().lower()
+    warm_fork_allow_root = warm_allow_root_raw not in {"0", "false", "no", "off"}
+    warm_fork_child_nofile = int(os.getenv("JUDGE_WARM_FORK_CHILD_NOFILE", "64"))
+
     if isolate_process_limit < 1:
         raise ValueError("JUDGE_ISOLATE_PROCESSES must be >= 1")
     if isolate_wall_time_extra_s < 0:
@@ -62,6 +93,14 @@ def load_settings() -> Settings:
         raise ValueError("JUDGE_PYTHON_BIN must not be empty")
     if queue_maxlen < 0:
         raise ValueError("JUDGE_QUEUE_MAXLEN must be >= 0")
+    if torch_execution_mode not in {"isolate", "warm_fork"}:
+        raise ValueError("JUDGE_TORCH_EXECUTION_MODE must be one of: isolate, warm_fork")
+    if warm_fork_enable_seccomp and not warm_fork_enable_no_new_privs:
+        raise ValueError(
+            "JUDGE_WARM_FORK_ENABLE_NO_NEW_PRIVS must be enabled when JUDGE_WARM_FORK_ENABLE_SECCOMP=1"
+        )
+    if warm_fork_child_nofile < 16:
+        raise ValueError("JUDGE_WARM_FORK_CHILD_NOFILE must be >= 16")
 
     origins_raw = os.getenv("JUDGE_ALLOWED_ORIGINS", "")
     allowed_origins = [origin.strip() for origin in origins_raw.split(",") if origin.strip()]
@@ -81,5 +120,13 @@ def load_settings() -> Settings:
         isolate_timeout_grace_s=isolate_timeout_grace_s,
         isolate_fsize_kb=isolate_fsize_kb,
         python_bin=python_bin,
+        torch_execution_mode=torch_execution_mode,
+        warm_fork_enable_no_new_privs=warm_fork_enable_no_new_privs,
+        warm_fork_enable_seccomp=warm_fork_enable_seccomp,
+        warm_fork_seccomp_fail_closed=warm_fork_seccomp_fail_closed,
+        warm_fork_clear_env=warm_fork_clear_env,
+        warm_fork_deny_file_open=warm_fork_deny_file_open,
+        warm_fork_allow_root=warm_fork_allow_root,
+        warm_fork_child_nofile=warm_fork_child_nofile,
         allowed_origins=allowed_origins,
     )
