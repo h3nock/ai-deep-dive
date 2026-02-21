@@ -2,7 +2,7 @@
 
 An open-source interactive learning platform for understanding LLMs through lessons, visualizations, and coding challenges.
 
-Live: https://learning.h3nok.dev
+Live: https://aideepdive.dev
 
 ## Repo layout
 
