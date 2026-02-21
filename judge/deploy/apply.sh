@@ -9,7 +9,7 @@ fi
 JUDGE_DOMAIN=${JUDGE_DOMAIN:-}
 if [[ -z "$JUDGE_DOMAIN" ]]; then
   echo "Set JUDGE_DOMAIN, e.g.:" >&2
-  echo "  sudo JUDGE_DOMAIN=judge.h3nok.dev $0" >&2
+  echo "  sudo JUDGE_DOMAIN=judge.aideepdive.dev $0" >&2
   exit 1
 fi
 
