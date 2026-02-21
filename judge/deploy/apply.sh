@@ -18,6 +18,54 @@ JUDGE_TESTS_ROOT=${JUDGE_TESTS_ROOT:-/opt/ai-deep-dive/judge/tests}
 
 ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 
+validate_non_negative_int() {
+  local value="$1"
+  local key="$2"
+  if [[ ! "$value" =~ ^[0-9]+$ ]]; then
+    echo "$key must be a non-negative integer (got: $value)." >&2
+    exit 1
+  fi
+}
+
+reconcile_worker_units() {
+  local prefix="$1"
+  local desired="$2"
+  local unit
+  local index
+  local -a known_units=()
+  local -a active_units=()
+
+  mapfile -t known_units < <(systemctl list-unit-files "${prefix}@*.service" --no-legend --no-pager 2>/dev/null | awk '{print $1}')
+  mapfile -t active_units < <(systemctl list-units --type=service --state=active --plain --no-legend "${prefix}@*.service" 2>/dev/null | awk '{print $1}')
+
+  for unit in "${known_units[@]}"; do
+    [[ -z "$unit" ]] && continue
+    if [[ "$unit" =~ ^${prefix}@([0-9]+)\.service$ ]]; then
+      index=${BASH_REMATCH[1]}
+      if (( index > desired )); then
+        systemctl disable --now "$unit" >/dev/null 2>&1 || true
+      fi
+    fi
+  done
+  for unit in "${active_units[@]}"; do
+    [[ -z "$unit" ]] && continue
+    if [[ "$unit" =~ ^${prefix}@([0-9]+)\.service$ ]]; then
+      index=${BASH_REMATCH[1]}
+      if (( index > desired )); then
+        systemctl disable --now "$unit" >/dev/null 2>&1 || true
+      fi
+    fi
+  done
+
+  if (( desired == 0 )); then
+    return
+  fi
+
+  for index in $(seq 1 "$desired"); do
+    systemctl enable --now "${prefix}@${index}.service"
+  done
+}
+
 # Load /etc/judge/judge.env if present.
 if [[ -f /etc/judge/judge.env ]]; then
   chown root:root /etc/judge/judge.env
@@ -82,22 +130,19 @@ install -m 644 "$ROOT_DIR/deploy/systemd/worker-override.conf" /etc/systemd/syst
 
 LIGHT_COUNT=${JUDGE_LIGHT_WORKERS:-1}
 TORCH_COUNT=${JUDGE_TORCH_WORKERS:-1}
+validate_non_negative_int "$LIGHT_COUNT" "JUDGE_LIGHT_WORKERS"
+validate_non_negative_int "$TORCH_COUNT" "JUDGE_TORCH_WORKERS"
 
 systemctl daemon-reload
-systemctl restart judge-metrics-init
-systemctl restart judge-api
+systemctl restart judge-metrics-init.service
+systemctl enable --now judge-api.service
 
-for i in $(seq 1 "$LIGHT_COUNT"); do
-  systemctl enable --now "judge-worker-light@${i}"
-done
-
-for i in $(seq 1 "$TORCH_COUNT"); do
-  systemctl enable --now "judge-worker-torch@${i}"
-done
-
-# Stop legacy non-template services if they exist
+# Stop legacy non-template services to avoid mixed worker models.
 systemctl disable --now judge-worker-light.service >/dev/null 2>&1 || true
 systemctl disable --now judge-worker-torch.service >/dev/null 2>&1 || true
+
+reconcile_worker_units "judge-worker-light" "$LIGHT_COUNT"
+reconcile_worker_units "judge-worker-torch" "$TORCH_COUNT"
 
 # Cleanup + backup timers
 install -m 644 "$ROOT_DIR/deploy/judge-cleanup.service" /etc/systemd/system/judge-cleanup.service
