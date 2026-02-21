@@ -5,7 +5,6 @@ from __future__ import annotations
 import ctypes.util
 import os
 import sys
-import tempfile
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
@@ -15,9 +14,10 @@ from judge.problems import TestCase as ProblemTestCase
 from judge.runner import IsolateConfig
 from judge.warm_executor import (
     _SECCOMP_DENY_FILE_METADATA_SYSCALLS,
+    _SECCOMP_DENY_SYSCALLS,
     WarmForkExecutor,
     WarmForkUnavailableError,
-    _SECCOMP_DENY_SYSCALLS,
+    _CgroupV2Sandbox,
 )
 
 
@@ -235,7 +235,6 @@ class WarmForkExecutorTests(TestCase):
         calls: list[str] = []
 
         with (
-            tempfile.TemporaryDirectory(prefix="warm-order-test-") as tmp_dir,
             patch("judge.warm_executor.os.setsid", return_value=None),
             patch.object(executor, "_set_no_new_privs", side_effect=lambda: calls.append("nnp")),
             patch.object(
@@ -255,9 +254,110 @@ class WarmForkExecutorTests(TestCase):
             ),
         ):
             executor._prepare_child_sandbox(  # noqa: SLF001
-                workspace=Path(tmp_dir),
                 problem=_problem(),
                 isolate=_isolate_config(),
             )
 
         self.assertEqual(calls, ["nnp", "limits", "seccomp", "fds"])
+
+    def test_job_count_increments_per_execution(self) -> None:
+        executor = WarmForkExecutor(
+            enable_no_new_privs=False,
+            child_nofile_limit=64,
+            preload_torch=False,
+        )
+        self.assertEqual(executor.job_count, 0)
+
+        executor.run_problem(
+            _problem(),
+            "def add(a, b):\n    return a + b\n",
+            max_output_chars=2000,
+            include_hidden=False,
+            detail_mode="all",
+            isolate=_isolate_config(),
+        )
+        self.assertEqual(executor.job_count, 1)
+
+    def test_needs_recycle_false_when_unlimited(self) -> None:
+        executor = WarmForkExecutor(
+            enable_no_new_privs=False,
+            child_nofile_limit=64,
+            max_jobs=0,
+            preload_torch=False,
+        )
+        self.assertFalse(executor.needs_recycle)
+
+        executor.run_problem(
+            _problem(),
+            "def add(a, b):\n    return a + b\n",
+            max_output_chars=2000,
+            include_hidden=False,
+            detail_mode="all",
+            isolate=_isolate_config(),
+        )
+        self.assertFalse(executor.needs_recycle)
+
+    def test_needs_recycle_true_after_max_jobs_reached(self) -> None:
+        executor = WarmForkExecutor(
+            enable_no_new_privs=False,
+            child_nofile_limit=64,
+            max_jobs=2,
+            preload_torch=False,
+        )
+        self.assertFalse(executor.needs_recycle)
+
+        for _ in range(2):
+            executor.run_problem(
+                _problem(),
+                "def add(a, b):\n    return a + b\n",
+                max_output_chars=2000,
+                include_hidden=False,
+                detail_mode="all",
+                isolate=_isolate_config(),
+            )
+        self.assertTrue(executor.needs_recycle)
+        self.assertEqual(executor.job_count, 2)
+
+    def test_multiple_sequential_jobs_all_succeed(self) -> None:
+        executor = WarmForkExecutor(
+            enable_no_new_privs=False,
+            child_nofile_limit=64,
+            preload_torch=False,
+        )
+
+        for i in range(3):
+            result = executor.run_problem(
+                _problem(),
+                "def add(a, b):\n    return a + b\n",
+                max_output_chars=2000,
+                include_hidden=False,
+                detail_mode="all",
+                isolate=_isolate_config(),
+            )
+            self.assertEqual(result.get("status"), "Accepted", f"job {i + 1} failed")
+
+        self.assertEqual(executor.job_count, 3)
+
+
+class CgroupV2SandboxTests(TestCase):
+    def test_unavailable_on_non_linux(self) -> None:
+        if sys.platform.startswith("linux"):
+            self.skipTest("test verifies non-Linux fallback")
+        sandbox = _CgroupV2Sandbox()
+        self.assertFalse(sandbox.available)
+
+    def test_graceful_fallback_when_proc_cgroup_missing(self) -> None:
+        with patch("judge.warm_executor.Path.read_text", side_effect=OSError("no such file")):
+            sandbox = _CgroupV2Sandbox()
+        self.assertFalse(sandbox.available)
+
+    def test_create_child_returns_none_when_unavailable(self) -> None:
+        sandbox = _CgroupV2Sandbox.__new__(_CgroupV2Sandbox)
+        sandbox._root = None  # noqa: SLF001
+        result = sandbox.create_child("test", memory_bytes=1024, pids_max=10)
+        self.assertIsNone(result)
+
+    def test_was_oom_killed_returns_false_when_no_events(self) -> None:
+        sandbox = _CgroupV2Sandbox.__new__(_CgroupV2Sandbox)
+        sandbox._root = None  # noqa: SLF001
+        self.assertFalse(sandbox.was_oom_killed(Path("/nonexistent")))

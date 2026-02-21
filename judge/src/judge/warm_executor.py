@@ -3,6 +3,12 @@
 This executor keeps a long-lived parent process that preloads torch and forks
 per submission. Child processes execute untrusted code with resource limits and
 exit after each job, so Python-level state never leaks back to the parent.
+
+Per-job isolation layers (when available):
+- cgroup v2: memory and PID limits with OOM kill detection
+- seccomp-bpf: syscall deny filter (network, exec, filesystem)
+- rlimits: CPU time, address space, file size, open files
+- session and environment isolation
 """
 
 from __future__ import annotations
@@ -11,11 +17,12 @@ import ctypes
 import ctypes.util
 import errno
 import json
+import logging
 import os
 import resource
+import select
 import signal
 import sys
-import tempfile
 import time
 import traceback
 from dataclasses import dataclass
@@ -31,6 +38,8 @@ from judge.runner import (
     _sanitize_item,
     _summarize_results,
 )
+
+logger = logging.getLogger(__name__)
 
 _THREAD_ENV_DEFAULTS = {
     "OMP_NUM_THREADS": "1",
@@ -51,6 +60,7 @@ _SAFE_ENV_VARS = (
     "TZ",
 )
 _INFRA_ERROR_MARKER = "__WARM_FORK_INFRA_ERROR__"
+_HAS_PIDFD = hasattr(os, "pidfd_open")
 _PR_SET_NO_NEW_PRIVS = 38
 _PR_SET_DUMPABLE = 4
 _SCMP_ACT_ALLOW = 0x7FFF0000
@@ -143,7 +153,133 @@ _SECCOMP_DENY_FILE_METADATA_SYSCALLS = (
     "getdents",
     "getdents64",
 )
+# Interval between retry attempts during cgroup teardown.
+_CGROUP_DESTROY_POLL_S = 0.005
+_CGROUP_DESTROY_ATTEMPTS = 10
 
+
+# ---------------------------------------------------------------------------
+# cgroup v2 per-job sandbox
+# ---------------------------------------------------------------------------
+
+class _CgroupV2Sandbox:
+    """Optional per-job cgroup v2 isolation with OOM kill detection.
+
+    Auto-detects the unified cgroup v2 hierarchy and whether the current
+    process owns a delegated subtree (systemd ``Delegate=yes``).  Falls back
+    gracefully when cgroup control is unavailable.
+    """
+
+    def __init__(self, *, enabled: bool = True) -> None:
+        self._root: Path | None = None
+        if enabled:
+            self._init_cgroup()
+
+    @property
+    def available(self) -> bool:
+        return self._root is not None
+
+    def _init_cgroup(self) -> None:
+        if not sys.platform.startswith("linux"):
+            return
+
+        # Resolve our cgroup path from the unified hierarchy entry (0::).
+        try:
+            content = Path("/proc/self/cgroup").read_text()
+        except OSError:
+            return
+
+        rel_path: str | None = None
+        for line in content.splitlines():
+            if line.startswith("0::"):
+                rel_path = line[3:].strip()
+                break
+        if rel_path is None:
+            return
+
+        root = Path("/sys/fs/cgroup") / rel_path.lstrip("/")
+        if not root.is_dir():
+            return
+
+        # Verify write access to subtree_control — requires Delegate=yes.
+        subtree_ctl = root / "cgroup.subtree_control"
+        if not os.access(subtree_ctl, os.W_OK):
+            logger.info("cgroup v2 delegation not available (subtree_control not writable)")
+            return
+
+        try:
+            subtree_ctl.write_text("+memory +pids\n")
+        except OSError as exc:
+            logger.info("cgroup v2 controller activation failed: %s", exc)
+            return
+
+        self._root = root
+        logger.info("cgroup v2 sandbox enabled at %s", root)
+
+    def create_child(
+        self,
+        name: str,
+        memory_bytes: int,
+        pids_max: int,
+    ) -> Path | None:
+        if self._root is None:
+            return None
+
+        child = self._root / name
+        try:
+            child.mkdir()
+        except OSError:
+            return None
+
+        try:
+            (child / "memory.max").write_text(str(memory_bytes))
+            (child / "pids.max").write_text(str(pids_max))
+        except OSError:
+            self.destroy(child)
+            return None
+
+        return child
+
+    def was_oom_killed(self, child: Path) -> bool:
+        try:
+            for line in (child / "memory.events").read_text().splitlines():
+                key, _, value = line.partition(" ")
+                if key == "oom_kill":
+                    return int(value) > 0
+        except (OSError, ValueError):
+            pass
+        return False
+
+    def destroy(self, child: Path) -> None:
+        if not child.is_dir():
+            return
+
+        procs_path = child / "cgroup.procs"
+        for _ in range(_CGROUP_DESTROY_ATTEMPTS):
+            try:
+                pids_raw = procs_path.read_text().strip()
+            except OSError:
+                break
+            if not pids_raw:
+                break
+            for pid_str in pids_raw.splitlines():
+                try:
+                    os.kill(int(pid_str), signal.SIGKILL)
+                except (OSError, ValueError):
+                    pass
+            time.sleep(_CGROUP_DESTROY_POLL_S)
+
+        for _ in range(_CGROUP_DESTROY_ATTEMPTS):
+            try:
+                child.rmdir()
+                return
+            except OSError:
+                time.sleep(_CGROUP_DESTROY_POLL_S)
+
+
+# ---------------------------------------------------------------------------
+# Result types
+# ---------------------------------------------------------------------------
 
 class WarmForkUnavailableError(RuntimeError):
     """Raised when warm fork execution cannot run on the current platform."""
@@ -155,8 +291,13 @@ class _ChildRunResult:
     stdout: str
     stderr: str
     timed_out: bool
+    oom_killed: bool = False
     signum: int | None = None
 
+
+# ---------------------------------------------------------------------------
+# Executor
+# ---------------------------------------------------------------------------
 
 class WarmForkExecutor:
     """Executes jobs in forked child processes with a warm torch parent."""
@@ -171,10 +312,14 @@ class WarmForkExecutor:
         deny_filesystem: bool = True,
         allow_root: bool = False,
         child_nofile_limit: int = 64,
+        enable_cgroup: bool = True,
+        max_jobs: int = 0,
         preload_torch: bool = True,
     ) -> None:
         if child_nofile_limit < 16:
             raise ValueError("child_nofile_limit must be >= 16")
+        if max_jobs < 0:
+            raise ValueError("max_jobs must be >= 0")
         if os.name != "posix" or not hasattr(os, "fork"):
             raise WarmForkUnavailableError("warm fork executor requires POSIX fork support")
         if hasattr(os, "geteuid") and os.geteuid() == 0 and not allow_root:
@@ -191,6 +336,8 @@ class WarmForkExecutor:
         self._compiled_harness = compile(HARNESS_CODE, "harness.py", "exec")
         self._libc = self._load_libc()
         self._seccomp_lib: ctypes.CDLL | None = None
+        self._job_seq = 0
+        self._max_jobs = max_jobs
 
         if (
             self.enable_seccomp
@@ -201,10 +348,23 @@ class WarmForkExecutor:
         if self.enable_seccomp and sys.platform.startswith("linux"):
             self._seccomp_lib = self._load_seccomp_lib()
         self._harden_parent_process()
+        self._cgroup = _CgroupV2Sandbox(enabled=enable_cgroup)
 
         if preload_torch:
-            # Warm-import torch once in the parent. Child imports become cheap.
             import torch  # noqa: F401
+
+    @property
+    def job_count(self) -> int:
+        return self._job_seq
+
+    @property
+    def needs_recycle(self) -> bool:
+        """True when the executor has reached its max_jobs limit and should be replaced."""
+        return self._max_jobs > 0 and self._job_seq >= self._max_jobs
+
+    # ------------------------------------------------------------------
+    # Public entry point
+    # ------------------------------------------------------------------
 
     def run_problem(
         self,
@@ -238,6 +398,15 @@ class WarmForkExecutor:
                 "tests": [],
                 "error": f"Warm executor failed: {exc}",
                 "error_kind": "internal",
+            }
+
+        if child.oom_killed:
+            return {
+                "status": "Memory Limit Exceeded",
+                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "tests": [],
+                "error": f"Memory Limit Exceeded ({problem.memory_mb}MB)",
+                "error_kind": "user",
             }
 
         if child.timed_out:
@@ -295,6 +464,10 @@ class WarmForkExecutor:
             "error": None,
         }
 
+    # ------------------------------------------------------------------
+    # Fork lifecycle
+    # ------------------------------------------------------------------
+
     def _run_child(
         self,
         *,
@@ -302,82 +475,82 @@ class WarmForkExecutor:
         user_code: str,
         config: dict[str, Any],
         isolate: IsolateConfig,
-        timeout_s: int,
+        timeout_s: float,
     ) -> _ChildRunResult:
-        with tempfile.TemporaryDirectory(prefix="judge-warm-fork-") as tmp_dir:
-            root = Path(tmp_dir)
-            workspace = root / "box"
-            workspace.mkdir(parents=True, exist_ok=True)
-            stdout_path = root / "stdout.txt"
-            stderr_path = root / "stderr.txt"
+        self._job_seq += 1
+        cgroup_name = f"job-{self._job_seq}"
+        cgroup_path = self._cgroup.create_child(
+            cgroup_name,
+            memory_bytes=max(problem.memory_mb, 1) * 1024 * 1024,
+            pids_max=max(isolate.process_limit, 1),
+        )
 
-            # Prevent parent buffered output from being duplicated into child files after fork.
-            sys.stdout.flush()
-            sys.stderr.flush()
-            pid = os.fork()
-            if pid == 0:
-                self._child_entry(
-                    workspace=workspace,
-                    stdout_path=stdout_path,
-                    stderr_path=stderr_path,
-                    problem=problem,
-                    user_code=user_code,
-                    config=config,
-                    isolate=isolate,
-                )
-                os._exit(1)
+        devnull_fd = os.open(os.devnull, os.O_RDONLY)
+        stdout_r, stdout_w = os.pipe()
+        stderr_r, stderr_w = os.pipe()
 
-            status, timed_out = self._wait_for_child(pid=pid, timeout_s=timeout_s)
-            stdout = stdout_path.read_text() if stdout_path.exists() else ""
-            stderr = stderr_path.read_text() if stderr_path.exists() else ""
+        # Prevent parent buffered output from being duplicated after fork.
+        sys.stdout.flush()
+        sys.stderr.flush()
 
-            if timed_out:
-                return _ChildRunResult(
-                    returncode=1,
-                    stdout=stdout,
-                    stderr=stderr,
-                    timed_out=True,
-                )
-
-            if os.WIFEXITED(status):
-                return _ChildRunResult(
-                    returncode=os.WEXITSTATUS(status),
-                    stdout=stdout,
-                    stderr=stderr,
-                    timed_out=False,
-                )
-
-            if os.WIFSIGNALED(status):
-                signum = os.WTERMSIG(status)
-                return _ChildRunResult(
-                    returncode=128 + signum,
-                    stdout=stdout,
-                    stderr=stderr,
-                    timed_out=False,
-                    signum=signum,
-                )
-
-            return _ChildRunResult(
-                returncode=1,
-                stdout=stdout,
-                stderr=stderr,
-                timed_out=False,
+        pid = os.fork()
+        if pid == 0:
+            os.close(stdout_r)
+            os.close(stderr_r)
+            self._child_entry(
+                devnull_fd=devnull_fd,
+                stdout_fd=stdout_w,
+                stderr_fd=stderr_w,
+                cgroup_path=cgroup_path,
+                problem=problem,
+                user_code=user_code,
+                config=config,
+                isolate=isolate,
             )
+            os._exit(1)
+
+        # Parent: close child-side fds.
+        os.close(devnull_fd)
+        os.close(stdout_w)
+        os.close(stderr_w)
+
+        try:
+            return self._wait_and_collect(
+                pid=pid,
+                stdout_fd=stdout_r,
+                stderr_fd=stderr_r,
+                timeout_s=timeout_s,
+                cgroup_path=cgroup_path,
+            )
+        finally:
+            os.close(stdout_r)
+            os.close(stderr_r)
+            if cgroup_path is not None:
+                self._cgroup.destroy(cgroup_path)
 
     def _child_entry(
         self,
         *,
-        workspace: Path,
-        stdout_path: Path,
-        stderr_path: Path,
+        devnull_fd: int,
+        stdout_fd: int,
+        stderr_fd: int,
+        cgroup_path: Path | None,
         problem: Problem,
         user_code: str,
         config: dict[str, Any],
         isolate: IsolateConfig,
     ) -> None:
         try:
-            self._redirect_stdio(stdout_path=stdout_path, stderr_path=stderr_path)
-            self._prepare_child_sandbox(workspace=workspace, problem=problem, isolate=isolate)
+            # Join cgroup before seccomp (requires file write to cgroup.procs).
+            if cgroup_path is not None:
+                self._join_cgroup(cgroup_path)
+
+            self._redirect_child_stdio(
+                devnull_fd=devnull_fd,
+                stdout_fd=stdout_fd,
+                stderr_fd=stderr_fd,
+            )
+            self._prepare_child_sandbox(problem=problem, isolate=isolate)
             self._execute_harness(
                 user_code=user_code,
                 config=config,
@@ -394,10 +567,42 @@ class WarmForkExecutor:
                 pass
             os._exit(1)
 
+    # ------------------------------------------------------------------
+    # Child sandbox setup
+    # ------------------------------------------------------------------
+
+    def _join_cgroup(self, cgroup_path: Path) -> None:
+        try:
+            (cgroup_path / "cgroup.procs").write_text(str(os.getpid()))
+        except OSError as exc:
+            raise RuntimeError(
+                f"{_INFRA_ERROR_MARKER} failed to join cgroup: {exc}"
+            ) from exc
+
+    def _redirect_child_stdio(
+        self,
+        *,
+        devnull_fd: int,
+        stdout_fd: int,
+        stderr_fd: int,
+    ) -> None:
+        os.dup2(devnull_fd, 0)
+        os.dup2(stdout_fd, 1)
+        os.dup2(stderr_fd, 2)
+        for fd in (devnull_fd, stdout_fd, stderr_fd):
+            if fd > 2:
+                os.close(fd)
+        # Reset Python-level stdio to match the new file descriptors.
+        # After fork the parent's sys.stdout/stderr may be wrapped objects
+        # (e.g. test framework capture, logging redirection) that no longer
+        # correspond to fd 1/2.  Line buffering ensures print() flushes.
+        sys.stdin = open(0, closefd=False)
+        sys.stdout = open(1, "w", buffering=1, closefd=False)
+        sys.stderr = open(2, "w", buffering=1, closefd=False)
+
     def _prepare_child_sandbox(
         self,
         *,
-        workspace: Path,
         problem: Problem,
         isolate: IsolateConfig,
     ) -> None:
@@ -406,7 +611,7 @@ class WarmForkExecutor:
         except OSError as exc:
             raise RuntimeError(f"{_INFRA_ERROR_MARKER} failed to create session: {exc}") from exc
 
-        self._apply_child_env(workspace=workspace)
+        self._apply_child_env()
         os.umask(0o077)
         if self.enable_no_new_privs:
             self._set_no_new_privs()
@@ -415,20 +620,7 @@ class WarmForkExecutor:
             self._apply_seccomp_filter()
         self._close_inherited_fds()
 
-    def _redirect_stdio(self, *, stdout_path: Path, stderr_path: Path) -> None:
-        stdin_fd = os.open("/dev/null", os.O_RDONLY)
-        stdout_fd = os.open(stdout_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        stderr_fd = os.open(stderr_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        try:
-            os.dup2(stdin_fd, 0)
-            os.dup2(stdout_fd, 1)
-            os.dup2(stderr_fd, 2)
-        finally:
-            for fd in (stdin_fd, stdout_fd, stderr_fd):
-                if fd > 2:
-                    os.close(fd)
-
-    def _build_child_env(self, *, workspace: Path, base_env: dict[str, str]) -> dict[str, str]:
+    def _build_child_env(self, *, base_env: dict[str, str]) -> dict[str, str]:
         child_env: dict[str, str] = {}
         if not self.clear_env:
             child_env.update(base_env)
@@ -445,20 +637,210 @@ class WarmForkExecutor:
             if value is not None:
                 child_env[name] = value
 
-        tmp_dir = workspace / "tmp"
-        tmp_dir.mkdir(parents=True, exist_ok=True)
-        child_env["HOME"] = str(workspace)
-        child_env["TMPDIR"] = str(tmp_dir)
-        child_env["TMP"] = str(tmp_dir)
-        child_env["TEMP"] = str(tmp_dir)
+        child_env["HOME"] = "/tmp"
+        child_env["TMPDIR"] = "/tmp"
+        child_env["TMP"] = "/tmp"
+        child_env["TEMP"] = "/tmp"
         child_env["PATH"] = "/usr/bin:/bin"
         child_env["PYTHONNOUSERSITE"] = "1"
         return child_env
 
-    def _apply_child_env(self, *, workspace: Path) -> None:
-        child_env = self._build_child_env(workspace=workspace, base_env=dict(os.environ))
+    def _apply_child_env(self) -> None:
+        child_env = self._build_child_env(base_env=dict(os.environ))
         os.environ.clear()
         os.environ.update(child_env)
+
+    # ------------------------------------------------------------------
+    # Child wait and output collection (pidfd + poll)
+    # ------------------------------------------------------------------
+
+    def _wait_and_collect(
+        self,
+        *,
+        pid: int,
+        stdout_fd: int,
+        stderr_fd: int,
+        timeout_s: float,
+        cgroup_path: Path | None,
+    ) -> _ChildRunResult:
+        pidfd = self._open_pidfd(pid)
+        try:
+            stdout_chunks, stderr_chunks, timed_out = self._poll_child_io(
+                pid=pid,
+                pidfd=pidfd,
+                stdout_fd=stdout_fd,
+                stderr_fd=stderr_fd,
+                timeout_s=timeout_s,
+            )
+        finally:
+            if pidfd >= 0:
+                os.close(pidfd)
+
+        if timed_out:
+            self._kill_child_process_group(pid)
+
+        _, status = os.waitpid(pid, 0)
+
+        # Drain any data written between the last poll and child exit.
+        stdout_chunks.extend(self._drain_fd(stdout_fd))
+        stderr_chunks.extend(self._drain_fd(stderr_fd))
+
+        oom_killed = (
+            cgroup_path is not None
+            and self._cgroup.was_oom_killed(cgroup_path)
+        )
+
+        stdout = b"".join(stdout_chunks).decode("utf-8", errors="replace")
+        stderr = b"".join(stderr_chunks).decode("utf-8", errors="replace")
+
+        return self._build_child_result(
+            status=status,
+            stdout=stdout,
+            stderr=stderr,
+            timed_out=timed_out,
+            oom_killed=oom_killed,
+        )
+
+    def _poll_child_io(
+        self,
+        *,
+        pid: int,
+        pidfd: int,
+        stdout_fd: int,
+        stderr_fd: int,
+        timeout_s: float,
+    ) -> tuple[list[bytes], list[bytes], bool]:
+        poller = select.poll()
+        if pidfd >= 0:
+            poller.register(pidfd, select.POLLIN)
+        poller.register(stdout_fd, select.POLLIN)
+        poller.register(stderr_fd, select.POLLIN)
+
+        stdout_chunks: list[bytes] = []
+        stderr_chunks: list[bytes] = []
+        active_pipes = {stdout_fd, stderr_fd}
+        deadline = time.monotonic() + max(timeout_s, 1)
+
+        while True:
+            remaining_ms = int((deadline - time.monotonic()) * 1000)
+            if remaining_ms <= 0:
+                return stdout_chunks, stderr_chunks, True
+
+            events = poller.poll(remaining_ms)
+            if not events:
+                return stdout_chunks, stderr_chunks, True
+
+            for fd, event in events:
+                if fd == pidfd:
+                    return stdout_chunks, stderr_chunks, False
+
+                chunks = stdout_chunks if fd == stdout_fd else stderr_chunks
+                if event & (select.POLLIN | select.POLLHUP):
+                    try:
+                        data = os.read(fd, 65536)
+                    except OSError:
+                        data = b""
+                    if data:
+                        chunks.append(data)
+                    if not data or event & select.POLLHUP:
+                        poller.unregister(fd)
+                        active_pipes.discard(fd)
+                elif event & select.POLLERR:
+                    poller.unregister(fd)
+                    active_pipes.discard(fd)
+
+            # Without pidfd, infer child exit when both pipes reach EOF.
+            if pidfd < 0 and not active_pipes:
+                return stdout_chunks, stderr_chunks, False
+
+    def _open_pidfd(self, pid: int) -> int:
+        if not _HAS_PIDFD:
+            return -1
+        try:
+            return os.pidfd_open(pid, 0)
+        except OSError:
+            return -1
+
+    def _drain_fd(self, fd: int) -> list[bytes]:
+        chunks: list[bytes] = []
+        os.set_blocking(fd, False)
+        try:
+            while True:
+                data = os.read(fd, 65536)
+                if not data:
+                    break
+                chunks.append(data)
+        except OSError:
+            pass
+        return chunks
+
+    def _build_child_result(
+        self,
+        *,
+        status: int,
+        stdout: str,
+        stderr: str,
+        timed_out: bool,
+        oom_killed: bool,
+    ) -> _ChildRunResult:
+        if timed_out:
+            return _ChildRunResult(
+                returncode=1,
+                stdout=stdout,
+                stderr=stderr,
+                timed_out=True,
+                oom_killed=oom_killed,
+            )
+
+        if os.WIFEXITED(status):
+            return _ChildRunResult(
+                returncode=os.WEXITSTATUS(status),
+                stdout=stdout,
+                stderr=stderr,
+                timed_out=False,
+                oom_killed=oom_killed,
+            )
+
+        if os.WIFSIGNALED(status):
+            signum = os.WTERMSIG(status)
+            return _ChildRunResult(
+                returncode=128 + signum,
+                stdout=stdout,
+                stderr=stderr,
+                timed_out=False,
+                oom_killed=oom_killed,
+                signum=signum,
+            )
+
+        return _ChildRunResult(
+            returncode=1,
+            stdout=stdout,
+            stderr=stderr,
+            timed_out=False,
+            oom_killed=oom_killed,
+        )
+
+    # ------------------------------------------------------------------
+    # Process control
+    # ------------------------------------------------------------------
+
+    def _kill_child_process_group(self, pid: int) -> None:
+        try:
+            os.killpg(pid, signal.SIGKILL)
+            return
+        except ProcessLookupError:
+            return
+        except OSError:
+            pass
+
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            return
+
+    # ------------------------------------------------------------------
+    # Security: prctl, seccomp, rlimits
+    # ------------------------------------------------------------------
 
     def _set_no_new_privs(self) -> None:
         if not sys.platform.startswith("linux"):
@@ -469,8 +851,8 @@ class WarmForkExecutor:
             raise RuntimeError(f"{_INFRA_ERROR_MARKER} libc not found for prctl()")
         result = libc.prctl(_PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)
         if result != 0:
-            errno = ctypes.get_errno()
-            detail = os.strerror(errno) if errno else "unknown error"
+            err = ctypes.get_errno()
+            detail = os.strerror(err) if err else "unknown error"
             raise RuntimeError(f"{_INFRA_ERROR_MARKER} prctl(PR_SET_NO_NEW_PRIVS) failed: {detail}")
 
     def _load_libc(self) -> ctypes.CDLL | None:
@@ -487,8 +869,8 @@ class WarmForkExecutor:
             raise RuntimeError(f"{_INFRA_ERROR_MARKER} libc not found for parent hardening")
         result = libc.prctl(_PR_SET_DUMPABLE, 0, 0, 0, 0)
         if result != 0:
-            errno = ctypes.get_errno()
-            detail = os.strerror(errno) if errno else "unknown error"
+            err = ctypes.get_errno()
+            detail = os.strerror(err) if err else "unknown error"
             raise RuntimeError(f"{_INFRA_ERROR_MARKER} prctl(PR_SET_DUMPABLE) failed: {detail}")
 
     def _load_seccomp_lib(self) -> ctypes.CDLL | None:
@@ -655,32 +1037,3 @@ class WarmForkExecutor:
             "__judge_test_config__": config,
         }
         exec(self._compiled_harness, exec_globals)
-
-    def _wait_for_child(self, *, pid: int, timeout_s: int) -> tuple[int, bool]:
-        deadline = time.monotonic() + max(timeout_s, 1)
-        while True:
-            waited_pid, status = os.waitpid(pid, os.WNOHANG)
-            if waited_pid == pid:
-                return status, False
-
-            if time.monotonic() >= deadline:
-                self._kill_child_process_group(pid)
-                waited_pid, status = os.waitpid(pid, 0)
-                if waited_pid != pid:
-                    return status, True
-                return status, True
-            time.sleep(0.01)
-
-    def _kill_child_process_group(self, pid: int) -> None:
-        try:
-            os.killpg(pid, signal.SIGKILL)
-            return
-        except ProcessLookupError:
-            return
-        except OSError:
-            pass
-
-        try:
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            return
