@@ -133,7 +133,7 @@ def build_worker_dependencies(
             enable_seccomp=resolved_settings.warm_fork_enable_seccomp,
             seccomp_fail_closed=resolved_settings.warm_fork_seccomp_fail_closed,
             clear_env=resolved_settings.warm_fork_clear_env,
-            deny_file_open=resolved_settings.warm_fork_deny_file_open,
+            deny_filesystem=resolved_settings.warm_fork_deny_filesystem,
             allow_root=resolved_settings.warm_fork_allow_root,
             child_nofile_limit=resolved_settings.warm_fork_child_nofile,
         )

@@ -5,6 +5,8 @@ from __future__ import annotations
 import ctypes.util
 import os
 import sys
+import tempfile
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -12,6 +14,7 @@ from judge.problems import Comparison, Problem
 from judge.problems import TestCase as ProblemTestCase
 from judge.runner import IsolateConfig
 from judge.warm_executor import (
+    _SECCOMP_DENY_FILE_METADATA_SYSCALLS,
     WarmForkExecutor,
     WarmForkUnavailableError,
     _SECCOMP_DENY_SYSCALLS,
@@ -180,7 +183,7 @@ class WarmForkExecutorTests(TestCase):
             ):
                 WarmForkExecutor(preload_torch=False)
 
-    def test_seccomp_deny_file_open_blocks_host_file_reads(self) -> None:
+    def test_seccomp_deny_filesystem_blocks_host_file_reads(self) -> None:
         if not sys.platform.startswith("linux"):
             self.skipTest("seccomp is Linux-only")
         if ctypes.util.find_library("seccomp") is None:
@@ -191,7 +194,7 @@ class WarmForkExecutorTests(TestCase):
             enable_seccomp=True,
             seccomp_fail_closed=True,
             clear_env=True,
-            deny_file_open=True,
+            deny_filesystem=True,
             allow_root=True,
             preload_torch=False,
         )
@@ -216,3 +219,45 @@ class WarmForkExecutorTests(TestCase):
         self.assertIn("process_vm_writev", _SECCOMP_DENY_SYSCALLS)
         self.assertIn("pidfd_open", _SECCOMP_DENY_SYSCALLS)
         self.assertIn("pidfd_getfd", _SECCOMP_DENY_SYSCALLS)
+        self.assertIn("prlimit64", _SECCOMP_DENY_SYSCALLS)
+        self.assertIn("statx", _SECCOMP_DENY_FILE_METADATA_SYSCALLS)
+        self.assertIn("newfstatat", _SECCOMP_DENY_FILE_METADATA_SYSCALLS)
+
+    def test_prepare_child_sandbox_applies_limits_before_seccomp(self) -> None:
+        executor = WarmForkExecutor(
+            enable_no_new_privs=True,
+            enable_seccomp=True,
+            seccomp_fail_closed=False,
+            clear_env=True,
+            allow_root=True,
+            preload_torch=False,
+        )
+        calls: list[str] = []
+
+        with (
+            tempfile.TemporaryDirectory(prefix="warm-order-test-") as tmp_dir,
+            patch("judge.warm_executor.os.setsid", return_value=None),
+            patch.object(executor, "_set_no_new_privs", side_effect=lambda: calls.append("nnp")),
+            patch.object(
+                executor,
+                "_apply_resource_limits",
+                side_effect=lambda **_kwargs: calls.append("limits"),
+            ),
+            patch.object(
+                executor,
+                "_apply_seccomp_filter",
+                side_effect=lambda: calls.append("seccomp"),
+            ),
+            patch.object(
+                executor,
+                "_close_inherited_fds",
+                side_effect=lambda: calls.append("fds"),
+            ),
+        ):
+            executor._prepare_child_sandbox(  # noqa: SLF001
+                workspace=Path(tmp_dir),
+                problem=_problem(),
+                isolate=_isolate_config(),
+            )
+
+        self.assertEqual(calls, ["nnp", "limits", "seccomp", "fds"])

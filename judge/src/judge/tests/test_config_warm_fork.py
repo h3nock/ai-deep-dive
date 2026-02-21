@@ -19,7 +19,7 @@ class WarmForkSettingsTests(TestCase):
         self.assertTrue(settings.warm_fork_enable_seccomp)
         self.assertTrue(settings.warm_fork_seccomp_fail_closed)
         self.assertTrue(settings.warm_fork_clear_env)
-        self.assertTrue(settings.warm_fork_deny_file_open)
+        self.assertTrue(settings.warm_fork_deny_filesystem)
         self.assertFalse(settings.warm_fork_allow_root)
         self.assertEqual(settings.warm_fork_child_nofile, 64)
 
@@ -32,7 +32,7 @@ class WarmForkSettingsTests(TestCase):
                 "JUDGE_WARM_FORK_ENABLE_SECCOMP": "0",
                 "JUDGE_WARM_FORK_SECCOMP_FAIL_CLOSED": "0",
                 "JUDGE_WARM_FORK_CLEAR_ENV": "0",
-                "JUDGE_WARM_FORK_DENY_FILE_OPEN": "0",
+                "JUDGE_WARM_FORK_DENY_FILESYSTEM": "0",
                 "JUDGE_WARM_FORK_ALLOW_ROOT": "1",
                 "JUDGE_WARM_FORK_CHILD_NOFILE": "128",
             },
@@ -45,7 +45,7 @@ class WarmForkSettingsTests(TestCase):
         self.assertFalse(settings.warm_fork_enable_seccomp)
         self.assertFalse(settings.warm_fork_seccomp_fail_closed)
         self.assertFalse(settings.warm_fork_clear_env)
-        self.assertFalse(settings.warm_fork_deny_file_open)
+        self.assertFalse(settings.warm_fork_deny_filesystem)
         self.assertTrue(settings.warm_fork_allow_root)
         self.assertEqual(settings.warm_fork_child_nofile, 128)
 

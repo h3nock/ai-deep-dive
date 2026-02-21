@@ -96,6 +96,7 @@ _SECCOMP_DENY_PROCESS_CONTROL_SYSCALLS = (
     "pidfd_open",
     "pidfd_getfd",
     "kcmp",
+    "prlimit64",
 )
 _SECCOMP_DENY_HIGH_RISK_KERNEL_SURFACE = (
     # Kernel attack surface that user submissions never need.
@@ -127,6 +128,21 @@ _SECCOMP_DENY_FILE_OPEN_SYSCALLS = (
     "openat2",
     "creat",
 )
+_SECCOMP_DENY_FILE_METADATA_SYSCALLS = (
+    # Block host filesystem metadata probing (existence/discovery via stat/access/readdir).
+    "stat",
+    "lstat",
+    "fstatat64",
+    "newfstatat",
+    "statx",
+    "access",
+    "faccessat",
+    "faccessat2",
+    "readlink",
+    "readlinkat",
+    "getdents",
+    "getdents64",
+)
 
 
 class WarmForkUnavailableError(RuntimeError):
@@ -152,7 +168,7 @@ class WarmForkExecutor:
         enable_seccomp: bool = True,
         seccomp_fail_closed: bool = True,
         clear_env: bool = True,
-        deny_file_open: bool = True,
+        deny_filesystem: bool = True,
         allow_root: bool = False,
         child_nofile_limit: int = 64,
         preload_torch: bool = True,
@@ -170,7 +186,7 @@ class WarmForkExecutor:
         self.enable_seccomp = enable_seccomp
         self.seccomp_fail_closed = seccomp_fail_closed
         self.clear_env = clear_env
-        self.deny_file_open = deny_file_open
+        self.deny_filesystem = deny_filesystem
         self.child_nofile_limit = child_nofile_limit
         self._compiled_harness = compile(HARNESS_CODE, "harness.py", "exec")
         self._libc = self._load_libc()
@@ -394,9 +410,9 @@ class WarmForkExecutor:
         os.umask(0o077)
         if self.enable_no_new_privs:
             self._set_no_new_privs()
+        self._apply_resource_limits(problem=problem, isolate=isolate)
         if self.enable_seccomp:
             self._apply_seccomp_filter()
-        self._apply_resource_limits(problem=problem, isolate=isolate)
         self._close_inherited_fds()
 
     def _redirect_stdio(self, *, stdout_path: Path, stderr_path: Path) -> None:
@@ -534,8 +550,9 @@ class WarmForkExecutor:
         deny_action = self._seccomp_errno_action(errno.EPERM)
         try:
             deny_syscalls = list(_SECCOMP_DENY_SYSCALLS)
-            if self.deny_file_open:
+            if self.deny_filesystem:
                 deny_syscalls.extend(_SECCOMP_DENY_FILE_OPEN_SYSCALLS)
+                deny_syscalls.extend(_SECCOMP_DENY_FILE_METADATA_SYSCALLS)
 
             for name in deny_syscalls:
                 syscall_nr = lib.seccomp_syscall_resolve_name(name.encode("ascii"))

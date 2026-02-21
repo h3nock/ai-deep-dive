@@ -27,7 +27,7 @@ class Settings:
     warm_fork_enable_seccomp: bool
     warm_fork_seccomp_fail_closed: bool
     warm_fork_clear_env: bool
-    warm_fork_deny_file_open: bool
+    warm_fork_deny_filesystem: bool
     warm_fork_allow_root: bool
     warm_fork_child_nofile: int
     allowed_origins: list[str]
@@ -75,8 +75,8 @@ def load_settings() -> Settings:
     }
     warm_clear_env_raw = os.getenv("JUDGE_WARM_FORK_CLEAR_ENV", "1").strip().lower()
     warm_fork_clear_env = warm_clear_env_raw not in {"0", "false", "no", "off"}
-    warm_deny_file_open_raw = os.getenv("JUDGE_WARM_FORK_DENY_FILE_OPEN", "1").strip().lower()
-    warm_fork_deny_file_open = warm_deny_file_open_raw not in {"0", "false", "no", "off"}
+    warm_deny_filesystem_raw = os.getenv("JUDGE_WARM_FORK_DENY_FILESYSTEM", "1").strip().lower()
+    warm_fork_deny_filesystem = warm_deny_filesystem_raw not in {"0", "false", "no", "off"}
     warm_allow_root_raw = os.getenv("JUDGE_WARM_FORK_ALLOW_ROOT", "0").strip().lower()
     warm_fork_allow_root = warm_allow_root_raw not in {"0", "false", "no", "off"}
     warm_fork_child_nofile = int(os.getenv("JUDGE_WARM_FORK_CHILD_NOFILE", "64"))
@@ -125,7 +125,7 @@ def load_settings() -> Settings:
         warm_fork_enable_seccomp=warm_fork_enable_seccomp,
         warm_fork_seccomp_fail_closed=warm_fork_seccomp_fail_closed,
         warm_fork_clear_env=warm_fork_clear_env,
-        warm_fork_deny_file_open=warm_fork_deny_file_open,
+        warm_fork_deny_filesystem=warm_fork_deny_filesystem,
         warm_fork_allow_root=warm_fork_allow_root,
         warm_fork_child_nofile=warm_fork_child_nofile,
         allowed_origins=allowed_origins,

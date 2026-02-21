@@ -34,7 +34,7 @@ def _settings(*, torch_execution_mode: str) -> Settings:
         warm_fork_enable_seccomp=True,
         warm_fork_seccomp_fail_closed=True,
         warm_fork_clear_env=True,
-        warm_fork_deny_file_open=True,
+        warm_fork_deny_filesystem=True,
         warm_fork_allow_root=False,
         warm_fork_child_nofile=64,
         allowed_origins=[],
@@ -92,7 +92,7 @@ class WorkerDependencyWiringTests(TestCase):
             enable_seccomp=True,
             seccomp_fail_closed=True,
             clear_env=True,
-            deny_file_open=True,
+            deny_filesystem=True,
             allow_root=False,
             child_nofile_limit=64,
         )
