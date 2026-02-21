@@ -216,6 +216,79 @@ description: "How residual connections and layer normalization enable deep netwo
 
 </Step>
 
+
+<Step title="Pre-Norm vs Post-Norm">
+  <Description>
+    We now have residual connections to preserve information across depth and layer normalization to stabilize magnitudes. The final step is determining how to arrange these two mechanisms around each sublayer. The specific ordering of these operations directly affects how stably the model trains.
+  </Description>
+
+  <Description>
+    The original Transformer architecture (Vaswani et al., 2017) applies normalization **after** the residual addition. This arrangement is known as **Post-Norm**:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-1">
+    <div className="text-zinc-500"># Post-Norm</div>
+    <div className="text-zinc-300">x = LayerNorm(x + sublayer(x))</div>
+  </div>
+
+  <Description>
+    Most modern language models use the alternative approach of applying normalization **before** the sublayer. By placing LayerNorm directly inside the residual branch, we get what is called **Pre-Norm**:
+  </Description>
+
+  <div className="my-4 p-4 bg-[#121212] rounded-lg border border-zinc-800 font-mono text-sm space-y-1">
+    <div className="text-zinc-500"># Pre-Norm</div>
+    <div className="text-zinc-300">x = x + sublayer(LayerNorm(x))</div>
+  </div>
+
+  <Description>
+    The fundamental difference between these approaches is how they affect the identity path. In Post-Norm, the combined output passes through LayerNorm before moving to the next layer. This introduces a nonlinear operation directly on the identity path, which modifies the gradient and disrupts the clean information flow that residual connections are designed to provide.
+  </Description>
+
+  <Description>
+    Pre-Norm avoids this issue by keeping the residual stream entirely clean. Since LayerNorm is isolated within the sublayer branch, the identity path remains an uninterrupted chain of addition operations. The input vector flows straight through without any additional transformation, ensuring that gradients can flow backward with a consistent multiplier of 1 at every step.
+  </Description>
+
+  {/* Pre-Norm vs Post-Norm identity path visual */}
+  <div className="my-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="text-center text-sm font-semibold text-zinc-400 mb-3">Post-Norm</div>
+      <div className="flex flex-col items-center font-mono text-xs space-y-2">
+        <div className="text-zinc-500">x</div>
+        <div className="text-zinc-600">↓ ─────────╮</div>
+        <div className="text-zinc-400">sublayer&ensp;&ensp;&ensp;│</div>
+        <div className="text-zinc-600">↓ ─────────╯</div>
+        <div className="text-zinc-400">+ (add)</div>
+        <div className="text-zinc-600">↓</div>
+        <div className="px-2 py-1 rounded border border-red-900/50 bg-red-950/30 text-red-400">LayerNorm</div>
+        <div className="text-zinc-600">↓</div>
+        <div className="text-zinc-500">out</div>
+      </div>
+      <div className="text-center text-xs text-red-400/70 mt-3">identity path passes through LayerNorm</div>
+    </div>
+    <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
+      <div className="text-center text-sm font-semibold text-zinc-400 mb-3">Pre-Norm</div>
+      <div className="flex flex-col items-center font-mono text-xs space-y-2">
+        <div className="text-zinc-500">x</div>
+        <div className="text-zinc-600">↓ ─────────╮</div>
+        <div className="px-2 py-1 rounded border border-emerald-900/50 bg-emerald-950/30 text-emerald-400">LayerNorm</div>
+        <div className="text-zinc-600">↓&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;│</div>
+        <div className="text-zinc-400">sublayer&ensp;&ensp;&ensp;│</div>
+        <div className="text-zinc-600">↓ ─────────╯</div>
+        <div className="text-zinc-400">+ (add)</div>
+        <div className="text-zinc-600">↓</div>
+        <div className="text-zinc-500">out</div>
+      </div>
+      <div className="text-center text-xs text-emerald-400/70 mt-3">identity path is completely clean</div>
+    </div>
+  </div>
+
+  <Description>
+    As a result, Post-Norm models can be difficult to train at scale. They typically require careful learning rate warmup schedules and can diverge entirely in deeper networks. Pre-Norm avoids these complications and trains much more stably. This is why it quickly became the standard approach for nearly all large language models.
+  </Description>
+
+  <Description>
+    Because Pre-Norm applies normalization before each sublayer, the final sublayer in the very last transformer block adds its output into the residual stream unnormalized. To account for this, Pre-Norm architectures include one final layer normalization step at the end of the model to stabilize these values. In many codebases, including GPT-2, this is referred to as `ln_f`.
   </Description>
 </Step>
+
 
