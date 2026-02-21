@@ -45,7 +45,8 @@ Re-run this after updating `judge/problems`.
 
 ```bash
 sudo cp judge/deploy/judge.env.example /etc/judge/judge.env
-sudo chown judge:judge /etc/judge/judge.env
+sudo chown root:root /etc/judge/judge.env
+sudo chmod 0640 /etc/judge/judge.env
 ```
 
 Set `JUDGE_ALLOWED_ORIGINS` when the web app is hosted on a different origin.
@@ -86,6 +87,16 @@ JUDGE_ISOLATE_WALL_TIME_EXTRA_S=2
 JUDGE_ISOLATE_TIMEOUT_GRACE_S=5
 JUDGE_ISOLATE_FSIZE_KB=1024
 JUDGE_PYTHON_BIN=/opt/ai-deep-dive/judge/.venv/bin/python
+# Optional torch backend override (default isolate)
+JUDGE_TORCH_EXECUTION_MODE=isolate
+# Warm fork controls (used only when JUDGE_TORCH_EXECUTION_MODE=warm_fork)
+JUDGE_WARM_FORK_ENABLE_NO_NEW_PRIVS=1
+JUDGE_WARM_FORK_ENABLE_SECCOMP=1
+JUDGE_WARM_FORK_SECCOMP_FAIL_CLOSED=1
+JUDGE_WARM_FORK_CLEAR_ENV=1
+JUDGE_WARM_FORK_DENY_FILE_OPEN=1
+JUDGE_WARM_FORK_ALLOW_ROOT=0
+JUDGE_WARM_FORK_CHILD_NOFILE=64
 ```
 
 The worker override installed in step 7 keeps thread counts capped and allows
