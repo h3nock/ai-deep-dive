@@ -2,171 +2,102 @@
 
 Minimal systemd setup for an Ubuntu VM.
 
-## 1) Create user + folders
+## Canonical workflow
+
+Use deploy scripts in this order:
+
+1. `bootstrap.sh` for first-time VM setup and repeatable deploy bootstrap.
+2. `apply.sh` for fast code/config re-apply on an existing VM.
+3. `verify.sh` as the required post-deploy gate.
+
+### First-time VM setup
 
 ```bash
-sudo adduser --system --group judge
-sudo mkdir -p /opt/ai-deep-dive
-sudo mkdir -p /etc/judge
-sudo chown -R judge:judge /opt/ai-deep-dive
-```
-
-## 2) Copy repo and create venv (uv)
-
-Install `uv` on the VM first if it is not already available.
-
-```bash
-# clone repo into /opt/ai-deep-dive
-sudo -u judge git clone <your-repo-url> /opt/ai-deep-dive
+# clone repo first (or set JUDGE_REPO_URL for bootstrap clone support)
+sudo git clone <your-repo-url> /opt/ai-deep-dive
 cd /opt/ai-deep-dive/judge
-uv venv .venv
-source .venv/bin/activate
-uv pip install -e .
+
+# CPU torch (default)
+sudo JUDGE_DOMAIN=judge.example.com ./deploy/bootstrap.sh
+
+# GPU torch (optional)
+# sudo JUDGE_DOMAIN=judge.example.com ./deploy/bootstrap.sh --gpu
 ```
 
-CPU-only PyTorch is required to run torch problems on the VM. Install it in
-the same venv using the official PyTorch install selector.
+`bootstrap.sh` is idempotent. Re-running it is safe.
+It creates the `judge` system user and required directories if they do not
+already exist.
+It uses `uv` for virtualenv/package install when available, and falls back to
+`python3 -m venv` + `pip` when `uv` is not installed.
+It also configures Redis durability/safety settings (`appendonly yes`,
+`appendfsync everysec`, `maxmemory-policy noeviction`).
 
-## 3) Export tests endpoint
+### Existing VM update
 
-Public bundles are served from `/judge-tests/` on the judge domain. Hidden
-tests are exported to the same root for server-side judge execution but are not
-publicly served (`hidden_tests.json` returns `404`). Export assets into the
-tests root:
+```bash
+cd /opt/ai-deep-dive
+sudo -u judge git pull --ff-only
+cd /opt/ai-deep-dive/judge
+sudo JUDGE_DOMAIN=judge.example.com ./deploy/apply.sh
+sudo ./deploy/verify.sh
+```
+
+### Health-only check
 
 ```bash
 cd /opt/ai-deep-dive/judge
-python judge/scripts/export_tests_endpoint.py --out-root /opt/ai-deep-dive/judge/tests
+sudo ./deploy/verify.sh
 ```
 
-Re-run this after updating `judge/problems`.
+Optional verify overrides:
 
-## 4) Configure environment
+- `JUDGE_VERIFY_API_URL` (default `http://127.0.0.1:8000`)
+- `JUDGE_VERIFY_SMOKE_PROBLEM_ID` (default `sample/01-basics/01-add`)
+- `JUDGE_VERIFY_SMOKE_CODE` (default code for the sample add problem)
+- `JUDGE_VERIFY_SMOKE_EXPECTED_STATUS` (default `Accepted`)
+- `JUDGE_VERIFY_SMOKE_TIMEOUT_S` (default `30`)
+
+### Environment file
+
+`bootstrap.sh` creates `/etc/judge/judge.env` from
+`deploy/judge.env.example` if it does not exist. All runtime `JUDGE_*` keys
+must be represented in `judge.env.example`.
+
+Set `JUDGE_ALLOWED_ORIGINS` for your deployed web origins.
+
+### Worker model and reconciliation
+
+Deployment uses template worker units only:
+
+- `judge-worker-light@N.service`
+- `judge-worker-torch@N.service`
+
+`apply.sh` enforces exact worker counts from `/etc/judge/judge.env`:
+
+- `JUDGE_LIGHT_WORKERS`
+- `JUDGE_TORCH_WORKERS`
+
+Legacy non-template units are always disabled to avoid mixed-consumer drift:
+
+- `judge-worker-light.service`
+- `judge-worker-torch.service`
+
+Any active template unit above the configured count is also stopped and
+disabled during reconciliation.
+
+### Test bundle export
+
+Public bundles are served from `/judge-tests/`. Hidden tests are exported to
+the tests root for server-side execution and are not publicly served.
+
+`bootstrap.sh` exports bundles automatically. To refresh manually:
 
 ```bash
-sudo cp judge/deploy/judge.env.example /etc/judge/judge.env
-sudo chown root:root /etc/judge/judge.env
-sudo chmod 0640 /etc/judge/judge.env
+cd /opt/ai-deep-dive/judge
+sudo -u judge env PYTHONPATH=src .venv/bin/python scripts/export_tests_endpoint.py --out-root /opt/ai-deep-dive/judge/tests
 ```
 
-Set `JUDGE_ALLOWED_ORIGINS` when the web app is hosted on a different origin.
-
-## 5) Install and start Redis
-
-```bash
-sudo apt-get update
-sudo apt-get install -y redis-server
-```
-
-Recommended Redis config (edit `/etc/redis/redis.conf`):
-
-```
-appendonly yes
-appendfsync everysec
-maxmemory-policy noeviction
-```
-
-## 6) Isolate sandbox
-
-Install isolate (Ubuntu):
-
-```bash
-sudo apt-get install -y isolate
-sudo mkdir -p /var/local/lib/isolate
-sudo chown root:root /var/local/lib/isolate
-sudo chmod 0755 /var/local/lib/isolate
-```
-
-Then set in `/etc/judge/judge.env`:
-
-```
-JUDGE_ISOLATE_BIN=/usr/bin/isolate
-JUDGE_ISOLATE_USE_CGROUPS=1
-JUDGE_ISOLATE_PROCESSES=64
-JUDGE_ISOLATE_WALL_TIME_EXTRA_S=2
-JUDGE_ISOLATE_TIMEOUT_GRACE_S=5
-JUDGE_ISOLATE_FSIZE_KB=1024
-JUDGE_PYTHON_BIN=/opt/ai-deep-dive/judge/.venv/bin/python
-# Optional torch backend override (default isolate)
-JUDGE_TORCH_EXECUTION_MODE=isolate
-# Warm fork controls (used only when JUDGE_TORCH_EXECUTION_MODE=warm_fork)
-JUDGE_WARM_FORK_ENABLE_NO_NEW_PRIVS=1
-JUDGE_WARM_FORK_ENABLE_SECCOMP=1
-JUDGE_WARM_FORK_SECCOMP_FAIL_CLOSED=1
-JUDGE_WARM_FORK_CLEAR_ENV=1
-JUDGE_WARM_FORK_DENY_FILESYSTEM=1
-JUDGE_WARM_FORK_ALLOW_ROOT=0
-JUDGE_WARM_FORK_CHILD_NOFILE=64
-```
-
-The worker override installed in step 7 keeps thread counts capped and allows
-worker access to isolate runtime paths.
-
-## 7) Install systemd services
-
-```bash
-sudo cp judge/deploy/judge-api.service /etc/systemd/system/
-sudo cp judge/deploy/judge-metrics-init.service /etc/systemd/system/
-sudo cp judge/deploy/judge-worker-light@.service /etc/systemd/system/
-sudo cp judge/deploy/judge-worker-torch@.service /etc/systemd/system/
-
-sudo systemctl daemon-reload
-sudo systemctl enable --now judge-api
-sudo systemctl enable --now judge-worker-light@1
-sudo systemctl enable --now judge-worker-torch@1
-```
-
-## 8) Apply nginx + worker hardening
-
-Install nginx, then apply the nginx config, API binding, and worker hardening:
-
-```bash
-sudo apt-get install -y nginx
-sudo JUDGE_DOMAIN=judge.example.com judge/deploy/apply.sh
-```
-
-If TLS is required, issue a certificate first (for example with certbot), then
-re-run the command above. Set `JUDGE_CERT_DIR` if the certificate files live
-somewhere else.
-
-Static tests are served from `JUDGE_TESTS_ROOT` (default
-`/opt/ai-deep-dive/judge/tests`) at `/judge-tests/`.
-
-Files used:
-- `judge/deploy/judge-api.service`
-- `judge/deploy/judge-metrics-init.service`
-- `judge/deploy/nginx/judge.http.conf.template`
-- `judge/deploy/nginx/judge.https.conf.template`
-- `judge/deploy/nginx/ratelimit.conf`
-- `judge/deploy/systemd/worker-override.conf`
-- `judge/deploy/judge-cleanup.service`
-- `judge/deploy/judge-cleanup.timer`
-- `judge/deploy/judge-backup.service`
-- `judge/deploy/judge-backup.timer`
-
-Cleanup settings live in `/etc/judge/judge.env`. The timer runs daily by default.
-To trigger a run immediately:
-
-```bash
-sudo systemctl start judge-cleanup.service
-```
-
-Backup settings live in `/etc/judge/judge.env`. The timer runs daily by default.
-To trigger a run immediately:
-
-```bash
-sudo systemctl start judge-backup.service
-```
-
-## 9) Verify
-
-```bash
-curl http://localhost:8000/health
-curl http://judge.example.com/health
-curl https://judge.example.com/health
-```
-
-Run warm-fork security probes as the `judge` user:
+### Warm-fork security probe
 
 ```bash
 cd /opt/ai-deep-dive/judge
