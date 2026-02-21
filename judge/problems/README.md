@@ -56,7 +56,11 @@ Notes:
 - For Python literals (e.g., tuple keys), store as a string and set
   `expected_is_code: true`.
 - Use `input_code` for arbitrary setup.
-- Prefer `inputs` (object of name to value) for better browser rendering.
+- Prefer `inputs` for better browser rendering. Contract:
+  - keys must be valid Python identifiers
+  - values must be strings containing Python literals/expressions
+    (e.g., `"3"`, `"'hello'"`, `"[1, 2, 3]"`, `"True"`).
+  - the loader injects values directly as `name = <value>`.
 - Hidden tests are not publicly served from `/judge-tests/`; nginx should return
   `404` for direct `hidden_tests.json` requests.
 - The judge returns the first failing hidden test on submit for debugging.
