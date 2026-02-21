@@ -19,9 +19,6 @@ cd /opt/ai-deep-dive/judge
 
 # CPU torch (default)
 sudo JUDGE_DOMAIN=judge.example.com ./deploy/bootstrap.sh
-
-# GPU torch (optional)
-# sudo JUDGE_DOMAIN=judge.example.com ./deploy/bootstrap.sh --gpu
 ```
 
 `bootstrap.sh` is idempotent. Re-running it is safe.
@@ -29,6 +26,8 @@ It creates the `judge` system user and required directories if they do not
 already exist.
 It uses `uv` for virtualenv/package install when available, and falls back to
 `python3 -m venv` + `pip` when `uv` is not installed.
+It enforces CPU-only PyTorch wheels for this VM profile and replaces CUDA
+wheels if they are present.
 It also configures Redis durability/safety settings (`appendonly yes`,
 `appendfsync everysec`, `maxmemory-policy noeviction`).
 
@@ -41,6 +40,8 @@ cd /opt/ai-deep-dive/judge
 sudo JUDGE_DOMAIN=judge.example.com ./deploy/apply.sh
 sudo ./deploy/verify.sh
 ```
+
+`apply.sh` also enforces CPU-only PyTorch wheels for the judge runtime.
 
 ### Health-only check
 
