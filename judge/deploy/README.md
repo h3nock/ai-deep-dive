@@ -166,6 +166,13 @@ curl http://judge.example.com/health
 curl https://judge.example.com/health
 ```
 
+Run warm-fork security probes as the `judge` user:
+
+```bash
+cd /opt/ai-deep-dive/judge
+sudo -u judge env PYTHONPATH=src .venv/bin/python scripts/warm_fork_security_probe.py
+```
+
 ## Metrics (Prometheus)
 
 The API serves Prometheus metrics at `http://127.0.0.1:8000/metrics`.

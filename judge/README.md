@@ -65,6 +65,12 @@ python -m judge.worker --stream queue:torch --group workers-torch --consumer tor
 CPU-only PyTorch is required to run torch problems locally. Install it in the
 same venv using the official PyTorch install selector.
 
+Run the warm-fork security probe:
+
+```bash
+python judge/scripts/warm_fork_security_probe.py --skip-bench
+```
+
 ## Export public tests for the frontend
 
 ```bash
