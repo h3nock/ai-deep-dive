@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Optional
 
 # Default Website URL (can be overridden in global config)
-DEFAULT_WEBSITE_URL = "https://learning.h3nok.dev"
+DEFAULT_WEBSITE_URL = "https://aideepdive.dev"
 # Default tests endpoint (judge VM)
-DEFAULT_TESTS_URL = "https://judge.h3nok.dev"
+DEFAULT_TESTS_URL = "https://judge.aideepdive.dev"
 
 # Directory names
 CONFIG_DIR_NAME = ".ai-deep-dive"
