@@ -65,6 +65,12 @@ python -m judge.worker --stream queue:torch --group workers-torch --consumer tor
 CPU-only PyTorch is required to run torch problems locally. Install it in the
 same venv using the official PyTorch install selector.
 
+Run the warm-fork security probe:
+
+```bash
+python judge/scripts/warm_fork_security_probe.py --skip-bench
+```
+
 ## Export public tests for the frontend
 
 ```bash
@@ -118,11 +124,23 @@ Environment variables:
 - `JUDGE_ISOLATE_TIMEOUT_GRACE_S` (default: `5`)
 - `JUDGE_ISOLATE_FSIZE_KB` (default: `1024`)
 - `JUDGE_PYTHON_BIN` (default: worker interpreter path)
+- `JUDGE_TORCH_EXECUTION_MODE` (default: `isolate`, options: `isolate`, `warm_fork`)
+- `JUDGE_WARM_FORK_ENABLE_NO_NEW_PRIVS` (default: `1`)
+- `JUDGE_WARM_FORK_ENABLE_SECCOMP` (default: `1`)
+- `JUDGE_WARM_FORK_SECCOMP_FAIL_CLOSED` (default: `1`)
+- `JUDGE_WARM_FORK_CLEAR_ENV` (default: `1`)
+- `JUDGE_WARM_FORK_DENY_FILESYSTEM` (default: `1`)
+- `JUDGE_WARM_FORK_ALLOW_ROOT` (default: `0`, keep disabled in production)
+- `JUDGE_WARM_FORK_CHILD_NOFILE` (default: `64`)
 - `PROMETHEUS_MULTIPROC_DIR` (optional, for API + worker metric aggregation)
 
 ## Notes
 
-- The judge executes every run/submit inside isolate.
+- `light` profile always executes inside isolate.
+- `torch` profile executes inside isolate by default, or with the warm fork
+  executor when `JUDGE_TORCH_EXECUTION_MODE=warm_fork`.
+- Warm fork hardening defaults:
+  `no_new_privs=on`, `seccomp=on`, `clear_env=on`.
 - Worker consumer names must follow the template services (`light-%i`, `torch-%i`).
 - `/health` is a liveness endpoint only and returns `{"status":"ok"}` when the
   API process is up.

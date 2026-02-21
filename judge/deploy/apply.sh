@@ -20,6 +20,8 @@ ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 
 # Load /etc/judge/judge.env if present.
 if [[ -f /etc/judge/judge.env ]]; then
+  chown root:root /etc/judge/judge.env
+  chmod 0640 /etc/judge/judge.env
   set -a
   # shellcheck disable=SC1091
   source /etc/judge/judge.env

@@ -19,6 +19,7 @@ from judge.metrics import (
 )
 from judge.runner import IsolateConfig
 from judge.services import WorkerExecutionService, WorkerJob
+from judge.warm_executor import WarmForkExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class WorkerDependencies:
     results: ResultsStore
     problems: ProblemRepository
     execution: WorkerExecutionService
+    warm_executor: WarmForkExecutor | None = None
 
 
 def _parse_args() -> argparse.Namespace:
@@ -124,12 +126,39 @@ def build_worker_dependencies(
         fsize_kb=resolved_settings.isolate_fsize_kb,
         python_bin=resolved_settings.python_bin,
     )
+
+    warm_executor_instance: WarmForkExecutor | None = None
+    run_problem_fn = None
+    if stream == "queue:torch" and resolved_settings.torch_execution_mode == "warm_fork":
+        warm_executor_instance = WarmForkExecutor(
+            enable_no_new_privs=resolved_settings.warm_fork_enable_no_new_privs,
+            enable_seccomp=resolved_settings.warm_fork_enable_seccomp,
+            seccomp_fail_closed=resolved_settings.warm_fork_seccomp_fail_closed,
+            clear_env=resolved_settings.warm_fork_clear_env,
+            deny_filesystem=resolved_settings.warm_fork_deny_filesystem,
+            allow_root=resolved_settings.warm_fork_allow_root,
+            child_nofile_limit=resolved_settings.warm_fork_child_nofile,
+            enable_cgroup=resolved_settings.warm_fork_enable_cgroup,
+            max_jobs=resolved_settings.warm_fork_max_jobs,
+        )
+        run_problem_fn = warm_executor_instance.run_problem
+        logger.info(
+            "Torch worker execution mode enabled: warm_fork (consumer=%s, max_jobs=%d)",
+            consumer,
+            resolved_settings.warm_fork_max_jobs,
+        )
+
+    execution_kwargs: dict[str, Any] = {}
+    if run_problem_fn is not None:
+        execution_kwargs["run_problem_fn"] = run_problem_fn
+
     execution = WorkerExecutionService(
         results=results,
         problems=problems,
         isolate=isolate,
         max_output_chars=resolved_settings.max_output_chars,
         log=logger,
+        **execution_kwargs,
     )
     return WorkerDependencies(
         settings=resolved_settings,
@@ -137,6 +166,7 @@ def build_worker_dependencies(
         results=results,
         problems=problems,
         execution=execution,
+        warm_executor=warm_executor_instance,
     )
 
 
@@ -249,6 +279,7 @@ def main() -> None:
     worker_profile = _profile_for_stream(args.stream)
     worker_heartbeat(worker_profile, args.consumer)
 
+    warm_executor = dependencies.warm_executor
     last_reclaim = 0.0
 
     while True:
@@ -274,6 +305,12 @@ def main() -> None:
                     results=results,
                     execution=execution,
                 )
+            if warm_executor is not None and warm_executor.needs_recycle:
+                logger.info(
+                    "Warm executor reached max_jobs=%d, exiting for recycle",
+                    warm_executor.job_count,
+                )
+                break
             last_reclaim = now
 
         entry = queue.read(args.stream, args.group, args.consumer)
@@ -292,6 +329,12 @@ def main() -> None:
             results=results,
             execution=execution,
         )
+        if warm_executor is not None and warm_executor.needs_recycle:
+            logger.info(
+                "Warm executor reached max_jobs=%d, exiting for recycle",
+                warm_executor.job_count,
+            )
+            break
 
 
 if __name__ == "__main__":

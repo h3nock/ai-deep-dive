@@ -97,19 +97,23 @@ def format_user_error():
 
 
 def run_cases():
-    try:
-        with open("test_config.json", "r") as f:
-            config = json.load(f)
-    except FileNotFoundError:
-        print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": "test_config.json not found"}]))
-        return
+    config = globals().get("__judge_test_config__")
+    if config is None:
+        try:
+            with open("test_config.json", "r") as f:
+                config = json.load(f)
+        except FileNotFoundError:
+            print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": "test_config.json not found"}]))
+            return
 
-    try:
-        with open("main.py", "r") as f:
-            user_code = f.read()
-    except FileNotFoundError:
-        print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": "main.py not found"}]))
-        return
+    user_code = globals().get("__judge_user_code__")
+    if user_code is None:
+        try:
+            with open("main.py", "r") as f:
+                user_code = f.read()
+        except FileNotFoundError:
+            print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": "main.py not found"}]))
+            return
 
     runner_expression = config.get("runner", "")
     comparison_default = config.get("comparison", {"type": "exact"})
