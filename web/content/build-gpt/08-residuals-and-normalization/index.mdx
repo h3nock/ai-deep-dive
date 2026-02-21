@@ -250,33 +250,87 @@ description: "How residual connections and layer normalization enable deep netwo
 
   {/* Pre-Norm vs Post-Norm identity path visual */}
   <div className="my-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+    {/* Post-Norm */}
     <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
       <div className="text-center text-sm font-semibold text-zinc-400 mb-3">Post-Norm</div>
-      <div className="flex flex-col items-center font-mono text-xs space-y-2">
-        <div className="text-zinc-500">x</div>
-        <div className="text-zinc-600">↓ ─────────╮</div>
-        <div className="text-zinc-400">sublayer&ensp;&ensp;&ensp;│</div>
-        <div className="text-zinc-600">↓ ─────────╯</div>
-        <div className="text-zinc-400">+ (add)</div>
-        <div className="text-zinc-600">↓</div>
-        <div className="px-2 py-1 rounded border border-red-900/50 bg-red-950/30 text-red-400">LayerNorm</div>
-        <div className="text-zinc-600">↓</div>
-        <div className="text-zinc-500">out</div>
+      <div className="flex justify-center">
+        <svg viewBox="0 0 220 260" className="w-full" style={{ maxWidth: "220px" }}>
+          {/* Branch (drawn first = behind identity path) */}
+          <path d="M 65 55 L 158 55 L 158 76" fill="none" stroke="#27272A" strokeWidth="1.5" />
+          <rect x="120" y="76" width="76" height="30" rx="5" fill="rgba(161,161,170,0.04)" stroke="rgba(161,161,170,0.15)" strokeWidth="1" />
+          <text x="158" y="95" textAnchor="middle" fill="#71717A" fontSize="10" fontFamily="var(--font-mono)">sublayer</text>
+          <path d="M 158 106 L 158 162 L 77 162" fill="none" stroke="#27272A" strokeWidth="1.5" />
+          <polygon points="77,158.5 69,162 77,165.5" fill="#27272A" />
+
+          {/* Identity path: x → + (bright neutral) */}
+          <line x1="65" y1="32" x2="65" y2="150" stroke="#A1A1AA" strokeWidth="2.5" />
+          {/* Flow arrow on identity path */}
+          <polygon points="61.5,90 65,97 68.5,90" fill="#A1A1AA" />
+          {/* Identity path: + → LayerNorm → out (RED = disrupted) */}
+          <line x1="65" y1="174" x2="65" y2="192" stroke="#EF4444" strokeWidth="2.5" strokeOpacity="0.8" />
+          <line x1="65" y1="220" x2="65" y2="234" stroke="#EF4444" strokeWidth="2.5" strokeOpacity="0.8" />
+
+          {/* Input */}
+          <rect x="43" y="8" width="44" height="24" rx="5" fill="#18181B" stroke="#3F3F46" strokeWidth="1" />
+          <text x="65" y="24" textAnchor="middle" fill="#D4D4D8" fontSize="11" fontFamily="var(--font-mono)">x</text>
+
+          {/* Fork point */}
+          <circle cx="65" cy="55" r="3.5" fill="#A1A1AA" />
+
+          {/* + node */}
+          <circle cx="65" cy="162" r="12" fill="#18181B" stroke="#A1A1AA" strokeWidth="1.5" />
+          <text x="65" y="167" textAnchor="middle" fill="#D4D4D8" fontSize="14" fontWeight="bold">+</text>
+
+          {/* LayerNorm on identity path (RED) */}
+          <rect x="18" y="192" width="94" height="28" rx="5" fill="rgba(239,68,68,0.1)" stroke="rgba(239,68,68,0.5)" strokeWidth="1.2" />
+          <text x="65" y="210" textAnchor="middle" fill="#F87171" fontSize="10" fontFamily="var(--font-mono)">LayerNorm</text>
+
+          {/* Output */}
+          <rect x="43" y="234" width="44" height="24" rx="5" fill="#18181B" stroke="#3F3F46" strokeWidth="1" />
+          <text x="65" y="250" textAnchor="middle" fill="#D4D4D8" fontSize="11" fontFamily="var(--font-mono)">out</text>
+        </svg>
       </div>
       <div className="text-center text-xs text-red-400/70 mt-3">identity path passes through LayerNorm</div>
     </div>
+
+    {/* Pre-Norm */}
     <div className="p-4 bg-[#121212] rounded-lg border border-zinc-800">
       <div className="text-center text-sm font-semibold text-zinc-400 mb-3">Pre-Norm</div>
-      <div className="flex flex-col items-center font-mono text-xs space-y-2">
-        <div className="text-zinc-500">x</div>
-        <div className="text-zinc-600">↓ ─────────╮</div>
-        <div className="px-2 py-1 rounded border border-emerald-900/50 bg-emerald-950/30 text-emerald-400">LayerNorm</div>
-        <div className="text-zinc-600">↓&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;│</div>
-        <div className="text-zinc-400">sublayer&ensp;&ensp;&ensp;│</div>
-        <div className="text-zinc-600">↓ ─────────╯</div>
-        <div className="text-zinc-400">+ (add)</div>
-        <div className="text-zinc-600">↓</div>
-        <div className="text-zinc-500">out</div>
+      <div className="flex justify-center">
+        <svg viewBox="0 0 220 260" className="w-full" style={{ maxWidth: "220px" }}>
+          {/* Branch (drawn first = behind identity path) */}
+          <path d="M 65 55 L 158 55 L 158 68" fill="none" stroke="#27272A" strokeWidth="1.5" />
+          <rect x="115" y="68" width="86" height="26" rx="5" fill="rgba(52,211,153,0.06)" stroke="rgba(52,211,153,0.25)" strokeWidth="1" />
+          <text x="158" y="85" textAnchor="middle" fill="#6EE7B7" fontSize="9" fontFamily="var(--font-mono)">LayerNorm</text>
+          <line x1="158" y1="94" x2="158" y2="106" stroke="#27272A" strokeWidth="1.5" />
+          <rect x="120" y="106" width="76" height="30" rx="5" fill="rgba(161,161,170,0.04)" stroke="rgba(161,161,170,0.15)" strokeWidth="1" />
+          <text x="158" y="125" textAnchor="middle" fill="#71717A" fontSize="10" fontFamily="var(--font-mono)">sublayer</text>
+          <path d="M 158 136 L 158 162 L 77 162" fill="none" stroke="#27272A" strokeWidth="1.5" />
+          <polygon points="77,158.5 69,162 77,165.5" fill="#27272A" />
+
+          {/* Identity path: x → + → out (emerald, clean) */}
+          <line x1="65" y1="32" x2="65" y2="150" stroke="#34D399" strokeWidth="2.5" strokeOpacity="0.85" />
+          {/* Flow arrow on identity path */}
+          <polygon points="61.5,90 65,97 68.5,90" fill="#34D399" fillOpacity="0.85" />
+          <line x1="65" y1="174" x2="65" y2="234" stroke="#34D399" strokeWidth="2.5" strokeOpacity="0.85" />
+          {/* Flow arrow below + */}
+          <polygon points="61.5,198 65,205 68.5,198" fill="#34D399" fillOpacity="0.85" />
+
+          {/* Input */}
+          <rect x="43" y="8" width="44" height="24" rx="5" fill="#18181B" stroke="#3F3F46" strokeWidth="1" />
+          <text x="65" y="24" textAnchor="middle" fill="#D4D4D8" fontSize="11" fontFamily="var(--font-mono)">x</text>
+
+          {/* Fork point */}
+          <circle cx="65" cy="55" r="3.5" fill="#34D399" />
+
+          {/* + node */}
+          <circle cx="65" cy="162" r="12" fill="#18181B" stroke="#34D399" strokeWidth="1.5" strokeOpacity="0.85" />
+          <text x="65" y="167" textAnchor="middle" fill="#6EE7B7" fontSize="14" fontWeight="bold">+</text>
+
+          {/* Output */}
+          <rect x="43" y="234" width="44" height="24" rx="5" fill="#18181B" stroke="#3F3F46" strokeWidth="1" />
+          <text x="65" y="250" textAnchor="middle" fill="#D4D4D8" fontSize="11" fontFamily="var(--font-mono)">out</text>
+        </svg>
       </div>
       <div className="text-center text-xs text-emerald-400/70 mt-3">identity path is completely clean</div>
     </div>
