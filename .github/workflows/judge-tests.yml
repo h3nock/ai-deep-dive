@@ -50,6 +50,16 @@ jobs:
           cd judge
           python -m ruff check src
 
+      - name: check generated tests
+        run: |
+          cd judge
+          PYTHONPATH=src python scripts/generate_hidden_tests.py --check
+
+      - name: validate problem contracts
+        run: |
+          cd judge
+          PYTHONPATH=src python scripts/validate_problem_contracts.py
+
       - name: run judge tests
         env:
           JUDGE_TEST_REDIS_URL: redis://localhost:6379/15

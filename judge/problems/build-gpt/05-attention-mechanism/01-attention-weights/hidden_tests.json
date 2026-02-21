@@ -11,20 +11,6 @@
       ]
     },
     {
-      "id": "b02",
-      "input_code": "import torch\nQ = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nK = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\n",
-      "expected": [
-        [
-          0.66976155,
-          0.33023845
-        ],
-        [
-          0.33023845,
-          0.66976155
-        ]
-      ]
-    },
-    {
       "id": "a01",
       "input_code": "import torch\nQ = torch.tensor([[1.0, 1.0], [1.0, 1.0]], dtype=torch.float32)\nK = torch.tensor([[1.0, 1.0], [1.0, 1.0]], dtype=torch.float32)\n",
       "expected": [

@@ -3,28 +3,14 @@
   "cases": [
     {
       "id": "b01",
-      "inputs": {
-        "d_model": "2"
-      },
+      "input_code": "import torch\nd_model = 2\n",
       "expected": [
         1.0
       ]
     },
     {
       "id": "b02",
-      "inputs": {
-        "d_model": "4"
-      },
-      "expected": [
-        1.0,
-        0.01
-      ]
-    },
-    {
-      "id": "b03",
-      "inputs": {
-        "d_model": "6"
-      },
+      "input_code": "import torch\nd_model = 6\n",
       "expected": [
         1.0,
         0.04641589,
@@ -32,22 +18,8 @@
       ]
     },
     {
-      "id": "b04",
-      "inputs": {
-        "d_model": "8"
-      },
-      "expected": [
-        1.0,
-        0.1,
-        0.01,
-        0.001
-      ]
-    },
-    {
       "id": "a01",
-      "inputs": {
-        "d_model": "10"
-      },
+      "input_code": "import torch\nd_model = 10\n",
       "expected": [
         1.0,
         0.15848932,
@@ -58,9 +30,7 @@
     },
     {
       "id": "a02",
-      "inputs": {
-        "d_model": "12"
-      },
+      "input_code": "import torch\nd_model = 12\n",
       "expected": [
         1.0,
         0.21544347,
@@ -72,9 +42,7 @@
     },
     {
       "id": "a03",
-      "inputs": {
-        "d_model": "16"
-      },
+      "input_code": "import torch\nd_model = 16\n",
       "expected": [
         1.0,
         0.31622777,
@@ -88,9 +56,7 @@
     },
     {
       "id": "a04",
-      "inputs": {
-        "d_model": "32"
-      },
+      "input_code": "import torch\nd_model = 32\n",
       "expected": [
         1.0,
         0.56234133,
@@ -112,9 +78,7 @@
     },
     {
       "id": "s01",
-      "inputs": {
-        "d_model": "128"
-      },
+      "input_code": "import torch\nd_model = 128\n",
       "expected": [
         1.0,
         0.86596432,
@@ -184,9 +148,7 @@
     },
     {
       "id": "s02",
-      "inputs": {
-        "d_model": "256"
-      },
+      "input_code": "import torch\nd_model = 256\n",
       "expected": [
         1.0,
         0.93057204,
@@ -320,9 +282,7 @@
     },
     {
       "id": "s03",
-      "inputs": {
-        "d_model": "512"
-      },
+      "input_code": "import torch\nd_model = 512\n",
       "expected": [
         1.0,
         0.96466162,
@@ -584,9 +544,7 @@
     },
     {
       "id": "s04",
-      "inputs": {
-        "d_model": "1024"
-      },
+      "input_code": "import torch\nd_model = 1024\n",
       "expected": [
         1.0,
         0.98217189,
@@ -1104,9 +1062,7 @@
     },
     {
       "id": "r01",
-      "inputs": {
-        "d_model": "768"
-      },
+      "input_code": "import torch\nd_model = 768\n",
       "expected": [
         1.0,
         0.9763001,
@@ -1496,9 +1452,7 @@
     },
     {
       "id": "r02",
-      "inputs": {
-        "d_model": "22"
-      },
+      "input_code": "import torch\nd_model = 22\n",
       "expected": [
         1.0,
         0.43287613,
@@ -1515,9 +1469,7 @@
     },
     {
       "id": "r03",
-      "inputs": {
-        "d_model": "192"
-      },
+      "input_code": "import torch\nd_model = 192\n",
       "expected": [
         1.0,
         0.90851758,
@@ -1619,9 +1571,7 @@
     },
     {
       "id": "r04",
-      "inputs": {
-        "d_model": "36"
-      },
+      "input_code": "import torch\nd_model = 36\n",
       "expected": [
         1.0,
         0.59948425,
@@ -1645,9 +1595,7 @@
     },
     {
       "id": "r05",
-      "inputs": {
-        "d_model": "96"
-      },
+      "input_code": "import torch\nd_model = 96\n",
       "expected": [
         1.0,
         0.82540419,
@@ -1701,9 +1649,7 @@
     },
     {
       "id": "r06",
-      "inputs": {
-        "d_model": "768"
-      },
+      "input_code": "import torch\nd_model = 768\n",
       "expected": [
         1.0,
         0.9763001,
@@ -2093,9 +2039,7 @@
     },
     {
       "id": "r07",
-      "inputs": {
-        "d_model": "48"
-      },
+      "input_code": "import torch\nd_model = 48\n",
       "expected": [
         1.0,
         0.68129207,
@@ -2125,9 +2069,7 @@
     },
     {
       "id": "r08",
-      "inputs": {
-        "d_model": "26"
-      },
+      "input_code": "import torch\nd_model = 26\n",
       "expected": [
         1.0,
         0.49238826,

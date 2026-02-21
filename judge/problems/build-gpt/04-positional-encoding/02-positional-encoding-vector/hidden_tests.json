@@ -3,47 +3,15 @@
   "cases": [
     {
       "id": "b01",
-      "inputs": {
-        "pos": "0",
-        "d_model": "2"
-      },
+      "input_code": "import torch\npos = 0\nd_model = 2\n",
       "expected": [
         0.0,
         1.0
-      ]
-    },
-    {
-      "id": "b02",
-      "inputs": {
-        "pos": "0",
-        "d_model": "4"
-      },
-      "expected": [
-        0.0,
-        1.0,
-        0.0,
-        1.0
-      ]
-    },
-    {
-      "id": "b03",
-      "inputs": {
-        "pos": "1",
-        "d_model": "4"
-      },
-      "expected": [
-        0.84147098,
-        0.54030231,
-        0.00999983,
-        0.99995
       ]
     },
     {
       "id": "a01",
-      "inputs": {
-        "pos": "5",
-        "d_model": "6"
-      },
+      "input_code": "import torch\npos = 5\nd_model = 6\n",
       "expected": [
         -0.95892427,
         0.28366219,
@@ -55,10 +23,7 @@
     },
     {
       "id": "a02",
-      "inputs": {
-        "pos": "100",
-        "d_model": "8"
-      },
+      "input_code": "import torch\npos = 100\nd_model = 8\n",
       "expected": [
         -0.50636564,
         0.86231887,
@@ -72,10 +37,7 @@
     },
     {
       "id": "a03",
-      "inputs": {
-        "pos": "1000",
-        "d_model": "10"
-      },
+      "input_code": "import torch\npos = 1000\nd_model = 10\n",
       "expected": [
         0.82687954,
         0.56237908,
@@ -91,10 +53,7 @@
     },
     {
       "id": "s01",
-      "inputs": {
-        "pos": "2048",
-        "d_model": "64"
-      },
+      "input_code": "import torch\npos = 2048\nd_model = 64\n",
       "expected": [
         -0.31305701,
         0.94973433,
@@ -164,10 +123,7 @@
     },
     {
       "id": "s02",
-      "inputs": {
-        "pos": "4096",
-        "d_model": "128"
-      },
+      "input_code": "import torch\npos = 4096\nd_model = 128\n",
       "expected": [
         -0.59464199,
         0.80399061,
@@ -301,10 +257,7 @@
     },
     {
       "id": "s03",
-      "inputs": {
-        "pos": "10000",
-        "d_model": "256"
-      },
+      "input_code": "import torch\npos = 10000\nd_model = 256\n",
       "expected": [
         -0.30561439,
         -0.95215537,
@@ -566,10 +519,7 @@
     },
     {
       "id": "s04",
-      "inputs": {
-        "pos": "50000",
-        "d_model": "64"
-      },
+      "input_code": "import torch\npos = 50000\nd_model = 64\n",
       "expected": [
         -0.99984019,
         -0.01787726,
@@ -639,10 +589,7 @@
     },
     {
       "id": "r01",
-      "inputs": {
-        "pos": "64180",
-        "d_model": "4"
-      },
+      "input_code": "import torch\npos = 64180\nd_model = 4\n",
       "expected": [
         -0.39280503,
         -0.91962177,
@@ -652,10 +599,7 @@
     },
     {
       "id": "r02",
-      "inputs": {
-        "pos": "90943",
-        "d_model": "16"
-      },
+      "input_code": "import torch\npos = 90943\nd_model = 16\n",
       "expected": [
         0.17495876,
         0.98457576,
@@ -677,10 +621,7 @@
     },
     {
       "id": "r03",
-      "inputs": {
-        "pos": "53167",
-        "d_model": "10"
-      },
+      "input_code": "import torch\npos = 53167\nd_model = 10\n",
       "expected": [
         -0.96722623,
         0.25391616,
@@ -696,10 +637,7 @@
     },
     {
       "id": "r04",
-      "inputs": {
-        "pos": "72028",
-        "d_model": "32"
-      },
+      "input_code": "import torch\npos = 72028\nd_model = 32\n",
       "expected": [
         -0.64820986,
         -0.76146174,
@@ -737,10 +675,7 @@
     },
     {
       "id": "r05",
-      "inputs": {
-        "pos": "53618",
-        "d_model": "128"
-      },
+      "input_code": "import torch\npos = 53618\nd_model = 128\n",
       "expected": [
         -0.42429318,
         -0.90552487,
@@ -874,10 +809,7 @@
     },
     {
       "id": "r06",
-      "inputs": {
-        "pos": "53131",
-        "d_model": "6"
-      },
+      "input_code": "import torch\npos = 53131\nd_model = 6\n",
       "expected": [
         0.37559852,
         0.92678247,
@@ -889,10 +821,7 @@
     },
     {
       "id": "r07",
-      "inputs": {
-        "pos": "796",
-        "d_model": "32"
-      },
+      "input_code": "import torch\npos = 796\nd_model = 32\n",
       "expected": [
         -0.92348158,
         -0.38364277,
@@ -930,10 +859,7 @@
     },
     {
       "id": "r08",
-      "inputs": {
-        "pos": "81618",
-        "d_model": "32"
-      },
+      "input_code": "import torch\npos = 81618\nd_model = 32\n",
       "expected": [
         -0.54562964,
         0.83802643,
@@ -971,10 +897,7 @@
     },
     {
       "id": "r09",
-      "inputs": {
-        "pos": "22040",
-        "d_model": "6"
-      },
+      "input_code": "import torch\npos = 22040\nd_model = 6\n",
       "expected": [
         -0.98774161,
         0.15609776,
@@ -986,10 +909,7 @@
     },
     {
       "id": "r10",
-      "inputs": {
-        "pos": "99425",
-        "d_model": "10"
-      },
+      "input_code": "import torch\npos = 99425\nd_model = 10\n",
       "expected": [
         -0.12398097,
         0.9922846,

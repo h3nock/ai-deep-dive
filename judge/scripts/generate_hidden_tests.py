@@ -13,14 +13,15 @@ Default output is 20 hidden cases per supported problem (within the 15-25 target
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import math
 import random
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
-
+from typing import Any
 
 ProblemGenerator = Callable[[random.Random], list["Case"]]
 
@@ -34,8 +35,35 @@ class Case:
     expected_is_code: bool = False
 
 
-def _literal(value: Any) -> str:
-    return repr(value)
+def _inputs_to_code(inputs: dict[str, Any]) -> str:
+    lines: list[str] = []
+    for name, value in inputs.items():
+        if not isinstance(name, str) or not name.isidentifier():
+            raise ValueError(f"Invalid input variable name: {name!r}")
+        lines.append(f"{name} = {repr(value)}")
+    rendered = "\n".join(lines)
+    if rendered:
+        rendered += "\n"
+    return rendered
+
+
+def _ensure_torch_import(input_code: str) -> str:
+    try:
+        tree = ast.parse(input_code, mode="exec")
+    except SyntaxError:
+        tree = None
+
+    if tree is not None:
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == "torch":
+                        return input_code if input_code.endswith("\n") else f"{input_code}\n"
+            if isinstance(node, ast.ImportFrom) and node.module == "torch":
+                return input_code if input_code.endswith("\n") else f"{input_code}\n"
+
+    prefixed = f"import torch\n{input_code}"
+    return prefixed if prefixed.endswith("\n") else f"{prefixed}\n"
 
 
 def _round_nested(value: Any, digits: int = 8) -> Any:
@@ -50,17 +78,18 @@ def _round_nested(value: Any, digits: int = 8) -> Any:
     return value
 
 
-def _serialize_case(case_id: str, case: Case) -> dict[str, Any]:
+def _serialize_case(case_id: str, case: Case, *, requires_torch: bool) -> dict[str, Any]:
     out: dict[str, Any] = {"id": case_id}
-    if case.input_code is not None:
-        code = case.input_code
-        if not code.endswith("\n"):
-            code += "\n"
-        out["input_code"] = code
-    elif case.inputs is not None:
-        out["inputs"] = {k: _literal(v) for k, v in case.inputs.items()}
-    else:
+    if case.input_code is None and case.inputs is None:
         raise ValueError("Case must provide either inputs or input_code")
+
+    code = case.input_code if case.input_code is not None else _inputs_to_code(case.inputs or {})
+    if requires_torch:
+        code = _ensure_torch_import(code)
+    elif not code.endswith("\n"):
+        code += "\n"
+
+    out["input_code"] = code
 
     if case.expected_is_code:
         out["expected"] = repr(case.expected)
@@ -71,7 +100,7 @@ def _serialize_case(case_id: str, case: Case) -> dict[str, Any]:
     return out
 
 
-def _assign_ids(cases: list[Case]) -> list[dict[str, Any]]:
+def _assign_hidden_ids(cases: list[Case], *, requires_torch: bool) -> list[dict[str, Any]]:
     prefixes = {
         "boundary": "b",
         "adversarial": "a",
@@ -86,8 +115,30 @@ def _assign_ids(cases: list[Case]) -> list[dict[str, Any]]:
         if prefix is None:
             raise ValueError(f"Unsupported bucket: {case.bucket}")
         counts[prefix] += 1
-        out.append(_serialize_case(f"{prefix}{counts[prefix]:02d}", case))
+        out.append(
+            _serialize_case(
+                f"{prefix}{counts[prefix]:02d}",
+                case,
+                requires_torch=requires_torch,
+            )
+        )
     return out
+
+
+def _assign_public_ids(cases: list[Case], *, requires_torch: bool) -> list[dict[str, Any]]:
+    return [
+        _serialize_case(f"case{index + 1}", case, requires_torch=requires_torch)
+        for index, case in enumerate(cases)
+    ]
+
+
+def _case_signature(case: Case, *, requires_torch: bool) -> tuple[str, str, bool]:
+    serialized = _serialize_case("__sig__", case, requires_torch=requires_torch)
+    return (
+        serialized["input_code"],
+        json.dumps(serialized.get("expected"), sort_keys=True),
+        bool(serialized.get("expected_is_code", False)),
+    )
 
 
 def _assert_case_count(problem_id: str, cases: list[Case], minimum: int = 15, maximum: int = 25) -> None:
@@ -349,7 +400,11 @@ def _random_matrix(
 def _gen_encoder(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
 
-    for text in ["", "A", "hello", "🙂", "e\u0301", "𐍈"]:
+    # Keep curated public examples first.
+    for text in ["Hello 🌍", "A"]:
+        cases.append(Case("boundary", inputs={"text": text}, expected=list(text.encode("utf-8"))))
+
+    for text in ["", "hello", "🙂", "e\u0301", "𐍈"]:
         cases.append(Case("boundary", inputs={"text": text}, expected=list(text.encode("utf-8"))))
 
     for text in ["\x00", "line1\\nline2", "漢字🙂", "Café", "👩‍💻"]:
@@ -382,7 +437,16 @@ def _gen_byte_inspector(rng: random.Random) -> list[Case]:
 
     cases: list[Case] = []
 
-    boundary_lists = [[], [0], [0x80], [0xC2, 0xA9], [0xF0, 0x9F, 0x98, 0x80]]
+    # Keep curated public examples first.
+    boundary_lists = [
+        [72, 101, 108, 108, 111, 32, 240, 159, 140, 141],
+        [65],
+        [],
+        [0],
+        [0x80],
+        [0xC2, 0xA9],
+        [0xF0, 0x9F, 0x98, 0x80],
+    ]
     for arr in boundary_lists:
         cases.append(Case("boundary", inputs={"byte_list": arr}, expected=ref(arr)))
 
@@ -417,6 +481,9 @@ def _gen_pair_counter(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
 
     fixed = [
+        # Keep curated public examples first.
+        ("boundary", [1, 2, 3, 1, 2]),
+        ("boundary", [97, 97, 97, 98]),
         ("boundary", []),
         ("boundary", [5]),
         ("boundary", [1, 2]),
@@ -454,6 +521,9 @@ def _gen_token_merger(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
 
     fixed = [
+        # Keep curated public examples first.
+        ("boundary", [1, 2, 3, 1, 2], (1, 2), 99),
+        ("boundary", [97, 97, 97, 98, 100, 97, 97, 97, 98, 97, 99], (97, 97), 256),
         ("boundary", [], (1, 2), 99),
         ("boundary", [1], (1, 2), 99),
         ("boundary", [1, 2], (1, 2), 99),
@@ -499,6 +569,8 @@ def _gen_bpe_trainer(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
 
     fixed = [
+        # Keep curated public example first.
+        ("boundary", "aaaaaa", 2),
         ("boundary", "", 0),
         ("boundary", "a", 5),
         ("boundary", "aa", 1),
@@ -553,11 +625,12 @@ def _gen_decoder(rng: random.Random) -> list[Case]:
 
     fixed: list[tuple[str, list[int], OrderedDict[tuple[int, int], int], str]] = []
 
-    merges0: OrderedDict[tuple[int, int], int] = OrderedDict()
-    fixed.append(("boundary", [], merges0, ""))
-
+    # Keep curated public example first.
     merges1: OrderedDict[tuple[int, int], int] = OrderedDict([((104, 105), 256)])
     fixed.append(("boundary", [256], merges1, "hi"))
+
+    merges0: OrderedDict[tuple[int, int], int] = OrderedDict()
+    fixed.append(("boundary", [], merges0, ""))
 
     merges2: OrderedDict[tuple[int, int], int] = OrderedDict([((97, 98), 256), ((256, 99), 257)])
     fixed.append(("adversarial", [257], merges2, "abc"))
@@ -602,8 +675,9 @@ def _gen_encoder_inference(rng: random.Random) -> list[Case]:
     fixed_merges2: OrderedDict[tuple[int, int], int] = OrderedDict([((97, 98), 256), ((98, 97), 257)])
 
     fixed = [
-        ("boundary", "", OrderedDict()),
+        # Keep curated public example first.
         ("boundary", "aa", OrderedDict([((97, 97), 256)])),
+        ("boundary", "", OrderedDict()),
         ("adversarial", "aaa", fixed_merges1),
         ("adversarial", "ababa", fixed_merges2),
     ]
@@ -647,6 +721,19 @@ def _gen_most_similar(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
 
     fixed = [
+        # Keep curated public examples first.
+        (
+            "boundary",
+            0,
+            [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, 0.0], [0.0, 0.0]],
+            2,
+        ),
+        (
+            "boundary",
+            1,
+            [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, 0.0], [0.0, 0.0]],
+            3,
+        ),
         ("boundary", 0, [[1.0, 0.0], [0.0, 1.0]], 1),
         ("boundary", 0, [[0.0, 0.0], [1.0, 0.0], [-1.0, 0.0]], 2),
         ("boundary", 1, [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], 5),
@@ -700,6 +787,21 @@ def _gen_vector_analogy(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
 
     fixed = [
+        # Keep curated public examples first.
+        (
+            "boundary",
+            0,
+            2,
+            3,
+            [[1.0, 1.0], [1.0, -1.0], [0.0, 1.0], [0.0, -1.0], [0.0, 0.0]],
+        ),
+        (
+            "boundary",
+            0,
+            1,
+            2,
+            [[0.5, 0.9], [0.5, 0.5], [0.8, 0.5], [0.8, 0.9], [0.1, 0.1]],
+        ),
         (
             "boundary",
             0,
@@ -790,7 +892,8 @@ def _gen_vector_analogy(rng: random.Random) -> list[Case]:
 
 def _gen_frequency_schedule(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
-    fixed = [2, 4, 6, 8, 10, 12, 16, 32]
+    # Keep curated public examples first.
+    fixed = [4, 8, 2, 6, 10, 12, 16, 32]
     for d_model in fixed:
         expected = _round_nested(_frequencies_ref(d_model))
         bucket = "boundary" if d_model <= 8 else "adversarial"
@@ -813,9 +916,10 @@ def _gen_frequency_schedule(rng: random.Random) -> list[Case]:
 def _gen_pe_vector(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
     fixed = [
-        ("boundary", 0, 2),
+        # Keep curated public examples first.
         ("boundary", 0, 4),
         ("boundary", 1, 4),
+        ("boundary", 0, 2),
         ("adversarial", 5, 6),
         ("adversarial", 100, 8),
         ("adversarial", 1000, 10),
@@ -841,9 +945,11 @@ def _gen_pe_vector(rng: random.Random) -> list[Case]:
 def _gen_pe_matrix(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
     fixed = [
+        # Keep curated public examples first.
+        ("boundary", 2, 4),
+        ("boundary", 3, 4),
         ("boundary", 1, 2),
         ("boundary", 1, 4),
-        ("boundary", 2, 4),
         ("adversarial", 4, 6),
         ("adversarial", 6, 8),
         ("adversarial", 8, 10),
@@ -874,8 +980,14 @@ def _gen_attention_weights(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
 
     fixed = [
-        ("boundary", [[1.0, 0.0]], [[1.0, 0.0]]),
+        # Keep curated public examples first.
         ("boundary", [[1.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [0.0, 1.0]]),
+        (
+            "boundary",
+            [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+        ),
+        ("boundary", [[1.0, 0.0]], [[1.0, 0.0]]),
         ("adversarial", [[1.0, 1.0], [1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0]]),
         ("adversarial", [[2.0, 0.0], [0.0, 2.0]], [[1.0, 0.0], [0.0, 1.0]]),
         (
@@ -924,13 +1036,20 @@ def _gen_causal_attention(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
 
     fixed = [
-        ("boundary", [[1.0, 0.0]], [[1.0, 0.0]], [[0.5, 0.5]]),
+        # Keep curated public examples first.
         (
             "boundary",
             [[1.0, 0.0], [0.0, 1.0]],
             [[1.0, 0.0], [0.0, 1.0]],
             [[1.0, 0.0], [0.0, 1.0]],
         ),
+        (
+            "boundary",
+            [[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]],
+            [[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]],
+            [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+        ),
+        ("boundary", [[1.0, 0.0]], [[1.0, 0.0]], [[0.5, 0.5]]),
         (
             "adversarial",
             [[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]],
@@ -1001,18 +1120,28 @@ def _gen_multi_head_causal_attention(rng: random.Random) -> list[Case]:
         return [[1.0 if i == j else 0.0 for j in range(n)] for i in range(n)]
 
     fixed = [
+        # Keep curated public examples first.
         (
             "boundary",
-            [[0.5, 0.5, 0.5, 0.5]],
-            _identity(4),
-            _identity(4),
-            _identity(4),
-            _identity(4),
+            [[1.0, 0.0], [0.0, 0.0]],
+            [[1.0, 0.0], [0.0, 1.0]],
+            [[1.0, 0.0], [0.0, 1.0]],
+            [[1.0, 0.0], [0.0, 1.0]],
+            [[0.0, 1.0], [1.0, 0.0]],
             2,
         ),
         (
             "boundary",
             [[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0]],
+            _identity(4),
+            _identity(4),
+            _identity(4),
+            [[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]],
+            2,
+        ),
+        (
+            "boundary",
+            [[0.5, 0.5, 0.5, 0.5]],
             _identity(4),
             _identity(4),
             _identity(4),
@@ -1152,26 +1281,65 @@ PROBLEM_SEEDS: dict[str, int] = {
     "build-gpt/06-multi-head-attention/01-multi-head-causal-attention": 601,
 }
 
+PUBLIC_CASE_COUNT_OVERRIDES: dict[str, int] = {
+    "build-gpt/02-tokenization/03-bpe-trainer": 1,
+    "build-gpt/02-tokenization/04-decoder": 1,
+    "build-gpt/02-tokenization/05-encoder": 1,
+}
+
 
 def _render_json(data: dict[str, Any]) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
 
-def generate_hidden_tests(problem_id: str, seed_offset: int = 0) -> dict[str, Any]:
+def _read_requires_torch(problems_root: Path, problem_id: str) -> bool:
+    manifest_path = problems_root / problem_id / "manifest.json"
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"manifest.json not found for {problem_id}")
+    manifest = json.loads(manifest_path.read_text())
+    return bool(manifest.get("requires_torch", False))
+
+
+def _public_case_count(problem_id: str) -> int:
+    return PUBLIC_CASE_COUNT_OVERRIDES.get(problem_id, 2)
+
+
+def generate_problem_tests(problem_id: str, problems_root: Path, seed_offset: int = 0) -> tuple[dict[str, Any], dict[str, Any]]:
     generator = PROBLEM_GENERATORS[problem_id]
     base_seed = PROBLEM_SEEDS.get(problem_id, 0)
     rng = random.Random(base_seed + seed_offset)
     cases = generator(rng)
     _assert_case_count(problem_id, cases)
-    return {"version": 1, "cases": _assign_ids(cases)}
+    requires_torch = _read_requires_torch(problems_root, problem_id)
+
+    public_count = _public_case_count(problem_id)
+    if public_count < 1:
+        raise ValueError(f"{problem_id}: public case count must be >= 1")
+    if public_count > len(cases):
+        raise ValueError(
+            f"{problem_id}: requested {public_count} public cases but only {len(cases)} generated"
+        )
+
+    public_seed_cases = cases[:public_count]
+    hidden_seed_cases = cases[public_count:]
+    public_signatures = {_case_signature(case, requires_torch=requires_torch) for case in public_seed_cases}
+    hidden_seed_cases = [
+        case
+        for case in hidden_seed_cases
+        if _case_signature(case, requires_torch=requires_torch) not in public_signatures
+    ]
+    public_cases = _assign_public_ids(public_seed_cases, requires_torch=requires_torch)
+    hidden_cases = _assign_hidden_ids(hidden_seed_cases, requires_torch=requires_torch)
+
+    return {"version": 1, "cases": public_cases}, {"version": 1, "cases": hidden_cases}
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate deterministic hidden tests")
+    parser = argparse.ArgumentParser(description="Generate deterministic public + hidden tests")
     parser.add_argument(
         "--problems-root",
-        default="judge/problems",
-        help="Path to judge problems root (default: judge/problems)",
+        default="problems",
+        help="Path to judge problems root (default: problems)",
     )
     parser.add_argument(
         "--only",
@@ -1181,7 +1349,7 @@ def main() -> None:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="Check mode: fail if committed hidden_tests.json differs from generated output",
+        help="Check mode: fail if committed test files differ from generated output",
     )
     parser.add_argument(
         "--seed-offset",
@@ -1205,34 +1373,55 @@ def main() -> None:
     checked = 0
 
     for problem_id in problem_ids:
-        hidden_path = problems_root / problem_id / "hidden_tests.json"
-        if not hidden_path.parent.exists():
-            raise SystemExit(f"Problem directory not found: {hidden_path.parent}")
+        problem_dir = problems_root / problem_id
+        if not problem_dir.exists():
+            raise SystemExit(f"Problem directory not found: {problem_dir}")
 
-        generated = generate_hidden_tests(problem_id, seed_offset=args.seed_offset)
-        rendered = _render_json(generated)
+        public_path = problem_dir / "public_tests.json"
+        hidden_path = problem_dir / "hidden_tests.json"
 
-        existing = hidden_path.read_text() if hidden_path.exists() else None
+        generated_public, generated_hidden = generate_problem_tests(
+            problem_id,
+            problems_root=problems_root,
+            seed_offset=args.seed_offset,
+        )
+        rendered_public = _render_json(generated_public)
+        rendered_hidden = _render_json(generated_hidden)
+
+        existing_public = public_path.read_text() if public_path.exists() else None
+        existing_hidden = hidden_path.read_text() if hidden_path.exists() else None
 
         if args.check:
             checked += 1
-            if existing != rendered:
-                print(f"MISMATCH: {problem_id}")
+            mismatched = False
+            if existing_public != rendered_public:
+                mismatched = True
+                print(f"MISMATCH: {problem_id} (public_tests.json)")
+            if existing_hidden != rendered_hidden:
+                mismatched = True
+                print(f"MISMATCH: {problem_id} (hidden_tests.json)")
+            if mismatched:
                 changed += 1
         else:
-            if existing != rendered:
-                hidden_path.write_text(rendered)
-                changed += 1
-                print(f"UPDATED: {problem_id}")
+            updated_files = 0
+            if existing_public != rendered_public:
+                public_path.write_text(rendered_public)
+                updated_files += 1
+            if existing_hidden != rendered_hidden:
+                hidden_path.write_text(rendered_hidden)
+                updated_files += 1
+            changed += updated_files
+            if updated_files:
+                print(f"UPDATED: {problem_id} ({updated_files} file(s))")
             else:
                 print(f"UNCHANGED: {problem_id}")
 
     if args.check:
         if changed:
-            raise SystemExit(f"{changed}/{checked} hidden_tests.json file(s) are out of date")
-        print(f"OK: {checked} problem(s) match generated hidden tests")
+            raise SystemExit(f"{changed}/{checked} problem(s) have out-of-date generated tests")
+        print(f"OK: {checked} problem(s) match generated public + hidden tests")
     else:
-        print(f"Done. Updated {changed} hidden_tests.json file(s)")
+        print(f"Done. Updated {changed} test file(s)")
 
 
 if __name__ == "__main__":

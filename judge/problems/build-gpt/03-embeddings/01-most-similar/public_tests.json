@@ -3,11 +3,7 @@
   "cases": [
     {
       "id": "case1",
-      "inputs": {
-        "query_id": "0",
-        "embedding_matrix": "[[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, 0.0], [0.0, 0.0]]",
-        "k": "2"
-      },
+      "input_code": "import torch\nquery_id = 0\nembedding_matrix = torch.tensor([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, 0.0], [0.0, 0.0]], dtype=torch.float32)\nk = 2\n",
       "expected": [
         2,
         1
@@ -15,11 +11,7 @@
     },
     {
       "id": "case2",
-      "inputs": {
-        "query_id": "1",
-        "embedding_matrix": "[[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, 0.0], [0.0, 0.0]]",
-        "k": "3"
-      },
+      "input_code": "import torch\nquery_id = 1\nembedding_matrix = torch.tensor([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, 0.0], [0.0, 0.0]], dtype=torch.float32)\nk = 3\n",
       "expected": [
         2,
         0,

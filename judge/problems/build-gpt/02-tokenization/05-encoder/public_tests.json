@@ -3,10 +3,7 @@
   "cases": [
     {
       "id": "case1",
-      "inputs": {
-        "text": "\"aa\"",
-        "merges": "{(97, 97): 256}"
-      },
+      "input_code": "text = 'aa'\nmerges = {(97, 97): 256}\n",
       "expected": [
         256
       ]

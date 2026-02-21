@@ -3,9 +3,7 @@
   "cases": [
     {
       "id": "case1",
-      "inputs": {
-        "text": "\"Hello \ud83c\udf0d\""
-      },
+      "input_code": "text = 'Hello 🌍'\n",
       "expected": [
         72,
         101,
@@ -21,9 +19,7 @@
     },
     {
       "id": "case2",
-      "inputs": {
-        "text": "\"A\""
-      },
+      "input_code": "text = 'A'\n",
       "expected": [
         65
       ]

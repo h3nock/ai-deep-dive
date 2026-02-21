@@ -3,16 +3,12 @@
   "cases": [
     {
       "id": "case1",
-      "inputs": {
-        "byte_list": "[72, 101, 108, 108, 111, 32, 240, 159, 140, 141]"
-      },
+      "input_code": "byte_list = [72, 101, 108, 108, 111, 32, 240, 159, 140, 141]\n",
       "expected": 7
     },
     {
       "id": "case2",
-      "inputs": {
-        "byte_list": "[65]"
-      },
+      "input_code": "byte_list = [65]\n",
       "expected": 1
     }
   ]

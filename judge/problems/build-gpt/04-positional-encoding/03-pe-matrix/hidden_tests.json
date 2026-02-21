@@ -3,10 +3,7 @@
   "cases": [
     {
       "id": "b01",
-      "inputs": {
-        "seq_len": "1",
-        "d_model": "2"
-      },
+      "input_code": "import torch\nseq_len = 1\nd_model = 2\n",
       "expected": [
         [
           0.0,
@@ -16,46 +13,19 @@
     },
     {
       "id": "b02",
-      "inputs": {
-        "seq_len": "1",
-        "d_model": "4"
-      },
+      "input_code": "import torch\nseq_len = 1\nd_model = 4\n",
       "expected": [
         [
           0.0,
           1.0,
           0.0,
           1.0
-        ]
-      ]
-    },
-    {
-      "id": "b03",
-      "inputs": {
-        "seq_len": "2",
-        "d_model": "4"
-      },
-      "expected": [
-        [
-          0.0,
-          1.0,
-          0.0,
-          1.0
-        ],
-        [
-          0.84147098,
-          0.54030231,
-          0.00999983,
-          0.99995
         ]
       ]
     },
     {
       "id": "a01",
-      "inputs": {
-        "seq_len": "4",
-        "d_model": "6"
-      },
+      "input_code": "import torch\nseq_len = 4\nd_model = 6\n",
       "expected": [
         [
           0.0,
@@ -93,10 +63,7 @@
     },
     {
       "id": "a02",
-      "inputs": {
-        "seq_len": "6",
-        "d_model": "8"
-      },
+      "input_code": "import torch\nseq_len = 6\nd_model = 8\n",
       "expected": [
         [
           0.0,
@@ -162,10 +129,7 @@
     },
     {
       "id": "a03",
-      "inputs": {
-        "seq_len": "8",
-        "d_model": "10"
-      },
+      "input_code": "import torch\nseq_len = 8\nd_model = 10\n",
       "expected": [
         [
           0.0,
@@ -267,10 +231,7 @@
     },
     {
       "id": "s01",
-      "inputs": {
-        "seq_len": "24",
-        "d_model": "24"
-      },
+      "input_code": "import torch\nseq_len = 24\nd_model = 24\n",
       "expected": [
         [
           0.0,
@@ -900,10 +861,7 @@
     },
     {
       "id": "s02",
-      "inputs": {
-        "seq_len": "32",
-        "d_model": "24"
-      },
+      "input_code": "import torch\nseq_len = 32\nd_model = 24\n",
       "expected": [
         [
           0.0,
@@ -1741,10 +1699,7 @@
     },
     {
       "id": "s03",
-      "inputs": {
-        "seq_len": "40",
-        "d_model": "20"
-      },
+      "input_code": "import torch\nseq_len = 40\nd_model = 20\n",
       "expected": [
         [
           0.0,
@@ -2630,10 +2585,7 @@
     },
     {
       "id": "s04",
-      "inputs": {
-        "seq_len": "48",
-        "d_model": "16"
-      },
+      "input_code": "import torch\nseq_len = 48\nd_model = 16\n",
       "expected": [
         [
           0.0,
@@ -3503,10 +3455,7 @@
     },
     {
       "id": "r01",
-      "inputs": {
-        "seq_len": "10",
-        "d_model": "16"
-      },
+      "input_code": "import torch\nseq_len = 10\nd_model = 16\n",
       "expected": [
         [
           0.0,
@@ -3692,10 +3641,7 @@
     },
     {
       "id": "r02",
-      "inputs": {
-        "seq_len": "13",
-        "d_model": "6"
-      },
+      "input_code": "import torch\nseq_len = 13\nd_model = 6\n",
       "expected": [
         [
           0.0,
@@ -3805,10 +3751,7 @@
     },
     {
       "id": "r03",
-      "inputs": {
-        "seq_len": "8",
-        "d_model": "10"
-      },
+      "input_code": "import torch\nseq_len = 8\nd_model = 10\n",
       "expected": [
         [
           0.0,
@@ -3910,10 +3853,7 @@
     },
     {
       "id": "r04",
-      "inputs": {
-        "seq_len": "18",
-        "d_model": "8"
-      },
+      "input_code": "import torch\nseq_len = 18\nd_model = 8\n",
       "expected": [
         [
           0.0,
@@ -4099,10 +4039,7 @@
     },
     {
       "id": "r05",
-      "inputs": {
-        "seq_len": "19",
-        "d_model": "16"
-      },
+      "input_code": "import torch\nseq_len = 19\nd_model = 16\n",
       "expected": [
         [
           0.0,
@@ -4450,10 +4387,7 @@
     },
     {
       "id": "r06",
-      "inputs": {
-        "seq_len": "15",
-        "d_model": "20"
-      },
+      "input_code": "import torch\nseq_len = 15\nd_model = 20\n",
       "expected": [
         [
           0.0,
@@ -4789,10 +4723,7 @@
     },
     {
       "id": "r07",
-      "inputs": {
-        "seq_len": "14",
-        "d_model": "12"
-      },
+      "input_code": "import torch\nseq_len = 14\nd_model = 12\n",
       "expected": [
         [
           0.0,
@@ -4994,10 +4925,7 @@
     },
     {
       "id": "r08",
-      "inputs": {
-        "seq_len": "7",
-        "d_model": "20"
-      },
+      "input_code": "import torch\nseq_len = 7\nd_model = 20\n",
       "expected": [
         [
           0.0,
@@ -5157,10 +5085,7 @@
     },
     {
       "id": "r09",
-      "inputs": {
-        "seq_len": "6",
-        "d_model": "20"
-      },
+      "input_code": "import torch\nseq_len = 6\nd_model = 20\n",
       "expected": [
         [
           0.0,
@@ -5298,10 +5223,7 @@
     },
     {
       "id": "r10",
-      "inputs": {
-        "seq_len": "11",
-        "d_model": "8"
-      },
+      "input_code": "import torch\nseq_len = 11\nd_model = 8\n",
       "expected": [
         [
           0.0,
