@@ -8,15 +8,11 @@ from judge.problems import _case_from_raw
 
 
 class ProblemCaseParsingTests(TestCase):
-    def test_inputs_are_serialized_with_python_literals(self) -> None:
+    def test_input_code_is_preserved(self) -> None:
         case = _case_from_raw(
             {
                 "id": "case-1",
-                "inputs": {
-                    "text": "'Hello'",
-                    "count": "3",
-                    "enabled": "True",
-                },
+                "input_code": "text = 'Hello'\ncount = 3\nenabled = True\n",
                 "expected": 123,
             }
         )
@@ -26,22 +22,31 @@ class ProblemCaseParsingTests(TestCase):
             "text = 'Hello'\ncount = 3\nenabled = True\n",
         )
 
-    def test_invalid_input_name_is_rejected(self) -> None:
-        with self.assertRaisesRegex(ValueError, "Invalid input variable name"):
+    def test_missing_input_code_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "non-empty input_code"):
             _case_from_raw(
                 {
                     "id": "case-1",
-                    "inputs": {"not-valid-name": "value"},
                     "expected": 1,
                 }
             )
 
-    def test_non_string_input_value_is_rejected(self) -> None:
-        with self.assertRaisesRegex(ValueError, "must be a string"):
+    def test_non_string_input_code_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "non-empty input_code"):
             _case_from_raw(
                 {
                     "id": "case-1",
-                    "inputs": {"count": 3},
+                    "input_code": 3,
                     "expected": 1,
                 }
             )
+
+    def test_input_code_is_normalized_to_include_trailing_newline(self) -> None:
+        case = _case_from_raw(
+            {
+                "id": "case-1",
+                "input_code": "x = 1",
+                "expected": 1,
+            }
+        )
+        self.assertEqual(case.input_code, "x = 1\n")
