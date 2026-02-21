@@ -25,6 +25,7 @@
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-markdown": "^10.1.0",
+    "react-resizable-panels": "^4.6.4",
     "rehype-katex": "^7.0.1",
     "rehype-pretty-code": "^0.14.1",
     "remark-gfm": "^4.0.1",

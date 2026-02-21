@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Group, Panel, Separator, usePanelRef } from "react-resizable-panels";
 import { useTheme } from "next-themes";
 import {
   Play,
@@ -184,12 +185,8 @@ function ChallengeEditorContent({
     }
     return false;
   });
-  const [leftPanelWidth, setLeftPanelWidth] = useState(40); // Percentage
-  const [isDraggingLeft, setIsDraggingLeft] = useState(false);
-
   // Bottom Panel State
-  const [bottomPanelHeight, setBottomPanelHeight] = useState(45); // Percentage
-  const [isDraggingBottom, setIsDraggingBottom] = useState(false);
+  const bottomPanelRef = usePanelRef();
   const [isBottomPanelCollapsed, setIsBottomPanelCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "console" | "testcases" | "result"
@@ -277,9 +274,6 @@ function ChallengeEditorContent({
   const editorRef = useRef<MonacoEditorInstance | null>(null);
   const vimModeRef = useRef<MonacoVimSession | null>(null);
   const consoleRef = useRef<HTMLDivElement>(null);
-  const rightPanelRef = useRef<HTMLDivElement>(null);
-  const toolbarRef = useRef<HTMLDivElement>(null);
-  const resizerRef = useRef<HTMLDivElement>(null);
   const isVimModeInitializedRef = useRef(false); // Track if vim was loaded from localStorage
   const isRunningRef = useRef(false); // Guard against concurrent executions
   const currentChallengeIdRef = useRef<string | null>(null); // Track challenge for race condition
@@ -702,10 +696,7 @@ function ChallengeEditorContent({
         setLastRunMode(mode);
         setRunMessage("Running...");
         setActiveTab("result");
-        if (isBottomPanelCollapsed) {
-          setBottomPanelHeight(45);
-          setIsBottomPanelCollapsed(false);
-        }
+        bottomPanelRef.current?.expand();
 
         try {
           // Show loading message if user runs tests before Pyodide is ready
@@ -775,10 +766,7 @@ function ChallengeEditorContent({
           if (normalized.systemError) {
             setOutput((prev) => (prev || "") + normalized.systemError);
             setActiveTab("console");
-            if (isBottomPanelCollapsed) {
-              setBottomPanelHeight(45);
-              setIsBottomPanelCollapsed(false);
-            }
+            bottomPanelRef.current?.expand();
             setRunMessage("");
             return;
           }
@@ -791,11 +779,7 @@ function ChallengeEditorContent({
           setRunResult(finalResult);
           setActiveTab("result");
           setRunMessage("");
-          // Reset to initial height when expanding
-          if (isBottomPanelCollapsed) {
-            setBottomPanelHeight(45);
-          }
-          setIsBottomPanelCollapsed(false);
+          bottomPanelRef.current?.expand();
 
           // Auto-select appropriate test case tab
           const tests = finalResult.tests;
@@ -818,10 +802,7 @@ function ChallengeEditorContent({
             setPyodideStatus("error");
             setOutput((prev) => (prev || "") + `\nError: ${errorMessage}`);
             setActiveTab("console");
-            if (isBottomPanelCollapsed) {
-              setBottomPanelHeight(45);
-              setIsBottomPanelCollapsed(false);
-            }
+            bottomPanelRef.current?.expand();
             setRunMessage("");
           }
         } finally {
@@ -837,10 +818,7 @@ function ChallengeEditorContent({
         setLastRunMode(mode);
         setRunMessage("Pending...");
         setActiveTab("result");
-        if (isBottomPanelCollapsed) {
-          setBottomPanelHeight(45);
-          setIsBottomPanelCollapsed(false);
-        }
+        bottomPanelRef.current?.expand();
 
         let pollAbortController: AbortController | null = null;
         try {
@@ -878,10 +856,7 @@ function ChallengeEditorContent({
           if (normalized.systemError) {
             setRunMessage(normalized.systemError);
             setActiveTab("result");
-            if (isBottomPanelCollapsed) {
-              setBottomPanelHeight(45);
-              setIsBottomPanelCollapsed(false);
-            }
+            bottomPanelRef.current?.expand();
             return;
           }
 
@@ -898,10 +873,7 @@ function ChallengeEditorContent({
           setActiveTab("result");
           setRunMessage("");
 
-          if (isBottomPanelCollapsed) {
-            setBottomPanelHeight(45);
-          }
-          setIsBottomPanelCollapsed(false);
+          bottomPanelRef.current?.expand();
 
           const tests = finalResult.tests;
           if (tests.length > 0) {
@@ -933,10 +905,7 @@ function ChallengeEditorContent({
               setRunMessage(formatServerError());
             }
             setActiveTab("result");
-            if (isBottomPanelCollapsed) {
-              setBottomPanelHeight(45);
-              setIsBottomPanelCollapsed(false);
-            }
+            bottomPanelRef.current?.expand();
           }
         } finally {
           if (
@@ -957,7 +926,6 @@ function ChallengeEditorContent({
       testCases,
       activeChallenge,
       executionMode,
-      isBottomPanelCollapsed,
       ensurePyodideLoaded,
       formatServerError,
       normalizeBrowserResults,
@@ -965,87 +933,15 @@ function ChallengeEditorContent({
     ]
   );
 
-  // Resizer Logic (Left Panel)
-  const startResizingLeft = (e: React.MouseEvent) => {
-    setIsDraggingLeft(true);
-    e.preventDefault();
-  };
-
-  useEffect(() => {
-    const stopResizing = () => setIsDraggingLeft(false);
-    const resize = (e: MouseEvent) => {
-      if (isDraggingLeft) {
-        const newWidth = (e.clientX / window.innerWidth) * 100;
-        if (newWidth > 20 && newWidth < 80) {
-          setLeftPanelWidth(newWidth);
-        }
-      }
-    };
-
-    if (isDraggingLeft) {
-      window.addEventListener("mousemove", resize);
-      window.addEventListener("mouseup", stopResizing);
+  const toggleBottomPanel = useCallback(() => {
+    const panel = bottomPanelRef.current;
+    if (!panel) return;
+    if (isBottomPanelCollapsed) {
+      panel.expand();
+    } else {
+      panel.collapse();
     }
-
-    return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
-    };
-  }, [isDraggingLeft]);
-
-  // Resizer Logic (Bottom Panel)
-  const startResizingBottom = (e: React.MouseEvent) => {
-    setIsDraggingBottom(true);
-    e.preventDefault();
-  };
-
-  useEffect(() => {
-    const stopResizing = () => setIsDraggingBottom(false);
-    const resize = (e: MouseEvent) => {
-      if (!isDraggingBottom || !rightPanelRef.current) return;
-
-      // Get the actual bounds of the right panel
-      const rect = rightPanelRef.current.getBoundingClientRect();
-      const panelTop = rect.top;
-      const panelHeight = rect.height;
-
-      // Measure actual DOM element heights
-      const toolbarHeight = toolbarRef.current?.getBoundingClientRect().height ?? 0;
-      const resizerHeight = resizerRef.current?.getBoundingClientRect().height ?? 0;
-      const minTopSpace = toolbarHeight + resizerHeight;
-
-      // Calculate max allowed height percentage
-      const maxHeightPercent = ((panelHeight - minTopSpace) / panelHeight) * 100;
-
-      // Calculate height from bottom of panel
-      const mouseYInPanel = e.clientY - panelTop;
-      const heightFromBottom = panelHeight - mouseYInPanel;
-      const newHeightPercent = (heightFromBottom / panelHeight) * 100;
-
-      // If dragged below 8%, collapse the panel
-      if (newHeightPercent < 8) {
-        setIsBottomPanelCollapsed(true);
-      } else {
-        // Expand if collapsed and set new height
-        if (isBottomPanelCollapsed) {
-          setIsBottomPanelCollapsed(false);
-        }
-        // Cap at max to leave room for toolbar and resizer
-        setBottomPanelHeight(Math.min(newHeightPercent, maxHeightPercent));
-      }
-    };
-
-    if (isDraggingBottom) {
-      // Use capture phase for immediate response
-      document.addEventListener("mousemove", resize, { passive: true });
-      document.addEventListener("mouseup", stopResizing);
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", resize);
-      document.removeEventListener("mouseup", stopResizing);
-    };
-  }, [isDraggingBottom, isBottomPanelCollapsed]);
+  }, [isBottomPanelCollapsed]);
 
   const isMac =
     typeof navigator !== "undefined" &&
@@ -1055,26 +951,14 @@ function ChallengeEditorContent({
 
   const visibleTestCases = testCases;
 
-  // Dragging state for premium feel
-  const isDragging = isDraggingLeft || isDraggingBottom;
-
   return (
-    <div
-      className={`flex flex-1 min-h-0 bg-background overflow-hidden ${
-        isDragging ? "cursor-grabbing" : ""
-      }`}
-      style={{
-        // Prevent text selection and iframe capture during drag
-        userSelect: isDragging ? "none" : undefined,
-        WebkitUserSelect: isDragging ? "none" : undefined,
-      }}
-    >
+    <Group orientation="horizontal" className="flex-1 min-h-0 min-w-0 bg-background">
       {/* Left Panel - Prose */}
+      <Panel defaultSize="40%" minSize="20%" maxSize="80%">
       <div
-        className={`flex flex-col bg-background overflow-hidden transition-colors border-r ${
+        className={`flex flex-col h-full bg-background overflow-hidden transition-colors border-r ${
           activePane === "prose" ? "border-border-hover" : "border-border"
         }`}
-        style={{ width: `${leftPanelWidth}%` }}
         onClick={() => setActivePane("prose")}
       >
         <div className="flex flex-col h-full">
@@ -1150,38 +1034,27 @@ function ChallengeEditorContent({
           </div>
         </div>
       </div>
+      </Panel>
 
       {/* Resizer Handle + Editor Panel - Only show when a challenge is selected */}
       {activeChallenge && (
         <>
-          {/* Resizer Handle (Left) */}
-          <div
-            className={`w-1.5 cursor-col-resize z-10 flex items-center justify-center group transition-colors duration-150 ${
-              isDraggingLeft
-                ? "bg-success/50"
-                : "bg-transparent hover:bg-border-hover"
-            }`}
-            onMouseDown={startResizingLeft}
-          >
-            <div
-              className={`w-0.5 h-12 rounded-full transition-all duration-150 ${
-                isDraggingLeft
-                  ? "bg-success h-16"
-                  : "bg-muted group-hover:bg-secondary group-hover:h-16"
-              }`}
-            />
-          </div>
+          <Separator className="w-1.5 flex items-center justify-center group hover:bg-border-hover active:bg-success/50 transition-colors duration-150">
+            <div className="w-0.5 h-12 rounded-full bg-muted group-hover:bg-secondary group-hover:h-16 group-active:bg-success group-active:h-16 transition-all duration-150" />
+          </Separator>
 
           {/* Right Panel: Editor */}
+          <Panel minSize="20%">
           <div
-            ref={rightPanelRef}
-            className={`flex-1 flex flex-col bg-background min-w-[300px] border-l transition-colors overflow-hidden ${
+            className={`flex flex-col h-full bg-background border-l transition-colors overflow-hidden ${
               activePane === "editor" ? "border-border-hover" : "border-border"
             }`}
             onClick={() => setActivePane("editor")}
           >
+          <Group orientation="vertical">
+            <Panel className="flex flex-col">
             {/* Toolbar */}
-            <div ref={toolbarRef} className="h-11 flex-shrink-0 flex items-center justify-between px-3 border-b border-border bg-surface">
+            <div className="h-11 flex-shrink-0 flex items-center justify-between px-3 border-b border-border bg-surface">
               <div className="flex items-center gap-1 text-muted text-sm">
                 {/* Language Badge */}
                 <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted">
@@ -1315,39 +1188,26 @@ function ChallengeEditorContent({
               )}
             </div>
 
-            {/* Resizer Handle (Bottom) - only visible when panel is expanded */}
-            {!isBottomPanelCollapsed && (
-              <div
-                ref={resizerRef}
-                className={`h-2 flex-shrink-0 cursor-row-resize z-10 flex items-center justify-center border-t transition-colors duration-150 group ${
-                  isDraggingBottom
-                    ? "bg-success/20 border-success/50"
-                    : "bg-background border-border hover:bg-surface/50 hover:border-border-hover"
-                }`}
-                onMouseDown={startResizingBottom}
-              >
-                <div
-                  className={`h-0.5 rounded-full transition-all duration-150 ${
-                    isDraggingBottom
-                      ? "w-16 bg-success"
-                      : "w-8 bg-muted group-hover:w-12 group-hover:bg-secondary"
-                  }`}
-                />
-              </div>
-            )}
+            </Panel>
+
+            {/* Resizer Handle (Bottom) */}
+            <Separator className="h-2 flex-shrink-0 flex items-center justify-center border-t group hover:bg-surface/50 hover:border-border-hover active:bg-success/20 active:border-success/50 bg-background border-border transition-colors duration-150">
+              <div className="h-0.5 rounded-full w-8 bg-muted group-hover:w-12 group-hover:bg-secondary group-active:w-16 group-active:bg-success transition-all duration-150" />
+            </Separator>
 
             {/* Bottom Panel (Console / Test Cases) */}
-            <div
-              className={`bg-background flex flex-col relative flex-shrink-0 ${
-                isDraggingBottom ? "" : "transition-[height] duration-200"
-              }`}
-              style={{
-                height: isBottomPanelCollapsed
-                  ? "auto"
-                  : `${bottomPanelHeight}%`,
-                minHeight: isBottomPanelCollapsed ? undefined : "100px",
+            <Panel
+              panelRef={bottomPanelRef}
+              defaultSize="45%"
+              minSize="8%"
+              collapsible
+              collapsedSize="4%"
+              className="flex flex-col"
+              onResize={(size) => {
+                setIsBottomPanelCollapsed(size.asPercentage <= 4);
               }}
             >
+            <div className="bg-background flex flex-col h-full relative">
               {/* Tabs Header */}
               <div
                 className={`flex items-center bg-surface ${
@@ -1360,7 +1220,7 @@ function ChallengeEditorContent({
                   onClick={() => {
                     setActiveTab("console");
                     if (isBottomPanelCollapsed)
-                      setIsBottomPanelCollapsed(false);
+                      bottomPanelRef.current?.expand();
                   }}
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
                     activeTab === "console" && !isBottomPanelCollapsed
@@ -1377,7 +1237,7 @@ function ChallengeEditorContent({
                   onClick={() => {
                     setActiveTab("testcases");
                     if (isBottomPanelCollapsed)
-                      setIsBottomPanelCollapsed(false);
+                      bottomPanelRef.current?.expand();
                     // Ensure a valid test case is selected
                     if (visibleTestCases.length > 0 && !visibleTestCases.some((tc) => tc.id === activeTestCaseId)) {
                       setActiveTestCaseId(visibleTestCases[0].id);
@@ -1398,7 +1258,7 @@ function ChallengeEditorContent({
                   onClick={() => {
                     setActiveTab("result");
                     if (isBottomPanelCollapsed)
-                      setIsBottomPanelCollapsed(false);
+                      bottomPanelRef.current?.expand();
                   }}
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
                     activeTab === "result" && !isBottomPanelCollapsed
@@ -1417,13 +1277,7 @@ function ChallengeEditorContent({
 
                 {/* Collapse/Expand Toggle Button */}
                 <button
-                  onClick={() => {
-                    if (isBottomPanelCollapsed) {
-                      // Reset to initial height when expanding via button
-                      setBottomPanelHeight(45);
-                    }
-                    setIsBottomPanelCollapsed(!isBottomPanelCollapsed);
-                  }}
+                  onClick={toggleBottomPanel}
                   className="px-3 py-2 text-muted hover:text-secondary transition-colors flex items-center gap-1.5"
                   title={
                     isBottomPanelCollapsed ? "Expand panel" : "Collapse panel"
@@ -1758,7 +1612,10 @@ function ChallengeEditorContent({
                 </div>
               )}
             </div>
+            </Panel>
+          </Group>
           </div>
+          </Panel>
         </>
       )}
 
@@ -1773,6 +1630,6 @@ function ChallengeEditorContent({
         cancelText="Keep Editing"
         variant="danger"
       />
-    </div>
+    </Group>
   );
 }
