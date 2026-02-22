@@ -82,7 +82,7 @@ description: "How to encode sequence order into token embeddings."
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">4. Extendability</h4>
 
   <Description>
-    It would be convenient if the encoding could extend to positions beyond what the model saw during training.In practice, this doesn't guarantee better generalization, but an encoding that doesn't break at unseen positions is at least preferable to one that does.
+    It would be convenient if the encoding could extend to positions beyond what the model saw during training. In practice, this doesn't guarantee better generalization, but an encoding that doesn't break at unseen positions is at least preferable to one that does.
   </Description>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">5. Smooth and Continuous</h4>
@@ -98,7 +98,7 @@ description: "How to encode sequence order into token embeddings."
 
 <Step title="4. Replacing Digits with Oscillations">
   <Description>
-    Number systems offer a useful insight. They use multiple columns cycling at different speeds, allowing us to represent arbitrarily large numbers with bounded symbols. In decimal, the ones column cycles 0→9, the tens column changes every 10 counts, the hundreds every 100. This multi-rate structure gives us bounded, unique values for each position.
+    Number systems point us in the right direction. They use multiple columns cycling at different speeds, allowing us to represent arbitrarily large numbers with bounded symbols. In decimal, the ones column cycles 0→9, the tens column changes every 10 counts, the hundreds every 100. This multi-rate structure gives us bounded, unique values for each position.
   </Description>
 
   <Description>
@@ -126,7 +126,7 @@ description: "How to encode sequence order into token embeddings."
   </Description>
 
   <Description>
-    Applying this to our multi-frequency idea, each dimension gets its own sine wave cycling at a different frequency. Play the animation to see how each dimension evolves across positions:
+    Applying this to our multi-frequency idea, each dimension gets its own sine wave cycling at a different frequency. The animation below shows how each dimension evolves across positions.
   </Description>
 
   <FrequencyWaves />
@@ -258,7 +258,7 @@ description: "How to encode sequence order into token embeddings."
   </Description>
 
   <Description>
-    Now we need to choose the actual frequencies. We need a fastest frequency to distinguish neighboring positions (like the ones digit in decimal distinguishes consecutive numbers), and a slowest frequency that doesn't repeat within our context window.
+    Now we need to choose the actual frequencies. We need a fastest frequency to distinguish neighboring positions, the way the ones digit in decimal distinguishes consecutive numbers, and a slowest frequency that doesn't repeat within our context window.
   </Description>
 
   <Description>

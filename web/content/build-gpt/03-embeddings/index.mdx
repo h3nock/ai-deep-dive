@@ -13,22 +13,22 @@ description: "How to represent tokens as vectors to capture semantic meaning."
 
 <Step title="1. Why Token IDs Aren't Enough">
   <Description>
-    Token IDs tell us which token we're looking at, but nothing about what it means. For example, the word "Queen" carries multiple aspects of meaning: royalty, gender, relationships to other words like "King" or "Car." A categorical label like 32466 can't capture any of that. It's just an identifier.
+    Token IDs tell us which token we're looking at, but nothing about what it means. For example, the word "Queen" carries multiple aspects of meaning: royalty, gender, relationships to other words like "King" or "Princess." A categorical label like 32466 can't capture any of that.
   </Description>
 
   <Description>
-    What we need is a representation with enough structure to express how words relate to each other. "King" and "Queen" are related. "Red" and "blue" belong to the same category. "Paris" connects to "France" the way "Tokyo" connects to "Japan." A single number can't express any of these relationships.
+    What we need is a representation with enough structure to express how words relate to each other. "King" and "Queen" are related. "Red" and "Blue" belong to the same category. "Paris" connects to "France" the way "Tokyo" connects to "Japan." A single number can't express any of these relationships.
   </Description>
 </Step>
 
 
 <Step title="2. Representing Meaning with Multiple Numbers">
   <Description>
-    What if instead of one number, we used a list of numbers to represent each token? Each number could capture a different aspect of meaning. Here's a simplified way to think about it.
+    What if instead of one number, we used a list of numbers, called a **vector**, to represent each token? Each number could capture a different aspect of meaning.
   </Description>
 
   <Description>
-    To illustrate how vectors let us express meaning, let's design a simple two-dimensional system, one dimension for **Royalty** and one for **Gender**. We score each token on both, using a scale from **-1.0** to **+1.0**. For Royalty, +1 means strongly royal, -1 means the opposite, and 0 means unrelated. For Gender, +1 means masculine, -1 means feminine, and 0 means neutral.
+    Let's try it with two numbers, one capturing **Royalty** and one capturing **Gender**. We score each token on both, using a scale from **-1.0** to **+1.0**. For Royalty, +1 means strongly royal, -1 means the opposite, and 0 means unrelated. For Gender, +1 means masculine, -1 means feminine, and 0 means neutral.
   </Description>
 
   <Description>
@@ -187,7 +187,7 @@ description: "How to represent tokens as vectors to capture semantic meaning."
   </Description>
 
   <Description>
-    When training begins, every value in this table is initialized randomly. The meaningful structure emerges during training.
+    When training begins, every value in this table is initialized randomly.
   </Description>
 
   <Description>

@@ -5,7 +5,7 @@ description: "The big picture: how Large Language Models actually work."
 ---
 
 <Description>
-  You send a prompt to ChatGPT and seconds later, a response streams back word by word. What's actually happening inside? In this chapter, we'll see the full picture before diving into technical details. Understanding how the pieces fit together will make each component much easier to grasp as we build them.
+  You send a prompt to ChatGPT and seconds later, a response streams back word by word. What's actually happening inside? This chapter walks through the process end to end, from the moment text enters the model to the moment a prediction comes out. The rest of the course builds each piece of this pipeline from the ground up.
 </Description>
 
 
@@ -37,7 +37,7 @@ description: "The big picture: how Large Language Models actually work."
   </div>
 
   <Description>
-    The model picks one word (usually sampling from the high-probability ones), appends it to the input, and repeats.
+    The model samples one word from the high-probability candidates, appends it to the input, and repeats.
   </Description>
 
   <div style={{ marginTop: "var(--space-flow)", marginBottom: "var(--space-flow)" }}>
@@ -64,7 +64,7 @@ description: "The big picture: how Large Language Models actually work."
   </div>
 
   <Description>
-    This loop continues until the response is complete. This simple mechanism, repeated many times during training on massive text data, produces behavior that looks remarkably like understanding.
+    Each new word feeds back in as input, and the process repeats until the response is complete. Every response you see from a language model is built one word at a time through this loop.
   </Description>
 </Step>
 
@@ -87,20 +87,20 @@ description: "The big picture: how Large Language Models actually work."
     {
       title: "Bytes → Tokens",
       data: "[72, 101, 108, 108, 111] → [15496]",
-      description: "We group bytes into chunks so there's a shorter sequence to process."
+      description: "Bytes are grouped into meaningful chunks, giving the model a shorter sequence to work with."
     },
     {
       title: "Tokens → Vectors",
       data: "[15496] → [0.12, -0.48, 0.91, ...]",
-      description: "Plain token IDs don't capture meaning. This step converts each token into a vector that represents what it means."
+      description: "Each token ID becomes a vector, a list of numbers that captures the token's meaning."
     },
     {
       title: "Vectors → Transformer → Next Token",
-      description: "The Transformer reads context and predicts the next token."
+      description: "The Transformer processes the full sequence and predicts what comes next."
     },
     {
       title: "Token → Text",
-      description: "Tokens convert back to text, looping until the response is complete."
+      description: "The predicted token converts back to text, and the loop continues until the response is complete."
     }
   ]} />
 </Step>
@@ -112,7 +112,7 @@ description: "The big picture: how Large Language Models actually work."
   </Description>
 
   <Description>
-    This is where training comes in. We show the model enormous amounts of text and let it learn from its mistakes, over and over, until patterns emerge.
+    These random numbers become useful through training. The model processes billions of text examples, and after each prediction, its parameters are adjusted to reduce the error between what it guessed and what actually came next.
   </Description>
 
   <ProcessTimeline steps={[
@@ -136,7 +136,7 @@ description: "The big picture: how Large Language Models actually work."
   ]} />
 
   <Description>
-    By repeating this process billions of times on massive datasets, the model's parameters gradually tune themselves. Words with similar meanings align in the vector space, and the model learns to recognize complex patterns, grammar, and facts.
+    By repeating this process billions of times across massive datasets, the model's parameters gradually shift from random noise into structured representations. It learns to recognize grammar, word relationships, and factual associations, all from predicting the next word.
   </Description>
 </Step>
 
