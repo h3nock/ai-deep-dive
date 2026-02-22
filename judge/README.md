@@ -99,6 +99,14 @@ This regenerates both `public_tests.json` and `hidden_tests.json` from the
 reference generators. Curated public examples are emitted first, and hidden
 output excludes those public cases to avoid duplicate submit execution.
 
+For torch-backed challenges, use the same Python environment used by judge
+workers when regenerating artifacts. This keeps numeric expected values aligned
+with runtime behavior:
+
+```bash
+/opt/ai-deep-dive/judge/.venv/bin/python judge/scripts/generate_hidden_tests.py
+```
+
 ## Submit a sample job
 
 ```bash
