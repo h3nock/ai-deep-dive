@@ -65,6 +65,12 @@ Optional verify overrides:
 must be represented in `judge.env.example`.
 
 Set `JUDGE_ALLOWED_ORIGINS` for your deployed web origins.
+Torch workers support two execution modes via `JUDGE_TORCH_EXECUTION_MODE`:
+
+- `warm_fork` (default): keeps a warm torch parent and forks a child per job
+  with warm-fork sandbox controls.
+- `isolate`: runs torch jobs in the isolate per-job process path using isolate
+  sandbox limits.
 
 ### Worker model and reconciliation
 
