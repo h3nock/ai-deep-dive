@@ -139,7 +139,7 @@ export function BinaryVsSmooth() {
 
       <div className="p-4 bg-terminal rounded-lg border border-border">
         {/* Controls */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-2 mb-4">
           <button
             onClick={() => {
               setIsPlaying(!isPlaying);
@@ -159,8 +159,6 @@ export function BinaryVsSmooth() {
             )}
           </button>
 
-          <span className="text-sm text-muted shrink-0">Position</span>
-
           <input
             type="range"
             min="0"
@@ -179,7 +177,7 @@ export function BinaryVsSmooth() {
           />
 
           <span
-            className="text-lg font-mono tabular-nums w-8 text-right shrink-0"
+            className="text-lg font-mono tabular-nums w-8 text-right shrink-0 font-semibold"
             style={{ color: viz.tertiary }}
           >
             {Math.round(position)}
