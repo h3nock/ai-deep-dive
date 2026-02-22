@@ -140,7 +140,7 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
     The function that does this is **softmax**. It takes the raw scores, exponentiates them, and normalizes so they sum to 1. Higher scores become larger weights, lower scores become smaller weights, and the relative differences are preserved.
   </Description>
   <Description>
-    As the dimension of the Query and Key vectors grows, dot products tend to produce larger numbers because each additional dimension adds to the sum. When softmax receives these larger values, it concentrates nearly all weight on whichever token has the highest score, and the output becomes essentially just that token's Value, losing the ability to blend information from multiple source tokens. Scaling the scores down by √d before softmax keeps the values moderate, allowing weight to spread across several tokens when useful:
+    As the dimension of the Query and Key vectors grows, dot products tend to produce larger numbers because each additional dimension adds to the sum. When softmax receives these larger values, it concentrates nearly all weight on whichever token has the highest score. The output becomes essentially one token's Value, losing the ability to blend information from multiple sources. Scaling the scores down by √d before softmax keeps the values moderate, allowing weight to spread across several tokens when useful.
   </Description>
 
   <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm text-center">
@@ -173,7 +173,7 @@ description: "How attention lets tokens communicate using Query, Key, and Value.
 
 <Step title="Causal Masking">
   <Description>
-    Recall from the introduction chapter that the model learns by predicting the next word. Given "The cat sat on the", it predicts "mat" and adjusts its weights based on the error. During training, however, we feed the model entire sequences at once for efficiency. If position 5 can attend to position 6, it could simply copy the answer instead of learning to predict it. This is information leakage.
+    As we saw in the introduction, the model learns by predicting the next word. Given "The cat sat on the", it predicts "mat" and adjusts its weights based on the error. During training, however, we feed the model entire sequences at once for efficiency. If position 5 can attend to position 6, it could simply copy the answer instead of learning to predict it. This is information leakage.
   </Description>
 
   <Description>
