@@ -63,7 +63,9 @@ reconcile_worker_units() {
   fi
 
   for index in $(seq 1 "$desired"); do
-    systemctl enable --now "${prefix}@${index}.service"
+    unit="${prefix}@${index}.service"
+    systemctl enable "$unit" >/dev/null
+    systemctl restart "$unit"
   done
 }
 
@@ -204,7 +206,8 @@ validate_non_negative_int "$TORCH_COUNT" "JUDGE_TORCH_WORKERS"
 
 systemctl daemon-reload
 systemctl restart judge-metrics-init.service
-systemctl enable --now judge-api.service
+systemctl enable judge-api.service >/dev/null
+systemctl restart judge-api.service
 
 # Stop legacy non-template services to avoid mixed worker models.
 systemctl disable --now judge-worker-light.service >/dev/null 2>&1 || true
