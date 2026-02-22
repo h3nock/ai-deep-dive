@@ -43,11 +43,11 @@ description: "The limitation of single-head attention and how multiple heads ove
 
 <Step title="How It Works">
   <Description>
-    Now that we understand the goal of capturing multiple independent relationships, let's walk through the mechanics of how the model achieves this.
+    Now that we understand the goal of capturing multiple independent relationships, let's walk through how the model achieves this.
   </Description>
 
   <Description>
-    We start by projecting the input `X` into distinct Query, Key, and Value matrices for each head using independent weights (`W_Q^i`, `W_K^i`, `W_V^i`). Since each head has its own unique projection, it maps the input into a different subspace. This allows each head to define "relevance" in its own way, enabling the model to simultaneously attend to information based on completely different criteria.
+    We start by projecting the input `X` into distinct Query, Key, and Value matrices for each head using independent weights (`W_Q^i`, `W_K^i`, `W_V^i`). Since each head has its own unique projection, it maps the input into a different subspace. This lets each head define what counts as relevant in its own way.
   </Description>
 
   <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm space-y-1">
@@ -65,7 +65,7 @@ description: "The limitation of single-head attention and how multiple heads ove
   </div>
 
   <Description>
-    Finally, the independent streams are merged. Concatenating the outputs from all heads restores the full dimensionality, yet keeps the information from each head isolated in its own segment. The subsequent multiplication with `W_O` allows these segments to interact. This projection mixes the distinct features discovered by different heads, integrating them into a single, unified representation.
+    Finally, the independent streams are merged. Concatenating the outputs from all heads restores the full dimensionality, yet keeps the information from each head isolated in its own segment. The projection through `W_O` mixes the distinct features discovered by different heads into a single, unified representation.
   </Description>
 
   <div className="my-6 p-5 bg-surface rounded-lg border border-border">
