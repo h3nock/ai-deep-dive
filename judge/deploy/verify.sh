@@ -139,6 +139,16 @@ check_worker_family() {
       unit="${prefix}@${index}.service"
       systemctl is-active --quiet "$unit" || fail "$unit is not active"
       systemctl is-enabled --quiet "$unit" || fail "$unit is not enabled"
+      unit_type=$(systemctl show "$unit" -p Type --value)
+      if [[ "$unit_type" != "notify" ]]; then
+        fail "$unit must use systemd Type=notify (got: ${unit_type})"
+      fi
+      watchdog_usec=$(systemctl show "$unit" -p WatchdogUSec --value)
+      case "$watchdog_usec" in
+        ""|0|0us|0s|0m|0min)
+          fail "$unit watchdog must be enabled (WatchdogUSec=${watchdog_usec})"
+          ;;
+      esac
     done
   fi
 
@@ -163,6 +173,15 @@ check_worker_family() {
 
 check_worker_family "light" "$JUDGE_LIGHT_WORKERS"
 check_worker_family "torch" "$JUDGE_TORCH_WORKERS"
+
+if systemctl list-unit-files --type=service --no-legend | awk '$1 == "prometheus-node-exporter.service" {found=1} END {exit(found ? 0 : 1)}'; then
+  systemctl is-active --quiet prometheus-node-exporter.service || fail "prometheus-node-exporter.service is not active"
+  node_metrics=$(curl -fsS "http://127.0.0.1:9100/metrics") || fail "Failed to query node-exporter metrics endpoint"
+  if ! grep -q '^node_systemd_unit_state{' <<<"$node_metrics"; then
+    fail "node_exporter is missing node_systemd_unit_state metric (systemd collector unavailable)"
+  fi
+  pass "node-exporter systemd metrics are available"
+fi
 
 api_url=${JUDGE_VERIFY_API_URL:-http://127.0.0.1:8000}
 smoke_problem_id=${JUDGE_VERIFY_SMOKE_PROBLEM_ID:-sample/01-basics/01-add}
@@ -192,6 +211,12 @@ if [[ "$ready_checks_ok" != "1" ]]; then
   fail "/ready checks contain non-healthy dependency"
 fi
 pass "/ready reports all dependencies healthy"
+
+metrics_size=$(curl -fsS "${api_url}/metrics" | wc -c | tr -d ' ')
+if [[ ! "$metrics_size" =~ ^[0-9]+$ ]] || (( metrics_size == 0 )); then
+  fail "/metrics returned an empty payload"
+fi
+pass "/metrics payload is non-empty"
 
 submit_payload=$(SMOKE_PROBLEM_ID="$smoke_problem_id" SMOKE_CODE="$smoke_code" python3 - <<'PY'
 import json
