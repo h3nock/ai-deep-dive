@@ -37,7 +37,7 @@ description: "The big picture: how Large Language Models actually work."
   </div>
 
   <Description>
-    The model picks one word (usually sampling from the high-probability ones), appends it to the input, and repeats.
+    The model samples one word from the high-probability candidates, appends it to the input, and repeats.
   </Description>
 
   <div style={{ marginTop: "var(--space-flow)", marginBottom: "var(--space-flow)" }}>
@@ -64,7 +64,7 @@ description: "The big picture: how Large Language Models actually work."
   </div>
 
   <Description>
-    This loop continues until the response is complete. This simple mechanism, repeated many times during training on massive text data, produces behavior that looks remarkably like understanding.
+    Each new word feeds back in as input, and the process repeats until the response is complete. Every response you see from a language model is built one word at a time through this loop.
   </Description>
 </Step>
 
