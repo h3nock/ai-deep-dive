@@ -3,10 +3,7 @@
   "cases": [
     {
       "id": "case1",
-      "inputs": {
-        "text": "\"aaaaaa\"",
-        "num_merges": "2"
-      },
+      "input_code": "text = 'aaaaaa'\nnum_merges = 2\n",
       "expected": "([257, 256], {(97, 97): 256, (256, 256): 257})",
       "expected_is_code": true
     }

@@ -71,21 +71,10 @@ def _comparison_from_raw(raw: dict[str, Any] | None) -> Comparison:
 
 def _case_from_raw(raw: dict[str, Any], hidden_override: bool | None = None) -> TestCase:
     input_code = raw.get("input_code")
-    if input_code is None and "inputs" in raw:
-        lines: list[str] = []
-        for name, value in raw["inputs"].items():
-            if not isinstance(name, str) or not name.isidentifier():
-                raise ValueError(f"Invalid input variable name: {name!r}")
-            if not isinstance(value, str):
-                raise ValueError(
-                    f"Input value for {name!r} must be a string (Python literal), got {type(value).__name__}"
-                )
-            lines.append(f"{name} = {value}")
-        input_code = "\n".join(lines)
-        if input_code:
-            input_code += "\n"
-    if input_code is None:
-        input_code = ""
+    if not isinstance(input_code, str) or not input_code:
+        raise ValueError("Case must define a non-empty input_code string")
+    if not input_code.endswith("\n"):
+        input_code += "\n"
 
     comparison = None
     if "comparison" in raw:

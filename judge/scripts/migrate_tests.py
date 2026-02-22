@@ -25,6 +25,19 @@ def _normalize_expected(value):
     return value, False
 
 
+def _inputs_to_code(inputs: dict[str, object]) -> str:
+    lines: list[str] = []
+    for name, value in inputs.items():
+        if not isinstance(name, str) or not name.isidentifier():
+            raise ValueError(f"invalid input variable name: {name!r}")
+        rendered = value if isinstance(value, str) else repr(value)
+        lines.append(f"{name} = {rendered}")
+    code = "\n".join(lines)
+    if code:
+        code += "\n"
+    return code
+
+
 def migrate_challenge(challenge_dir: Path, out_root: Path, course_slug: str, chapter_slug: str) -> bool:
     tests_path = challenge_dir / "tests.json"
     if not tests_path.exists():
@@ -39,9 +52,19 @@ def migrate_challenge(challenge_dir: Path, out_root: Path, course_slug: str, cha
 
     for case in cases:
         expected, expected_is_code = _normalize_expected(case.get("expected"))
+        input_code = case.get("input_code")
+        if not isinstance(input_code, str) or not input_code.strip():
+            raw_inputs = case.get("inputs", {})
+            if not isinstance(raw_inputs, dict):
+                raise ValueError("inputs must be an object when input_code is missing")
+            input_code = _inputs_to_code(raw_inputs)
+
+        if not input_code.endswith("\n"):
+            input_code += "\n"
+
         item = {
             "id": case.get("id", ""),
-            "inputs": case.get("inputs", {}),
+            "input_code": input_code,
             "expected": expected,
         }
         if expected_is_code:

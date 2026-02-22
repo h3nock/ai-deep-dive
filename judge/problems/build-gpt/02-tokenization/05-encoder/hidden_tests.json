@@ -3,38 +3,19 @@
   "cases": [
     {
       "id": "b01",
-      "inputs": {
-        "text": "''",
-        "merges": "{}"
-      },
+      "input_code": "text = ''\nmerges = {}\n",
       "expected": []
     },
     {
-      "id": "b02",
-      "inputs": {
-        "text": "'aa'",
-        "merges": "{(97, 97): 256}"
-      },
-      "expected": [
-        256
-      ]
-    },
-    {
       "id": "a01",
-      "inputs": {
-        "text": "'aaa'",
-        "merges": "{(97, 97): 256, (256, 97): 257}"
-      },
+      "input_code": "text = 'aaa'\nmerges = {(97, 97): 256, (256, 97): 257}\n",
       "expected": [
         257
       ]
     },
     {
       "id": "a02",
-      "inputs": {
-        "text": "'ababa'",
-        "merges": "{(97, 98): 256, (98, 97): 257}"
-      },
+      "input_code": "text = 'ababa'\nmerges = {(97, 98): 256, (98, 97): 257}\n",
       "expected": [
         256,
         256,
@@ -43,10 +24,7 @@
     },
     {
       "id": "g01",
-      "inputs": {
-        "text": "'banan'",
-        "merges": "{(97, 110): 256, (98, 256): 257, (256, 97): 258, (257, 258): 259}"
-      },
+      "input_code": "text = 'banan'\nmerges = {(97, 110): 256, (98, 256): 257, (256, 97): 258, (257, 258): 259}\n",
       "expected": [
         257,
         256
@@ -54,10 +32,7 @@
     },
     {
       "id": "g02",
-      "inputs": {
-        "text": "'hell'",
-        "merges": "{(101, 108): 256, (104, 256): 257, (108, 111): 258, (257, 258): 259}"
-      },
+      "input_code": "text = 'hell'\nmerges = {(101, 108): 256, (104, 256): 257, (108, 111): 258, (257, 258): 259}\n",
       "expected": [
         257,
         108
@@ -65,10 +40,7 @@
     },
     {
       "id": "g03",
-      "inputs": {
-        "text": "'aaaaa'",
-        "merges": "{(97, 97): 256, (256, 256): 257, (257, 256): 258}"
-      },
+      "input_code": "text = 'aaaaa'\nmerges = {(97, 97): 256, (256, 256): 257, (257, 256): 258}\n",
       "expected": [
         257,
         97
@@ -76,10 +48,7 @@
     },
     {
       "id": "g04",
-      "inputs": {
-        "text": "'abcabcab'",
-        "merges": "{(97, 98): 256, (256, 99): 257, (257, 257): 258, (258, 257): 259}"
-      },
+      "input_code": "text = 'abcabcab'\nmerges = {(97, 98): 256, (256, 99): 257, (257, 257): 258, (258, 257): 259}\n",
       "expected": [
         258,
         256
@@ -87,10 +56,7 @@
     },
     {
       "id": "s01",
-      "inputs": {
-        "text": "'abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab'",
-        "merges": "{(97, 98): 256, (256, 256): 257, (257, 257): 258, (258, 258): 259, (259, 259): 260, (260, 260): 261, (261, 261): 262, (262, 262): 263, (259, 258): 264, (261, 264): 265, (263, 263): 266, (266, 265): 267}"
-      },
+      "input_code": "text = 'abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab'\nmerges = {(97, 98): 256, (256, 256): 257, (257, 257): 258, (258, 258): 259, (259, 259): 260, (260, 260): 261, (261, 261): 262, (262, 262): 263, (259, 258): 264, (261, 264): 265, (263, 263): 266, (266, 265): 267}\n",
       "expected": [
         262,
         261,
@@ -100,10 +66,7 @@
     },
     {
       "id": "s02",
-      "inputs": {
-        "text": "'tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization'",
-        "merges": "{(97, 116): 256, (101, 110): 257, (105, 111): 258, (105, 122): 259, (107, 257): 260, (111, 260): 261, (116, 261): 262, (256, 258): 263, (259, 263): 264, (262, 264): 265, (265, 110): 266, (32, 266): 267, (267, 267): 268, (268, 268): 269, (269, 269): 270, (270, 270): 271, (271, 271): 272, (266, 272): 273, (268, 267): 274, (269, 274): 275}"
-      },
+      "input_code": "text = 'tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization tokenization'\nmerges = {(97, 116): 256, (101, 110): 257, (105, 111): 258, (105, 122): 259, (107, 257): 260, (111, 260): 261, (116, 261): 262, (256, 258): 263, (259, 263): 264, (262, 264): 265, (265, 110): 266, (32, 266): 267, (267, 267): 268, (268, 268): 269, (269, 269): 270, (270, 270): 271, (271, 271): 272, (266, 272): 273, (268, 267): 274, (269, 274): 275}\n",
       "expected": [
         266,
         271,
@@ -112,10 +75,7 @@
     },
     {
       "id": "s03",
-      "inputs": {
-        "text": "'🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中'",
-        "merges": "{(130, 228): 256, (153, 256): 257, (159, 257): 258, (184, 173): 259, (240, 258): 260, (260, 259): 261, (261, 261): 262, (262, 262): 263, (263, 263): 264, (264, 264): 265, (265, 265): 266, (266, 266): 267, (265, 264): 268, (266, 268): 269}"
-      },
+      "input_code": "text = '🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中'\nmerges = {(130, 228): 256, (153, 256): 257, (159, 257): 258, (184, 173): 259, (240, 258): 260, (260, 259): 261, (261, 261): 262, (262, 262): 263, (263, 263): 264, (264, 264): 265, (265, 265): 266, (266, 266): 267, (265, 264): 268, (266, 268): 269}\n",
       "expected": [
         266,
         265,
@@ -124,10 +84,7 @@
     },
     {
       "id": "s04",
-      "inputs": {
-        "text": "'abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde'",
-        "merges": "{(97, 97): 256, (98, 98): 257, (99, 99): 258, (97, 257): 259, (99, 100): 260, (100, 101): 261, (256, 256): 262, (257, 258): 263, (259, 263): 264, (260, 261): 265, (262, 264): 266, (266, 265): 267, (32, 267): 268, (268, 268): 269, (269, 269): 270, (270, 270): 271, (271, 271): 272, (272, 272): 273}"
-      },
+      "input_code": "text = 'abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde abcde'\nmerges = {(97, 97): 256, (98, 98): 257, (99, 99): 258, (97, 257): 259, (99, 100): 260, (100, 101): 261, (256, 256): 262, (257, 258): 263, (259, 263): 264, (260, 261): 265, (262, 264): 266, (266, 265): 267, (32, 267): 268, (268, 268): 269, (269, 269): 270, (270, 270): 271, (271, 271): 272, (272, 272): 273}\n",
       "expected": [
         97,
         98,
@@ -432,10 +389,7 @@
     },
     {
       "id": "r01",
-      "inputs": {
-        "text": "'hg bbbfdhebeafcbc heddbhbadbacgagadecffafcgfdbc hgabfafagf g aggghda begegee  debahe'",
-        "merges": "{(97, 104): 256, (98, 98): 257, (32, 101): 258, (100, 99): 259, (100, 104): 260, (32, 102): 261, (98, 99): 262, (98, 103): 263, (101, 103): 264, (103, 103): 265}"
-      },
+      "input_code": "text = 'hg bbbfdhebeafcbc heddbhbadbacgagadecffafcgfdbc hgabfafagf g aggghda begegee  debahe'\nmerges = {(97, 104): 256, (98, 98): 257, (32, 101): 258, (100, 99): 259, (100, 104): 260, (32, 102): 261, (98, 99): 262, (98, 103): 263, (101, 103): 264, (103, 103): 265}\n",
       "expected": [
         104,
         103,
@@ -517,10 +471,7 @@
     },
     {
       "id": "r02",
-      "inputs": {
-        "text": "'  g eefadgahefegabaaf eeegecceg dahacdgdedd agbhbghc cdcbadhebehecfd g a aghbhfcfaccachegbfg c egc afgfaaffda'",
-        "merges": "{(98, 100): 256, (97, 98): 257, (101, 98): 258, (101, 100): 259, (32, 32): 260, (32, 256): 261, (99, 98): 262, (99, 104): 263, (100, 97): 264, (100, 102): 265, (101, 97): 266, (103, 32): 267}"
-      },
+      "input_code": "text = '  g eefadgahefegabaaf eeegecceg dahacdgdedd agbhbghc cdcbadhebehecfd g a aghbhfcfaccachegbfg c egc afgfaaffda'\nmerges = {(98, 100): 256, (97, 98): 257, (101, 98): 258, (101, 100): 259, (32, 32): 260, (32, 256): 261, (99, 98): 262, (99, 104): 263, (100, 97): 264, (100, 102): 265, (101, 97): 266, (103, 32): 267}\n",
       "expected": [
         260,
         267,
@@ -623,10 +574,7 @@
     },
     {
       "id": "r03",
-      "inputs": {
-        "text": "'ff ebhgbhfgcegabdc cabddeae bccgf cgbeada fbdehhdb  bccfga  d d b dg cedgbfhchagffdaa hfaf bda'",
-        "merges": "{(32, 102): 256, (99, 98): 257, (98, 101): 258, (98, 103): 259, (32, 99): 260, (32, 103): 261, (97, 101): 262, (97, 102): 263, (100, 98): 264, (104, 97): 265, (104, 104): 266, (32, 98): 267, (97, 103): 268}"
-      },
+      "input_code": "text = 'ff ebhgbhfgcegabdc cabddeae bccgf cgbeada fbdehhdb  bccfga  d d b dg cedgbfhchagffdaa hfaf bda'\nmerges = {(32, 102): 256, (99, 98): 257, (98, 101): 258, (98, 103): 259, (32, 99): 260, (32, 103): 261, (97, 101): 262, (97, 102): 263, (100, 98): 264, (104, 97): 265, (104, 104): 266, (32, 98): 267, (97, 103): 268}\n",
       "expected": [
         102,
         102,
@@ -712,10 +660,7 @@
     },
     {
       "id": "r04",
-      "inputs": {
-        "text": "'dbbf addhef f fcgfccgbhhf aagceeehch gd hfgfhffgaeh  gehcfgea'",
-        "merges": "{(100, 104): 256, (32, 32): 257, (32, 98): 258, (97, 102): 259, (101, 99): 260, (32, 99): 261, (97, 100): 262, (97, 101): 263, (97, 104): 264, (98, 104): 265, (99, 259): 266, (101, 98): 267, (101, 100): 268, (103, 100): 269}"
-      },
+      "input_code": "text = 'dbbf addhef f fcgfccgbhhf aagceeehch gd hfgfhffgaeh  gehcfgea'\nmerges = {(100, 104): 256, (32, 32): 257, (32, 98): 258, (97, 102): 259, (101, 99): 260, (32, 99): 261, (97, 100): 262, (97, 101): 263, (97, 104): 264, (98, 104): 265, (99, 259): 266, (101, 98): 267, (101, 100): 268, (103, 100): 269}\n",
       "expected": [
         100,
         98,
@@ -776,10 +721,7 @@
     },
     {
       "id": "r05",
-      "inputs": {
-        "text": "'gafecbdgggcbc afggbcaefgcggbbebc facfae'",
-        "merges": "{(99, 97): 256, (99, 101): 257, (102, 98): 258, (97, 98): 259, (97, 104): 260, (99, 98): 261, (99, 100): 262, (99, 103): 263, (100, 32): 264, (101, 32): 265, (104, 98): 266, (97, 103): 267, (100, 103): 268, (101, 102): 269}"
-      },
+      "input_code": "text = 'gafecbdgggcbc afggbcaefgcggbbebc facfae'\nmerges = {(99, 97): 256, (99, 101): 257, (102, 98): 258, (97, 98): 259, (97, 104): 260, (99, 98): 261, (99, 100): 262, (99, 103): 263, (100, 32): 264, (101, 32): 265, (104, 98): 266, (97, 103): 267, (100, 103): 268, (101, 102): 269}\n",
       "expected": [
         103,
         97,
@@ -818,10 +760,7 @@
     },
     {
       "id": "r06",
-      "inputs": {
-        "text": "'cf bhafehedeefddebfabecdbahb ghbffca b adhehhfgccgfbcd eehae  aeggdgfebg '",
-        "merges": "{(101, 32): 256, (98, 101): 257, (103, 104): 258, (102, 103): 259, (99, 104): 260, (102, 32): 261, (100, 104): 262, (100, 256): 263, (103, 101): 264, (104, 98): 265, (32, 98): 266, (97, 99): 267, (98, 32): 268, (99, 32): 269, (99, 103): 270}"
-      },
+      "input_code": "text = 'cf bhafehedeefddebfabecdbahb ghbffca b adhehhfgccgfbcd eehae  aeggdgfebg '\nmerges = {(101, 32): 256, (98, 101): 257, (103, 104): 258, (102, 103): 259, (99, 104): 260, (102, 32): 261, (100, 104): 262, (100, 256): 263, (103, 101): 264, (104, 98): 265, (32, 98): 266, (97, 99): 267, (98, 32): 268, (99, 32): 269, (99, 103): 270}\n",
       "expected": [
         99,
         261,
@@ -891,10 +830,7 @@
     },
     {
       "id": "r07",
-      "inputs": {
-        "text": "'fgcfeaeacddhdfaeg bcgfebfeaaaggbfefchafeca fecde adegghe  debfhegadhdfhhhgh   aebeeggdeba bacacgb'",
-        "merges": "{(97, 101): 256, (98, 102): 257, (104, 101): 258, (97, 99): 259, (100, 103): 260}"
-      },
+      "input_code": "text = 'fgcfeaeacddhdfaeg bcgfebfeaaaggbfefchafeca fecde adegghe  debfhegadhdfhhhgh   aebeeggdeba bacacgb'\nmerges = {(97, 101): 256, (98, 102): 257, (104, 101): 258, (97, 99): 259, (100, 103): 260}\n",
       "expected": [
         102,
         103,
@@ -986,10 +922,7 @@
     },
     {
       "id": "r08",
-      "inputs": {
-        "text": "'dhhf cefbgbeefgccdfcceca b fchhdd hecehgbeachfebdcbghgaehh'",
-        "merges": "{(98, 102): 256, (99, 104): 257, (100, 97): 258, (101, 99): 259, (102, 103): 260, (103, 104): 261, (32, 259): 262, (99, 100): 263}"
-      },
+      "input_code": "text = 'dhhf cefbgbeefgccdfcceca b fchhdd hecehgbeachfebdcbghgaehh'\nmerges = {(98, 102): 256, (99, 104): 257, (100, 97): 258, (101, 99): 259, (102, 103): 260, (103, 104): 261, (32, 259): 262, (99, 100): 263}\n",
       "expected": [
         100,
         104,

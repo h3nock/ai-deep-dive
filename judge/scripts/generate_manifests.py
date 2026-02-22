@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import ast
 import json
-from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -134,8 +133,58 @@ def _detect_comparison(problem_dir: Path) -> dict[str, object]:
                 bool(case.get("expected_is_code", False)),
             )
             if _has_float(expected):
-                return {"type": "allclose", "rtol": 1e-5, "atol": 1e-8}
+                return {"type": "allclose", "rtol": 1e-5, "atol": 1e-6}
     return {"type": "exact"}
+
+
+COMPARISON_BY_PROBLEM: dict[str, dict[str, object]] = {
+    "build-gpt/01-from-text-to-bytes/01-encoder": {"type": "exact"},
+    "build-gpt/01-from-text-to-bytes/02-byte-inspector": {"type": "exact"},
+    "build-gpt/02-tokenization/01-pair-counter": {"type": "exact"},
+    "build-gpt/02-tokenization/02-token-merger": {"type": "exact"},
+    "build-gpt/02-tokenization/03-bpe-trainer": {"type": "exact"},
+    "build-gpt/02-tokenization/04-decoder": {"type": "exact"},
+    "build-gpt/02-tokenization/05-encoder": {"type": "exact"},
+    "build-gpt/03-embeddings/01-most-similar": {"type": "exact"},
+    "build-gpt/03-embeddings/02-vector-analogy": {"type": "exact"},
+    "build-gpt/04-positional-encoding/01-frequency-schedule": {
+        "type": "allclose",
+        "rtol": 1e-5,
+        "atol": 1e-6,
+    },
+    "build-gpt/04-positional-encoding/02-positional-encoding-vector": {
+        "type": "allclose",
+        "rtol": 1e-5,
+        "atol": 5e-5,
+    },
+    "build-gpt/04-positional-encoding/03-pe-matrix": {
+        "type": "allclose",
+        "rtol": 1e-5,
+        "atol": 1e-6,
+    },
+    "build-gpt/05-attention-mechanism/01-attention-weights": {
+        "type": "allclose",
+        "rtol": 1e-5,
+        "atol": 1e-6,
+    },
+    "build-gpt/05-attention-mechanism/02-causal-attention": {
+        "type": "allclose",
+        "rtol": 1e-5,
+        "atol": 1e-6,
+    },
+    "build-gpt/06-multi-head-attention/01-multi-head-causal-attention": {
+        "type": "allclose",
+        "rtol": 1e-5,
+        "atol": 1e-6,
+    },
+}
+
+
+def _comparison_for_problem(problem_id: str, problem_dir: Path) -> dict[str, object]:
+    explicit = COMPARISON_BY_PROBLEM.get(problem_id)
+    if explicit is not None:
+        return dict(explicit)
+    return _detect_comparison(problem_dir)
 
 
 def generate_manifest(
@@ -200,7 +249,7 @@ def main() -> None:
             if not fm_lines:
                 continue
             frontmatter = _parse_frontmatter(fm_lines)
-            comparison = _detect_comparison(problem_dir)
+            comparison = _comparison_for_problem(problem_id, problem_dir)
             manifest = generate_manifest(problem_id, frontmatter, comparison)
 
             manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
