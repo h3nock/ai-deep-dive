@@ -142,7 +142,7 @@ Environment variables:
 - `JUDGE_ISOLATE_TIMEOUT_GRACE_S` (default: `5`)
 - `JUDGE_ISOLATE_FSIZE_KB` (default: `1024`)
 - `JUDGE_PYTHON_BIN` (default: worker interpreter path)
-- `JUDGE_TORCH_EXECUTION_MODE` (default: `isolate`, options: `isolate`, `warm_fork`)
+- `JUDGE_TORCH_EXECUTION_MODE` (default: `warm_fork`, options: `isolate`, `warm_fork`)
 - `JUDGE_WARM_FORK_ENABLE_NO_NEW_PRIVS` (default: `1`)
 - `JUDGE_WARM_FORK_ENABLE_SECCOMP` (default: `1`)
 - `JUDGE_WARM_FORK_SECCOMP_FAIL_CLOSED` (default: `1`)
@@ -155,8 +155,8 @@ Environment variables:
 ## Notes
 
 - `light` profile always executes inside isolate.
-- `torch` profile executes inside isolate by default, or with the warm fork
-  executor when `JUDGE_TORCH_EXECUTION_MODE=warm_fork`.
+- `torch` profile uses warm fork execution by default.
+- Set `JUDGE_TORCH_EXECUTION_MODE=isolate` to force per-job isolate execution.
 - VM deployment scripts enforce CPU-only PyTorch wheels for judge workers.
 - Warm fork hardening defaults:
   `no_new_privs=on`, `seccomp=on`, `clear_env=on`.
