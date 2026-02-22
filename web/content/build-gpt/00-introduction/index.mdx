@@ -87,20 +87,20 @@ description: "The big picture: how Large Language Models actually work."
     {
       title: "Bytes → Tokens",
       data: "[72, 101, 108, 108, 111] → [15496]",
-      description: "We group bytes into chunks so there's a shorter sequence to process."
+      description: "Bytes are grouped into meaningful chunks, giving the model a shorter sequence to work with."
     },
     {
       title: "Tokens → Vectors",
       data: "[15496] → [0.12, -0.48, 0.91, ...]",
-      description: "Plain token IDs don't capture meaning. This step converts each token into a vector that represents what it means."
+      description: "Each token ID becomes a vector, a list of numbers that captures the token's meaning."
     },
     {
       title: "Vectors → Transformer → Next Token",
-      description: "The Transformer reads context and predicts the next token."
+      description: "The Transformer processes the full sequence and predicts what comes next."
     },
     {
       title: "Token → Text",
-      description: "Tokens convert back to text, looping until the response is complete."
+      description: "The predicted token converts back to text, and the loop continues until the response is complete."
     }
   ]} />
 </Step>
