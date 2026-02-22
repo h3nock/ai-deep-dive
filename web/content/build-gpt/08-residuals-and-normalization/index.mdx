@@ -6,7 +6,7 @@ description: "How residual connections and layer normalization enable deep netwo
 
 <div className="flex flex-col" style={{ gap: 'var(--space-flow)' }}>
 <Description noMargin>
-  We now have all the core components, from embeddings and positional encoding to multi-head attention and feed-forward networks. But a single pass through one attention layer and one FFN isn't enough to capture the full complexity of language. So, the model needs to refine its representations through multiple rounds of processing, and the way to do this is **stacking**. By repeating the same attention-then-FFN block many times in sequence, the model develops increasingly abstract patterns at each level.
+  We now have all the core components, from embeddings and positional encoding to multi-head attention and feed-forward networks. But a single pass through one attention layer and one FFN isn't enough to capture the full complexity of language. The model needs to refine its representations through multiple rounds of processing. By **stacking** the same attention-then-FFN block many times in sequence, it develops increasingly abstract patterns at each level.
 </Description>
 
 <Description>
@@ -44,11 +44,11 @@ description: "How residual connections and layer normalization enable deep netwo
 
 <Step title="Residual Connections">
   <Description>
-    Both problems trace back to the same structural cause. The layers form a sequential chain where each one receives the previous layer's output, transforms it into a new vector, and passes that vector as the next layer's entire input. This means whatever an early layer produces gets transformed by the next layer, then again by the layer after that, and so on through the rest of the stack. The information an early layer encodes can only reach the final output by surviving this entire sequence of transformations, and any transformation that distorts something useful passes that distortion forward to every layer that follows.
+    Both problems share the same structural cause. The layers form a sequential chain where each one receives the previous layer's output, transforms it, and passes the result as the next layer's entire input. The information an early layer encodes can only reach the final output by surviving every transformation in this chain, and any transformation that distorts something useful passes that distortion forward to every layer that follows.
   </Description>
 
   <Description>
-    The gradient during the backward pass travels this same chain in reverse. For an early layer to update its weights, the loss signal must flow backward from the output through every intermediate layer, getting multiplied at each one by that layer's local derivatives. Over enough layers, these repeated multiplications might cause gradients to vanish or explode.
+    The gradient travels this same chain in reverse. For an early layer to update its weights, the loss signal must flow backward through every intermediate layer, getting multiplied at each one by that layer's local derivatives. Over enough layers, these repeated multiplications might cause gradients to vanish or explode.
   </Description>
 
   <Description>
@@ -165,7 +165,7 @@ description: "How residual connections and layer normalization enable deep netwo
   </Description>
 
   <Description>
-    The core idea is to reduce each token's vector to just its underlying structure by subtracting the mean across the `d_model` values to remove any overall offset, and dividing by the standard deviation to remove differences in scale.
+    The core idea is to strip each token's vector down to its underlying structure. Subtracting the mean across the `d_model` values removes any overall offset, and dividing by the standard deviation removes differences in scale.
   </Description>
 
   <div className="my-6 p-5 bg-surface rounded-lg border border-border space-y-3">
@@ -237,7 +237,7 @@ description: "How residual connections and layer normalization enable deep netwo
   </div>
 
   <Description>
-    Most modern language models use the alternative approach of applying normalization **before** the sublayer. By placing LayerNorm directly inside the residual branch, we get what is called **Pre-Norm**:
+    Most modern language models take a different approach called **Pre-Norm**, which applies normalization **before** the sublayer rather than after:
   </Description>
 
   <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm space-y-1">
@@ -352,7 +352,7 @@ description: "How residual connections and layer normalization enable deep netwo
   * Deep networks can be difficult to train because sequential layers repeatedly multiply the error signal during backpropagation, which can cause **vanishing or exploding gradients**
   * During the **forward pass**, information from earlier layers can be degraded or overwritten as it passes through successive sublayers
   * **Residual connections** add a bypass pathway (`output = sublayer(x) + x`), preserving forward information and providing a direct path for gradients with a multiplier of 1
-  * **Layer normalization** standardizes vectors to zero mean and unit variance, using learned parameters ($\gamma$ and $\beta$) to ensure sublayers receive data at a consistent scale
+  * **Layer normalization** standardizes vectors to zero mean and unit variance, using learned parameters (γ and β) to ensure sublayers receive data at a consistent scale
   * **Post-Norm** applies normalization *after* the residual addition, placing a nonlinear operation on the identity path which can complicate training at greater depths
   * **Pre-Norm** applies normalization *inside* the sublayer branch, keeping the identity path clean and generally enabling more stable training for modern language models
 </Callout>
