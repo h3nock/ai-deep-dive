@@ -8,8 +8,7 @@ type Comparison = {
 
 type PublicTestCase = {
   id: string;
-  input_code?: string;
-  inputs?: Record<string, string>;
+  input_code: string;
   expected: unknown;
   expected_is_code?: boolean;
   comparison?: Comparison;
@@ -129,13 +128,7 @@ export function bundleToTestConfig(bundle: PublicBundle): TestConfig {
   }
 
   const cases = normalizeTests(bundle.tests).map((tc) => {
-    let input = tc.input_code ?? "";
-    if (!input && tc.inputs) {
-      input = Object.entries(tc.inputs)
-        .map(([key, value]) => `${key} = ${value}`)
-        .join("\n");
-      if (input) input += "\n";
-    }
+    const input = tc.input_code ?? "";
 
     const expected = tc.expected_is_code
       ? String(tc.expected)

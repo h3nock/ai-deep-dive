@@ -3,7 +3,7 @@ import type Editor from "@monaco-editor/react";
 /** UI-level test case used in the challenge editor panels. */
 export interface TestCase {
   id: string;
-  inputs: Record<string, string>;
+  input_code: string;
   expected: string;
   explanation?: string;
 }

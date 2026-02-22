@@ -3,25 +3,12 @@
   "cases": [
     {
       "id": "b01",
-      "inputs": {
-        "text": "''"
-      },
+      "input_code": "text = ''\n",
       "expected": []
     },
     {
       "id": "b02",
-      "inputs": {
-        "text": "'A'"
-      },
-      "expected": [
-        65
-      ]
-    },
-    {
-      "id": "b03",
-      "inputs": {
-        "text": "'hello'"
-      },
+      "input_code": "text = 'hello'\n",
       "expected": [
         104,
         101,
@@ -31,10 +18,8 @@
       ]
     },
     {
-      "id": "b04",
-      "inputs": {
-        "text": "'🙂'"
-      },
+      "id": "b03",
+      "input_code": "text = '🙂'\n",
       "expected": [
         240,
         159,
@@ -43,10 +28,8 @@
       ]
     },
     {
-      "id": "b05",
-      "inputs": {
-        "text": "'é'"
-      },
+      "id": "b04",
+      "input_code": "text = 'é'\n",
       "expected": [
         101,
         204,
@@ -54,10 +37,8 @@
       ]
     },
     {
-      "id": "b06",
-      "inputs": {
-        "text": "'𐍈'"
-      },
+      "id": "b05",
+      "input_code": "text = '𐍈'\n",
       "expected": [
         240,
         144,
@@ -67,18 +48,14 @@
     },
     {
       "id": "a01",
-      "inputs": {
-        "text": "'\\x00'"
-      },
+      "input_code": "text = '\\x00'\n",
       "expected": [
         0
       ]
     },
     {
       "id": "a02",
-      "inputs": {
-        "text": "'line1\\\\nline2'"
-      },
+      "input_code": "text = 'line1\\\\nline2'\n",
       "expected": [
         108,
         105,
@@ -96,9 +73,7 @@
     },
     {
       "id": "a03",
-      "inputs": {
-        "text": "'漢字🙂'"
-      },
+      "input_code": "text = '漢字🙂'\n",
       "expected": [
         230,
         188,
@@ -114,9 +89,7 @@
     },
     {
       "id": "a04",
-      "inputs": {
-        "text": "'Café'"
-      },
+      "input_code": "text = 'Café'\n",
       "expected": [
         67,
         97,
@@ -127,9 +100,7 @@
     },
     {
       "id": "a05",
-      "inputs": {
-        "text": "'👩\\u200d💻'"
-      },
+      "input_code": "text = '👩\\u200d💻'\n",
       "expected": [
         240,
         159,
@@ -146,9 +117,7 @@
     },
     {
       "id": "s01",
-      "inputs": {
-        "text": "'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'"
-      },
+      "input_code": "text = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n",
       "expected": [
         97,
         97,
@@ -410,9 +379,7 @@
     },
     {
       "id": "s02",
-      "inputs": {
-        "text": "'🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂'"
-      },
+      "input_code": "text = '🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂'\n",
       "expected": [
         240,
         159,
@@ -738,9 +705,7 @@
     },
     {
       "id": "s03",
-      "inputs": {
-        "text": "'token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-'"
-      },
+      "input_code": "text = 'token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-token-'\n",
       "expected": [
         116,
         111,
@@ -1286,9 +1251,7 @@
     },
     {
       "id": "s04",
-      "inputs": {
-        "text": "'漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n'"
-      },
+      "input_code": "text = '漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n漢字🙂abc\\n'\n",
       "expected": [
         230,
         188,
@@ -1854,9 +1817,7 @@
     },
     {
       "id": "r01",
-      "inputs": {
-        "text": "' 中é🙂a中 \\n -🙂 é🙂b- cb🙂中é 🙂é ßß bß🙂- b\\né-'"
-      },
+      "input_code": "text = ' 中é🙂a中 \\n -🙂 é🙂b- cb🙂中é 🙂é ßß bß🙂- b\\né-'\n",
       "expected": [
         32,
         228,
@@ -1932,9 +1893,7 @@
     },
     {
       "id": "r02",
-      "inputs": {
-        "text": "'ß ßbßßa🙂 中béaééa-\\ncaßc-bcß'"
-      },
+      "input_code": "text = 'ß ßbßßa🙂 中béaééa-\\ncaßc-bcß'\n",
       "expected": [
         195,
         159,
@@ -1980,9 +1939,7 @@
     },
     {
       "id": "r03",
-      "inputs": {
-        "text": "'\\n🙂c🙂中-c中abba\\né中🙂b\\n\\n🙂cc 中🙂cbc-éßba中中é🙂a -éb-c-🙂 ßb中é b-caaß\\n🙂\\naé -🙂 中\\n中ééac-ééßßa 中b cbcébéa🙂 é中中 c🙂中中é--- ß 🙂-a a\\né🙂🙂a-中 a🙂\\naaß🙂-\\nc🙂aa-\\nbb\\n🙂é中bc🙂ßb-a é 中b  cc\\n 🙂ca 中中 b\\n中aé'"
-      },
+      "input_code": "text = '\\n🙂c🙂中-c中abba\\né中🙂b\\n\\n🙂cc 中🙂cbc-éßba中中é🙂a -éb-c-🙂 ßb中é b-caaß\\n🙂\\naé -🙂 中\\n中ééac-ééßßa 中b cbcébéa🙂 é中中 c🙂中中é--- ß 🙂-a a\\né🙂🙂a-中 a🙂\\naaß🙂-\\nc🙂aa-\\nbb\\n🙂é中bc🙂ßb-a é 中b  cc\\n 🙂ca 中中 b\\n中aé'\n",
       "expected": [
         10,
         240,
@@ -2286,9 +2243,7 @@
     },
     {
       "id": "r04",
-      "inputs": {
-        "text": "'c\\n🙂cbba🙂\\n\\n\\n\\nb-ßcab-中ab-- cß中ßcéa -ß 🙂  ßc\\nc🙂🙂🙂 -a éa -中-aßc-\\n\\né🙂\\n-a🙂-bcaé🙂aßaéa aßc🙂ßbcß🙂-é \\n-ßcc中🙂- ß中aa中ba🙂-🙂é\\n-cé🙂 c🙂bßb\\n🙂b中a🙂-éßcb中 中中ßßcaé\\nbac-c中c中-中\\n\\n 中\\nb ca中 🙂b\\nc🙂🙂-cccc🙂ß🙂acéb\\n-caaéac- cß  éc\\nééßé \\n---中'"
-      },
+      "input_code": "text = 'c\\n🙂cbba🙂\\n\\n\\n\\nb-ßcab-中ab-- cß中ßcéa -ß 🙂  ßc\\nc🙂🙂🙂 -a éa -中-aßc-\\n\\né🙂\\n-a🙂-bcaé🙂aßaéa aßc🙂ßbcß🙂-é \\n-ßcc中🙂- ß中aa中ba🙂-🙂é\\n-cé🙂 c🙂bßb\\n🙂b中a🙂-éßcb中 中中ßßcaé\\nbac-c中c中-中\\n\\n 中\\nb ca中 🙂b\\nc🙂🙂-cccc🙂ß🙂acéb\\n-caaéac- cß  éc\\nééßé \\n---中'\n",
       "expected": [
         99,
         10,
@@ -2640,9 +2595,7 @@
     },
     {
       "id": "r05",
-      "inputs": {
-        "text": "'ccaßb中ßc- 🙂🙂\\n cbbßßa-c\\nc中\\nßa\\né\\nbc 中-acaßé中 中🙂c éca🙂🙂 -🙂ébß🙂éaé🙂abéé\\nébab🙂ß- - c中 c中中--\\nbcé\\nac\\nßé\\n-é\\nécß中中 ßaa-é  écb-b-中-céa  a中a-\\nßb🙂ébßßßéßb\\nb--中🙂bß ca 🙂cbb中c中\\n- ß🙂bc-écb \\n-acé\\naßacß中a中 '"
-      },
+      "input_code": "text = 'ccaßb中ßc- 🙂🙂\\n cbbßßa-c\\nc中\\nßa\\né\\nbc 中-acaßé中 中🙂c éca🙂🙂 -🙂ébß🙂éaé🙂abéé\\nébab🙂ß- - c中 c中中--\\nbcé\\nac\\nßé\\n-é\\nécß中中 ßaa-é  écb-b-中-céa  a中a-\\nßb🙂ébßßßéßb\\nb--中🙂bß ca 🙂cbb中c中\\n- ß🙂bc-écb \\n-acé\\naßacß中a中 '\n",
       "expected": [
         99,
         99,

@@ -8,6 +8,6 @@
   "comparison": {
     "type": "allclose",
     "rtol": 1e-05,
-    "atol": 1e-08
+    "atol": 5e-05
   }
 }

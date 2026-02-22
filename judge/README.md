@@ -74,7 +74,7 @@ python judge/scripts/warm_fork_security_probe.py --skip-bench
 ## Export public tests for the frontend
 
 ```bash
-python judge/scripts/export_public_tests.py
+python judge/scripts/export_tests_endpoint.py --web-out-root web/public/judge-tests
 ```
 
 Bundles are written to `web/public/judge-tests/` and treated as build artifacts.
@@ -88,6 +88,16 @@ python judge/scripts/export_tests_endpoint.py --out-root /opt/ai-deep-dive/judge
 
 This export includes public manifests/bundles and hidden test files. Hidden
 tests are for judge execution only and are not publicly served over nginx.
+
+## Generate problem tests
+
+```bash
+python judge/scripts/generate_hidden_tests.py
+```
+
+This regenerates both `public_tests.json` and `hidden_tests.json` from the
+reference generators. Curated public examples are emitted first, and hidden
+output excludes those public cases to avoid duplicate submit execution.
 
 ## Submit a sample job
 

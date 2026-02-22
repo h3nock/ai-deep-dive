@@ -1,4 +1,4 @@
-"""Export public bundles + hidden tests for the judge tests endpoint."""
+"""Export judge test artifacts for endpoint and/or web bundle roots."""
 
 from __future__ import annotations
 
@@ -17,28 +17,11 @@ def write_json(path: Path, data: dict) -> None:
     path.write_text(json.dumps(data))
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Export judge tests endpoint")
-    parser.add_argument(
-        "--out-root",
-        default=None,
-        help="Output root for /judge-tests (default: judge/tests)",
-    )
-    args = parser.parse_args()
-
-    repo_root = Path(__file__).resolve().parents[2]
-    problems_root = repo_root / "judge" / "problems"
-    out_root = Path(args.out_root) if args.out_root else (repo_root / "judge" / "tests")
-
-    if not problems_root.exists():
-        raise SystemExit("judge/problems directory not found")
-
+def _export_root(*, problems_root: Path, out_root: Path, include_hidden: bool) -> int:
     if out_root.exists():
         shutil.rmtree(out_root)
     out_root.mkdir(parents=True, exist_ok=True)
-
     exported = 0
-
     for manifest_path in problems_root.rglob("manifest.json"):
         problem_dir = manifest_path.parent
         public_tests = problem_dir / "public_tests.json"
@@ -71,13 +54,57 @@ def main() -> None:
         }
         write_json(out_dir / "public_manifest.json", public_manifest)
 
-        hidden_tests = problem_dir / "hidden_tests.json"
-        if hidden_tests.exists():
-            shutil.copy2(hidden_tests, out_dir / "hidden_tests.json")
+        if include_hidden:
+            hidden_tests = problem_dir / "hidden_tests.json"
+            if hidden_tests.exists():
+                shutil.copy2(hidden_tests, out_dir / "hidden_tests.json")
 
         exported += 1
+    return exported
 
-    print(f"Exported {exported} problem(s) to {out_root}")
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Export judge test bundles")
+    parser.add_argument(
+        "--out-root",
+        default=None,
+        help="Output root for judge endpoint artifacts (default: judge/tests)",
+    )
+    parser.add_argument(
+        "--web-out-root",
+        default=None,
+        help="Optional output root for web public bundles (hidden tests are not exported)",
+    )
+    args = parser.parse_args()
+
+    repo_root = Path(__file__).resolve().parents[2]
+    problems_root = repo_root / "judge" / "problems"
+
+    if not problems_root.exists():
+        raise SystemExit("judge/problems directory not found")
+
+    if args.out_root is None and args.web_out_root is None:
+        judge_out_root = repo_root / "judge" / "tests"
+        web_out_root: Path | None = None
+    else:
+        judge_out_root = Path(args.out_root) if args.out_root else None
+        web_out_root = Path(args.web_out_root) if args.web_out_root else None
+
+    if judge_out_root is not None:
+        count = _export_root(
+            problems_root=problems_root,
+            out_root=judge_out_root,
+            include_hidden=True,
+        )
+        print(f"Exported {count} problem(s) to {judge_out_root}")
+
+    if web_out_root is not None:
+        count = _export_root(
+            problems_root=problems_root,
+            out_root=web_out_root,
+            include_hidden=False,
+        )
+        print(f"Exported {count} public bundle(s) to {web_out_root}")
 
 
 if __name__ == "__main__":
