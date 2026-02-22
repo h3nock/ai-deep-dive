@@ -16,7 +16,7 @@ description: "How computers represent language (Unicode & UTF-8)."
   </Description>
 
   <Description>
-    This consistency is achieved through **Unicode**, the universal standard for text. It acts as a large lookup table that assigns a unique number, called a **Code Point**, to every character in almost every language. Today, Unicode defines over 150,000 characters across 161 scripts. We usually represent these code points with the notation `U+XXXX` (where XXXX is a hexadecimal number).
+    **Unicode** provides this consistency as the universal standard for text. It acts as a large lookup table that assigns a unique number, called a **Code Point**, to every character in almost every language. Today, Unicode defines over 150,000 characters across 161 scripts. We usually represent these code points with the notation `U+XXXX` (where XXXX is a hexadecimal number).
   </Description>
 
   <Callout type="note" muted>
@@ -47,7 +47,7 @@ description: "How computers represent language (Unicode & UTF-8)."
   </Description>
 
   <Description attached>
-    However, UTF-32 is space-inefficient for most text. For example, a simple text file of English letters (which only need 1 byte) would be four times larger than necessary. Let's consider storing **"Hello"** using UTF-32:
+    However, UTF-32 is space-inefficient for most text. For example, a simple text file of English letters, which only need 1 byte each, would be four times larger than necessary. Let's consider storing **"Hello"** using UTF-32:
   </Description>
 
   <div className="content-attached">
@@ -66,19 +66,19 @@ description: "How computers represent language (Unicode & UTF-8)."
   </Description>
 
   <Description>
-    For English text (which dominates the internet), UTF-32 uses four times more storage than necessary. This makes UTF-32 impractical for almost all real-world applications, so we need a more efficient encoding.
+    For English text, which makes up most of the internet, UTF-32 uses four times more storage than necessary. This makes UTF-32 impractical for almost all real-world applications, so we need a more efficient encoding.
   </Description>
 </Step>
 
 <Step title="3. UTF-8">
   <Description>
-    **UTF-8** solves the storage problem by using fewer bytes for common characters and more bytes only when needed, instead of wasting 4 bytes on every character.
+    **UTF-8** solves the storage problem by using fewer bytes for common characters and more bytes only when needed.
   </Description>
 
   <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.1 How UTF-8 Allocates Bytes</h4>
 
   <Description attached>
-    In UTF-8, different characters need different amounts of storage. ASCII characters (the basic Latin alphabet, digits, and punctuation) are so common that UTF-8 keeps them as single bytes for maximum efficiency. As characters become less common in English text (accented letters, then Asian scripts, then emoji), they get allocated more bytes. Here's how UTF-8 divides the Unicode space:
+    In UTF-8, different characters need different amounts of storage. ASCII characters (the basic Latin alphabet, digits, and punctuation) are so common that UTF-8 keeps them as single bytes for maximum efficiency. As characters become less common in English text, they get allocated more bytes. Here's how UTF-8 divides the Unicode space:
   </Description>
 
   <div className="content-attached grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -109,7 +109,7 @@ description: "How computers represent language (Unicode & UTF-8)."
   </div>
 
   <Description>
-    With UTF-8, "Hello" takes just 5 bytes instead of 20. English text is as compact as it was with ASCII, while still supporting every character in Unicode. Try different text in the interactive comparison below to see how the byte counts change:
+    With UTF-8, "Hello" takes just 5 bytes instead of 20. English text is as compact as it was with ASCII, while still supporting every character in Unicode. You can try different text in the interactive comparison below to see how the byte counts change.
   </Description>
 
   <EncodingCompare />
@@ -165,7 +165,7 @@ description: "How computers represent language (Unicode & UTF-8)."
   </div>
 
   <Description>
-    This is the core challenge with variable-width encoding.
+    Finding where one character ends and the next begins is the core challenge with variable-width encoding.
   </Description>
 
   <h4 className="text-lg font-semibold text-primary" style={{ marginTop: 'var(--space-flow)', marginBottom: 'var(--space-atomic)' }}>3.3 How UTF-8 Marks Boundaries</h4>
