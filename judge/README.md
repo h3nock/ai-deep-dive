@@ -206,6 +206,13 @@ Deploy automation:
 - `judge/deploy/monitoring/send-test-alert.sh` injects a synthetic alert to
   test Telegram/email delivery through Alertmanager.
 
+Worker liveness and recovery:
+
+- Worker template services use systemd watchdog (`Type=notify` + `WatchdogSec`).
+- Workers send readiness/watchdog pings from the parent loop.
+- Worker-missing alerts use node-exporter systemd unit-state metrics
+  (`node_systemd_unit_state`) instead of app heartbeat shard files.
+
 ## Problem format
 
 See `judge/problems/README.md` for manifest and test formats.

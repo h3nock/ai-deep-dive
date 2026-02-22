@@ -86,6 +86,10 @@ Legacy non-template units are always disabled to avoid mixed-consumer drift:
 Any active template unit above the configured count is also stopped and
 disabled during reconciliation.
 
+Worker template services run with systemd watchdog enabled (`Type=notify`).
+Workers send readiness/watchdog pings from the main loop, so systemd can
+restart hung worker processes even if the process does not exit on its own.
+
 ### Test bundle export
 
 Public bundles are served from `/judge-tests/`. Hidden tests are exported to
@@ -136,6 +140,8 @@ This installer:
 - adds Grafana APT repo + signing key
 - installs `prometheus`, `prometheus-node-exporter`, `prometheus-alertmanager`, `grafana`
 - enables and starts all monitoring services
+- provides systemd unit-state metrics (`node_systemd_unit_state`) used by
+  worker-missing alerts
 
 On non-Ubuntu systems, install equivalent packages/repos manually, then run:
 
@@ -203,7 +209,7 @@ these alert tuning variables:
 - `ALERT_BACKLOG_WARN_MINUTES` and `ALERT_BACKLOG_FOR` (queue lag warning calibration)
 - `ALERT_QUEUE_WAIT_P95_WARN_SECONDS`, `ALERT_QUEUE_WAIT_WINDOW`,
   `ALERT_QUEUE_WAIT_FOR`, `ALERT_QUEUE_WAIT_MIN_STARTS`
-- `ALERT_WORKER_HEARTBEAT_STALE_SECONDS` and `ALERT_WORKER_HEALTH_FOR`
+- `ALERT_WORKER_HEALTH_FOR` (worker-missing alert hold duration)
 - `ALERT_INTERNAL_ERROR_RATE_THRESHOLD`, `ALERT_INTERNAL_ERROR_WINDOW_MINUTES`,
   `ALERT_INTERNAL_ERROR_FOR`, `ALERT_INTERNAL_ERROR_MIN_COMPLETIONS`
 
