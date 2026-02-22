@@ -29,7 +29,7 @@ const CLOCK_SIZE = 56;
 const CLOCK_RADIUS = 22;
 const CLOCK_CENTER = CLOCK_SIZE / 2;
 
-const WAVE_WIDTH = 200;
+const WAVE_WIDTH = 400;
 const WAVE_HEIGHT = 64;
 
 function generateWavePath(dim: number, width: number, height: number): string {
@@ -135,7 +135,7 @@ export function FrequencyWaves() {
 
       <div className="p-4 bg-terminal rounded-lg border border-border">
         {/* Controls */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-2 mb-4">
           <button
             onClick={() => setIsPlaying(!isPlaying)}
             className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-surface hover:bg-border-hover transition-colors border border-border-hover"
@@ -152,8 +152,6 @@ export function FrequencyWaves() {
               </svg>
             )}
           </button>
-
-          <span className="text-sm text-muted shrink-0">Position</span>
 
           <input
             type="range"
@@ -173,7 +171,7 @@ export function FrequencyWaves() {
           />
 
           <span
-            className="text-lg font-mono tabular-nums w-8 text-right shrink-0"
+            className="text-lg font-mono tabular-nums w-10 text-right shrink-0 font-semibold"
             style={{ color: viz.tertiary }}
           >
             {Math.round(position)}
@@ -195,7 +193,7 @@ export function FrequencyWaves() {
             const sign = wave.value >= 0 ? "+" : "";
 
             return (
-              <div key={wave.dim} className="flex items-center gap-3">
+              <div key={wave.dim} className="flex items-center gap-2">
                 {/* Clock */}
                 <div className="shrink-0">
                   <svg
@@ -248,7 +246,7 @@ export function FrequencyWaves() {
                 </div>
 
                 {/* Label */}
-                <div className="w-24 shrink-0">
+                <div className="w-16 shrink-0">
                   <div className="text-xs text-muted">Dim {wave.dim}</div>
                   <div className="text-xs" style={{ color }}>
                     {FREQ_LABELS[index]}
@@ -282,8 +280,9 @@ export function FrequencyWaves() {
                     <path
                       d={generateWavePath(wave.dim, WAVE_WIDTH, WAVE_HEIGHT)}
                       fill="none"
-                      stroke={grid.line}
+                      stroke={color}
                       strokeWidth="1.5"
+                      opacity={0.5}
                     />
                     {/* Vertical position line */}
                     <line
@@ -296,11 +295,11 @@ export function FrequencyWaves() {
                       strokeDasharray="3 3"
                       opacity={0.4}
                     />
-                    {/* Marker */}
+                    {/* Marker — slightly larger on fast waves for visibility */}
                     <circle
                       cx={markerX}
                       cy={markerY}
-                      r={5}
+                      r={index === 0 ? 6 : 5}
                       fill={color}
                       stroke={withAlpha(color, 0.5)}
                       strokeWidth="1.5"
@@ -316,20 +315,6 @@ export function FrequencyWaves() {
                   >
                     {sign}{wave.value.toFixed(2)}
                   </div>
-                  {/* Tiny horizontal bar showing value direction */}
-                  <svg width="48" height="6" viewBox="0 0 48 6" className="ml-auto mt-0.5">
-                    <line x1="24" y1="3" x2="24" y2="3" stroke={grid.line} strokeWidth="1" />
-                    <rect
-                      x={wave.value >= 0 ? 24 : 24 + wave.value * 22}
-                      y="1"
-                      width={Math.abs(wave.value) * 22}
-                      height="4"
-                      rx="1"
-                      fill={withAlpha(color, 0.6)}
-                    />
-                    {/* Center tick */}
-                    <line x1="24" y1="0" x2="24" y2="6" stroke={grid.line} strokeWidth="0.5" opacity={0.5} />
-                  </svg>
                 </div>
               </div>
             );
