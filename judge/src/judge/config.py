@@ -60,7 +60,7 @@ def load_settings() -> Settings:
     isolate_timeout_grace_s = int(os.getenv("JUDGE_ISOLATE_TIMEOUT_GRACE_S", "5"))
     isolate_fsize_kb = int(os.getenv("JUDGE_ISOLATE_FSIZE_KB", "1024"))
     python_bin = os.getenv("JUDGE_PYTHON_BIN", sys.executable).strip()
-    torch_execution_mode = os.getenv("JUDGE_TORCH_EXECUTION_MODE", "isolate").strip().lower()
+    torch_execution_mode = os.getenv("JUDGE_TORCH_EXECUTION_MODE", "warm_fork").strip().lower()
     warm_no_new_privs_raw = os.getenv("JUDGE_WARM_FORK_ENABLE_NO_NEW_PRIVS", "1").strip().lower()
     warm_fork_enable_no_new_privs = warm_no_new_privs_raw not in {"0", "false", "no", "off"}
     warm_enable_seccomp_raw = os.getenv("JUDGE_WARM_FORK_ENABLE_SECCOMP", "1").strip().lower()

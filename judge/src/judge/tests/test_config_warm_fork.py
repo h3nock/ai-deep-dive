@@ -10,11 +10,11 @@ from judge.config import load_settings
 
 
 class WarmForkSettingsTests(TestCase):
-    def test_defaults_use_isolate_mode(self) -> None:
+    def test_defaults_use_warm_fork_mode(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
             settings = load_settings()
 
-        self.assertEqual(settings.torch_execution_mode, "isolate")
+        self.assertEqual(settings.torch_execution_mode, "warm_fork")
         self.assertTrue(settings.warm_fork_enable_no_new_privs)
         self.assertTrue(settings.warm_fork_enable_seccomp)
         self.assertTrue(settings.warm_fork_seccomp_fail_closed)
@@ -54,6 +54,16 @@ class WarmForkSettingsTests(TestCase):
         self.assertEqual(settings.warm_fork_child_nofile, 128)
         self.assertFalse(settings.warm_fork_enable_cgroup)
         self.assertEqual(settings.warm_fork_max_jobs, 500)
+
+    def test_explicit_isolate_mode_is_supported(self) -> None:
+        with patch.dict(
+            os.environ,
+            {"JUDGE_TORCH_EXECUTION_MODE": "isolate"},
+            clear=True,
+        ):
+            settings = load_settings()
+
+        self.assertEqual(settings.torch_execution_mode, "isolate")
 
     def test_invalid_torch_execution_mode_is_rejected(self) -> None:
         with patch.dict(
