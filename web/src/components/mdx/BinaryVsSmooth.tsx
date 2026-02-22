@@ -138,6 +138,24 @@ export function BinaryVsSmooth() {
       </div>
 
       <div className="p-4 bg-terminal rounded-lg border border-border">
+        <style>{`
+          .viz-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: ${viz.tertiary};
+            border: none;
+            cursor: pointer;
+          }
+          .viz-slider::-moz-range-thumb {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: ${viz.tertiary};
+            border: none;
+            cursor: pointer;
+          }
+        `}</style>
+
         {/* Controls */}
         <div className="flex items-center gap-2 mb-4">
           <button
@@ -165,16 +183,15 @@ export function BinaryVsSmooth() {
             type="range"
             min="0"
             max={MAX_POSITION}
-            step="1"
-            value={Math.round(position)}
+            step="any"
+            value={position}
             onChange={(e) => {
               setIsPlaying(false);
-              setPosition(parseInt(e.target.value, 10));
+              setPosition(parseFloat(e.target.value));
             }}
-            className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
+            className="viz-slider flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
             style={{
               background: `linear-gradient(to right, ${viz.tertiary} 0%, ${viz.tertiary} ${(position / MAX_POSITION) * 100}%, ${grid.line} ${(position / MAX_POSITION) * 100}%, ${grid.line} 100%)`,
-              accentColor: viz.tertiary,
             }}
           />
 
