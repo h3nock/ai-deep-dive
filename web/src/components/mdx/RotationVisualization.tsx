@@ -19,7 +19,8 @@ import { viz, getGrid, withAlpha } from "@/lib/viz-colors";
 
 const CIRCLE_RADIUS = 100;
 const CENTER = 140;
-const SVG_SIZE = 280;
+const SVG_WIDTH = 296;
+const SVG_HEIGHT = 280;
 
 export function RotationVisualization() {
   const { resolvedTheme } = useTheme();
@@ -207,7 +208,7 @@ export function RotationVisualization() {
         <div className="flex flex-col items-center gap-4">
           {/* Circle Diagram */}
           <div className="flex flex-col items-center gap-2">
-            <svg width={SVG_SIZE} height={SVG_SIZE} viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}>
+            <svg width={SVG_WIDTH} height={SVG_HEIGHT} viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}>
               <defs>
                 <marker
                   id="arrowMarker"
@@ -220,19 +221,11 @@ export function RotationVisualization() {
                 >
                   <path d="M0,2 L0,8 L6,5 Z" fill={viz.primary} />
                 </marker>
-                {/* Glow filter for endpoint dots */}
-                <filter id="dotGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
               </defs>
 
               {/* Axes */}
-              <line x1="20" y1={CENTER} x2={SVG_SIZE - 20} y2={CENTER} stroke={grid.axis} strokeWidth="1" />
-              <line x1={CENTER} y1="20" x2={CENTER} y2={SVG_SIZE - 20} stroke={grid.axis} strokeWidth="1" />
+              <line x1="20" y1={CENTER} x2={SVG_WIDTH - 20} y2={CENTER} stroke={grid.axis} strokeWidth="1" />
+              <line x1={CENTER} y1="20" x2={CENTER} y2={SVG_HEIGHT - 20} stroke={grid.axis} strokeWidth="1" />
 
               {/* Unit circle */}
               <circle
@@ -276,32 +269,30 @@ export function RotationVisualization() {
                 strokeWidth="2.5"
               />
 
-              {/* Input endpoint with glow */}
+              {/* Input endpoint */}
               <circle
                 cx={inputX}
                 cy={inputY}
-                r="9"
+                r="7"
                 fill={viz.tertiary}
                 stroke={viz.tertiaryDark}
                 strokeWidth="1"
-                filter="url(#dotGlow)"
               />
 
-              {/* Output endpoint with glow */}
+              {/* Output endpoint */}
               <circle
                 cx={outputX}
                 cy={outputY}
-                r="9"
+                r="7"
                 fill={viz.secondary}
                 stroke={viz.secondaryDark}
                 strokeWidth="1"
-                filter="url(#dotGlow)"
               />
 
               {/* Axis labels */}
               <text
-                x={CENTER + CIRCLE_RADIUS + 16}
-                y={CENTER + 4}
+                x={CENTER + CIRCLE_RADIUS + 8}
+                y={CENTER + 14}
                 fill={grid.labelLight}
                 fontSize="10"
                 textAnchor="start"
@@ -310,7 +301,7 @@ export function RotationVisualization() {
               </text>
               <text
                 x={CENTER + 8}
-                y={CENTER - CIRCLE_RADIUS - 16}
+                y={14}
                 fill={grid.labelLight}
                 fontSize="10"
               >
@@ -321,7 +312,7 @@ export function RotationVisualization() {
               {rotationDegrees > 0 && (
                 <text
                   x={CENTER}
-                  y={SVG_SIZE - 12}
+                  y={SVG_HEIGHT - 12}
                   fill={viz.primary}
                   fontSize="11"
                   textAnchor="middle"
