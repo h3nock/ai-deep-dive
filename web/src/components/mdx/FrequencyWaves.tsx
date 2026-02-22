@@ -138,17 +138,21 @@ export function FrequencyWaves() {
         <div className="flex items-center gap-2 mb-4">
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-surface hover:bg-border-hover transition-colors border border-border-hover"
+            className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full cursor-pointer"
+            style={{
+              backgroundColor: withAlpha(grid.line, 0.12),
+              border: `1.5px solid ${withAlpha(grid.line, 0.3)}`,
+            }}
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
-              <svg className="w-3.5 h-3.5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
-                <rect x="6" y="4" width="4" height="16" />
-                <rect x="14" y="4" width="4" height="16" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={viz.tertiary}>
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
               </svg>
             ) : (
-              <svg className="w-3.5 h-3.5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
-                <polygon points="5,3 19,12 5,21" />
+              <svg width="12" height="12" viewBox="0 0 24 24" fill={viz.tertiary} style={{ marginLeft: '2px' }}>
+                <polygon points="7,4 20,12 7,20" />
               </svg>
             )}
           </button>
