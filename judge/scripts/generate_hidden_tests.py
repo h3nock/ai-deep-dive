@@ -23,6 +23,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 ProblemGenerator = Callable[[random.Random], list["Case"]]
 
 
@@ -148,13 +150,54 @@ def _assert_case_count(problem_id: str, cases: list[Case], minimum: int = 15, ma
         )
 
 
-def _cosine_similarity(a: list[float], b: list[float]) -> float:
-    dot = sum(x * y for x, y in zip(a, b))
-    na = math.sqrt(sum(x * x for x in a))
-    nb = math.sqrt(sum(y * y for y in b))
-    if na == 0.0 or nb == 0.0:
+RANKING_MARGIN_MIN = 1e-4
+FLOAT_EXPECTED_DIGITS = 8
+GENERATION_CHECK_ATOL = 5e-6
+GENERATION_CHECK_RTOL = 1e-9
+
+
+def _cosine_similarity(a: list[float], b: list[float], *, dtype: Any = np.float64) -> float:
+    a_arr = np.asarray(a, dtype=dtype)
+    b_arr = np.asarray(b, dtype=dtype)
+    dot = np.sum(a_arr * b_arr, dtype=dtype)
+    na = np.sqrt(np.sum(a_arr * a_arr, dtype=dtype), dtype=dtype)
+    nb = np.sqrt(np.sum(b_arr * b_arr, dtype=dtype), dtype=dtype)
+    if float(na) == 0.0 or float(nb) == 0.0:
         return 0.0
-    return dot / (na * nb)
+    return float(dot / (na * nb))
+
+
+def _most_similar_scored(
+    query_id: int, embedding_matrix: list[list[float]], *, dtype: Any = np.float64
+) -> list[tuple[float, int]]:
+    query = embedding_matrix[query_id]
+    scored: list[tuple[float, int]] = []
+    for idx, vec in enumerate(embedding_matrix):
+        if idx == query_id:
+            continue
+        sim = _cosine_similarity(query, vec, dtype=dtype)
+        scored.append((sim, idx))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return scored
+
+
+def _analogy_scored(
+    a_id: int, b_id: int, c_id: int, embedding_matrix: list[list[float]], *, dtype: Any = np.float64
+) -> list[tuple[float, int]]:
+    a = np.asarray(embedding_matrix[a_id], dtype=dtype)
+    b = np.asarray(embedding_matrix[b_id], dtype=dtype)
+    c = np.asarray(embedding_matrix[c_id], dtype=dtype)
+    target = (a - b + c).tolist()
+
+    scored: list[tuple[float, int]] = []
+    excluded = {a_id, b_id, c_id}
+    for idx, vec in enumerate(embedding_matrix):
+        if idx in excluded:
+            continue
+        sim = _cosine_similarity(target, vec, dtype=dtype)
+        scored.append((sim, idx))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return scored
 
 
 def _merge_tokens(ids: list[int], pair: tuple[int, int], new_id: int) -> list[int]:
@@ -217,121 +260,258 @@ def _encode_with_merges(
     return ids
 
 
-def _most_similar_ref(query_id: int, embedding_matrix: list[list[float]], k: int) -> list[int]:
-    query = embedding_matrix[query_id]
-    scored: list[tuple[float, int]] = []
-    for idx, vec in enumerate(embedding_matrix):
-        if idx == query_id:
-            continue
-        sim = _cosine_similarity(query, vec)
-        scored.append((sim, idx))
-    scored.sort(key=lambda item: (-item[0], item[1]))
+def _most_similar_ref(
+    query_id: int, embedding_matrix: list[list[float]], k: int, *, dtype: Any = np.float64
+) -> list[int]:
+    scored = _most_similar_scored(query_id, embedding_matrix, dtype=dtype)
     limit = max(0, min(k, len(scored)))
     return [idx for _, idx in scored[:limit]]
 
 
-def _analogy_ref(a_id: int, b_id: int, c_id: int, embedding_matrix: list[list[float]]) -> int:
-    a = embedding_matrix[a_id]
-    b = embedding_matrix[b_id]
-    c = embedding_matrix[c_id]
-    target = [x - y + z for x, y, z in zip(a, b, c)]
-
-    scored: list[tuple[float, int]] = []
-    excluded = {a_id, b_id, c_id}
-    for idx, vec in enumerate(embedding_matrix):
-        if idx in excluded:
-            continue
-        sim = _cosine_similarity(target, vec)
-        scored.append((sim, idx))
-
+def _analogy_ref(
+    a_id: int, b_id: int, c_id: int, embedding_matrix: list[list[float]], *, dtype: Any = np.float64
+) -> int:
+    scored = _analogy_scored(a_id, b_id, c_id, embedding_matrix, dtype=dtype)
     if not scored:
         raise ValueError("Vector analogy needs at least one candidate token")
-    scored.sort(key=lambda item: (-item[0], item[1]))
     return scored[0][1]
 
 
-def _frequencies_ref(d_model: int) -> list[float]:
+def _descending_cosine_targets(count: int, *, max_cos: float, min_cos: float) -> list[float]:
+    if count <= 0:
+        return []
+    if count == 1:
+        return [max_cos]
+    step = (max_cos - min_cos) / (count - 1)
+    return [max_cos - step * index for index in range(count)]
+
+
+def _random_unit_vector(rng: random.Random, dim: int) -> list[float]:
+    components = [rng.uniform(-1.0, 1.0) for _ in range(dim)]
+    norm = math.sqrt(sum(v * v for v in components))
+    if norm == 0.0:
+        components[0] = 1.0
+        norm = 1.0
+    return [v / norm for v in components]
+
+
+def _random_unit_orthogonal_to(rng: random.Random, basis: list[float]) -> list[float]:
+    dim = len(basis)
+    probe = _random_unit_vector(rng, dim)
+    dot = sum(a * b for a, b in zip(probe, basis))
+    orth = [probe[i] - dot * basis[i] for i in range(dim)]
+    norm = math.sqrt(sum(v * v for v in orth))
+    if norm == 0.0:
+        for i, value in enumerate(basis):
+            if abs(value) < 0.9:
+                orth = [0.0] * dim
+                orth[i] = 1.0
+                dot = sum(a * b for a, b in zip(orth, basis))
+                orth = [orth[j] - dot * basis[j] for j in range(dim)]
+                norm = math.sqrt(sum(v * v for v in orth))
+                break
+    if norm == 0.0:
+        raise ValueError("Unable to build orthogonal vector")
+    return [v / norm for v in orth]
+
+
+def _build_similarity_vector(
+    target_unit: list[float], cos_value: float, rng: random.Random
+) -> list[float]:
+    if not (-1.0 <= cos_value <= 1.0):
+        raise ValueError("cos_value must be in [-1, 1]")
+    orth = _random_unit_orthogonal_to(rng, target_unit)
+    sin_value = math.sqrt(max(0.0, 1.0 - cos_value * cos_value))
+    scale = rng.uniform(0.7, 1.3)
+    return [
+        round(scale * (cos_value * target_unit[i] + sin_value * orth[i]), 6)
+        for i in range(len(target_unit))
+    ]
+
+
+def _assert_most_similar_stability(
+    *,
+    label: str,
+    query_id: int,
+    embedding_matrix: list[list[float]],
+    k: int,
+    require_margin: bool,
+) -> None:
+    expected32 = _most_similar_ref(query_id, embedding_matrix, k, dtype=np.float32)
+    expected64 = _most_similar_ref(query_id, embedding_matrix, k, dtype=np.float64)
+    if expected32 != expected64:
+        raise ValueError(
+            f"{label}: float32 vs float64 ranking mismatch ({expected32} vs {expected64})"
+        )
+
+    if require_margin:
+        scored32 = _most_similar_scored(query_id, embedding_matrix, dtype=np.float32)
+        limit = max(0, min(k, len(scored32)))
+        if 0 < limit < len(scored32):
+            margin = scored32[limit - 1][0] - scored32[limit][0]
+            if margin < RANKING_MARGIN_MIN:
+                raise ValueError(
+                    f"{label}: top-k boundary margin {margin:.2e} is below "
+                    f"{RANKING_MARGIN_MIN:.1e}"
+                )
+
+
+def _assert_analogy_stability(
+    *,
+    label: str,
+    a_id: int,
+    b_id: int,
+    c_id: int,
+    embedding_matrix: list[list[float]],
+    require_margin: bool,
+) -> None:
+    expected32 = _analogy_ref(a_id, b_id, c_id, embedding_matrix, dtype=np.float32)
+    expected64 = _analogy_ref(a_id, b_id, c_id, embedding_matrix, dtype=np.float64)
+    if expected32 != expected64:
+        raise ValueError(
+            f"{label}: float32 vs float64 ranking mismatch ({expected32} vs {expected64})"
+        )
+
+    if require_margin:
+        scored32 = _analogy_scored(a_id, b_id, c_id, embedding_matrix, dtype=np.float32)
+        if len(scored32) >= 2:
+            margin = scored32[0][0] - scored32[1][0]
+            if margin < RANKING_MARGIN_MIN:
+                raise ValueError(
+                    f"{label}: winner margin {margin:.2e} is below {RANKING_MARGIN_MIN:.1e}"
+                )
+
+
+def _construct_most_similar_case(
+    rng: random.Random, *, rows: int, cols: int, k: int
+) -> tuple[int, int, list[list[float]]]:
+    if rows < 2:
+        raise ValueError("Most-similar case requires at least 2 rows")
+    if cols < 2:
+        raise ValueError("Most-similar case requires at least 2 dimensions")
+
+    query_id = rng.randrange(rows)
+    query_vector = _random_unit_vector(rng, cols)
+    candidates = rows - 1
+    cosine_targets = _descending_cosine_targets(candidates, max_cos=0.95, min_cos=-0.85)
+    candidate_vectors = [
+        _build_similarity_vector(query_vector, cos_value, rng) for cos_value in cosine_targets
+    ]
+    rng.shuffle(candidate_vectors)
+
+    matrix = [[0.0] * cols for _ in range(rows)]
+    matrix[query_id] = [round(v, 6) for v in query_vector]
+    candidate_indices = [idx for idx in range(rows) if idx != query_id]
+    for idx, vec in zip(candidate_indices, candidate_vectors, strict=True):
+        matrix[idx] = vec
+
+    clamped_k = max(0, min(k, rows - 1))
+    return query_id, clamped_k, matrix
+
+
+def _construct_vector_analogy_case(
+    rng: random.Random, *, rows: int, cols: int
+) -> tuple[int, int, int, list[list[float]]]:
+    if rows < 5:
+        raise ValueError("Vector-analogy case requires at least 5 rows")
+    if cols < 2:
+        raise ValueError("Vector-analogy case requires at least 2 dimensions")
+
+    matrix = [[0.0] * cols for _ in range(rows)]
+    ids = list(range(rows))
+    rng.shuffle(ids)
+    a_id, b_id, c_id = ids[0], ids[1], ids[2]
+    candidate_ids = ids[3:]
+
+    target_unit = _random_unit_vector(rng, cols)
+    a = _random_unit_vector(rng, cols)
+    b = _random_unit_vector(rng, cols)
+    c = [target_unit[i] - a[i] + b[i] for i in range(cols)]
+
+    matrix[a_id] = [round(v, 6) for v in a]
+    matrix[b_id] = [round(v, 6) for v in b]
+    matrix[c_id] = [round(v, 6) for v in c]
+
+    cosine_targets = _descending_cosine_targets(len(candidate_ids), max_cos=0.96, min_cos=-0.75)
+    for idx, cos_value in zip(candidate_ids, cosine_targets, strict=True):
+        matrix[idx] = _build_similarity_vector(target_unit, cos_value, rng)
+
+    return a_id, b_id, c_id, matrix
+
+
+def _frequencies_ref(d_model: int, *, dtype: Any = np.float32) -> list[float]:
     half = d_model // 2
-    return [1.0 / (10000.0 ** (2.0 * i / d_model)) for i in range(half)]
+    frequencies: list[float] = []
+    base = dtype(10000.0)
+    one = dtype(1.0)
+    for i in range(half):
+        exponent = dtype((2.0 * i) / float(d_model))
+        value = one / (base**exponent)
+        frequencies.append(float(value))
+    return frequencies
 
 
-def _pe_vector_ref(pos: int, d_model: int) -> list[float]:
-    freq = _frequencies_ref(d_model)
-    out = [0.0] * d_model
-    for i, f in enumerate(freq):
-        out[2 * i] = math.sin(pos * f)
-        out[2 * i + 1] = math.cos(pos * f)
+def _pe_vector_ref(pos: int, d_model: int, *, dtype: Any = np.float32) -> list[float]:
+    frequencies = _frequencies_ref(d_model, dtype=dtype)
+    out: list[float] = [0.0] * d_model
+    pos_v = np.asarray(pos, dtype=dtype)
+    for i, f in enumerate(frequencies):
+        angle = float(pos_v * np.asarray(f, dtype=dtype))
+        out[2 * i] = float(np.asarray(math.sin(angle), dtype=dtype))
+        out[2 * i + 1] = float(np.asarray(math.cos(angle), dtype=dtype))
     return out
 
 
-def _pe_matrix_ref(seq_len: int, d_model: int) -> list[list[float]]:
-    return [_pe_vector_ref(pos, d_model) for pos in range(seq_len)]
+def _pe_matrix_ref(seq_len: int, d_model: int, *, dtype: Any = np.float32) -> list[list[float]]:
+    return [_pe_vector_ref(pos, d_model, dtype=dtype) for pos in range(seq_len)]
 
 
-def _softmax(row: list[float]) -> list[float]:
-    m = max(row)
-    exps = [math.exp(x - m) for x in row]
-    s = sum(exps)
-    return [e / s for e in exps]
-
-
-def _attention_weights_ref(q: list[list[float]], k: list[list[float]]) -> list[list[float]]:
-    d_k = len(q[0])
-    scale = math.sqrt(d_k)
-    scores: list[list[float]] = []
-    for q_row in q:
-        row = []
-        for k_row in k:
-            row.append(sum(a * b for a, b in zip(q_row, k_row)) / scale)
-        scores.append(_softmax(row))
-    return scores
+def _attention_weights_ref(
+    q: list[list[float]], k: list[list[float]], *, dtype: Any = np.float32
+) -> list[list[float]]:
+    q_arr = np.asarray(q, dtype=dtype)
+    k_arr = np.asarray(k, dtype=dtype)
+    scale = np.sqrt(np.asarray(q_arr.shape[1], dtype=dtype), dtype=dtype)
+    scores = (q_arr @ k_arr.T) / scale
+    max_scores = np.max(scores, axis=1, keepdims=True)
+    exps = np.exp(scores - max_scores, dtype=dtype)
+    denom = np.sum(exps, axis=1, keepdims=True, dtype=dtype)
+    weights = exps / denom
+    return [[float(v) for v in row] for row in weights.astype(dtype)]
 
 
 def _causal_attention_ref(
-    q: list[list[float]], k: list[list[float]], v: list[list[float]]
+    q: list[list[float]], k: list[list[float]], v: list[list[float]], *, dtype: Any = np.float32
 ) -> list[list[float]]:
-    seq_len = len(q)
-    d_k = len(q[0])
-    scale = math.sqrt(d_k)
+    q_arr = np.asarray(q, dtype=dtype)
+    k_arr = np.asarray(k, dtype=dtype)
+    v_arr = np.asarray(v, dtype=dtype)
 
-    scores: list[list[float]] = []
-    for q_row in q:
-        row = []
-        for k_row in k:
-            row.append(sum(a * b for a, b in zip(q_row, k_row)) / scale)
-        scores.append(row)
+    seq_len = q_arr.shape[0]
+    d_k = q_arr.shape[1]
+    scale = np.sqrt(np.asarray(d_k, dtype=dtype), dtype=dtype)
 
-    weights: list[list[float]] = []
-    for i in range(seq_len):
-        masked = []
-        for j in range(seq_len):
-            masked.append(scores[i][j] if j <= i else -1e30)
-        weights.append(_softmax(masked))
+    scores = (q_arr @ k_arr.T) / scale
+    mask = np.triu(np.ones((seq_len, seq_len), dtype=bool), k=1)
+    minus_inf = np.asarray(float("-inf"), dtype=dtype)
+    masked_scores = np.where(mask, minus_inf, scores)
 
-    d_v = len(v[0])
-    out: list[list[float]] = []
-    for i in range(seq_len):
-        row = []
-        for d in range(d_v):
-            row.append(sum(weights[i][j] * v[j][d] for j in range(seq_len)))
-        out.append(row)
-    return out
+    max_scores = np.max(masked_scores, axis=1, keepdims=True)
+    exps = np.exp(masked_scores - max_scores, dtype=dtype)
+    denom = np.sum(exps, axis=1, keepdims=True, dtype=dtype)
+    weights = exps / denom
+
+    out = weights @ v_arr
+    return [[float(vv) for vv in row] for row in out.astype(dtype)]
 
 
-def _matmul_ref(a: list[list[float]], b: list[list[float]]) -> list[list[float]]:
-    rows = len(a)
-    inner = len(a[0]) if rows else 0
-    if len(b) != inner:
+def _matmul_ref(a: list[list[float]], b: list[list[float]], *, dtype: Any = np.float32) -> list[list[float]]:
+    a_arr = np.asarray(a, dtype=dtype)
+    b_arr = np.asarray(b, dtype=dtype)
+    if a_arr.shape[1] != b_arr.shape[0]:
         raise ValueError("Incompatible matrix shapes for matmul")
-
-    cols = len(b[0]) if b else 0
-    out: list[list[float]] = []
-    for i in range(rows):
-        row: list[float] = []
-        for j in range(cols):
-            row.append(sum(a[i][k] * b[k][j] for k in range(inner)))
-        out.append(row)
-    return out
+    out = a_arr @ b_arr
+    return [[float(v) for v in row] for row in out.astype(dtype)]
 
 
 def _multi_head_causal_attention_ref(
@@ -341,6 +521,8 @@ def _multi_head_causal_attention_ref(
     w_v: list[list[float]],
     w_o: list[list[float]],
     num_heads: int,
+    *,
+    dtype: Any = np.float32,
 ) -> list[list[float]]:
     seq_len = len(x)
     d_model = len(x[0]) if seq_len else 0
@@ -350,9 +532,9 @@ def _multi_head_causal_attention_ref(
         raise ValueError("d_model must be divisible by num_heads")
 
     d_head = d_model // num_heads
-    q = _matmul_ref(x, w_q)
-    k = _matmul_ref(x, w_k)
-    v = _matmul_ref(x, w_v)
+    q = _matmul_ref(x, w_q, dtype=dtype)
+    k = _matmul_ref(x, w_k, dtype=dtype)
+    v = _matmul_ref(x, w_v, dtype=dtype)
 
     def _split_heads(m: list[list[float]]) -> list[list[list[float]]]:
         heads: list[list[list[float]]] = []
@@ -371,7 +553,9 @@ def _multi_head_causal_attention_ref(
 
     head_outputs: list[list[list[float]]] = []
     for head_idx in range(num_heads):
-        head_outputs.append(_causal_attention_ref(q_heads[head_idx], k_heads[head_idx], v_heads[head_idx]))
+        head_outputs.append(
+            _causal_attention_ref(q_heads[head_idx], k_heads[head_idx], v_heads[head_idx], dtype=dtype)
+        )
 
     merged: list[list[float]] = []
     for token_idx in range(seq_len):
@@ -380,7 +564,7 @@ def _multi_head_causal_attention_ref(
             row.extend(head_outputs[head_idx][token_idx])
         merged.append(row)
 
-    return _matmul_ref(merged, w_o)
+    return _matmul_ref(merged, w_o, dtype=dtype)
 
 
 def _torch_matrix_input_code(var_name: str, matrix: list[list[float]]) -> str:
@@ -727,23 +911,54 @@ def _gen_most_similar(rng: random.Random) -> list[Case]:
             0,
             [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, 0.0], [0.0, 0.0]],
             2,
+            False,
         ),
         (
             "boundary",
             1,
             [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, 0.0], [0.0, 0.0]],
             3,
+            False,
         ),
-        ("boundary", 0, [[1.0, 0.0], [0.0, 1.0]], 1),
-        ("boundary", 0, [[0.0, 0.0], [1.0, 0.0], [-1.0, 0.0]], 2),
-        ("boundary", 1, [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], 5),
-        ("adversarial", 0, [[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, -1.0]], 2),
-        ("adversarial", 2, [[1.0, 1.0], [1.0, -1.0], [1.0, 0.0], [-1.0, 0.0]], 0),
-        ("adversarial", 3, [[1.0, 0.0], [0.5, 0.0], [0.5, 0.0], [0.0, 1.0], [0.0, -1.0]], 3),
+        (
+            "boundary",
+            0,
+            [[1.0, 0.0], [0.9, 0.1], [0.3, 0.95], [-0.8, 0.2], [0.1, -0.9]],
+            2,
+            True,
+        ),
+        (
+            "boundary",
+            0,
+            [[1.0, 0.0], [0.4, 0.9], [-0.7, 0.2], [0.2, -0.8]],
+            0,
+            False,
+        ),
+        (
+            "adversarial",
+            2,
+            [[0.2, 1.0], [0.8, -0.2], [1.0, 0.0], [-0.9, 0.1], [0.4, -0.7], [0.7, 0.6]],
+            4,
+            True,
+        ),
+        (
+            "regression",
+            1,
+            [[-0.2, 1.0], [1.0, 0.0], [0.85, 0.2], [0.4, 0.9], [-0.3, 0.8]],
+            10,
+            False,
+        ),
     ]
 
-    for bucket, query_id, matrix, k in fixed:
-        expected = _most_similar_ref(query_id, matrix, k)
+    for idx, (bucket, query_id, matrix, k, require_margin) in enumerate(fixed):
+        _assert_most_similar_stability(
+            label=f"most-similar-fixed-{idx + 1}",
+            query_id=query_id,
+            embedding_matrix=matrix,
+            k=k,
+            require_margin=require_margin,
+        )
+        expected = _most_similar_ref(query_id, matrix, k, dtype=np.float32)
         code = "import torch\n"
         code += f"query_id = {query_id}\n"
         code += _torch_matrix_input_code("embedding_matrix", matrix)
@@ -751,33 +966,39 @@ def _gen_most_similar(rng: random.Random) -> list[Case]:
         cases.append(Case(bucket, input_code=code, expected=expected))
 
     stress_specs = [(64, 12, 10), (96, 10, 12), (128, 8, 15), (80, 16, 20)]
-    for rows, cols, k in stress_specs:
-        matrix = _random_matrix(rng, rows, cols)
-        matrix[rng.randrange(rows)] = [0.0] * cols
-        matrix[rng.randrange(rows)] = matrix[rng.randrange(rows)].copy()
-        query_id = rng.randrange(rows)
-        expected = _most_similar_ref(query_id, matrix, k)
+    for idx, (rows, cols, k) in enumerate(stress_specs):
+        query_id, k_value, matrix = _construct_most_similar_case(rng, rows=rows, cols=cols, k=k)
+        _assert_most_similar_stability(
+            label=f"most-similar-stress-{idx + 1}",
+            query_id=query_id,
+            embedding_matrix=matrix,
+            k=k_value,
+            require_margin=True,
+        )
+        expected = _most_similar_ref(query_id, matrix, k_value, dtype=np.float32)
         code = "import torch\n"
         code += f"query_id = {query_id}\n"
         code += _torch_matrix_input_code("embedding_matrix", matrix)
-        code += f"k = {k}\n"
+        code += f"k = {k_value}\n"
         cases.append(Case("stress", input_code=code, expected=expected))
 
-    for _ in range(10):
+    for index in range(10):
         rows = rng.randint(10, 70)
         cols = rng.randint(4, 16)
-        matrix = _random_matrix(rng, rows, cols)
-        if rng.random() < 0.35:
-            matrix[rng.randrange(rows)] = [0.0] * cols
-        if rng.random() < 0.3:
-            matrix[rng.randrange(rows)] = matrix[rng.randrange(rows)].copy()
-        query_id = rng.randrange(rows)
-        k = rng.randint(0, min(rows + 2, 30))
-        expected = _most_similar_ref(query_id, matrix, k)
+        k = rng.randint(1, min(rows - 1, 30))
+        query_id, k_value, matrix = _construct_most_similar_case(rng, rows=rows, cols=cols, k=k)
+        _assert_most_similar_stability(
+            label=f"most-similar-random-{index + 1}",
+            query_id=query_id,
+            embedding_matrix=matrix,
+            k=k_value,
+            require_margin=True,
+        )
+        expected = _most_similar_ref(query_id, matrix, k_value, dtype=np.float32)
         code = "import torch\n"
         code += f"query_id = {query_id}\n"
         code += _torch_matrix_input_code("embedding_matrix", matrix)
-        code += f"k = {k}\n"
+        code += f"k = {k_value}\n"
         cases.append(Case("random", input_code=code, expected=expected))
 
     return cases
@@ -794,6 +1015,7 @@ def _gen_vector_analogy(rng: random.Random) -> list[Case]:
             2,
             3,
             [[1.0, 1.0], [1.0, -1.0], [0.0, 1.0], [0.0, -1.0], [0.0, 0.0]],
+            False,
         ),
         (
             "boundary",
@@ -801,53 +1023,36 @@ def _gen_vector_analogy(rng: random.Random) -> list[Case]:
             1,
             2,
             [[0.5, 0.9], [0.5, 0.5], [0.8, 0.5], [0.8, 0.9], [0.1, 0.1]],
+            False,
         ),
         (
             "boundary",
             0,
             1,
             2,
-            [[1.0, 1.0], [1.0, 0.0], [0.0, 1.0], [0.0, 0.0], [1.0, 2.0]],
-        ),
-        (
-            "boundary",
-            0,
-            1,
-            2,
-            [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [1.0, 0.0], [0.0, 1.0]],
+            [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [0.9, 0.9], [0.2, 1.0], [-1.0, 0.0]],
+            True,
         ),
         (
             "adversarial",
             0,
-            2,
-            3,
-            [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [0.0, 0.0], [0.5, 0.5]],
-        ),
-        (
-            "adversarial",
             1,
             2,
-            3,
-            [[1.0, -1.0], [0.0, 1.0], [1.0, 0.0], [0.0, 0.0], [1.0, 1.0]],
-        ),
-        (
-            "regression",
-            0,
-            1,
-            2,
-            [[2.0, 1.0], [1.0, 1.0], [0.0, 2.0], [1.0, 2.0], [2.0, 2.0]],
-        ),
-        (
-            "regression",
-            2,
-            3,
-            4,
-            [[0.5, 0.9], [0.5, 0.5], [0.8, 0.5], [0.8, 0.9], [0.1, 0.1], [0.3, 0.3]],
+            [[0.5, 0.5], [0.2, 0.2], [-0.5, 0.8], [-0.1, 1.0], [0.6, 0.7], [-1.0, -1.0]],
+            True,
         ),
     ]
 
-    for bucket, a_id, b_id, c_id, matrix in fixed:
-        expected = _analogy_ref(a_id, b_id, c_id, matrix)
+    for idx, (bucket, a_id, b_id, c_id, matrix, require_margin) in enumerate(fixed):
+        _assert_analogy_stability(
+            label=f"vector-analogy-fixed-{idx + 1}",
+            a_id=a_id,
+            b_id=b_id,
+            c_id=c_id,
+            embedding_matrix=matrix,
+            require_margin=require_margin,
+        )
+        expected = _analogy_ref(a_id, b_id, c_id, matrix, dtype=np.float32)
         code = "import torch\n"
         code += f"a_id = {a_id}\n"
         code += f"b_id = {b_id}\n"
@@ -856,12 +1061,17 @@ def _gen_vector_analogy(rng: random.Random) -> list[Case]:
         cases.append(Case(bucket, input_code=code, expected=expected))
 
     stress_specs = [(72, 8), (96, 10), (120, 6), (80, 12)]
-    for rows, cols in stress_specs:
-        matrix = _random_matrix(rng, rows, cols)
-        for _zero in range(rng.randint(1, 3)):
-            matrix[rng.randrange(rows)] = [0.0] * cols
-        a_id, b_id, c_id = rng.sample(range(rows), k=3)
-        expected = _analogy_ref(a_id, b_id, c_id, matrix)
+    for idx, (rows, cols) in enumerate(stress_specs):
+        a_id, b_id, c_id, matrix = _construct_vector_analogy_case(rng, rows=rows, cols=cols)
+        _assert_analogy_stability(
+            label=f"vector-analogy-stress-{idx + 1}",
+            a_id=a_id,
+            b_id=b_id,
+            c_id=c_id,
+            embedding_matrix=matrix,
+            require_margin=True,
+        )
+        expected = _analogy_ref(a_id, b_id, c_id, matrix, dtype=np.float32)
         code = "import torch\n"
         code += f"a_id = {a_id}\n"
         code += f"b_id = {b_id}\n"
@@ -869,16 +1079,19 @@ def _gen_vector_analogy(rng: random.Random) -> list[Case]:
         code += _torch_matrix_input_code("embedding_matrix", matrix)
         cases.append(Case("stress", input_code=code, expected=expected))
 
-    for _ in range(10):
+    for index in range(10):
         rows = rng.randint(12, 80)
         cols = rng.randint(4, 12)
-        matrix = _random_matrix(rng, rows, cols)
-        for _zero in range(rng.randint(0, 2)):
-            matrix[rng.randrange(rows)] = [0.0] * cols
-
-        ids = rng.sample(range(rows), k=3)
-        a_id, b_id, c_id = ids[0], ids[1], ids[2]
-        expected = _analogy_ref(a_id, b_id, c_id, matrix)
+        a_id, b_id, c_id, matrix = _construct_vector_analogy_case(rng, rows=rows, cols=cols)
+        _assert_analogy_stability(
+            label=f"vector-analogy-random-{index + 1}",
+            a_id=a_id,
+            b_id=b_id,
+            c_id=c_id,
+            embedding_matrix=matrix,
+            require_margin=True,
+        )
+        expected = _analogy_ref(a_id, b_id, c_id, matrix, dtype=np.float32)
 
         code = "import torch\n"
         code += f"a_id = {a_id}\n"
@@ -895,19 +1108,19 @@ def _gen_frequency_schedule(rng: random.Random) -> list[Case]:
     # Keep curated public examples first.
     fixed = [4, 8, 2, 6, 10, 12, 16, 32]
     for d_model in fixed:
-        expected = _round_nested(_frequencies_ref(d_model))
+        expected = _round_nested(_frequencies_ref(d_model), digits=FLOAT_EXPECTED_DIGITS)
         bucket = "boundary" if d_model <= 8 else "adversarial"
         cases.append(Case(bucket, inputs={"d_model": d_model}, expected=expected))
 
     for d_model in [128, 256, 512, 1024]:
-        expected = _round_nested(_frequencies_ref(d_model))
+        expected = _round_nested(_frequencies_ref(d_model), digits=FLOAT_EXPECTED_DIGITS)
         cases.append(Case("stress", inputs={"d_model": d_model}, expected=expected))
 
     for _ in range(8):
         d_model = rng.choice(
             [14, 18, 20, 22, 24, 26, 28, 30, 36, 40, 48, 64, 96, 192, 384, 768]
         )
-        expected = _round_nested(_frequencies_ref(d_model))
+        expected = _round_nested(_frequencies_ref(d_model), digits=FLOAT_EXPECTED_DIGITS)
         cases.append(Case("random", inputs={"d_model": d_model}, expected=expected))
 
     return cases
@@ -926,17 +1139,17 @@ def _gen_pe_vector(rng: random.Random) -> list[Case]:
     ]
 
     for bucket, pos, d_model in fixed:
-        expected = _round_nested(_pe_vector_ref(pos, d_model))
+        expected = _round_nested(_pe_vector_ref(pos, d_model), digits=FLOAT_EXPECTED_DIGITS)
         cases.append(Case(bucket, inputs={"pos": pos, "d_model": d_model}, expected=expected))
 
     for pos, d_model in [(2048, 64), (4096, 128), (10000, 256), (50000, 64)]:
-        expected = _round_nested(_pe_vector_ref(pos, d_model))
+        expected = _round_nested(_pe_vector_ref(pos, d_model), digits=FLOAT_EXPECTED_DIGITS)
         cases.append(Case("stress", inputs={"pos": pos, "d_model": d_model}, expected=expected))
 
     for _ in range(10):
         pos = rng.randint(0, 100000)
         d_model = rng.choice([2, 4, 6, 8, 10, 12, 16, 32, 64, 128])
-        expected = _round_nested(_pe_vector_ref(pos, d_model))
+        expected = _round_nested(_pe_vector_ref(pos, d_model), digits=FLOAT_EXPECTED_DIGITS)
         cases.append(Case("random", inputs={"pos": pos, "d_model": d_model}, expected=expected))
 
     return cases
@@ -956,19 +1169,19 @@ def _gen_pe_matrix(rng: random.Random) -> list[Case]:
     ]
 
     for bucket, seq_len, d_model in fixed:
-        expected = _round_nested(_pe_matrix_ref(seq_len, d_model))
+        expected = _round_nested(_pe_matrix_ref(seq_len, d_model), digits=FLOAT_EXPECTED_DIGITS)
         cases.append(
             Case(bucket, inputs={"seq_len": seq_len, "d_model": d_model}, expected=expected)
         )
 
     for seq_len, d_model in [(24, 24), (32, 24), (40, 20), (48, 16)]:
-        expected = _round_nested(_pe_matrix_ref(seq_len, d_model))
+        expected = _round_nested(_pe_matrix_ref(seq_len, d_model), digits=FLOAT_EXPECTED_DIGITS)
         cases.append(Case("stress", inputs={"seq_len": seq_len, "d_model": d_model}, expected=expected))
 
     for _ in range(10):
         seq_len = rng.randint(3, 20)
         d_model = rng.choice([6, 8, 10, 12, 16, 20, 24])
-        expected = _round_nested(_pe_matrix_ref(seq_len, d_model))
+        expected = _round_nested(_pe_matrix_ref(seq_len, d_model), digits=FLOAT_EXPECTED_DIGITS)
         cases.append(
             Case("random", inputs={"seq_len": seq_len, "d_model": d_model}, expected=expected)
         )
@@ -1003,7 +1216,10 @@ def _gen_attention_weights(rng: random.Random) -> list[Case]:
     ]
 
     for bucket, q, k in fixed:
-        expected = _round_nested(_attention_weights_ref(q, k))
+        expected = _round_nested(
+            _attention_weights_ref(q, k),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
         code = "import torch\n"
         code += _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
@@ -1012,7 +1228,10 @@ def _gen_attention_weights(rng: random.Random) -> list[Case]:
     for seq_len, d_k in [(16, 12), (20, 16), (24, 12), (18, 20)]:
         q = _random_matrix(rng, seq_len, d_k)
         k = _random_matrix(rng, seq_len, d_k)
-        expected = _round_nested(_attention_weights_ref(q, k))
+        expected = _round_nested(
+            _attention_weights_ref(q, k),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
         code = "import torch\n"
         code += _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
@@ -1023,7 +1242,10 @@ def _gen_attention_weights(rng: random.Random) -> list[Case]:
         d_k = rng.randint(3, 12)
         q = _random_matrix(rng, seq_len, d_k)
         k = _random_matrix(rng, seq_len, d_k)
-        expected = _round_nested(_attention_weights_ref(q, k))
+        expected = _round_nested(
+            _attention_weights_ref(q, k),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
         code = "import torch\n"
         code += _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
@@ -1077,7 +1299,10 @@ def _gen_causal_attention(rng: random.Random) -> list[Case]:
     ]
 
     for bucket, q, k, v in fixed:
-        expected = _round_nested(_causal_attention_ref(q, k, v))
+        expected = _round_nested(
+            _causal_attention_ref(q, k, v),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
         code = "import torch\n"
         code += _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
@@ -1088,7 +1313,10 @@ def _gen_causal_attention(rng: random.Random) -> list[Case]:
         q = _random_matrix(rng, seq_len, d_k)
         k = _random_matrix(rng, seq_len, d_k)
         v = _random_matrix(rng, seq_len, d_v)
-        expected = _round_nested(_causal_attention_ref(q, k, v))
+        expected = _round_nested(
+            _causal_attention_ref(q, k, v),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
         code = "import torch\n"
         code += _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
@@ -1102,7 +1330,10 @@ def _gen_causal_attention(rng: random.Random) -> list[Case]:
         q = _random_matrix(rng, seq_len, d_k)
         k = _random_matrix(rng, seq_len, d_k)
         v = _random_matrix(rng, seq_len, d_v)
-        expected = _round_nested(_causal_attention_ref(q, k, v))
+        expected = _round_nested(
+            _causal_attention_ref(q, k, v),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
 
         code = "import torch\n"
         code += _torch_matrix_input_code("Q", q)
@@ -1188,7 +1419,8 @@ def _gen_multi_head_causal_attention(rng: random.Random) -> list[Case]:
 
     for bucket, x, w_q, w_k, w_v, w_o, num_heads in fixed:
         expected = _round_nested(
-            _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads), digits=10
+            _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads),
+            digits=FLOAT_EXPECTED_DIGITS,
         )
         code = "import torch\n"
         code += _torch_matrix_input_code("X", x)
@@ -1206,7 +1438,8 @@ def _gen_multi_head_causal_attention(rng: random.Random) -> list[Case]:
         w_v = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
         w_o = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
         expected = _round_nested(
-            _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads), digits=10
+            _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads),
+            digits=FLOAT_EXPECTED_DIGITS,
         )
         code = "import torch\n"
         code += _torch_matrix_input_code("X", x)
@@ -1230,7 +1463,8 @@ def _gen_multi_head_causal_attention(rng: random.Random) -> list[Case]:
         w_o = _random_matrix(rng, d_model, d_model, low=-1.0, high=1.0)
 
         expected = _round_nested(
-            _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads), digits=10
+            _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads),
+            digits=FLOAT_EXPECTED_DIGITS,
         )
         code = "import torch\n"
         code += _torch_matrix_input_code("X", x)
@@ -1290,6 +1524,31 @@ PUBLIC_CASE_COUNT_OVERRIDES: dict[str, int] = {
 
 def _render_json(data: dict[str, Any]) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _json_equivalent(left: Any, right: Any) -> bool:
+    if _is_number(left) and _is_number(right):
+        return math.isclose(
+            float(left),
+            float(right),
+            rel_tol=GENERATION_CHECK_RTOL,
+            abs_tol=GENERATION_CHECK_ATOL,
+        )
+    if type(left) is not type(right):
+        return False
+    if isinstance(left, dict):
+        if set(left.keys()) != set(right.keys()):
+            return False
+        return all(_json_equivalent(left[key], right[key]) for key in left)
+    if isinstance(left, list):
+        if len(left) != len(right):
+            return False
+        return all(_json_equivalent(a, b) for a, b in zip(left, right))
+    return left == right
 
 
 def _read_requires_torch(problems_root: Path, problem_id: str) -> bool:
@@ -1390,14 +1649,16 @@ def main() -> None:
 
         existing_public = public_path.read_text() if public_path.exists() else None
         existing_hidden = hidden_path.read_text() if hidden_path.exists() else None
+        existing_public_obj = json.loads(existing_public) if existing_public is not None else None
+        existing_hidden_obj = json.loads(existing_hidden) if existing_hidden is not None else None
 
         if args.check:
             checked += 1
             mismatched = False
-            if existing_public != rendered_public:
+            if existing_public_obj is None or not _json_equivalent(existing_public_obj, generated_public):
                 mismatched = True
                 print(f"MISMATCH: {problem_id} (public_tests.json)")
-            if existing_hidden != rendered_hidden:
+            if existing_hidden_obj is None or not _json_equivalent(existing_hidden_obj, generated_hidden):
                 mismatched = True
                 print(f"MISMATCH: {problem_id} (hidden_tests.json)")
             if mismatched:
