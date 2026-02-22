@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
+import socket
 import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -22,6 +24,7 @@ from judge.services import WorkerExecutionService, WorkerJob
 from judge.warm_executor import WarmForkExecutor
 
 logger = logging.getLogger(__name__)
+_NOTIFY_ERROR_LOGGED = False
 
 if TYPE_CHECKING:
     from judge.problems import ProblemRepository
@@ -70,6 +73,48 @@ def _profile_for_stream(stream: str) -> str:
     if stream == "queue:torch":
         return "torch"
     return "unknown"
+
+
+def _notify_systemd(message: str) -> None:
+    global _NOTIFY_ERROR_LOGGED
+
+    notify_socket = os.getenv("NOTIFY_SOCKET", "").strip()
+    if not notify_socket:
+        return
+
+    address = f"\0{notify_socket[1:]}" if notify_socket.startswith("@") else notify_socket
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sock:
+            sock.connect(address)
+            sock.sendall(message.encode("utf-8"))
+    except OSError:
+        if _NOTIFY_ERROR_LOGGED:
+            return
+        _NOTIFY_ERROR_LOGGED = True
+        logger.warning("Failed to send sd_notify message to systemd", exc_info=True)
+
+
+def _watchdog_enabled() -> bool:
+    raw_value = os.getenv("WATCHDOG_USEC", "").strip()
+    return raw_value.isdigit() and int(raw_value) > 0
+
+
+def _notify_ready(consumer: str) -> None:
+    _notify_systemd(f"READY=1\nSTATUS=Judge worker ready: {consumer}")
+
+
+def _notify_watchdog(status: str | None = None) -> None:
+    if not _watchdog_enabled():
+        return
+    payload = "WATCHDOG=1"
+    if status:
+        payload += f"\nSTATUS={status}"
+    _notify_systemd(payload)
+
+
+def _emit_liveness(profile: str, consumer: str, *, status: str | None = None) -> None:
+    worker_heartbeat(profile, consumer)
+    _notify_watchdog(status=status)
 
 
 def _parse_queue_message(fields: dict[str, str]) -> tuple[dict[str, Any], str | None]:
@@ -182,7 +227,7 @@ def _process_queue_entry(
     results: ResultsStore,
     execution: WorkerExecutionService,
 ) -> None:
-    worker_heartbeat(worker_profile, consumer)
+    _emit_liveness(worker_profile, consumer, status=f"processing queue entry {msg_id}")
     parsed, parse_error = _parse_queue_message(fields)
     if parse_error:
         logger.error(
@@ -250,7 +295,7 @@ def _process_queue_entry(
         observe_job_duration(worker_profile, duration)
         job_finished(worker_profile, outcome.status, outcome.error_kind)
 
-    worker_heartbeat(worker_profile, consumer)
+    _emit_liveness(worker_profile, consumer, status=f"idle after queue entry {msg_id}")
 
     if outcome.should_ack:
         try:
@@ -277,13 +322,14 @@ def main() -> None:
     queue.ensure_group(args.stream, args.group)
 
     worker_profile = _profile_for_stream(args.stream)
-    worker_heartbeat(worker_profile, args.consumer)
+    _notify_ready(args.consumer)
+    _emit_liveness(worker_profile, args.consumer, status=f"worker loop active ({args.consumer})")
 
     warm_executor = dependencies.warm_executor
     last_reclaim = 0.0
 
     while True:
-        worker_heartbeat(worker_profile, args.consumer)
+        _emit_liveness(worker_profile, args.consumer, status=f"worker loop active ({args.consumer})")
         now = time.time()
         if now - last_reclaim > args.reclaim_interval:
             reclaimed = queue.autoclaim(
