@@ -11,22 +11,22 @@ groups:
           description: "Prometheus cannot scrape judge-api for at least 2 minutes."
 
       - alert: JudgeLightWorkersMissing
-        expr: (sum((time() - judge_worker_heartbeat_unixtime{profile="light"}) < bool __WORKER_HEARTBEAT_STALE_SECONDS__) or vector(0)) < __LIGHT_WORKERS__
+        expr: (sum(node_systemd_unit_state{job="node-exporter",name=~"judge-worker-light@[0-9]+\\.service",state="active"}) or vector(0)) < __LIGHT_WORKERS__
         for: __WORKER_HEALTH_FOR__
         labels:
           severity: critical
         annotations:
-          summary: "Judge light workers missing heartbeats"
-          description: "Live light workers stayed below __LIGHT_WORKERS__ for __WORKER_HEALTH_FOR__ (stale after __WORKER_HEARTBEAT_STALE_SECONDS__s)."
+          summary: "Judge light workers missing active units"
+          description: "Active light worker units stayed below __LIGHT_WORKERS__ for __WORKER_HEALTH_FOR__."
 
       - alert: JudgeTorchWorkersMissing
-        expr: (sum((time() - judge_worker_heartbeat_unixtime{profile="torch"}) < bool __WORKER_HEARTBEAT_STALE_SECONDS__) or vector(0)) < __TORCH_WORKERS__
+        expr: (sum(node_systemd_unit_state{job="node-exporter",name=~"judge-worker-torch@[0-9]+\\.service",state="active"}) or vector(0)) < __TORCH_WORKERS__
         for: __WORKER_HEALTH_FOR__
         labels:
           severity: critical
         annotations:
-          summary: "Judge torch workers missing heartbeats"
-          description: "Live torch workers stayed below __TORCH_WORKERS__ for __WORKER_HEALTH_FOR__ (stale after __WORKER_HEARTBEAT_STALE_SECONDS__s)."
+          summary: "Judge torch workers missing active units"
+          description: "Active torch worker units stayed below __TORCH_WORKERS__ for __WORKER_HEALTH_FOR__."
 
       - alert: JudgeLightQueueBacklogHigh
         expr: judge_queue_group_lag{stream="queue:light",group="workers-light"} > __LIGHT_BACKLOG_WARN__
