@@ -3,7 +3,7 @@
   "cases": [
     {
       "id": "b01",
-      "input_code": "import torch\nseq_len = 1\nd_model = 2\n",
+      "input_code": "seq_len = 1\nd_model = 2\n",
       "expected": [
         [
           0.0,
@@ -13,7 +13,7 @@
     },
     {
       "id": "b02",
-      "input_code": "import torch\nseq_len = 1\nd_model = 4\n",
+      "input_code": "seq_len = 1\nd_model = 4\n",
       "expected": [
         [
           0.0,
@@ -25,7 +25,7 @@
     },
     {
       "id": "a01",
-      "input_code": "import torch\nseq_len = 4\nd_model = 6\n",
+      "input_code": "seq_len = 4\nd_model = 6\n",
       "expected": [
         [
           0.0,
@@ -63,7 +63,7 @@
     },
     {
       "id": "a02",
-      "input_code": "import torch\nseq_len = 6\nd_model = 8\n",
+      "input_code": "seq_len = 6\nd_model = 8\n",
       "expected": [
         [
           0.0,
@@ -129,7 +129,7 @@
     },
     {
       "id": "a03",
-      "input_code": "import torch\nseq_len = 8\nd_model = 10\n",
+      "input_code": "seq_len = 8\nd_model = 10\n",
       "expected": [
         [
           0.0,
@@ -231,7 +231,7 @@
     },
     {
       "id": "s01",
-      "input_code": "import torch\nseq_len = 24\nd_model = 24\n",
+      "input_code": "seq_len = 24\nd_model = 24\n",
       "expected": [
         [
           0.0,
@@ -861,7 +861,7 @@
     },
     {
       "id": "s02",
-      "input_code": "import torch\nseq_len = 32\nd_model = 24\n",
+      "input_code": "seq_len = 32\nd_model = 24\n",
       "expected": [
         [
           0.0,
@@ -1699,7 +1699,7 @@
     },
     {
       "id": "s03",
-      "input_code": "import torch\nseq_len = 40\nd_model = 20\n",
+      "input_code": "seq_len = 40\nd_model = 20\n",
       "expected": [
         [
           0.0,
@@ -2585,7 +2585,7 @@
     },
     {
       "id": "s04",
-      "input_code": "import torch\nseq_len = 48\nd_model = 16\n",
+      "input_code": "seq_len = 48\nd_model = 16\n",
       "expected": [
         [
           0.0,
@@ -3455,7 +3455,7 @@
     },
     {
       "id": "r01",
-      "input_code": "import torch\nseq_len = 10\nd_model = 16\n",
+      "input_code": "seq_len = 10\nd_model = 16\n",
       "expected": [
         [
           0.0,
@@ -3641,7 +3641,7 @@
     },
     {
       "id": "r02",
-      "input_code": "import torch\nseq_len = 13\nd_model = 6\n",
+      "input_code": "seq_len = 13\nd_model = 6\n",
       "expected": [
         [
           0.0,
@@ -3751,7 +3751,7 @@
     },
     {
       "id": "r03",
-      "input_code": "import torch\nseq_len = 8\nd_model = 10\n",
+      "input_code": "seq_len = 8\nd_model = 10\n",
       "expected": [
         [
           0.0,
@@ -3853,7 +3853,7 @@
     },
     {
       "id": "r04",
-      "input_code": "import torch\nseq_len = 18\nd_model = 8\n",
+      "input_code": "seq_len = 18\nd_model = 8\n",
       "expected": [
         [
           0.0,
@@ -4039,7 +4039,7 @@
     },
     {
       "id": "r05",
-      "input_code": "import torch\nseq_len = 19\nd_model = 16\n",
+      "input_code": "seq_len = 19\nd_model = 16\n",
       "expected": [
         [
           0.0,
@@ -4387,7 +4387,7 @@
     },
     {
       "id": "r06",
-      "input_code": "import torch\nseq_len = 15\nd_model = 20\n",
+      "input_code": "seq_len = 15\nd_model = 20\n",
       "expected": [
         [
           0.0,
@@ -4723,7 +4723,7 @@
     },
     {
       "id": "r07",
-      "input_code": "import torch\nseq_len = 14\nd_model = 12\n",
+      "input_code": "seq_len = 14\nd_model = 12\n",
       "expected": [
         [
           0.0,
@@ -4925,7 +4925,7 @@
     },
     {
       "id": "r08",
-      "input_code": "import torch\nseq_len = 7\nd_model = 20\n",
+      "input_code": "seq_len = 7\nd_model = 20\n",
       "expected": [
         [
           0.0,
@@ -5085,7 +5085,7 @@
     },
     {
       "id": "r09",
-      "input_code": "import torch\nseq_len = 6\nd_model = 20\n",
+      "input_code": "seq_len = 6\nd_model = 20\n",
       "expected": [
         [
           0.0,
@@ -5223,7 +5223,7 @@
     },
     {
       "id": "r10",
-      "input_code": "import torch\nseq_len = 11\nd_model = 8\n",
+      "input_code": "seq_len = 11\nd_model = 8\n",
       "expected": [
         [
           0.0,

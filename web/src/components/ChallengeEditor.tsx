@@ -33,7 +33,7 @@ import {
   type TestConfig,
 } from "@/lib/pyodide";
 import type { RunResult, TestStatus, TestSummary } from "@/lib/test-results";
-import { bundleToTestConfig, fetchPublicBundle } from "@/lib/judge-public-tests";
+import { bundleToTestConfig, fetchPublicBundle, pythonLiteral } from "@/lib/judge-public-tests";
 import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
 import type { JudgeJobResult } from "@/lib/judge-client";
 import type { Challenge } from "@/lib/challenge-types";
@@ -88,10 +88,14 @@ export interface ChallengeEditorProps {
   setActiveChallengeIndex: (index: number | null) => void;
 }
 
+function cleanInputDisplay(input: string): string {
+  return input.replace(/, dtype=torch\.float32/g, "");
+}
+
 // ExampleCard component for displaying test cases with optional explanations
 function ExampleCard({ testCase }: { testCase: TestCase }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const inputLines = testCase.input_code.trim();
+  const inputLines = cleanInputDisplay(testCase.input_code).trim();
 
   return (
     <div className="p-3 bg-terminal rounded-md border border-border">
@@ -445,10 +449,9 @@ function ChallengeEditorContent({
               ? bundle.tests
               : bundle.tests.cases || []
             ).map((tc) => {
-              const expected =
-                typeof tc.expected === "string"
-                  ? tc.expected
-                  : JSON.stringify(tc.expected);
+              const expected = tc.expected_is_code
+                  ? String(tc.expected)
+                  : pythonLiteral(tc.expected);
               return {
                 id: tc.id,
                 input_code: tc.input_code || "",
@@ -949,7 +952,7 @@ function ChallengeEditorContent({
   const runShortcut = isMac ? "Cmd + ," : "Ctrl + ,";
   const submitShortcut = isMac ? "Cmd + Enter" : "Ctrl + Enter";
 
-  const visibleTestCases = testCases;
+  const editableTestCases = testCases;
 
   return (
     <Group orientation="horizontal" className="flex-1 min-h-0 min-w-0 bg-background">
@@ -1014,7 +1017,10 @@ function ChallengeEditorContent({
 
             {/* Automated Example Test Cases */}
             {(() => {
-              const exampleCases = bundleExamples || [];
+              const allExamples = bundleExamples || [];
+              const exampleCases = activeChallenge.visibleTestCases
+                ? allExamples.slice(0, activeChallenge.visibleTestCases)
+                : allExamples;
               if (exampleCases.length === 0) {
                 return null;
               }
@@ -1239,8 +1245,8 @@ function ChallengeEditorContent({
                     if (isBottomPanelCollapsed)
                       bottomPanelRef.current?.expand();
                     // Ensure a valid test case is selected
-                    if (visibleTestCases.length > 0 && !visibleTestCases.some((tc) => tc.id === activeTestCaseId)) {
-                      setActiveTestCaseId(visibleTestCases[0].id);
+                    if (editableTestCases.length > 0 && !editableTestCases.some((tc) => tc.id === activeTestCaseId)) {
+                      setActiveTestCaseId(editableTestCases[0].id);
                     }
                   }}
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
@@ -1315,7 +1321,7 @@ function ChallengeEditorContent({
                     <div id="testcases-panel" role="tabpanel" aria-label="Test cases editor" className="flex flex-col h-full">
                       {/* Case Tabs */}
                       <div className="flex items-center gap-2 p-2 border-b border-border">
-                        {visibleTestCases.map((tc, idx) => (
+                        {editableTestCases.map((tc, idx) => (
                             <button
                               key={tc.id}
                               onClick={() => setActiveTestCaseId(tc.id)}
@@ -1326,7 +1332,7 @@ function ChallengeEditorContent({
                               }`}
                             >
                               Case {idx + 1}
-                              {visibleTestCases.length > 1 && (
+                              {editableTestCases.length > 1 && (
                                 <X
                                   className="w-3 h-3 hover:text-error"
                                   onClick={(e) => {
@@ -1335,7 +1341,7 @@ function ChallengeEditorContent({
                                       prev.filter((c) => c.id !== tc.id)
                                     );
                                     if (activeTestCaseId === tc.id) {
-                                      const remaining = visibleTestCases.filter(
+                                      const remaining = editableTestCases.filter(
                                         (c) => c.id !== tc.id
                                       );
                                       if (remaining.length > 0) {

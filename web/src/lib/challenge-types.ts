@@ -11,4 +11,5 @@ export interface Challenge {
   problemId: string; // Problem id for server-side judge
   chapterNumber?: string; // e.g., "02" from "02-tokenization"
   problemNumber?: string; // e.g., "01" from "01-pair-counter"
+  visibleTestCases?: number; // Limit examples shown in left panel
 }

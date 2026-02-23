@@ -3,7 +3,7 @@
   "cases": [
     {
       "id": "case1",
-      "input_code": "import torch\nX = torch.tensor([[1.0, 0.0], [0.0, 0.0]], dtype=torch.float32)\nW_Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nW_K = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nW_V = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nW_O = torch.tensor([[0.0, 1.0], [1.0, 0.0]], dtype=torch.float32)\nnum_heads = 2\n",
+      "input_code": "X = torch.tensor([[1.0, 0.0], [0.0, 0.0]], dtype=torch.float32)\nW_Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nW_K = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nW_V = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nW_O = torch.tensor([[0.0, 1.0], [1.0, 0.0]], dtype=torch.float32)\nnum_heads = 2\n",
       "expected": [
         [
           0.0,
@@ -17,7 +17,7 @@
     },
     {
       "id": "case2",
-      "input_code": "import torch\nX = torch.tensor([[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0]], dtype=torch.float32)\nW_Q = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)\nW_K = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)\nW_V = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)\nW_O = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)\nnum_heads = 2\n",
+      "input_code": "X = torch.tensor([[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0]], dtype=torch.float32)\nW_Q = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)\nW_K = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)\nW_V = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)\nW_O = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)\nnum_heads = 2\n",
       "expected": [
         [
           1.0,

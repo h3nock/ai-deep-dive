@@ -3,7 +3,7 @@
   "cases": [
     {
       "id": "b01",
-      "input_code": "import torch\npos = 0\nd_model = 2\n",
+      "input_code": "pos = 0\nd_model = 2\n",
       "expected": [
         0.0,
         1.0
@@ -11,7 +11,7 @@
     },
     {
       "id": "a01",
-      "input_code": "import torch\npos = 5\nd_model = 6\n",
+      "input_code": "pos = 5\nd_model = 6\n",
       "expected": [
         -0.95892429,
         0.2836622,
@@ -23,7 +23,7 @@
     },
     {
       "id": "a02",
-      "input_code": "import torch\npos = 100\nd_model = 8\n",
+      "input_code": "pos = 100\nd_model = 8\n",
       "expected": [
         -0.50636566,
         0.86231887,
@@ -37,7 +37,7 @@
     },
     {
       "id": "a03",
-      "input_code": "import torch\npos = 1000\nd_model = 10\n",
+      "input_code": "pos = 1000\nd_model = 10\n",
       "expected": [
         0.82687956,
         0.56237906,
@@ -53,7 +53,7 @@
     },
     {
       "id": "s01",
-      "input_code": "import torch\npos = 2048\nd_model = 64\n",
+      "input_code": "pos = 2048\nd_model = 64\n",
       "expected": [
         -0.31305701,
         0.94973433,
@@ -123,7 +123,7 @@
     },
     {
       "id": "s02",
-      "input_code": "import torch\npos = 4096\nd_model = 128\n",
+      "input_code": "pos = 4096\nd_model = 128\n",
       "expected": [
         -0.59464198,
         0.8039906,
@@ -257,7 +257,7 @@
     },
     {
       "id": "s03",
-      "input_code": "import torch\npos = 10000\nd_model = 256\n",
+      "input_code": "pos = 10000\nd_model = 256\n",
       "expected": [
         -0.30561438,
         -0.95215535,
@@ -519,7 +519,7 @@
     },
     {
       "id": "s04",
-      "input_code": "import torch\npos = 50000\nd_model = 64\n",
+      "input_code": "pos = 50000\nd_model = 64\n",
       "expected": [
         -0.9998402,
         -0.01787726,
@@ -589,7 +589,7 @@
     },
     {
       "id": "r01",
-      "input_code": "import torch\npos = 64180\nd_model = 4\n",
+      "input_code": "pos = 64180\nd_model = 4\n",
       "expected": [
         -0.39280504,
         -0.91962177,
@@ -599,7 +599,7 @@
     },
     {
       "id": "r02",
-      "input_code": "import torch\npos = 90943\nd_model = 16\n",
+      "input_code": "pos = 90943\nd_model = 16\n",
       "expected": [
         0.17495877,
         0.98457575,
@@ -621,7 +621,7 @@
     },
     {
       "id": "r03",
-      "input_code": "import torch\npos = 53167\nd_model = 10\n",
+      "input_code": "pos = 53167\nd_model = 10\n",
       "expected": [
         -0.96722621,
         0.25391617,
@@ -637,7 +637,7 @@
     },
     {
       "id": "r04",
-      "input_code": "import torch\npos = 72028\nd_model = 32\n",
+      "input_code": "pos = 72028\nd_model = 32\n",
       "expected": [
         -0.64820987,
         -0.76146173,
@@ -675,7 +675,7 @@
     },
     {
       "id": "r05",
-      "input_code": "import torch\npos = 53618\nd_model = 128\n",
+      "input_code": "pos = 53618\nd_model = 128\n",
       "expected": [
         -0.42429319,
         -0.90552485,
@@ -809,7 +809,7 @@
     },
     {
       "id": "r06",
-      "input_code": "import torch\npos = 53131\nd_model = 6\n",
+      "input_code": "pos = 53131\nd_model = 6\n",
       "expected": [
         0.37559852,
         0.92678249,
@@ -821,7 +821,7 @@
     },
     {
       "id": "r07",
-      "input_code": "import torch\npos = 796\nd_model = 32\n",
+      "input_code": "pos = 796\nd_model = 32\n",
       "expected": [
         -0.92348158,
         -0.38364276,
@@ -859,7 +859,7 @@
     },
     {
       "id": "r08",
-      "input_code": "import torch\npos = 81618\nd_model = 32\n",
+      "input_code": "pos = 81618\nd_model = 32\n",
       "expected": [
         -0.54562962,
         0.8380264,
@@ -897,7 +897,7 @@
     },
     {
       "id": "r09",
-      "input_code": "import torch\npos = 22040\nd_model = 6\n",
+      "input_code": "pos = 22040\nd_model = 6\n",
       "expected": [
         -0.98774159,
         0.15609775,
@@ -909,7 +909,7 @@
     },
     {
       "id": "r10",
-      "input_code": "import torch\npos = 99425\nd_model = 10\n",
+      "input_code": "pos = 99425\nd_model = 10\n",
       "expected": [
         -0.12398097,
         0.9922846,

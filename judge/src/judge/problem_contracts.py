@@ -64,18 +64,6 @@ def _case_input_names(input_code: str) -> set[str]:
     return names
 
 
-def _has_torch_import(input_code: str) -> bool:
-    tree = ast.parse(input_code, mode="exec")
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                if alias.name == "torch":
-                    return True
-        if isinstance(node, ast.ImportFrom):
-            if node.module == "torch":
-                return True
-    return False
-
 
 def _iter_cases(tests_raw: Any) -> list[dict[str, Any]]:
     if isinstance(tests_raw, dict):
@@ -102,7 +90,6 @@ def validate_problem_contracts(problems_root: Path) -> list[ContractIssue]:
             continue
 
         manifest = _load_json(manifest_path)
-        requires_torch = bool(manifest.get("requires_torch", False))
         runner = manifest.get("runner", "")
 
         if not isinstance(runner, str) or not runner.strip():
@@ -164,15 +151,6 @@ def validate_problem_contracts(problems_root: Path) -> list[ContractIssue]:
                         ContractIssue(
                             tests_path,
                             f"runner inputs missing from input_code: {', '.join(missing_runner_inputs)}",
-                            case_id=case_id,
-                        )
-                    )
-
-                if requires_torch and not _has_torch_import(input_code):
-                    issues.append(
-                        ContractIssue(
-                            tests_path,
-                            "requires_torch problem case must import torch in input_code",
                             case_id=case_id,
                         )
                     )
