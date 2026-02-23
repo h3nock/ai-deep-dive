@@ -54,7 +54,7 @@ async function fetchJson<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-function pythonLiteral(value: unknown): string {
+export function pythonLiteral(value: unknown): string {
   if (value === null || value === undefined) return "None";
   if (typeof value === "boolean") return value ? "True" : "False";
   if (typeof value === "number") return Number.isFinite(value) ? `${value}` : "float('nan')";
