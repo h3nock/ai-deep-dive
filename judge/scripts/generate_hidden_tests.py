@@ -582,6 +582,26 @@ def _gelu_ref(x: Any, *, dtype: Any = np.float32) -> Any:
     out = _gelu_array(np.asarray(x, dtype=dtype), dtype=dtype)
     return out.astype(dtype).tolist()
 
+def _ffn_ref(
+    x: list[list[float]],
+    w1: list[list[float]],
+    b1: list[float],
+    w2: list[list[float]],
+    b2: list[float],
+    *,
+    dtype: Any = np.float32,
+) -> list[list[float]]:
+    x_arr = np.asarray(x, dtype=dtype)
+    w1_arr = np.asarray(w1, dtype=dtype)
+    b1_arr = np.asarray(b1, dtype=dtype)
+    w2_arr = np.asarray(w2, dtype=dtype)
+    b2_arr = np.asarray(b2, dtype=dtype)
+
+    hidden = x_arr @ w1_arr + b1_arr
+    activated = _gelu_array(hidden, dtype=dtype)
+    out = activated @ w2_arr + b2_arr
+    return out.astype(dtype).tolist()
+
 def _torch_vector_input_code(var_name: str, vector: list[float]) -> str:
     return f"{var_name} = torch.tensor({repr(vector)}, dtype=torch.float32)\n"
 
@@ -1541,6 +1561,117 @@ def _gen_gelu(rng: random.Random) -> list[Case]:
 
     return cases
 
+def _gen_ffn_forward_pass(rng: random.Random) -> list[Case]:
+    cases: list[Case] = []
+
+    fixed = [
+        # Keep curated public examples first.
+        (
+            "boundary",
+            [[1.0, 0.0], [0.0, 1.0]],
+            [[0.5, -0.3, 0.8], [0.1, 0.6, -0.2]],
+            [0.0, 0.0, 0.0],
+            [[0.4, -0.1], [0.2, 0.5], [-0.3, 0.7]],
+            [0.0, 0.0],
+        ),
+        (
+            "boundary",
+            [[1.0, -1.0], [0.5, 0.5]],
+            [[0.5, -0.3, 0.8], [0.1, 0.6, -0.2]],
+            [0.1, -0.1, 0.2],
+            [[0.4, -0.1], [0.2, 0.5], [-0.3, 0.7]],
+            [0.1, -0.1],
+        ),
+        (
+            "boundary",
+            [[0.0, 0.0]],
+            [[1.0, -1.0], [0.5, 0.5]],
+            [0.2, -0.2],
+            [[1.0, 0.0], [0.0, 1.0]],
+            [0.0, 0.0],
+        ),
+        (
+            "adversarial",
+            [[2.0, -1.0, 0.5], [-0.5, 1.5, -2.0]],
+            [[0.3, -0.6, 0.4, 0.2], [-0.1, 0.5, -0.7, 0.9], [0.8, 0.2, -0.3, -0.4]],
+            [0.1, -0.2, 0.3, -0.4],
+            [[0.5, -0.2, 0.1], [-0.3, 0.4, 0.2], [0.7, -0.1, -0.5], [0.2, 0.6, -0.3]],
+            [0.05, -0.1, 0.2],
+        ),
+        (
+            "regression",
+            [[-1.2, 0.3], [0.8, -0.7], [0.0, 0.5]],
+            [[-0.4, 0.6, 0.2, -0.1], [0.7, -0.3, 0.5, 0.9]],
+            [-0.2, 0.1, 0.0, 0.3],
+            [[0.3, -0.2], [0.4, 0.1], [-0.5, 0.7], [0.6, -0.4]],
+            [0.0, 0.15],
+        ),
+        (
+            "regression",
+            [[0.25, -0.5, 0.75, -1.0]],
+            [[0.2, 0.1, -0.3], [-0.4, 0.5, 0.6], [0.7, -0.8, 0.9], [-1.0, 0.2, -0.1]],
+            [0.05, -0.05, 0.1],
+            [[0.6, -0.2, 0.4, -0.1], [0.3, 0.7, -0.5, 0.2], [-0.4, 0.1, 0.8, -0.6]],
+            [0.0, 0.1, -0.1, 0.2],
+        ),
+    ]
+
+    for bucket, x, w1, b1, w2, b2 in fixed:
+        expected = _round_nested(
+            _ffn_ref(x, w1, b1, w2, b2),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
+        code = "import torch\n"
+        code += _torch_matrix_input_code("x", x)
+        code += _torch_matrix_input_code("W1", w1)
+        code += _torch_vector_input_code("b1", b1)
+        code += _torch_matrix_input_code("W2", w2)
+        code += _torch_vector_input_code("b2", b2)
+        cases.append(Case(bucket, input_code=code, expected=expected))
+
+    for seq_len, d_model, d_ff in [(12, 8, 24), (14, 10, 30), (10, 12, 36), (16, 6, 24)]:
+        x = _random_matrix(rng, seq_len, d_model, low=-2.0, high=2.0)
+        w1 = _random_matrix(rng, d_model, d_ff, low=-1.0, high=1.0)
+        b1 = [round(rng.uniform(-0.5, 0.5), 4) for _ in range(d_ff)]
+        w2 = _random_matrix(rng, d_ff, d_model, low=-1.0, high=1.0)
+        b2 = [round(rng.uniform(-0.5, 0.5), 4) for _ in range(d_model)]
+        expected = _round_nested(
+            _ffn_ref(x, w1, b1, w2, b2),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
+        code = "import torch\n"
+        code += _torch_matrix_input_code("x", x)
+        code += _torch_matrix_input_code("W1", w1)
+        code += _torch_vector_input_code("b1", b1)
+        code += _torch_matrix_input_code("W2", w2)
+        code += _torch_vector_input_code("b2", b2)
+        cases.append(Case("stress", input_code=code, expected=expected))
+
+    for _ in range(10):
+        seq_len = rng.randint(2, 10)
+        d_model = rng.choice([2, 3, 4, 6, 8, 10])
+        d_ff = rng.choice([d_model * 2, d_model * 3, d_model * 4])
+        x = _random_matrix(rng, seq_len, d_model, low=-2.0, high=2.0)
+        w1 = _random_matrix(rng, d_model, d_ff, low=-1.0, high=1.0)
+        b1 = [round(rng.uniform(-0.5, 0.5), 4) for _ in range(d_ff)]
+        w2 = _random_matrix(rng, d_ff, d_model, low=-1.0, high=1.0)
+        b2 = [round(rng.uniform(-0.5, 0.5), 4) for _ in range(d_model)]
+        expected = _round_nested(
+            _ffn_ref(x, w1, b1, w2, b2),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
+        code = "import torch\n"
+        code += _torch_matrix_input_code("x", x)
+        code += _torch_matrix_input_code("W1", w1)
+        code += _torch_vector_input_code("b1", b1)
+        code += _torch_matrix_input_code("W2", w2)
+        code += _torch_vector_input_code("b2", b2)
+        cases.append(Case("random", input_code=code, expected=expected))
+
+    return cases
+
+
+
 
 
 PROBLEM_GENERATORS: dict[str, ProblemGenerator] = {
@@ -1560,6 +1691,7 @@ PROBLEM_GENERATORS: dict[str, ProblemGenerator] = {
     "build-gpt/05-attention-mechanism/02-causal-attention": _gen_causal_attention,
     "build-gpt/06-multi-head-attention/01-multi-head-causal-attention": _gen_multi_head_causal_attention,
     "build-gpt/07-feed-forward-networks/01-gelu": _gen_gelu,
+    "build-gpt/07-feed-forward-networks/02-ffn-forward-pass": _gen_ffn_forward_pass,
 }
 
 
@@ -1580,6 +1712,7 @@ PROBLEM_SEEDS: dict[str, int] = {
     "build-gpt/05-attention-mechanism/02-causal-attention": 502,
     "build-gpt/06-multi-head-attention/01-multi-head-causal-attention": 601,
     "build-gpt/07-feed-forward-networks/01-gelu": 701,
+    "build-gpt/07-feed-forward-networks/02-ffn-forward-pass": 702,
 }
 
 PUBLIC_CASE_COUNT_OVERRIDES: dict[str, int] = {
