@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case1",
+      "input_code": "import torch\nx = torch.tensor([[2.0, 4.0, 6.0, 8.0]], dtype=torch.float32)\ngamma = torch.tensor([1.0, 1.0, 1.0, 1.0], dtype=torch.float32)\nbeta = torch.tensor([0.0, 0.0, 0.0, 0.0], dtype=torch.float32)\neps = 1e-05\n",
+      "expected": [
+        [
+          -1.34163952,
+          -0.44721317,
+          0.44721317,
+          1.34163952
+        ]
+      ]
+    },
+    {
+      "id": "case2",
+      "input_code": "import torch\nx = torch.tensor([[1.0, 2.0, 3.0], [4.0, 4.0, 4.0]], dtype=torch.float32)\ngamma = torch.tensor([2.0, 1.0, 0.5], dtype=torch.float32)\nbeta = torch.tensor([0.0, 1.0, -1.0], dtype=torch.float32)\neps = 1e-05\n",
+      "expected": [
+        [
+          -2.44947124,
+          1.0,
+          -0.38763219
+        ],
+        [
+          0.0,
+          1.0,
+          -1.0
+        ]
+      ]
+    }
+  ]
+}

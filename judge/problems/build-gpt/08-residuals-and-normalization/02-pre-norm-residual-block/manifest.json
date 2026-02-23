@@ -1,0 +1,13 @@
+{
+  "id": "build-gpt/08-residuals-and-normalization/02-pre-norm-residual-block",
+  "version": "v1",
+  "runner": "pre_norm_block(x, gamma, beta, W, b, eps)",
+  "requires_torch": true,
+  "time_limit_s": 5,
+  "memory_mb": 1024,
+  "comparison": {
+    "type": "allclose",
+    "rtol": 1e-05,
+    "atol": 1e-06
+  }
+}

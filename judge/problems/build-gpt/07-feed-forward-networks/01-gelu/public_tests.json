@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case1",
+      "input_code": "import torch\nx = torch.tensor([0.0, 1.0, -1.0], dtype=torch.float32)\n",
+      "expected": [
+        0.0,
+        0.84119201,
+        -0.15880799
+      ]
+    },
+    {
+      "id": "case2",
+      "input_code": "import torch\nx = torch.tensor([[0.5, -0.5], [2.0, -2.0]], dtype=torch.float32)\n",
+      "expected": [
+        [
+          0.345714,
+          -0.154286
+        ],
+        [
+          1.95459771,
+          -0.04540229
+        ]
+      ]
+    }
+  ]
+}
