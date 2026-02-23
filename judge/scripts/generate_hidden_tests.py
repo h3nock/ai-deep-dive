@@ -582,6 +582,7 @@ def _gelu_ref(x: Any, *, dtype: Any = np.float32) -> Any:
     out = _gelu_array(np.asarray(x, dtype=dtype), dtype=dtype)
     return out.astype(dtype).tolist()
 
+
 def _ffn_ref(
     x: list[list[float]],
     w1: list[list[float]],
@@ -601,6 +602,7 @@ def _ffn_ref(
     activated = _gelu_array(hidden, dtype=dtype)
     out = activated @ w2_arr + b2_arr
     return out.astype(dtype).tolist()
+
 
 def _layer_norm_array(
     x_arr: np.ndarray,
@@ -639,12 +641,36 @@ def _layer_norm_ref(
     )
     return out.astype(dtype).tolist()
 
-def _torch_vector_input_code(var_name: str, vector: list[float]) -> str:
-    return f"{var_name} = torch.tensor({repr(vector)}, dtype=torch.float32)\n"
+
+def _pre_norm_block_ref(
+    x: list[list[float]],
+    gamma: list[float],
+    beta: list[float],
+    w: list[list[float]],
+    b: list[float],
+    eps: float,
+    *,
+    dtype: Any = np.float32,
+) -> list[list[float]]:
+    x_arr = np.asarray(x, dtype=dtype)
+    w_arr = np.asarray(w, dtype=dtype)
+    b_arr = np.asarray(b, dtype=dtype)
+    ln = _layer_norm_array(
+        x_arr,
+        np.asarray(gamma, dtype=dtype),
+        np.asarray(beta, dtype=dtype),
+        eps,
+        dtype=dtype,
+    )
+    return (x_arr + (ln @ w_arr + b_arr)).astype(dtype).tolist()
 
 
 def _torch_matrix_input_code(var_name: str, matrix: list[list[float]]) -> str:
     return f"{var_name} = torch.tensor({repr(matrix)}, dtype=torch.float32)\n"
+
+
+def _torch_vector_input_code(var_name: str, vector: list[float]) -> str:
+    return f"{var_name} = torch.tensor({repr(vector)}, dtype=torch.float32)\n"
 
 
 def _random_matrix(
@@ -1598,6 +1624,7 @@ def _gen_gelu(rng: random.Random) -> list[Case]:
 
     return cases
 
+
 def _gen_ffn_forward_pass(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
 
@@ -1707,6 +1734,7 @@ def _gen_ffn_forward_pass(rng: random.Random) -> list[Case]:
 
     return cases
 
+
 def _gen_layer_normalization(rng: random.Random) -> list[Case]:
     cases: list[Case] = []
 
@@ -1805,9 +1833,124 @@ def _gen_layer_normalization(rng: random.Random) -> list[Case]:
     return cases
 
 
+def _gen_pre_norm_residual_block(rng: random.Random) -> list[Case]:
+    cases: list[Case] = []
 
+    fixed = [
+        # Keep curated public examples first.
+        (
+            "boundary",
+            [[1.0, 2.0], [3.0, 4.0]],
+            [1.0, 1.0],
+            [0.0, 0.0],
+            [[0.5, 0.0], [0.0, 0.5]],
+            [0.0, 0.0],
+            1e-5,
+        ),
+        (
+            "boundary",
+            [[1.0, -1.0, 0.0], [2.0, 0.0, -2.0]],
+            [1.0, 2.0, 1.0],
+            [0.1, 0.0, -0.1],
+            [[0.3, 0.0, -0.1], [0.0, 0.5, 0.2], [-0.2, 0.1, 0.4]],
+            [0.1, 0.0, -0.1],
+            1e-5,
+        ),
+        (
+            "boundary",
+            [[0.5, -0.5, 1.0], [2.0, 1.0, 0.0]],
+            [1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0],
+            [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+            [0.0, 0.0, 0.0],
+            1e-5,
+        ),
+        (
+            "adversarial",
+            [[-1.0, 0.0, 1.0, 2.0], [0.2, -0.2, 0.2, -0.2]],
+            [1.2, 0.8, -1.0, 0.5],
+            [0.0, 0.1, -0.1, 0.2],
+            [[0.4, -0.1, 0.2, 0.0], [0.0, 0.3, -0.2, 0.1], [-0.3, 0.0, 0.5, -0.4], [0.2, 0.1, 0.0, 0.6]],
+            [0.05, -0.05, 0.1, -0.1],
+            1e-6,
+        ),
+        (
+            "regression",
+            [[3.0, 3.0, 3.0], [1.0, 2.0, 4.0], [-2.0, -1.0, -3.0]],
+            [0.7, 1.3, -0.9],
+            [0.2, -0.2, 0.0],
+            [[0.6, -0.4, 0.1], [0.2, 0.5, -0.3], [-0.1, 0.7, 0.4]],
+            [0.0, 0.1, -0.1],
+            1e-5,
+        ),
+        (
+            "regression",
+            [[-0.5, 0.5], [1.5, -1.5], [0.0, 0.0]],
+            [1.5, -0.5],
+            [0.0, 0.2],
+            [[-0.7, 0.4], [0.3, 0.6]],
+            [0.1, -0.1],
+            1e-8,
+        ),
+    ]
 
+    for bucket, x, gamma, beta, w, b, eps in fixed:
+        expected = _round_nested(
+            _pre_norm_block_ref(x, gamma, beta, w, b, eps),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
+        code = "import torch\n"
+        code += _torch_matrix_input_code("x", x)
+        code += _torch_vector_input_code("gamma", gamma)
+        code += _torch_vector_input_code("beta", beta)
+        code += _torch_matrix_input_code("W", w)
+        code += _torch_vector_input_code("b", b)
+        code += f"eps = {eps}\n"
+        cases.append(Case(bucket, input_code=code, expected=expected))
 
+    for seq_len, d_model in [(12, 10), (14, 12), (16, 8), (10, 16)]:
+        x = _random_matrix(rng, seq_len, d_model, low=-2.0, high=2.0)
+        gamma = [round(rng.uniform(0.5, 1.5), 4) for _ in range(d_model)]
+        beta = [round(rng.uniform(-0.3, 0.3), 4) for _ in range(d_model)]
+        w = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
+        b = [round(rng.uniform(-0.2, 0.2), 4) for _ in range(d_model)]
+        eps = rng.choice([1e-5, 1e-6])
+        expected = _round_nested(
+            _pre_norm_block_ref(x, gamma, beta, w, b, eps),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
+        code = "import torch\n"
+        code += _torch_matrix_input_code("x", x)
+        code += _torch_vector_input_code("gamma", gamma)
+        code += _torch_vector_input_code("beta", beta)
+        code += _torch_matrix_input_code("W", w)
+        code += _torch_vector_input_code("b", b)
+        code += f"eps = {eps}\n"
+        cases.append(Case("stress", input_code=code, expected=expected))
+
+    for _ in range(10):
+        seq_len = rng.randint(2, 10)
+        d_model = rng.randint(2, 14)
+        x = _random_matrix(rng, seq_len, d_model, low=-2.0, high=2.0)
+        gamma = [round(rng.uniform(-1.5, 1.5), 4) for _ in range(d_model)]
+        beta = [round(rng.uniform(-0.3, 0.3), 4) for _ in range(d_model)]
+        w = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
+        b = [round(rng.uniform(-0.2, 0.2), 4) for _ in range(d_model)]
+        eps = rng.choice([1e-5, 1e-6, 1e-8])
+        expected = _round_nested(
+            _pre_norm_block_ref(x, gamma, beta, w, b, eps),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
+        code = "import torch\n"
+        code += _torch_matrix_input_code("x", x)
+        code += _torch_vector_input_code("gamma", gamma)
+        code += _torch_vector_input_code("beta", beta)
+        code += _torch_matrix_input_code("W", w)
+        code += _torch_vector_input_code("b", b)
+        code += f"eps = {eps}\n"
+        cases.append(Case("random", input_code=code, expected=expected))
+
+    return cases
 
 
 PROBLEM_GENERATORS: dict[str, ProblemGenerator] = {
@@ -1829,6 +1972,7 @@ PROBLEM_GENERATORS: dict[str, ProblemGenerator] = {
     "build-gpt/07-feed-forward-networks/01-gelu": _gen_gelu,
     "build-gpt/07-feed-forward-networks/02-ffn-forward-pass": _gen_ffn_forward_pass,
     "build-gpt/08-residuals-and-normalization/01-layer-normalization": _gen_layer_normalization,
+    "build-gpt/08-residuals-and-normalization/02-pre-norm-residual-block": _gen_pre_norm_residual_block,
 }
 
 
@@ -1851,6 +1995,7 @@ PROBLEM_SEEDS: dict[str, int] = {
     "build-gpt/07-feed-forward-networks/01-gelu": 701,
     "build-gpt/07-feed-forward-networks/02-ffn-forward-pass": 702,
     "build-gpt/08-residuals-and-normalization/01-layer-normalization": 801,
+    "build-gpt/08-residuals-and-normalization/02-pre-norm-residual-block": 802,
 }
 
 PUBLIC_CASE_COUNT_OVERRIDES: dict[str, int] = {
