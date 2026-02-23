@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case1",
+      "input_code": "import torch\nx = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nW1 = torch.tensor([[0.5, -0.3, 0.8], [0.1, 0.6, -0.2]], dtype=torch.float32)\nb1 = torch.tensor([0.0, 0.0, 0.0], dtype=torch.float32)\nW2 = torch.tensor([[0.4, -0.1], [0.2, 0.5], [-0.3, 0.7]], dtype=torch.float32)\nb2 = torch.tensor([0.0, 0.0], dtype=torch.float32)\n",
+      "expected": [
+        [
+          -0.07376973,
+          0.34941626
+        ],
+        [
+          0.13392073,
+          0.15340535
+        ]
+      ]
+    },
+    {
+      "id": "case2",
+      "input_code": "import torch\nx = torch.tensor([[1.0, -1.0], [0.5, 0.5]], dtype=torch.float32)\nW1 = torch.tensor([[0.5, -0.3, 0.8], [0.1, 0.6, -0.2]], dtype=torch.float32)\nb1 = torch.tensor([0.1, -0.1, 0.2], dtype=torch.float32)\nW2 = torch.tensor([[0.4, -0.1], [0.2, 0.5], [-0.3, 0.7]], dtype=torch.float32)\nb2 = torch.tensor([0.1, -0.1], dtype=torch.float32)\n",
+      "expected": [
+        [
+          -0.11198685,
+          0.52921659
+        ],
+        [
+          0.10634966,
+          0.12878215
+        ]
+      ]
+    }
+  ]
+}
