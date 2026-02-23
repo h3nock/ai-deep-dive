@@ -13,7 +13,6 @@ Default output is 20 hidden cases per supported problem (within the 15-25 target
 from __future__ import annotations
 
 import argparse
-import ast
 import json
 import math
 import random
@@ -49,24 +48,6 @@ def _inputs_to_code(inputs: dict[str, Any]) -> str:
     return rendered
 
 
-def _ensure_torch_import(input_code: str) -> str:
-    try:
-        tree = ast.parse(input_code, mode="exec")
-    except SyntaxError:
-        tree = None
-
-    if tree is not None:
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    if alias.name == "torch":
-                        return input_code if input_code.endswith("\n") else f"{input_code}\n"
-            if isinstance(node, ast.ImportFrom) and node.module == "torch":
-                return input_code if input_code.endswith("\n") else f"{input_code}\n"
-
-    prefixed = f"import torch\n{input_code}"
-    return prefixed if prefixed.endswith("\n") else f"{prefixed}\n"
-
 
 def _round_nested(value: Any, digits: int = 8) -> Any:
     if isinstance(value, float):
@@ -80,15 +61,13 @@ def _round_nested(value: Any, digits: int = 8) -> Any:
     return value
 
 
-def _serialize_case(case_id: str, case: Case, *, requires_torch: bool) -> dict[str, Any]:
+def _serialize_case(case_id: str, case: Case) -> dict[str, Any]:
     out: dict[str, Any] = {"id": case_id}
     if case.input_code is None and case.inputs is None:
         raise ValueError("Case must provide either inputs or input_code")
 
     code = case.input_code if case.input_code is not None else _inputs_to_code(case.inputs or {})
-    if requires_torch:
-        code = _ensure_torch_import(code)
-    elif not code.endswith("\n"):
+    if not code.endswith("\n"):
         code += "\n"
 
     out["input_code"] = code
@@ -102,7 +81,7 @@ def _serialize_case(case_id: str, case: Case, *, requires_torch: bool) -> dict[s
     return out
 
 
-def _assign_hidden_ids(cases: list[Case], *, requires_torch: bool) -> list[dict[str, Any]]:
+def _assign_hidden_ids(cases: list[Case]) -> list[dict[str, Any]]:
     prefixes = {
         "boundary": "b",
         "adversarial": "a",
@@ -118,24 +97,20 @@ def _assign_hidden_ids(cases: list[Case], *, requires_torch: bool) -> list[dict[
             raise ValueError(f"Unsupported bucket: {case.bucket}")
         counts[prefix] += 1
         out.append(
-            _serialize_case(
-                f"{prefix}{counts[prefix]:02d}",
-                case,
-                requires_torch=requires_torch,
-            )
+            _serialize_case(f"{prefix}{counts[prefix]:02d}", case)
         )
     return out
 
 
-def _assign_public_ids(cases: list[Case], *, requires_torch: bool) -> list[dict[str, Any]]:
+def _assign_public_ids(cases: list[Case]) -> list[dict[str, Any]]:
     return [
-        _serialize_case(f"case{index + 1}", case, requires_torch=requires_torch)
+        _serialize_case(f"case{index + 1}", case)
         for index, case in enumerate(cases)
     ]
 
 
-def _case_signature(case: Case, *, requires_torch: bool) -> tuple[str, str, bool]:
-    serialized = _serialize_case("__sig__", case, requires_torch=requires_torch)
+def _case_signature(case: Case) -> tuple[str, str, bool]:
+    serialized = _serialize_case("__sig__", case)
     return (
         serialized["input_code"],
         json.dumps(serialized.get("expected"), sort_keys=True),
@@ -1061,8 +1036,7 @@ def _gen_most_similar(rng: random.Random) -> list[Case]:
             require_margin=require_margin,
         )
         expected = _most_similar_ref(query_id, matrix, k, dtype=np.float32)
-        code = "import torch\n"
-        code += f"query_id = {query_id}\n"
+        code = f"query_id = {query_id}\n"
         code += _torch_matrix_input_code("embedding_matrix", matrix)
         code += f"k = {k}\n"
         cases.append(Case(bucket, input_code=code, expected=expected))
@@ -1078,8 +1052,7 @@ def _gen_most_similar(rng: random.Random) -> list[Case]:
             require_margin=True,
         )
         expected = _most_similar_ref(query_id, matrix, k_value, dtype=np.float32)
-        code = "import torch\n"
-        code += f"query_id = {query_id}\n"
+        code = f"query_id = {query_id}\n"
         code += _torch_matrix_input_code("embedding_matrix", matrix)
         code += f"k = {k_value}\n"
         cases.append(Case("stress", input_code=code, expected=expected))
@@ -1097,8 +1070,7 @@ def _gen_most_similar(rng: random.Random) -> list[Case]:
             require_margin=True,
         )
         expected = _most_similar_ref(query_id, matrix, k_value, dtype=np.float32)
-        code = "import torch\n"
-        code += f"query_id = {query_id}\n"
+        code = f"query_id = {query_id}\n"
         code += _torch_matrix_input_code("embedding_matrix", matrix)
         code += f"k = {k_value}\n"
         cases.append(Case("random", input_code=code, expected=expected))
@@ -1155,8 +1127,7 @@ def _gen_vector_analogy(rng: random.Random) -> list[Case]:
             require_margin=require_margin,
         )
         expected = _analogy_ref(a_id, b_id, c_id, matrix, dtype=np.float32)
-        code = "import torch\n"
-        code += f"a_id = {a_id}\n"
+        code = f"a_id = {a_id}\n"
         code += f"b_id = {b_id}\n"
         code += f"c_id = {c_id}\n"
         code += _torch_matrix_input_code("embedding_matrix", matrix)
@@ -1174,8 +1145,7 @@ def _gen_vector_analogy(rng: random.Random) -> list[Case]:
             require_margin=True,
         )
         expected = _analogy_ref(a_id, b_id, c_id, matrix, dtype=np.float32)
-        code = "import torch\n"
-        code += f"a_id = {a_id}\n"
+        code = f"a_id = {a_id}\n"
         code += f"b_id = {b_id}\n"
         code += f"c_id = {c_id}\n"
         code += _torch_matrix_input_code("embedding_matrix", matrix)
@@ -1195,8 +1165,7 @@ def _gen_vector_analogy(rng: random.Random) -> list[Case]:
         )
         expected = _analogy_ref(a_id, b_id, c_id, matrix, dtype=np.float32)
 
-        code = "import torch\n"
-        code += f"a_id = {a_id}\n"
+        code = f"a_id = {a_id}\n"
         code += f"b_id = {b_id}\n"
         code += f"c_id = {c_id}\n"
         code += _torch_matrix_input_code("embedding_matrix", matrix)
@@ -1322,8 +1291,7 @@ def _gen_attention_weights(rng: random.Random) -> list[Case]:
             _attention_weights_ref(q, k),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("Q", q)
+        code = _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
         cases.append(Case(bucket, input_code=code, expected=expected))
 
@@ -1334,8 +1302,7 @@ def _gen_attention_weights(rng: random.Random) -> list[Case]:
             _attention_weights_ref(q, k),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("Q", q)
+        code = _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
         cases.append(Case("stress", input_code=code, expected=expected))
 
@@ -1348,8 +1315,7 @@ def _gen_attention_weights(rng: random.Random) -> list[Case]:
             _attention_weights_ref(q, k),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("Q", q)
+        code = _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
         cases.append(Case("random", input_code=code, expected=expected))
 
@@ -1405,8 +1371,7 @@ def _gen_causal_attention(rng: random.Random) -> list[Case]:
             _causal_attention_ref(q, k, v),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("Q", q)
+        code = _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
         code += _torch_matrix_input_code("V", v)
         cases.append(Case(bucket, input_code=code, expected=expected))
@@ -1419,8 +1384,7 @@ def _gen_causal_attention(rng: random.Random) -> list[Case]:
             _causal_attention_ref(q, k, v),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("Q", q)
+        code = _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
         code += _torch_matrix_input_code("V", v)
         cases.append(Case("stress", input_code=code, expected=expected))
@@ -1437,8 +1401,7 @@ def _gen_causal_attention(rng: random.Random) -> list[Case]:
             digits=FLOAT_EXPECTED_DIGITS,
         )
 
-        code = "import torch\n"
-        code += _torch_matrix_input_code("Q", q)
+        code = _torch_matrix_input_code("Q", q)
         code += _torch_matrix_input_code("K", k)
         code += _torch_matrix_input_code("V", v)
         cases.append(Case("random", input_code=code, expected=expected))
@@ -1524,8 +1487,7 @@ def _gen_multi_head_causal_attention(rng: random.Random) -> list[Case]:
             _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("X", x)
+        code = _torch_matrix_input_code("X", x)
         code += _torch_matrix_input_code("W_Q", w_q)
         code += _torch_matrix_input_code("W_K", w_k)
         code += _torch_matrix_input_code("W_V", w_v)
@@ -1543,8 +1505,7 @@ def _gen_multi_head_causal_attention(rng: random.Random) -> list[Case]:
             _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("X", x)
+        code = _torch_matrix_input_code("X", x)
         code += _torch_matrix_input_code("W_Q", w_q)
         code += _torch_matrix_input_code("W_K", w_k)
         code += _torch_matrix_input_code("W_V", w_v)
@@ -1568,8 +1529,7 @@ def _gen_multi_head_causal_attention(rng: random.Random) -> list[Case]:
             _multi_head_causal_attention_ref(x, w_q, w_k, w_v, w_o, num_heads),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("X", x)
+        code = _torch_matrix_input_code("X", x)
         code += _torch_matrix_input_code("W_Q", w_q)
         code += _torch_matrix_input_code("W_K", w_k)
         code += _torch_matrix_input_code("W_V", w_v)
@@ -1595,29 +1555,25 @@ def _gen_gelu(rng: random.Random) -> list[Case]:
 
     for bucket, x in fixed:
         expected = _round_nested(_gelu_ref(x), digits=FLOAT_EXPECTED_DIGITS)
-        code = "import torch\n"
-        code += f"x = torch.tensor({repr(x)}, dtype=torch.float32)\n"
+        code = f"x = torch.tensor({repr(x)}, dtype=torch.float32)\n"
         cases.append(Case(bucket, input_code=code, expected=expected))
 
     for seq_len, d_model in [(24, 12), (32, 16), (20, 24), (40, 8)]:
         x = _random_matrix(rng, seq_len, d_model, low=-6.0, high=6.0)
         expected = _round_nested(_gelu_ref(x), digits=FLOAT_EXPECTED_DIGITS)
-        code = "import torch\n"
-        code += _torch_matrix_input_code("x", x)
+        code = _torch_matrix_input_code("x", x)
         cases.append(Case("stress", input_code=code, expected=expected))
 
     for _ in range(10):
         if rng.random() < 0.5:
             length = rng.randint(2, 24)
             x = [round(rng.uniform(-6.0, 6.0), 4) for _ in range(length)]
-            code = "import torch\n"
-            code += f"x = torch.tensor({repr(x)}, dtype=torch.float32)\n"
+            code = f"x = torch.tensor({repr(x)}, dtype=torch.float32)\n"
         else:
             seq_len = rng.randint(2, 12)
             d_model = rng.randint(2, 16)
             x = _random_matrix(rng, seq_len, d_model, low=-6.0, high=6.0)
-            code = "import torch\n"
-            code += _torch_matrix_input_code("x", x)
+            code = _torch_matrix_input_code("x", x)
 
         expected = _round_nested(_gelu_ref(x), digits=FLOAT_EXPECTED_DIGITS)
         cases.append(Case("random", input_code=code, expected=expected))
@@ -1685,8 +1641,7 @@ def _gen_ffn_forward_pass(rng: random.Random) -> list[Case]:
             _ffn_ref(x, w1, b1, w2, b2),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("x", x)
+        code = _torch_matrix_input_code("x", x)
         code += _torch_matrix_input_code("W1", w1)
         code += _torch_vector_input_code("b1", b1)
         code += _torch_matrix_input_code("W2", w2)
@@ -1703,8 +1658,7 @@ def _gen_ffn_forward_pass(rng: random.Random) -> list[Case]:
             _ffn_ref(x, w1, b1, w2, b2),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("x", x)
+        code = _torch_matrix_input_code("x", x)
         code += _torch_matrix_input_code("W1", w1)
         code += _torch_vector_input_code("b1", b1)
         code += _torch_matrix_input_code("W2", w2)
@@ -1724,8 +1678,7 @@ def _gen_ffn_forward_pass(rng: random.Random) -> list[Case]:
             _ffn_ref(x, w1, b1, w2, b2),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("x", x)
+        code = _torch_matrix_input_code("x", x)
         code += _torch_matrix_input_code("W1", w1)
         code += _torch_vector_input_code("b1", b1)
         code += _torch_matrix_input_code("W2", w2)
@@ -1789,8 +1742,7 @@ def _gen_layer_normalization(rng: random.Random) -> list[Case]:
             _layer_norm_ref(x, gamma, beta, eps),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("x", x)
+        code = _torch_matrix_input_code("x", x)
         code += _torch_vector_input_code("gamma", gamma)
         code += _torch_vector_input_code("beta", beta)
         code += f"eps = {eps}\n"
@@ -1805,8 +1757,7 @@ def _gen_layer_normalization(rng: random.Random) -> list[Case]:
             _layer_norm_ref(x, gamma, beta, eps),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("x", x)
+        code = _torch_matrix_input_code("x", x)
         code += _torch_vector_input_code("gamma", gamma)
         code += _torch_vector_input_code("beta", beta)
         code += f"eps = {eps}\n"
@@ -1823,8 +1774,7 @@ def _gen_layer_normalization(rng: random.Random) -> list[Case]:
             _layer_norm_ref(x, gamma, beta, eps),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("x", x)
+        code = _torch_matrix_input_code("x", x)
         code += _torch_vector_input_code("gamma", gamma)
         code += _torch_vector_input_code("beta", beta)
         code += f"eps = {eps}\n"
@@ -1899,8 +1849,7 @@ def _gen_pre_norm_residual_block(rng: random.Random) -> list[Case]:
             _pre_norm_block_ref(x, gamma, beta, w, b, eps),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("x", x)
+        code = _torch_matrix_input_code("x", x)
         code += _torch_vector_input_code("gamma", gamma)
         code += _torch_vector_input_code("beta", beta)
         code += _torch_matrix_input_code("W", w)
@@ -1919,8 +1868,7 @@ def _gen_pre_norm_residual_block(rng: random.Random) -> list[Case]:
             _pre_norm_block_ref(x, gamma, beta, w, b, eps),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("x", x)
+        code = _torch_matrix_input_code("x", x)
         code += _torch_vector_input_code("gamma", gamma)
         code += _torch_vector_input_code("beta", beta)
         code += _torch_matrix_input_code("W", w)
@@ -1941,8 +1889,7 @@ def _gen_pre_norm_residual_block(rng: random.Random) -> list[Case]:
             _pre_norm_block_ref(x, gamma, beta, w, b, eps),
             digits=FLOAT_EXPECTED_DIGITS,
         )
-        code = "import torch\n"
-        code += _torch_matrix_input_code("x", x)
+        code = _torch_matrix_input_code("x", x)
         code += _torch_vector_input_code("gamma", gamma)
         code += _torch_vector_input_code("beta", beta)
         code += _torch_matrix_input_code("W", w)
@@ -2034,13 +1981,6 @@ def _json_equivalent(left: Any, right: Any) -> bool:
     return left == right
 
 
-def _read_requires_torch(problems_root: Path, problem_id: str) -> bool:
-    manifest_path = problems_root / problem_id / "manifest.json"
-    if not manifest_path.exists():
-        raise FileNotFoundError(f"manifest.json not found for {problem_id}")
-    manifest = json.loads(manifest_path.read_text())
-    return bool(manifest.get("requires_torch", False))
-
 
 def _public_case_count(problem_id: str) -> int:
     return PUBLIC_CASE_COUNT_OVERRIDES.get(problem_id, 2)
@@ -2052,7 +1992,6 @@ def generate_problem_tests(problem_id: str, problems_root: Path, seed_offset: in
     rng = random.Random(base_seed + seed_offset)
     cases = generator(rng)
     _assert_case_count(problem_id, cases)
-    requires_torch = _read_requires_torch(problems_root, problem_id)
 
     public_count = _public_case_count(problem_id)
     if public_count < 1:
@@ -2064,14 +2003,14 @@ def generate_problem_tests(problem_id: str, problems_root: Path, seed_offset: in
 
     public_seed_cases = cases[:public_count]
     hidden_seed_cases = cases[public_count:]
-    public_signatures = {_case_signature(case, requires_torch=requires_torch) for case in public_seed_cases}
+    public_signatures = {_case_signature(case) for case in public_seed_cases}
     hidden_seed_cases = [
         case
         for case in hidden_seed_cases
-        if _case_signature(case, requires_torch=requires_torch) not in public_signatures
+        if _case_signature(case) not in public_signatures
     ]
-    public_cases = _assign_public_ids(public_seed_cases, requires_torch=requires_torch)
-    hidden_cases = _assign_hidden_ids(hidden_seed_cases, requires_torch=requires_torch)
+    public_cases = _assign_public_ids(public_seed_cases)
+    hidden_cases = _assign_hidden_ids(hidden_seed_cases)
 
     return {"version": 1, "cases": public_cases}, {"version": 1, "cases": hidden_cases}
 

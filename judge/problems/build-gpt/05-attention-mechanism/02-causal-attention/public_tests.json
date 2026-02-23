@@ -3,7 +3,7 @@
   "cases": [
     {
       "id": "case1",
-      "input_code": "import torch\nQ = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nK = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nV = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\n",
+      "input_code": "Q = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nK = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\nV = torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)\n",
       "expected": [
         [
           1.0,
@@ -17,7 +17,7 @@
     },
     {
       "id": "case2",
-      "input_code": "import torch\nQ = torch.tensor([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]], dtype=torch.float32)\nK = torch.tensor([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]], dtype=torch.float32)\nV = torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], dtype=torch.float32)\n",
+      "input_code": "Q = torch.tensor([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]], dtype=torch.float32)\nK = torch.tensor([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]], dtype=torch.float32)\nV = torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], dtype=torch.float32)\n",
       "expected": [
         [
           1.0,

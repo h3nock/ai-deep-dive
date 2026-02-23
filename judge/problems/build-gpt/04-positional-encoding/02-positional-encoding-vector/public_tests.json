@@ -3,7 +3,7 @@
   "cases": [
     {
       "id": "case1",
-      "input_code": "import torch\npos = 0\nd_model = 4\n",
+      "input_code": "pos = 0\nd_model = 4\n",
       "expected": [
         0.0,
         1.0,
@@ -13,7 +13,7 @@
     },
     {
       "id": "case2",
-      "input_code": "import torch\npos = 1\nd_model = 4\n",
+      "input_code": "pos = 1\nd_model = 4\n",
       "expected": [
         0.84147096,
         0.54030228,

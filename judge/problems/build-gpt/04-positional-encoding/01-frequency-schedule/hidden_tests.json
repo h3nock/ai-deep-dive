@@ -3,14 +3,14 @@
   "cases": [
     {
       "id": "b01",
-      "input_code": "import torch\nd_model = 2\n",
+      "input_code": "d_model = 2\n",
       "expected": [
         1.0
       ]
     },
     {
       "id": "b02",
-      "input_code": "import torch\nd_model = 6\n",
+      "input_code": "d_model = 6\n",
       "expected": [
         1.0,
         0.04641588,
@@ -19,7 +19,7 @@
     },
     {
       "id": "a01",
-      "input_code": "import torch\nd_model = 10\n",
+      "input_code": "d_model = 10\n",
       "expected": [
         1.0,
         0.15848932,
@@ -30,7 +30,7 @@
     },
     {
       "id": "a02",
-      "input_code": "import torch\nd_model = 12\n",
+      "input_code": "d_model = 12\n",
       "expected": [
         1.0,
         0.21544345,
@@ -42,7 +42,7 @@
     },
     {
       "id": "a03",
-      "input_code": "import torch\nd_model = 16\n",
+      "input_code": "d_model = 16\n",
       "expected": [
         1.0,
         0.31622776,
@@ -56,7 +56,7 @@
     },
     {
       "id": "a04",
-      "input_code": "import torch\nd_model = 32\n",
+      "input_code": "d_model = 32\n",
       "expected": [
         1.0,
         0.56234133,
@@ -78,7 +78,7 @@
     },
     {
       "id": "s01",
-      "input_code": "import torch\nd_model = 128\n",
+      "input_code": "d_model = 128\n",
       "expected": [
         1.0,
         0.86596435,
@@ -148,7 +148,7 @@
     },
     {
       "id": "s02",
-      "input_code": "import torch\nd_model = 256\n",
+      "input_code": "d_model = 256\n",
       "expected": [
         1.0,
         0.93057203,
@@ -282,7 +282,7 @@
     },
     {
       "id": "s03",
-      "input_code": "import torch\nd_model = 512\n",
+      "input_code": "d_model = 512\n",
       "expected": [
         1.0,
         0.96466166,
@@ -544,7 +544,7 @@
     },
     {
       "id": "s04",
-      "input_code": "import torch\nd_model = 1024\n",
+      "input_code": "d_model = 1024\n",
       "expected": [
         1.0,
         0.98217183,
@@ -1062,7 +1062,7 @@
     },
     {
       "id": "r01",
-      "input_code": "import torch\nd_model = 768\n",
+      "input_code": "d_model = 768\n",
       "expected": [
         1.0,
         0.97630012,
@@ -1452,7 +1452,7 @@
     },
     {
       "id": "r02",
-      "input_code": "import torch\nd_model = 22\n",
+      "input_code": "d_model = 22\n",
       "expected": [
         1.0,
         0.43287614,
@@ -1469,7 +1469,7 @@
     },
     {
       "id": "r03",
-      "input_code": "import torch\nd_model = 192\n",
+      "input_code": "d_model = 192\n",
       "expected": [
         1.0,
         0.90851754,
@@ -1571,7 +1571,7 @@
     },
     {
       "id": "r04",
-      "input_code": "import torch\nd_model = 36\n",
+      "input_code": "d_model = 36\n",
       "expected": [
         1.0,
         0.59948421,
@@ -1595,7 +1595,7 @@
     },
     {
       "id": "r05",
-      "input_code": "import torch\nd_model = 96\n",
+      "input_code": "d_model = 96\n",
       "expected": [
         1.0,
         0.82540417,
@@ -1649,7 +1649,7 @@
     },
     {
       "id": "r06",
-      "input_code": "import torch\nd_model = 768\n",
+      "input_code": "d_model = 768\n",
       "expected": [
         1.0,
         0.97630012,
@@ -2039,7 +2039,7 @@
     },
     {
       "id": "r07",
-      "input_code": "import torch\nd_model = 48\n",
+      "input_code": "d_model = 48\n",
       "expected": [
         1.0,
         0.68129206,
@@ -2069,7 +2069,7 @@
     },
     {
       "id": "r08",
-      "input_code": "import torch\nd_model = 26\n",
+      "input_code": "d_model = 26\n",
       "expected": [
         1.0,
         0.49238825,
