@@ -118,6 +118,10 @@ def run_cases():
     runner_expression = config.get("runner", "")
     comparison_default = config.get("comparison", {"type": "exact"})
 
+    _torch_module = None
+    if config.get("requires_torch", False):
+        import torch as _torch_module
+
     try:
         compiled_runner = compile(runner_expression, "runner.py", "eval")
     except Exception as exc:
@@ -161,6 +165,8 @@ def run_cases():
                     "__file__": "solution.py",
                     "__package__": None,
                 }
+                if _torch_module is not None:
+                    case_globals["torch"] = _torch_module
                 exec(compiled_solution, case_globals)
                 compiled_input = compile(input_code, "testcase.py", "exec")
                 exec(compiled_input, case_globals)
@@ -306,6 +312,7 @@ def _build_test_config(problem: Problem, include_hidden: bool) -> dict[str, Any]
             "rtol": problem.comparison.rtol,
             "atol": problem.comparison.atol,
         },
+        "requires_torch": problem.requires_torch,
         "cases": cases,
     }
 
