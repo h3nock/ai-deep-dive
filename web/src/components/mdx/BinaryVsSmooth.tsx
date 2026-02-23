@@ -1,126 +1,130 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
-import { viz, getGrid } from "@/lib/viz-colors";
+import { viz, getGrid, withAlpha } from "@/lib/viz-colors";
 
 /**
- * BinaryVsSmooth - Animated visualization comparing discrete binary jumps
- * vs smooth sinusoidal oscillation for positional encoding.
- * 
- * Shows 3 dimensions at different frequencies:
- * - Dimension 0: Fastest (4 cycles)
- * - Dimension 1: Medium (2 cycles)
- * - Dimension 2: Slowest (1 cycle)
+ * BinaryVsSmooth — Slider-driven comparison of binary vs sinusoidal encoding.
+ *
+ * Shows 3 dimensions at different frequencies. The user scrubs a position
+ * slider (0-49) and watches binary values snap while smooth values glide.
+ * A fingerprint section at the bottom makes the "aha" visible: binary
+ * fingerprints stay identical for stretches then jump, while smooth
+ * fingerprints vary continuously.
  */
 
-const CYCLE_DURATION = 6000; // ms for one full animation loop
+const MAX_POSITION = 49;
+const PLAY_SPEED = 3; // positions per second
 
 interface DimensionConfig {
   label: string;
   cycles: number;
   speedLabel: string;
+  color: string;
 }
 
 const DIMENSIONS: DimensionConfig[] = [
-  { label: "Dim 0", cycles: 4, speedLabel: "Fast" },
-  { label: "Dim 1", cycles: 2, speedLabel: "Medium" },
-  { label: "Dim 2", cycles: 1, speedLabel: "Slow" },
+  { label: "Dim 0", cycles: 4, speedLabel: "Fast", color: viz.tertiary },
+  { label: "Dim 1", cycles: 2, speedLabel: "Medium", color: viz.secondary },
+  { label: "Dim 2", cycles: 1, speedLabel: "Slow", color: viz.quaternary },
 ];
+
+const GRAPH_WIDTH = 200;
+const GRAPH_HEIGHT = 80;
+const GRAPH_PADDING_Y = 8;
+
+function getSmoothValue(t: number, cycles: number): number {
+  return (1 - Math.cos(t * 2 * Math.PI * cycles)) / 2;
+}
+
+function getBinaryValue(t: number, cycles: number): number {
+  const phase = (t * cycles) % 1;
+  return phase < 0.5 ? 0 : 1;
+}
+
+function valueToY(value: number): number {
+  const usable = GRAPH_HEIGHT - GRAPH_PADDING_Y * 2;
+  return GRAPH_PADDING_Y + usable * (1 - value);
+}
+
+function generateSmoothPath(cycles: number): string {
+  const parts: string[] = [];
+  for (let i = 0; i <= GRAPH_WIDTH; i++) {
+    const t = i / GRAPH_WIDTH;
+    const y = valueToY(getSmoothValue(t, cycles));
+    parts.push(`${i === 0 ? "M" : "L"} ${i} ${y.toFixed(1)}`);
+  }
+  return parts.join(" ");
+}
+
+function generateBinaryPath(cycles: number): string {
+  const parts: string[] = [];
+  const stepWidth = GRAPH_WIDTH / (cycles * 2);
+  let isHigh = false;
+
+  parts.push(`M 0 ${valueToY(0)}`);
+
+  for (let i = 0; i < cycles * 2; i++) {
+    const nextX = Math.min((i + 1) * stepWidth, GRAPH_WIDTH);
+    const currentY = valueToY(isHigh ? 1 : 0);
+    const nextIsHigh: boolean = !isHigh;
+    const nextY = valueToY(nextIsHigh ? 1 : 0);
+
+    parts.push(`L ${nextX.toFixed(1)} ${currentY.toFixed(1)}`);
+    if (i < cycles * 2 - 1) {
+      parts.push(`L ${nextX.toFixed(1)} ${nextY.toFixed(1)}`);
+    }
+    isHigh = nextIsHigh;
+  }
+  return parts.join(" ");
+}
 
 export function BinaryVsSmooth() {
   const { resolvedTheme } = useTheme();
   const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
 
-  const [progress, setProgress] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [position, setPosition] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const animationRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number | null>(null);
+
+  const stopAnimation = useCallback(() => {
+    if (animationRef.current !== null) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+    lastTimeRef.current = null;
+  }, []);
 
   useEffect(() => {
-    if (isPlaying) {
-      const animate = (time: number) => {
-        if (startTimeRef.current === null) {
-          startTimeRef.current = time;
-        }
-        const elapsed = time - startTimeRef.current;
-        const newProgress = (elapsed % CYCLE_DURATION) / CYCLE_DURATION;
-        setProgress(newProgress);
-        animationRef.current = requestAnimationFrame(animate);
-      };
+    if (!isPlaying) {
+      stopAnimation();
+      return;
+    }
+
+    const animate = (time: number) => {
+      if (lastTimeRef.current !== null) {
+        const dt = (time - lastTimeRef.current) / 1000;
+        setPosition((prev) => {
+          const next = prev + dt * PLAY_SPEED;
+          return next > MAX_POSITION ? 0 : next;
+        });
+      }
+      lastTimeRef.current = time;
       animationRef.current = requestAnimationFrame(animate);
-    } else {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    }
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
     };
-  }, [isPlaying]);
+    animationRef.current = requestAnimationFrame(animate);
+    return stopAnimation;
+  }, [isPlaying, stopAnimation]);
 
-  const GRAPH_WIDTH = 180;
-  const GRAPH_HEIGHT = 36;
-  const PADDING_Y = 4;
+  const t = position / MAX_POSITION;
+  const markerX = t * GRAPH_WIDTH;
 
-  // Calculate smooth value: (1 - cos(2π * cycles * t)) / 2
-  const getSmoothValue = (t: number, cycles: number): number => {
-    return (1 - Math.cos(t * 2 * Math.PI * cycles)) / 2;
-  };
-
-  // Calculate binary value: step function based on phase
-  const getBinaryValue = (t: number, cycles: number): number => {
-    const phase = (t * cycles) % 1;
-    return phase < 0.5 ? 0 : 1;
-  };
-
-  // Convert value (0-1) to Y coordinate
-  const valueToY = (value: number): number => {
-    const usableHeight = GRAPH_HEIGHT - PADDING_Y * 2;
-    return PADDING_Y + usableHeight * (1 - value);
-  };
-
-  // Generate smooth sine path
-  const generateSmoothPath = (cycles: number): string => {
-    const points: string[] = [];
-    for (let i = 0; i <= GRAPH_WIDTH; i++) {
-      const t = i / GRAPH_WIDTH;
-      const value = getSmoothValue(t, cycles);
-      const y = valueToY(value);
-      points.push(`${i === 0 ? "M" : "L"} ${i} ${y.toFixed(1)}`);
-    }
-    return points.join(" ");
-  };
-
-  // Generate binary step path
-  const generateBinaryPath = (cycles: number): string => {
-    const segments: string[] = [];
-    const stepWidth = GRAPH_WIDTH / (cycles * 2);
-    
-    let isHigh: boolean = false;
-    
-    segments.push(`M 0 ${valueToY(0)}`);
-    
-    for (let i = 0; i < cycles * 2; i++) {
-      const nextX = Math.min((i + 1) * stepWidth, GRAPH_WIDTH);
-      const currentY = valueToY(isHigh ? 1 : 0);
-      const nextIsHigh: boolean = !isHigh;
-      const nextY = valueToY(nextIsHigh ? 1 : 0);
-      
-      // Horizontal line at current level
-      segments.push(`L ${nextX.toFixed(1)} ${currentY.toFixed(1)}`);
-      // Vertical jump to next level (if not last segment)
-      if (i < cycles * 2 - 1) {
-        segments.push(`L ${nextX.toFixed(1)} ${nextY.toFixed(1)}`);
-      }
-      
-      isHigh = nextIsHigh;
-    }
-    
-    return segments.join(" ");
-  };
+  const dimValues = DIMENSIONS.map((dim) => ({
+    binary: getBinaryValue(t, dim.cycles),
+    smooth: getSmoothValue(t, dim.cycles),
+  }));
 
   return (
     <div
@@ -134,119 +138,236 @@ export function BinaryVsSmooth() {
       </div>
 
       <div className="p-4 bg-terminal rounded-lg border border-border">
+        <style>{`
+          .viz-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: ${viz.tertiary};
+            border: none;
+            cursor: pointer;
+          }
+          .viz-slider::-moz-range-thumb {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: ${viz.tertiary};
+            border: none;
+            cursor: pointer;
+          }
+        `}</style>
+
         {/* Controls */}
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-2 mb-4">
           <button
-            onClick={() => {
-              setIsPlaying(!isPlaying);
-              if (!isPlaying) {
-                startTimeRef.current = null;
-              }
+            onClick={() => setIsPlaying(!isPlaying)}
+            className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full cursor-pointer"
+            style={{
+              backgroundColor: withAlpha(grid.line, 0.12),
+              border: `1.5px solid ${withAlpha(grid.line, 0.3)}`,
             }}
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-surface hover:bg-border-hover transition-colors border border-border-hover"
             aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
-              <svg className="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 24 24">
-                <rect x="6" y="4" width="4" height="16" />
-                <rect x="14" y="4" width="4" height="16" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={viz.tertiary}>
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
               </svg>
             ) : (
-              <svg className="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 24 24">
-                <polygon points="5,3 19,12 5,21" />
+              <svg width="12" height="12" viewBox="0 0 24 24" fill={viz.tertiary} style={{ marginLeft: '2px' }}>
+                <polygon points="7,4 20,12 7,20" />
               </svg>
             )}
           </button>
 
-          {/* Column Headers */}
-          <div className="flex-1 grid grid-cols-[60px_1fr_1fr] gap-2 text-center">
-            <div></div>
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: viz.highlight }}>
-                Binary
-              </span>
-            </div>
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: viz.tertiary }}>
-                Smooth
-              </span>
-            </div>
+          <input
+            type="range"
+            min="0"
+            max={MAX_POSITION}
+            step="any"
+            value={position}
+            onChange={(e) => {
+              setIsPlaying(false);
+              setPosition(parseFloat(e.target.value));
+            }}
+            className="viz-slider flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, ${viz.tertiary} 0%, ${viz.tertiary} ${(position / MAX_POSITION) * 100}%, ${grid.line} ${(position / MAX_POSITION) * 100}%, ${grid.line} 100%)`,
+            }}
+          />
+
+          <span
+            className="text-lg font-mono tabular-nums w-8 text-right shrink-0 font-semibold"
+            style={{ color: viz.tertiary }}
+          >
+            {Math.round(position)}
+          </span>
+        </div>
+
+        {/* Column headers */}
+        <div className="grid grid-cols-[auto_1fr_1fr] gap-x-3 mb-2">
+          <div className="w-16" />
+          <div className="text-center">
+            <span
+              className="text-[10px] font-semibold uppercase tracking-wider"
+              style={{ color: grid.text }}
+            >
+              Binary
+            </span>
+          </div>
+          <div className="text-center">
+            <span
+              className="text-[10px] font-semibold uppercase tracking-wider"
+              style={{ color: grid.text }}
+            >
+              Smooth (Sine)
+            </span>
           </div>
         </div>
 
         {/* Dimension rows */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           {DIMENSIONS.map((dim, idx) => {
-            const markerX = progress * GRAPH_WIDTH;
-            const binaryValue = getBinaryValue(progress, dim.cycles);
-            const smoothValue = getSmoothValue(progress, dim.cycles);
-            const binaryY = valueToY(binaryValue);
-            const smoothY = valueToY(smoothValue);
+            const binaryVal = dimValues[idx].binary;
+            const smoothVal = dimValues[idx].smooth;
+            const binaryY = valueToY(binaryVal);
+            const smoothY = valueToY(smoothVal);
 
             return (
-              <div key={idx} className="grid grid-cols-[60px_1fr_1fr] gap-2 items-center">
-                {/* Label */}
-                <div className="text-right pr-1">
-                  <div className="text-[11px] font-medium text-primary leading-tight">{dim.label}</div>
-                  <div className="text-[9px] text-muted">{dim.speedLabel}</div>
+              <div key={idx} className="grid grid-cols-[auto_1fr_1fr] gap-x-3 items-center">
+                {/* Row label */}
+                <div className="w-16 text-right pr-1">
+                  <div className="text-[13px] font-medium text-primary leading-tight">
+                    {dim.label}
+                  </div>
+                  <div className="text-[11px]" style={{ color: dim.color }}>
+                    {dim.speedLabel}
+                  </div>
                 </div>
 
                 {/* Binary graph */}
-                <div className="bg-background/50 rounded border border-border p-1 relative">
+                <div>
                   <svg
                     className="w-full"
                     viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-                    preserveAspectRatio="none"
-                    style={{ height: "32px" }}
+                    preserveAspectRatio="xMidYMid meet"
+                    style={{ height: "64px" }}
                   >
+                    {/* Midline */}
+                    <line
+                      x1="0"
+                      y1={GRAPH_HEIGHT / 2}
+                      x2={GRAPH_WIDTH}
+                      y2={GRAPH_HEIGHT / 2}
+                      stroke={grid.line}
+                      strokeWidth="0.5"
+                      opacity={0.3}
+                    />
+                    {/* Path */}
                     <path
                       d={generateBinaryPath(dim.cycles)}
                       fill="none"
-                      stroke={grid.line}
+                      stroke={dim.color}
+                      strokeWidth="2"
+                      opacity={0.6}
+                    />
+                    {/* Marker */}
+                    <circle
+                      cx={markerX}
+                      cy={binaryY}
+                      r={5}
+                      fill={dim.color}
+                      stroke={withAlpha(dim.color, 0.5)}
                       strokeWidth="1.5"
                     />
                   </svg>
-                  {/* Marker as absolute div to maintain perfect circle shape */}
+                  {/* Value below graph */}
                   <div
-                    className="absolute w-2.5 h-2.5 rounded-full"
-                    style={{
-                      backgroundColor: viz.highlight,
-                      left: `calc(4px + ${(markerX / GRAPH_WIDTH) * 100}% * (1 - 8px / 100%))`,
-                      top: `calc(4px + ${(binaryY / GRAPH_HEIGHT) * 100}% * (1 - 8px / 100%))`,
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                  />
+                    className="text-[11px] font-mono tabular-nums text-center mt-0.5"
+                    style={{ color: dim.color }}
+                  >
+                    {binaryVal.toFixed(0)}
+                  </div>
                 </div>
 
                 {/* Smooth graph */}
-                <div className="bg-background/50 rounded border border-border p-1 relative">
+                <div>
                   <svg
                     className="w-full"
                     viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-                    preserveAspectRatio="none"
-                    style={{ height: "32px" }}
+                    preserveAspectRatio="xMidYMid meet"
+                    style={{ height: "64px" }}
                   >
+                    {/* Midline */}
+                    <line
+                      x1="0"
+                      y1={GRAPH_HEIGHT / 2}
+                      x2={GRAPH_WIDTH}
+                      y2={GRAPH_HEIGHT / 2}
+                      stroke={grid.line}
+                      strokeWidth="0.5"
+                      opacity={0.3}
+                    />
+                    {/* Path */}
                     <path
                       d={generateSmoothPath(dim.cycles)}
                       fill="none"
-                      stroke={grid.line}
+                      stroke={dim.color}
+                      strokeWidth="2"
+                    />
+                    {/* Marker */}
+                    <circle
+                      cx={markerX}
+                      cy={smoothY}
+                      r={5}
+                      fill={dim.color}
+                      stroke={withAlpha(dim.color, 0.5)}
                       strokeWidth="1.5"
                     />
                   </svg>
-                  {/* Marker as absolute div to maintain perfect circle shape */}
+                  {/* Value below graph */}
                   <div
-                    className="absolute w-2.5 h-2.5 rounded-full"
-                    style={{
-                      backgroundColor: viz.tertiary,
-                      left: `calc(4px + ${(markerX / GRAPH_WIDTH) * 100}% * (1 - 8px / 100%))`,
-                      top: `calc(4px + ${(smoothY / GRAPH_HEIGHT) * 100}% * (1 - 8px / 100%))`,
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                  />
+                    className="text-[11px] font-mono tabular-nums text-center mt-0.5"
+                    style={{ color: dim.color }}
+                  >
+                    {smoothVal.toFixed(2)}
+                  </div>
                 </div>
               </div>
             );
           })}
+        </div>
+
+        {/* Fingerprint comparison — raw value vectors side by side */}
+        <div className="mt-5 pt-4 border-t border-border">
+          <div className="grid grid-cols-[auto_1fr_1fr] gap-x-3 items-baseline">
+            <div className="w-16 text-right pr-1">
+              <div className="text-[11px] text-muted">Encoding</div>
+            </div>
+            <div className="text-center">
+              <span className="font-mono tabular-nums text-sm">
+                [
+                {dimValues.map((dv, i) => (
+                  <React.Fragment key={i}>
+                    {i > 0 && <span style={{ color: grid.label }}>, </span>}
+                    <span style={{ color: DIMENSIONS[i].color }}>{dv.binary.toFixed(0)}</span>
+                  </React.Fragment>
+                ))}
+                ]
+              </span>
+            </div>
+            <div className="text-center">
+              <span className="font-mono tabular-nums text-sm">
+                [
+                {dimValues.map((dv, i) => (
+                  <React.Fragment key={i}>
+                    {i > 0 && <span style={{ color: grid.label }}>, </span>}
+                    <span style={{ color: DIMENSIONS[i].color }}>{dv.smooth.toFixed(2)}</span>
+                  </React.Fragment>
+                ))}
+                ]
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
