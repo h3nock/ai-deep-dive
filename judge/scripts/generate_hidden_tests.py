@@ -567,6 +567,25 @@ def _multi_head_causal_attention_ref(
     return _matmul_ref(merged, w_o, dtype=dtype)
 
 
+def _gelu_array(x_arr: np.ndarray, *, dtype: Any = np.float32) -> np.ndarray:
+    x_t = np.asarray(x_arr, dtype=dtype)
+    tanh_vals = np.vectorize(math.tanh, otypes=[float])(
+        math.sqrt(2.0 / math.pi) * (x_t + 0.044715 * x_t ** 3)
+    )
+    tanh_arr = np.asarray(tanh_vals, dtype=dtype)
+    half = np.asarray(0.5, dtype=dtype)
+    one = np.asarray(1.0, dtype=dtype)
+    return half * x_t * (one + tanh_arr)
+
+
+def _gelu_ref(x: Any, *, dtype: Any = np.float32) -> Any:
+    out = _gelu_array(np.asarray(x, dtype=dtype), dtype=dtype)
+    return out.astype(dtype).tolist()
+
+def _torch_vector_input_code(var_name: str, vector: list[float]) -> str:
+    return f"{var_name} = torch.tensor({repr(vector)}, dtype=torch.float32)\n"
+
+
 def _torch_matrix_input_code(var_name: str, matrix: list[list[float]]) -> str:
     return f"{var_name} = torch.tensor({repr(matrix)}, dtype=torch.float32)\n"
 
@@ -1478,6 +1497,52 @@ def _gen_multi_head_causal_attention(rng: random.Random) -> list[Case]:
     return cases
 
 
+def _gen_gelu(rng: random.Random) -> list[Case]:
+    cases: list[Case] = []
+
+    fixed = [
+        # Keep curated public examples first.
+        ("boundary", [0.0, 1.0, -1.0]),
+        ("boundary", [[0.5, -0.5], [2.0, -2.0]]),
+        ("boundary", [0.0]),
+        ("adversarial", [3.0, -3.0, 0.25, -0.25]),
+        ("regression", [0.001, -0.001, 6.0, -6.0]),
+        ("regression", [[1.25, -0.75, 0.0], [-2.5, 2.5, 0.5]]),
+    ]
+
+    for bucket, x in fixed:
+        expected = _round_nested(_gelu_ref(x), digits=FLOAT_EXPECTED_DIGITS)
+        code = "import torch\n"
+        code += f"x = torch.tensor({repr(x)}, dtype=torch.float32)\n"
+        cases.append(Case(bucket, input_code=code, expected=expected))
+
+    for seq_len, d_model in [(24, 12), (32, 16), (20, 24), (40, 8)]:
+        x = _random_matrix(rng, seq_len, d_model, low=-6.0, high=6.0)
+        expected = _round_nested(_gelu_ref(x), digits=FLOAT_EXPECTED_DIGITS)
+        code = "import torch\n"
+        code += _torch_matrix_input_code("x", x)
+        cases.append(Case("stress", input_code=code, expected=expected))
+
+    for _ in range(10):
+        if rng.random() < 0.5:
+            length = rng.randint(2, 24)
+            x = [round(rng.uniform(-6.0, 6.0), 4) for _ in range(length)]
+            code = "import torch\n"
+            code += f"x = torch.tensor({repr(x)}, dtype=torch.float32)\n"
+        else:
+            seq_len = rng.randint(2, 12)
+            d_model = rng.randint(2, 16)
+            x = _random_matrix(rng, seq_len, d_model, low=-6.0, high=6.0)
+            code = "import torch\n"
+            code += _torch_matrix_input_code("x", x)
+
+        expected = _round_nested(_gelu_ref(x), digits=FLOAT_EXPECTED_DIGITS)
+        cases.append(Case("random", input_code=code, expected=expected))
+
+    return cases
+
+
+
 PROBLEM_GENERATORS: dict[str, ProblemGenerator] = {
     "build-gpt/01-from-text-to-bytes/01-encoder": _gen_encoder,
     "build-gpt/01-from-text-to-bytes/02-byte-inspector": _gen_byte_inspector,
@@ -1494,6 +1559,7 @@ PROBLEM_GENERATORS: dict[str, ProblemGenerator] = {
     "build-gpt/05-attention-mechanism/01-attention-weights": _gen_attention_weights,
     "build-gpt/05-attention-mechanism/02-causal-attention": _gen_causal_attention,
     "build-gpt/06-multi-head-attention/01-multi-head-causal-attention": _gen_multi_head_causal_attention,
+    "build-gpt/07-feed-forward-networks/01-gelu": _gen_gelu,
 }
 
 
@@ -1513,6 +1579,7 @@ PROBLEM_SEEDS: dict[str, int] = {
     "build-gpt/05-attention-mechanism/01-attention-weights": 501,
     "build-gpt/05-attention-mechanism/02-causal-attention": 502,
     "build-gpt/06-multi-head-attention/01-multi-head-causal-attention": 601,
+    "build-gpt/07-feed-forward-networks/01-gelu": 701,
 }
 
 PUBLIC_CASE_COUNT_OVERRIDES: dict[str, int] = {
