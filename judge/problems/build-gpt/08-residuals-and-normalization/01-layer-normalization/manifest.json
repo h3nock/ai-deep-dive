@@ -1,0 +1,13 @@
+{
+  "id": "build-gpt/08-residuals-and-normalization/01-layer-normalization",
+  "version": "v1",
+  "runner": "layer_norm(x, gamma, beta, eps)",
+  "requires_torch": true,
+  "time_limit_s": 5,
+  "memory_mb": 1024,
+  "comparison": {
+    "type": "allclose",
+    "rtol": 1e-05,
+    "atol": 1e-06
+  }
+}
