@@ -8,4 +8,47 @@ description: "How all components combine into the repeatable transformer block."
   The GPT architecture is built from a single repeating unit called the Transformer block. Each block arranges the components from the previous chapters into a specific internal pattern, and every block in the model uses that same pattern with its own learned weights. The complete model stacks these blocks between input processing that converts token IDs to vectors and output processing that converts vectors to predictions.
 </Description>
 
+{/* High-level architecture overview */}
+<div className="my-8 flex justify-center">
+  <svg viewBox="0 0 260 280" className="w-full" style={{ maxWidth: "320px", display: "block" }}>
+    {/* Token IDs */}
+    <rect x="80" y="6" width="100" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
+    <text x="130" y="23" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Token IDs</text>
+
+    {/* Arrow */}
+    <line x1="130" y1="32" x2="130" y2="50" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+    <polygon points="126,44 130,52 134,44" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+    {/* Input Processing */}
+    <rect x="56" y="52" width="148" height="36" rx="6" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 25%, transparent)" strokeWidth="1" />
+    <text x="130" y="74" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontWeight="600">Input Processing</text>
+
+    {/* Arrow */}
+    <line x1="130" y1="88" x2="130" y2="106" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+    <polygon points="126,100 130,108 134,100" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+    {/* Transformer Block x N */}
+    <rect x="40" y="108" width="180" height="68" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 10%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 35%, transparent)" strokeWidth="1" strokeDasharray="4 3" />
+    <text x="130" y="138" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Transformer Block</text>
+    <text x="130" y="155" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN</text>
+    <text x="226" y="148" textAnchor="start" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">×N</text>
+
+    {/* Arrow */}
+    <line x1="130" y1="176" x2="130" y2="194" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+    <polygon points="126,188 130,196 134,188" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+    {/* Output Processing */}
+    <rect x="48" y="196" width="164" height="36" rx="6" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 25%, transparent)" strokeWidth="1" />
+    <text x="130" y="218" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontWeight="600">Output Processing</text>
+
+    {/* Arrow */}
+    <line x1="130" y1="232" x2="130" y2="250" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+    <polygon points="126,244 130,252 134,244" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+    {/* Probabilities */}
+    <rect x="72" y="252" width="116" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
+    <text x="130" y="269" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Probabilities</text>
+  </svg>
+</div>
+
 </Description>
