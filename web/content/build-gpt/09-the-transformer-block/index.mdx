@@ -56,6 +56,96 @@ description: "How all components combine into the repeatable transformer block."
   <Description>
     A single Transformer block contains two sub-blocks arranged in sequence. The first is the **attention sub-block**, where multi-head attention lets tokens exchange information across positions. The second is the **FFN sub-block**, where the feed-forward network transforms each token's representation independently.
   </Description>
+
+  {/* Single Transformer Block — Pre-Norm internal structure */}
+  <div className="my-8 flex justify-center">
+    <svg viewBox="0 0 220 406" className="w-full" style={{ maxWidth: "220px", display: "block" }}>
+      {/* Input */}
+      <rect x="37" y="6" width="56" height="22" rx="4" fill="var(--color-surface)" stroke="var(--color-border)" strokeWidth="1" />
+      <text x="65" y="21" textAnchor="middle" fill="var(--color-primary)" fontSize="10" fontFamily="var(--font-mono)">input</text>
+
+      {/* === Attention Sub-Block === */}
+
+      {/* Input to fork */}
+      <line x1="65" y1="28" x2="65" y2="46" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+
+      {/* Fork dot */}
+      <circle cx="65" cy="46" r="4" fill="var(--color-accent-2)" />
+
+      {/* Identity path (straight through to addition) */}
+      <line x1="65" y1="46" x2="65" y2="164" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+
+      {/* Branch: horizontal from fork */}
+      <line x1="65" y1="46" x2="158" y2="46" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Branch: down to LayerNorm */}
+      <line x1="158" y1="46" x2="158" y2="70" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="154,64 158,72 162,64" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* LayerNorm 1 */}
+      <rect x="111" y="72" width="94" height="26" rx="5" fill="color-mix(in srgb, var(--color-accent-1) 10%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
+      <text x="158" y="89" textAnchor="middle" fill="var(--color-accent-1)" fontSize="9" fontFamily="var(--font-mono)">LayerNorm</text>
+
+      {/* Down to Attention */}
+      <line x1="158" y1="98" x2="158" y2="112" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="154,106 158,114 162,106" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* Multi-Head Attention */}
+      <rect x="100" y="114" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-4) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 30%, transparent)" strokeWidth="1" />
+      <text x="158" y="132" textAnchor="middle" fill="var(--color-accent-4)" fontSize="10" fontFamily="var(--font-mono)">Multi-Head Attn</text>
+
+      {/* Return: down from Attn, rounded corner, left to + */}
+      <path d="M 158 142 L 158 170 Q 158 176 152 176 L 77 176" fill="none" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Addition circle 1 */}
+      <circle cx="65" cy="176" r="12" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="65" y="181" textAnchor="middle" fill="var(--color-accent-2)" fontSize="14" fontWeight="bold">+</text>
+
+      {/* === FFN Sub-Block === */}
+
+      {/* Addition to fork */}
+      <line x1="65" y1="188" x2="65" y2="210" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+
+      {/* Fork dot */}
+      <circle cx="65" cy="210" r="4" fill="var(--color-accent-2)" />
+
+      {/* Identity path (straight through to addition) */}
+      <line x1="65" y1="210" x2="65" y2="328" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+
+      {/* Branch: horizontal from fork */}
+      <line x1="65" y1="210" x2="158" y2="210" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Branch: down to LayerNorm */}
+      <line x1="158" y1="210" x2="158" y2="234" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="154,228 158,236 162,228" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* LayerNorm 2 */}
+      <rect x="111" y="236" width="94" height="26" rx="5" fill="color-mix(in srgb, var(--color-accent-1) 10%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
+      <text x="158" y="253" textAnchor="middle" fill="var(--color-accent-1)" fontSize="9" fontFamily="var(--font-mono)">LayerNorm</text>
+
+      {/* Down to FFN */}
+      <line x1="158" y1="262" x2="158" y2="276" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="154,270 158,278 162,270" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* FFN */}
+      <rect x="120" y="278" width="76" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-4) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 30%, transparent)" strokeWidth="1" />
+      <text x="158" y="296" textAnchor="middle" fill="var(--color-accent-4)" fontSize="10" fontFamily="var(--font-mono)">FFN</text>
+
+      {/* Return: down from FFN, rounded corner, left to + */}
+      <path d="M 158 306 L 158 334 Q 158 340 152 340 L 77 340" fill="none" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Addition circle 2 */}
+      <circle cx="65" cy="340" r="12" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="65" y="345" textAnchor="middle" fill="var(--color-accent-2)" fontSize="14" fontWeight="bold">+</text>
+
+      {/* Output */}
+      <line x1="65" y1="352" x2="65" y2="374" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+      <polygon points="61,368 65,376 69,368" fill="var(--color-accent-2)" fillOpacity="0.7" />
+      <rect x="37" y="378" width="56" height="22" rx="4" fill="var(--color-surface)" stroke="var(--color-border)" strokeWidth="1" />
+      <text x="65" y="393" textAnchor="middle" fill="var(--color-primary)" fontSize="10" fontFamily="var(--font-mono)">output</text>
+    </svg>
+  </div>
+
   <Description>
     Both sub-blocks share the same structural pattern. They normalize the input, apply their specific transformation, and add the result back into the residual stream. This is the Pre-Norm arrangement from the previous chapter, and it keeps the main identity path completely clean.
   </Description>
