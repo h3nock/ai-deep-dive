@@ -51,4 +51,20 @@ description: "How all components combine into the repeatable transformer block."
   </svg>
 </div>
 
+
+<Step title="Inside the Block">
+  <Description>
+    A single Transformer block contains two sub-blocks arranged in sequence. The first is the **attention sub-block**, where multi-head attention lets tokens exchange information across positions. The second is the **FFN sub-block**, where the feed-forward network transforms each token's representation independently.
+  </Description>
+  <Description>
+    Both sub-blocks share the same structural pattern. They normalize the input, apply their specific transformation, and add the result back into the residual stream. This is the Pre-Norm arrangement from the previous chapter, and it keeps the main identity path completely clean.
+  </Description>
+  <Description>
+    Within the block, attention comes first so that each position can gather context from across the full sequence, enriching its representation with information from other tokens. The FFN then transforms these context-aware representations individually.
+  </Description>
+
+  <Description>
+    Every block in the model follows this same internal structure. What distinguishes one block from another is its weights. The attention sub-block has its own Q, K, V projection matrices and output projection. The FFN has its own weight matrices and biases. Each LayerNorm has its own learned scale and shift parameters. Each block therefore learns a different transformation on the same residual stream.
+  </Description>
+</Step>
 </Description>
