@@ -59,6 +59,30 @@ description: "How all components combine into the repeatable transformer block."
   <Description>
     Both sub-blocks share the same structural pattern. They normalize the input, apply their specific transformation, and add the result back into the residual stream. This is the Pre-Norm arrangement from the previous chapter, and it keeps the main identity path completely clean.
   </Description>
+
+  <div className="my-6 p-5 bg-terminal rounded-xl border border-border-hover space-y-4">
+    {[
+      { label: 'Attention sub-block', fn: 'MultiHeadAttention' },
+      { label: 'FFN sub-block', fn: 'FFN' },
+    ].map(({ label, fn }, i) => (
+      <div key={i}>
+        <div className="text-xs tracking-wide text-muted mb-1.5 uppercase font-mono">{label}</div>
+        <div className="text-lg" style={{ fontFamily: 'KaTeX_Main, "Times New Roman", serif' }}>
+          <span className="text-primary" style={{ fontFamily: 'KaTeX_Math, "Times New Roman", serif', fontStyle: 'italic' }}>x</span>
+          <span className="text-muted"> = </span>
+          <span className="text-primary" style={{ fontFamily: 'KaTeX_Math, "Times New Roman", serif', fontStyle: 'italic' }}>x</span>
+          <span style={{ color: 'var(--color-accent-2)' }}> + </span>
+          <span style={{ color: 'var(--color-accent-4)', fontSize: '0.85em' }}>{fn}</span>
+          <span className="text-muted">(</span>
+          <span style={{ color: 'var(--color-accent-1)', fontSize: '0.85em' }}>LayerNorm</span>
+          <span className="text-muted">(</span>
+          <span className="text-primary" style={{ fontFamily: 'KaTeX_Math, "Times New Roman", serif', fontStyle: 'italic' }}>x</span>
+          <span className="text-muted">))</span>
+        </div>
+      </div>
+    ))}
+  </div>
+
   <Description>
     Within the block, attention comes first so that each position can gather context from across the full sequence, enriching its representation with information from other tokens. The FFN then transforms these context-aware representations individually.
   </Description>
