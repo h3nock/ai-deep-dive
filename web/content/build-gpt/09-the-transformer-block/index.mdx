@@ -181,10 +181,113 @@ description: "How all components combine into the repeatable transformer block."
     The attention sub-block lets each position gather information from across the full sequence, enriching its representation with context from other tokens. The FFN sub-block then processes each of these representations individually, transforming them through its expand-activate-contract pipeline. Together, one round of cross-token communication followed by one round of per-token transformation completes a single block.
   </Description>
 </Step>
+
+
+<Step title="Stacking Blocks">
+  <Description>
+    A single block refines each token's representation once, performing one round of multi-head self-attention followed by one round of FFN. No matter how wide the block is in terms of `d_model`, it remains limited to a single step of contextual aggregation and non-linear transformation on the input it receives. As a result, a single block can only capture relatively shallow interactions and lacks the iterative depth needed to progressively build more abstract hierarchical understanding from raw token embeddings.
   </Description>
 
   <Description>
-    Every block in the model follows this same internal structure. What distinguishes one block from another is its weights. The attention sub-block has its own Q, K, V projection matrices and output projection. The FFN has its own weight matrices and biases. Each LayerNorm has its own learned scale and shift parameters. Each block therefore learns a different transformation on the same residual stream.
+    Stacking blocks solves this limitation by enabling the model to perform iterative refinement through sequential depth. Each subsequent block operates on representations already refined by every preceding block, allowing the model to compose increasingly complex features, from lower-level patterns in early blocks to more abstract relationships in later ones.
+  </Description>
+
+  <Description>
+    Every block in the stack shares the same internal structure, the same two sub-blocks in the same Pre-Norm arrangement. What differs is their learned weights, which determine what each block's attention focuses on and what its FFN computes.
+  </Description>
+
+  {/* Stacked Transformer Blocks — showing residual stream as continuous path */}
+  <div className="my-8 flex justify-center">
+    <svg viewBox="0 0 260 380" className="w-full" style={{ maxWidth: "340px", display: "block" }}>
+      {/* Residual stream — continuous vertical line */}
+      <line x1="48" y1="24" x2="48" y2="358" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.6" />
+
+      {/* Residual stream label */}
+      <text x="16" y="190" textAnchor="middle" fill="var(--color-accent-2)" fontSize="9" fontFamily="var(--font-mono)" transform="rotate(-90, 16, 190)" fillOpacity="0.6">residual stream</text>
+
+      {/* Input */}
+      <text x="48" y="16" textAnchor="middle" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">input</text>
+
+      {/* === Block 1 === */}
+      {/* Fork dot */}
+      <circle cx="48" cy="48" r="3" fill="var(--color-accent-2)" />
+
+      {/* Branch to block center-top */}
+      <line x1="48" y1="48" x2="158" y2="48" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="48" x2="158" y2="56" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Block 1 box */}
+      <rect x="80" y="56" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
+      <text x="158" y="74" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block 1</text>
+      <text x="158" y="90" textAnchor="middle" fill="var(--color-muted)" fontSize="9.5" fontFamily="var(--font-mono)">Attn + FFN · weights₁</text>
+
+      {/* Return from block center-bottom */}
+      <line x1="158" y1="100" x2="158" y2="112" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="112" x2="60" y2="112" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="60,108.5 52,112 60,115.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* + node */}
+      <circle cx="48" cy="112" r="9" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="48" y="116" textAnchor="middle" fill="var(--color-accent-2)" fontSize="12" fontWeight="bold">+</text>
+
+      {/* === Block 2 === */}
+      {/* Fork dot */}
+      <circle cx="48" cy="148" r="3" fill="var(--color-accent-2)" />
+
+      {/* Branch to block center-top */}
+      <line x1="48" y1="148" x2="158" y2="148" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="148" x2="158" y2="156" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Block 2 box */}
+      <rect x="80" y="156" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
+      <text x="158" y="174" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block 2</text>
+      <text x="158" y="190" textAnchor="middle" fill="var(--color-muted)" fontSize="9.5" fontFamily="var(--font-mono)">Attn + FFN · weights₂</text>
+
+      {/* Return from block center-bottom */}
+      <line x1="158" y1="200" x2="158" y2="212" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="212" x2="60" y2="212" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="60,208.5 52,212 60,215.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* + node */}
+      <circle cx="48" cy="212" r="9" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="48" y="216" textAnchor="middle" fill="var(--color-accent-2)" fontSize="12" fontWeight="bold">+</text>
+
+      {/* Dots */}
+      <text x="158" y="248" textAnchor="middle" fill="var(--color-muted)" fontSize="16">···</text>
+
+      {/* === Block N === */}
+      {/* Fork dot */}
+      <circle cx="48" cy="268" r="3" fill="var(--color-accent-2)" />
+
+      {/* Branch to block center-top */}
+      <line x1="48" y1="268" x2="158" y2="268" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="268" x2="158" y2="276" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Block N box */}
+      <rect x="80" y="276" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
+      <text x="158" y="294" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block N</text>
+      <text x="158" y="310" textAnchor="middle" fill="var(--color-muted)" fontSize="9.5" fontFamily="var(--font-mono)">Attn + FFN · weightsₙ</text>
+
+      {/* Return from block center-bottom */}
+      <line x1="158" y1="320" x2="158" y2="332" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="332" x2="60" y2="332" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="60,328.5 52,332 60,335.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* + node */}
+      <circle cx="48" cy="332" r="9" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="48" y="336" textAnchor="middle" fill="var(--color-accent-2)" fontSize="12" fontWeight="bold">+</text>
+
+      {/* Output arrow */}
+      <polygon points="44,352 48,360 52,352" fill="var(--color-accent-2)" fillOpacity="0.7" />
+
+      {/* Output */}
+      <text x="48" y="376" textAnchor="middle" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">output</text>
+    </svg>
+  </div>
+
+  <Description>
+    The residual stream connects this entire stack, running as a continuous path from the first block's input to the last block's output. Each block reads from the stream, applies its attention and FFN, and adds the result back. The stream accumulates contributions from every block it has passed through.
   </Description>
 </Step>
+
 </Description>
