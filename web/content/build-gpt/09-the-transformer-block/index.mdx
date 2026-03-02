@@ -178,7 +178,9 @@ description: "How all components combine into the repeatable transformer block."
   </div>
 
   <Description>
-    Within the block, attention comes first so that each position can gather context from across the full sequence, enriching its representation with information from other tokens. The FFN then transforms these context-aware representations individually.
+    The attention sub-block lets each position gather information from across the full sequence, enriching its representation with context from other tokens. The FFN sub-block then processes each of these representations individually, transforming them through its expand-activate-contract pipeline. Together, one round of cross-token communication followed by one round of per-token transformation completes a single block.
+  </Description>
+</Step>
   </Description>
 
   <Description>
