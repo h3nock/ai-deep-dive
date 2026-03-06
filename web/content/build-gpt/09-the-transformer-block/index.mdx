@@ -497,3 +497,40 @@ class GPT(nn.Module):
         return self.lm_head(x)
 ```
 
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">GPT-2 Small</h4>
+
+  <Description>
+    The model we implement in the next chapter is GPT-2 Small: 12 blocks, `d_model = 768`, roughly 124 million parameters.
+  </Description>
+
+  <div className="my-6 overflow-x-auto">
+    <table className="w-full text-sm border-collapse">
+      <thead>
+        <tr className="border-b border-border">
+          <th className="py-2.5 pr-4 font-mono text-muted text-left text-xs uppercase tracking-wide whitespace-nowrap">Parameter</th>
+          <th className="py-2.5 pr-4 font-mono text-muted text-left text-xs uppercase tracking-wide whitespace-nowrap">Value</th>
+          <th className="py-2.5 text-muted text-left text-xs uppercase tracking-wide">Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {[
+          ['d_model', '768', 'Embedding dimension'],
+          ['n_heads', '12', 'Attention heads per block'],
+          ['n_layers', '12', 'Transformer blocks'],
+          ['d_ff', '3072', '4 × d_model'],
+          ['vocab_size', '50,257', 'BPE token vocabulary'],
+          ['context_length', '1024', 'Maximum sequence length'],
+          ['dropout', '0.1', 'Dropout rate'],
+          ['params', '~124M', 'Total trainable parameters'],
+        ].map(([param, value, note], i) => (
+          <tr key={i} className="border-b border-border last:border-b-0">
+            <td className="py-2.5 pr-4 font-mono text-accent-4 whitespace-nowrap">{param}</td>
+            <td className="py-2.5 pr-4 font-mono text-primary whitespace-nowrap">{value}</td>
+            <td className="py-2.5 text-muted">{note}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</Step>
+
