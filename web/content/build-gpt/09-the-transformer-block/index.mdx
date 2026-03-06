@@ -534,3 +534,18 @@ class GPT(nn.Module):
   </div>
 </Step>
 
+
+<Callout type="success" title="Summary">
+  * A Transformer block applies two sub-blocks in sequence: multi-head attention for cross-token communication, then FFN for per-token transformation
+  * Each sub-block uses the Pre-Norm arrangement: normalize, transform, add the residual
+  * Every block shares the same structure but has its own independent set of learned weights
+  * Stacking blocks allows the model to compose multi-step relationships, with each block building on representations shaped by all earlier blocks
+  * The residual stream runs continuously through the stack, accumulating each block's contribution
+  * The full architecture wraps the block stack with input processing (token + learned positional embeddings) and output processing (final LayerNorm, linear projection to vocabulary, softmax)
+  * Weight tying shares the embedding matrix between input and output, using a single learned representation for each token in both directions
+  * Dropout zeros out random activations during training to prevent over-reliance on individual features, applied after attention weights and before each residual addition
+</Callout>
+
+<Description>
+  The full GPT-2 architecture is now in place. In the next chapter, we implement it from scratch and train it end to end.
+</Description>
