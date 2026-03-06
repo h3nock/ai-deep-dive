@@ -306,6 +306,12 @@ class Block(nn.Module):
   </Description>
 </Step>
 
+
+<Step title="The Full Architecture">
+  <Description>
+    The full architecture assembles everything covered so far into three stages: input processing converts token IDs into vectors, the block stack refines those vectors, and output processing converts the final vectors into predictions.
+  </Description>
+
   {/* Full GPT Architecture — straight residual stream, blocks branch right */}
   <div className="my-8 flex justify-center">
     <svg viewBox="-30 0 330 560" className="w-full" style={{ maxWidth: "400px", display: "block" }}>
@@ -420,4 +426,50 @@ class Block(nn.Module):
     </svg>
   </div>
 
-</Description>
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Input Processing</h4>
+
+  <Description>
+    The token embedding table from Chapter 3 is a learned matrix of shape `vocab_size × d_model`, where each row is the embedding for one token. Retrieving an embedding is a direct index operation: use the token ID to select the corresponding row. These row vectors encode semantic properties of each token but no positional information.
+  </Description>
+
+  <Description>
+    Token embeddings carry no positional information, so in Chapter 4 we built sinusoidal positional encoding, computing a fixed vector for each position from sine and cosine waves. GPT-2 replaces the formula with **learned positional embeddings** (`nn.Embedding(context_length, d_model)`), where each row is trained directly from data. This gives the model flexibility to discover whatever positional patterns prove useful, but the table only covers positions seen during training. These vectors are added element-wise to the token embeddings, and the combined representations flow into the first block.
+  </Description>
+
+```python
+x = token_emb + pos_emb
+```
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Block Stack</h4>
+
+  <Description>
+    These representations pass through all N blocks in order, each one refining them and adding its output back to the residual stream. After the final block, the stream enters the output stage.
+  </Description>
+
+  <Callout type="note" title="Dropout">
+    GPT-2 applies dropout during training, randomly zeroing 10% of activations at two points: after the attention weights and before each residual addition. Many newer models skip it entirely, relying on large data volumes as a natural regularizer.
+  </Callout>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Output Processing</h4>
+
+  <Description>
+    The Pre-Norm arrangement leaves the residual stream unnormalized after the final block. A dedicated LayerNorm, **ln_f**, corrects this before the output stage.
+  </Description>
+
+  <Description>
+    The **output projection** maps each position's `d_model`-dimensional vector to a raw score for every token in the vocabulary, producing what are called **logits**. **Softmax** then converts them into a probability distribution.
+  </Description>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Weight Tying</h4>
+
+  <Description>
+    The token embedding table maps token IDs into vectors, and the output projection maps those vectors back to scores over the vocabulary. Because they're inverses of each other, it's natural to share the same weight matrix for both rather than learn two separate ones. This is **weight tying**, and GPT-2 applies it between the embedding table and the output projection.
+  </Description>
+
+  <Description>
+    Mechanically, each token's score is the dot product of the final hidden state with that token's embedding vector. Tokens whose embeddings point in the same direction as the hidden state score higher. This shapes training in a meaningful way: the model is pushed to produce hidden states that resemble the embeddings of likely next tokens, so the same space that encodes input meaning also guides output prediction.
+  </Description>
+
+  <Description>
+    Sharing the matrix also cuts parameter count significantly: the embedding table is roughly 38.6 million parameters for GPT-2 Small, all of which would otherwise appear twice.
+  </Description>
