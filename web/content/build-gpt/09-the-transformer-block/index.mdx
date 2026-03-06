@@ -306,4 +306,118 @@ class Block(nn.Module):
   </Description>
 </Step>
 
+  {/* Full GPT Architecture — straight residual stream, blocks branch right */}
+  <div className="my-8 flex justify-center">
+    <svg viewBox="-30 0 330 560" className="w-full" style={{ maxWidth: "400px", display: "block" }}>
+
+      {/* === Input section — sequential flow arrows, no stream line === */}
+
+      {/* Token IDs */}
+      <rect x="10" y="6" width="100" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <text x="60" y="23" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Token IDs</text>
+
+      {/* Arrow: Token IDs → Token Embed */}
+      <line x1="60" y1="32" x2="60" y2="46" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="56,40 60,48 64,40" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+      {/* Token Embeddings */}
+      <rect x="2" y="48" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 30%, transparent)" strokeWidth="1" />
+      <text x="60" y="66" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontFamily="var(--font-mono)">Token Embed</text>
+
+      {/* Arrow: Token Embed → + */}
+      <line x1="60" y1="76" x2="60" y2="84" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* + Positional Embeddings */}
+      <circle cx="60" cy="96" r="10" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="60" y="100" textAnchor="middle" fill="var(--color-accent-2)" fontSize="13" fontWeight="bold">+</text>
+      <text x="80" y="100" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Pos Embed</text>
+
+      {/* Arrow: + → block stack */}
+      <line x1="60" y1="106" x2="60" y2="126" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* === Block stack section — residual stream only here === */}
+
+      {/* Residual stream line — only spans the block section */}
+      <line x1="60" y1="126" x2="60" y2="390" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.5" />
+
+      {/* Block group dashed outline */}
+      <rect x="36" y="118" width="230" height="280" rx="8" fill="none" stroke="var(--color-border)" strokeWidth="1" strokeDasharray="4 3" />
+      <text x="270" y="260" textAnchor="start" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">×N</text>
+
+      {/* === Block 1 === */}
+      <circle cx="60" cy="144" r="3" fill="var(--color-accent-2)" />
+      <line x1="60" y1="144" x2="170" y2="144" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="170" y1="144" x2="170" y2="152" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      <rect x="92" y="152" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
+      <text x="170" y="170" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block 1</text>
+      <text x="170" y="186" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN · weights₁</text>
+
+      <line x1="170" y1="196" x2="170" y2="208" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="170" y1="208" x2="72" y2="208" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="72,204.5 64,208 72,211.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      <circle cx="60" cy="208" r="10" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="60" y="212" textAnchor="middle" fill="var(--color-accent-2)" fontSize="13" fontWeight="bold">+</text>
+
+      {/* Dots */}
+      <text x="170" y="248" textAnchor="middle" fill="var(--color-muted)" fontSize="18">···</text>
+
+      {/* === Block N === */}
+      <circle cx="60" cy="272" r="3" fill="var(--color-accent-2)" />
+      <line x1="60" y1="272" x2="170" y2="272" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="170" y1="272" x2="170" y2="280" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      <rect x="92" y="280" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
+      <text x="170" y="298" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block N</text>
+      <text x="170" y="314" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN · weightsₙ</text>
+
+      <line x1="170" y1="324" x2="170" y2="336" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="170" y1="336" x2="72" y2="336" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="72,332.5 64,336 72,339.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      <circle cx="60" cy="336" r="10" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="60" y="340" textAnchor="middle" fill="var(--color-accent-2)" fontSize="13" fontWeight="bold">+</text>
+
+      {/* === Output section — sequential flow arrows, no stream line === */}
+
+      {/* Arrow: block stack → ln_f */}
+      <line x1="60" y1="390" x2="60" y2="408" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="56,402 60,410 64,402" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+      {/* ln_f */}
+      <rect x="2" y="410" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-1) 10%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
+      <text x="60" y="428" textAnchor="middle" fill="var(--color-accent-1)" fontSize="11" fontFamily="var(--font-mono)">ln_f (LayerNorm)</text>
+
+      {/* Arrow: ln_f → Output Proj */}
+      <line x1="60" y1="438" x2="60" y2="452" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="56,446 60,454 64,446" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+      {/* Output Projection */}
+      <rect x="2" y="454" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 30%, transparent)" strokeWidth="1" />
+      <text x="60" y="472" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontFamily="var(--font-mono)">Output Proj</text>
+      <text x="128" y="472" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">→ vocab size</text>
+
+      {/* Weight tying annotation */}
+      <path d="M 2 62 C -28 62 -28 468 2 468" fill="none" stroke="var(--color-muted)" strokeWidth="0.8" strokeDasharray="3 2" />
+      <text x="-14" y="266" textAnchor="middle" fill="var(--color-muted)" fontSize="9" fontFamily="var(--font-mono)" transform="rotate(-90, -14, 266)">weight tying</text>
+
+      {/* Arrow: Output Proj → Softmax */}
+      <line x1="60" y1="482" x2="60" y2="496" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="56,490 60,498 64,490" fill="var(--color-accent-2)" fillOpacity="0.5" />
+      <text x="76" y="493" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">logits</text>
+
+      {/* Softmax */}
+      <rect x="16" y="498" width="88" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <text x="60" y="515" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Softmax</text>
+
+      {/* Arrow: Softmax → probabilities */}
+      <line x1="60" y1="524" x2="60" y2="536" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="56,530 60,538 64,530" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+      {/* Probabilities */}
+      <text x="60" y="552" textAnchor="middle" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">next-token probs</text>
+    </svg>
+  </div>
+
 </Description>
