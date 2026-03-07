@@ -468,15 +468,21 @@ x = token_emb + pos_emb
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Weight Tying</h4>
 
   <Description>
-    The token embedding table maps token IDs into vectors, and the output projection maps those vectors back to scores over the vocabulary. Because they're inverses of each other, it's natural to share the same weight matrix for both rather than learn two separate ones. This is **weight tying**, and GPT-2 applies it between the embedding table and the output projection.
+    GPT-2 uses **weight tying**, which means the output layer reuses the token embedding matrix instead of learning a separate output matrix. The embedding matrix is a learned vocabulary table that maps each token ID to a vector. At the input, the model uses that table to turn token IDs into vectors. At the output, it compares the final hidden state with the learned vector for each token. Reusing the same token vectors for both jobs avoids learning a second vocabulary-sized matrix.
   </Description>
 
   <Description>
-    Mechanically, each token's score is the dot product of the final hidden state with that token's embedding vector. Tokens whose embeddings point in the same direction as the hidden state score higher. This shapes training in a meaningful way: the model is pushed to produce hidden states that resemble the embeddings of likely next tokens, so the same space that encodes input meaning also guides output prediction.
+    With weight tying, the output projection is just the transpose of the embedding matrix.
   </Description>
 
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm space-y-2 text-center">
+    <div className="text-primary">W_proj = E^T</div>
+    <div className="text-primary">logits = h × E^T</div>
+    <div className="text-muted">E: (vocab_size × d_model)&ensp;&ensp;h: (1 × d_model)&ensp;&ensp;logits: (1 × vocab_size)</div>
+  </div>
+
   <Description>
-    Sharing the matrix also cuts parameter count significantly: the embedding table is roughly 38.6 million parameters for GPT-2 Small, all of which would otherwise appear twice.
+    In GPT-2 Small, this avoids learning a second `50,257 × 768` matrix, which would add `38,597,376` parameters.
   </Description>
 
 ```python
@@ -547,7 +553,7 @@ class GPT(nn.Module):
   * Stacking blocks allows the model to compose multi-step relationships, with each block building on representations shaped by all earlier blocks
   * The residual stream runs continuously through the stack, accumulating each block's contribution
   * The full architecture wraps the block stack with input processing (token + learned positional embeddings) and output processing (final LayerNorm, linear projection to vocabulary, softmax)
-  * Weight tying shares the embedding matrix between input and output, using a single learned representation for each token in both directions
+  * Weight tying reuses the token embedding matrix for the output projection, using the transpose of the embedding table to produce logits
   * Dropout zeros out random activations during training to prevent over-reliance on individual features, applied after attention weights and before each residual addition
 </Callout>
 
