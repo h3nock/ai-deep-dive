@@ -640,12 +640,104 @@ def _pre_norm_block_ref(
     return (x_arr + (ln @ w_arr + b_arr)).astype(dtype).tolist()
 
 
+def _transformer_block_ref(
+    x: list[list[float]],
+    gamma1: list[float],
+    beta1: list[float],
+    w_q: list[list[float]],
+    w_k: list[list[float]],
+    w_v: list[list[float]],
+    w_o: list[list[float]],
+    num_heads: int,
+    gamma2: list[float],
+    beta2: list[float],
+    w1: list[list[float]],
+    b1: list[float],
+    w2: list[list[float]],
+    b2: list[float],
+    *,
+    dtype: Any = np.float32,
+) -> list[list[float]]:
+    eps = 1e-5
+    x_arr = np.asarray(x, dtype=dtype)
+    ln1 = np.asarray(_layer_norm_ref(x, gamma1, beta1, eps, dtype=dtype), dtype=dtype)
+    attn = np.asarray(
+        _multi_head_causal_attention_ref(ln1.tolist(), w_q, w_k, w_v, w_o, num_heads, dtype=dtype),
+        dtype=dtype,
+    )
+    x1 = x_arr + attn
+    ln2 = np.asarray(_layer_norm_ref(x1.tolist(), gamma2, beta2, eps, dtype=dtype), dtype=dtype)
+    ffn = np.asarray(_ffn_ref(ln2.tolist(), w1, b1, w2, b2, dtype=dtype), dtype=dtype)
+    return (x1 + ffn).astype(dtype).tolist()
+
+
 def _torch_matrix_input_code(var_name: str, matrix: list[list[float]]) -> str:
     return f"{var_name} = torch.tensor({repr(matrix)}, dtype=torch.float32)\n"
 
 
 def _torch_vector_input_code(var_name: str, vector: list[float]) -> str:
     return f"{var_name} = torch.tensor({repr(vector)}, dtype=torch.float32)\n"
+
+
+def _indent_block(text: str, prefix: str = "  ") -> str:
+    return "\n".join(f"{prefix}{line}" if line else line for line in text.splitlines())
+
+
+def _python_literal_code_pretty(value: Any) -> str:
+    return json.dumps(value, indent=2)
+
+
+def _torch_matrix_input_code_pretty(var_name: str, matrix: list[list[float]]) -> str:
+    literal = _indent_block(_python_literal_code_pretty(matrix))
+    return (
+        f"{var_name} = torch.tensor(\n"
+        f"{literal},\n"
+        f"  dtype=torch.float32,\n"
+        f")\n"
+    )
+
+
+def _torch_vector_input_code_pretty(var_name: str, vector: list[float]) -> str:
+    literal = _indent_block(_python_literal_code_pretty(vector))
+    return (
+        f"{var_name} = torch.tensor(\n"
+        f"{literal},\n"
+        f"  dtype=torch.float32,\n"
+        f")\n"
+    )
+
+
+def _transformer_block_input_code(
+    x: list[list[float]],
+    gamma1: list[float],
+    beta1: list[float],
+    w_q: list[list[float]],
+    w_k: list[list[float]],
+    w_v: list[list[float]],
+    w_o: list[list[float]],
+    num_heads: int,
+    gamma2: list[float],
+    beta2: list[float],
+    w1: list[list[float]],
+    b1: list[float],
+    w2: list[list[float]],
+    b2: list[float],
+) -> str:
+    code = _torch_matrix_input_code("x", x)
+    code += _torch_vector_input_code("gamma1", gamma1)
+    code += _torch_vector_input_code("beta1", beta1)
+    code += _torch_matrix_input_code("W_Q", w_q)
+    code += _torch_matrix_input_code("W_K", w_k)
+    code += _torch_matrix_input_code("W_V", w_v)
+    code += _torch_matrix_input_code("W_O", w_o)
+    code += f"num_heads = {num_heads}\n"
+    code += _torch_vector_input_code("gamma2", gamma2)
+    code += _torch_vector_input_code("beta2", beta2)
+    code += _torch_matrix_input_code("W1", w1)
+    code += _torch_vector_input_code("b1", b1)
+    code += _torch_matrix_input_code("W2", w2)
+    code += _torch_vector_input_code("b2", b2)
+    return code
 
 
 def _random_matrix(
@@ -1900,6 +1992,341 @@ def _gen_pre_norm_residual_block(rng: random.Random) -> list[Case]:
     return cases
 
 
+def _gen_transformer_block(rng: random.Random) -> list[Case]:
+    cases: list[Case] = []
+
+    def _identity(n: int) -> list[list[float]]:
+        return [[1.0 if i == j else 0.0 for j in range(n)] for i in range(n)]
+
+    def _zeros(rows: int, cols: int) -> list[list[float]]:
+        return [[0.0 for _ in range(cols)] for _ in range(rows)]
+
+    def append_case(
+        bucket: str,
+        *,
+        x: list[list[float]],
+        gamma1: list[float],
+        beta1: list[float],
+        w_q: list[list[float]],
+        w_k: list[list[float]],
+        w_v: list[list[float]],
+        w_o: list[list[float]],
+        num_heads: int,
+        gamma2: list[float],
+        beta2: list[float],
+        w1: list[list[float]],
+        b1: list[float],
+        w2: list[list[float]],
+        b2: list[float],
+        input_code_override: str | None = None,
+    ) -> None:
+        expected = _round_nested(
+            _transformer_block_ref(
+                x,
+                gamma1,
+                beta1,
+                w_q,
+                w_k,
+                w_v,
+                w_o,
+                num_heads,
+                gamma2,
+                beta2,
+                w1,
+                b1,
+                w2,
+                b2,
+            ),
+            digits=FLOAT_EXPECTED_DIGITS,
+        )
+        code = input_code_override or _transformer_block_input_code(
+            x,
+            gamma1,
+            beta1,
+            w_q,
+            w_k,
+            w_v,
+            w_o,
+            num_heads,
+            gamma2,
+            beta2,
+            w1,
+            b1,
+            w2,
+            b2,
+        )
+        cases.append(
+            Case(
+                bucket,
+                input_code=code,
+                expected=expected,
+            )
+        )
+
+    # Keep curated public examples first.
+    append_case(
+        "boundary",
+        x=[[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0]],
+        gamma1=[1.0, 1.0, 1.0, 1.0],
+        beta1=[0.0, 0.0, 0.0, 0.0],
+        w_q=_identity(4),
+        w_k=_identity(4),
+        w_v=_identity(4),
+        w_o=_identity(4),
+        num_heads=2,
+        gamma2=[1.0, 1.0, 1.0, 1.0],
+        beta2=[0.0, 0.0, 0.0, 0.0],
+        w1=_zeros(4, 6),
+        b1=[0.0] * 6,
+        w2=_zeros(6, 4),
+        b2=[0.0] * 4,
+        input_code_override=(
+            "x = torch.tensor(\n"
+            "  [[1.0, 0.0, 1.0, 0.0],\n"
+            "   [0.0, 1.0, 0.0, 1.0]],\n"
+            "  dtype=torch.float32,\n"
+            ")\n\n"
+            "I = torch.eye(4, dtype=torch.float32)\n"
+            "Z_ff = torch.zeros((4, 6), dtype=torch.float32)\n"
+            "Z_out = torch.zeros((6, 4), dtype=torch.float32)\n\n"
+            "gamma1 = torch.ones(4, dtype=torch.float32)\n"
+            "beta1 = torch.zeros(4, dtype=torch.float32)\n"
+            "W_Q = I\n"
+            "W_K = I\n"
+            "W_V = I\n"
+            "W_O = I\n"
+            "num_heads = 2\n\n"
+            "gamma2 = torch.ones(4, dtype=torch.float32)\n"
+            "beta2 = torch.zeros(4, dtype=torch.float32)\n"
+            "W1 = Z_ff\n"
+            "b1 = torch.zeros(6, dtype=torch.float32)\n"
+            "W2 = Z_out\n"
+            "b2 = torch.zeros(4, dtype=torch.float32)\n"
+        ),
+    )
+    case2_x = [[1.0, -1.0, 0.5, 0.0], [0.0, 2.0, -1.0, 1.0], [1.5, 0.5, 0.0, -0.5]]
+    case2_gamma1 = [1.0, 0.5, -1.0, 1.5]
+    case2_beta1 = [0.1, -0.2, 0.0, 0.2]
+    case2_w_q = [[0.8, 0.0, 0.2, 0.0], [0.0, 0.6, 0.0, -0.3], [0.1, 0.0, 0.7, 0.0], [0.0, 0.2, 0.0, 0.9]]
+    case2_w_k = [[0.7, 0.0, 0.0, 0.2], [0.0, 0.9, -0.1, 0.0], [0.0, 0.3, 0.8, 0.0], [0.2, 0.0, 0.0, 0.6]]
+    case2_w_v = [[1.0, 0.0, 0.0, 0.0], [0.0, 0.5, 0.2, 0.0], [0.0, 0.0, 0.8, 0.1], [0.1, 0.0, 0.0, 0.9]]
+    case2_w_o = [[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
+    case2_gamma2 = [1.2, -0.8, 0.7, 1.1]
+    case2_beta2 = [0.0, 0.1, -0.1, 0.0]
+    case2_w1 = [[0.5, -0.2, 0.3, 0.0, -0.4, 0.2], [0.1, 0.4, -0.3, 0.2, 0.0, -0.1], [0.0, -0.5, 0.6, 0.1, 0.2, 0.0], [0.3, 0.0, 0.1, -0.2, 0.4, 0.5]]
+    case2_b1 = [0.0, 0.1, -0.1, 0.05, 0.0, -0.05]
+    case2_w2 = [[0.2, 0.0, -0.1, 0.3], [0.0, 0.4, 0.2, -0.2], [-0.3, 0.1, 0.5, 0.0], [0.1, -0.2, 0.0, 0.4], [0.5, 0.0, 0.1, -0.1], [0.0, 0.3, -0.4, 0.2]]
+    case2_b2 = [0.05, -0.05, 0.1, 0.0]
+    case2_input_code = _torch_matrix_input_code("x", case2_x)
+    case2_input_code += "\n"
+    case2_input_code += _torch_vector_input_code("gamma1", case2_gamma1)
+    case2_input_code += _torch_vector_input_code("beta1", case2_beta1)
+    case2_input_code += "\n"
+    case2_input_code += _torch_matrix_input_code("W_Q", case2_w_q)
+    case2_input_code += _torch_matrix_input_code("W_K", case2_w_k)
+    case2_input_code += _torch_matrix_input_code("W_V", case2_w_v)
+    case2_input_code += _torch_matrix_input_code("W_O", case2_w_o)
+    case2_input_code += "num_heads = 2\n\n"
+    case2_input_code += _torch_vector_input_code("gamma2", case2_gamma2)
+    case2_input_code += _torch_vector_input_code("beta2", case2_beta2)
+    case2_input_code += "\n"
+    case2_input_code += _torch_matrix_input_code("W1", case2_w1)
+    case2_input_code += _torch_vector_input_code("b1", case2_b1)
+    case2_input_code += _torch_matrix_input_code("W2", case2_w2)
+    case2_input_code += _torch_vector_input_code("b2", case2_b2)
+    append_case(
+        "boundary",
+        x=case2_x,
+        gamma1=case2_gamma1,
+        beta1=case2_beta1,
+        w_q=case2_w_q,
+        w_k=case2_w_k,
+        w_v=case2_w_v,
+        w_o=case2_w_o,
+        num_heads=2,
+        gamma2=case2_gamma2,
+        beta2=case2_beta2,
+        w1=case2_w1,
+        b1=case2_b1,
+        w2=case2_w2,
+        b2=case2_b2,
+        input_code_override=case2_input_code,
+    )
+    append_case(
+        "boundary",
+        x=[[0.5, -0.5, 1.0, -1.0], [2.0, 1.0, 0.0, -2.0]],
+        gamma1=[0.5, -1.0, 1.5, 0.75],
+        beta1=[0.0, 0.1, -0.1, 0.2],
+        w_q=_zeros(4, 4),
+        w_k=_zeros(4, 4),
+        w_v=_zeros(4, 4),
+        w_o=_zeros(4, 4),
+        num_heads=2,
+        gamma2=[1.0, 1.0, 1.0, 1.0],
+        beta2=[0.0, 0.0, 0.0, 0.0],
+        w1=_zeros(4, 8),
+        b1=[0.0] * 8,
+        w2=_zeros(8, 4),
+        b2=[0.0] * 4,
+    )
+    append_case(
+        "boundary",
+        x=[[1.0, -2.0, 0.5, 3.0, -1.5, 0.0]],
+        gamma1=[1.0, -1.0, 0.5, 1.5, -0.5, 0.8],
+        beta1=[0.1, 0.0, -0.1, 0.2, 0.05, -0.05],
+        w_q=_identity(6),
+        w_k=[[0.9, 0.0, 0.0, 0.0, 0.2, 0.0], [0.0, 0.7, 0.1, 0.0, 0.0, 0.0], [0.0, 0.1, 0.8, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.6, 0.0, 0.2], [0.2, 0.0, 0.0, 0.0, 0.9, 0.0], [0.0, 0.0, 0.0, 0.2, 0.0, 0.7]],
+        w_v=[[0.6, 0.0, 0.0, 0.0, 0.1, 0.0], [0.0, 0.5, 0.2, 0.0, 0.0, 0.0], [0.0, -0.2, 0.7, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.8, 0.0, 0.1], [0.1, 0.0, 0.0, 0.0, 0.6, 0.0], [0.0, 0.0, 0.0, -0.1, 0.0, 0.9]],
+        w_o=[[1.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]],
+        num_heads=3,
+        gamma2=[0.8, 1.1, -0.6, 1.0, 0.7, -1.2],
+        beta2=[0.0, -0.1, 0.1, 0.0, 0.05, -0.05],
+        w1=[[0.4, -0.1, 0.3, 0.0, 0.2, -0.2, 0.1, 0.0, 0.5], [0.0, 0.5, -0.3, 0.2, 0.0, 0.1, -0.1, 0.3, 0.0], [0.2, 0.0, 0.4, -0.2, 0.1, 0.0, 0.3, -0.1, 0.2], [0.0, -0.4, 0.0, 0.5, 0.2, 0.1, 0.0, 0.2, -0.3], [0.3, 0.1, -0.2, 0.0, 0.6, -0.1, 0.0, 0.4, 0.0], [-0.2, 0.0, 0.1, 0.3, 0.0, 0.5, -0.4, 0.0, 0.2]],
+        b1=[0.0, 0.05, -0.05, 0.1, -0.1, 0.0, 0.02, -0.02, 0.03],
+        w2=[[0.3, 0.0, -0.1, 0.2, 0.0, 0.1], [0.0, 0.2, 0.1, -0.2, 0.3, 0.0], [-0.2, 0.1, 0.4, 0.0, 0.0, -0.1], [0.1, -0.3, 0.0, 0.5, 0.1, 0.0], [0.4, 0.0, 0.2, -0.1, 0.2, 0.0], [0.0, 0.3, -0.2, 0.1, 0.0, 0.4], [0.2, -0.1, 0.0, 0.0, 0.5, -0.2], [0.0, 0.2, 0.3, -0.1, 0.0, 0.1], [-0.1, 0.0, 0.2, 0.3, -0.2, 0.5]],
+        b2=[0.0, 0.1, -0.1, 0.05, 0.0, -0.05],
+    )
+    append_case(
+        "adversarial",
+        x=[[2.0, 2.0, 2.0, 2.0], [-1.0, 0.0, 1.0, 2.0], [0.5, -0.5, 0.5, -0.5]],
+        gamma1=[-1.0, 0.5, 1.5, -0.75],
+        beta1=[0.2, -0.1, 0.0, 0.3],
+        w_q=[[0.7, 0.0, 0.1, 0.0], [0.0, 0.6, 0.0, -0.2], [0.2, 0.0, 0.8, 0.0], [0.0, 0.1, 0.0, 0.9]],
+        w_k=[[0.8, 0.0, 0.0, 0.1], [0.0, 0.7, -0.2, 0.0], [0.0, 0.2, 0.6, 0.0], [0.1, 0.0, 0.0, 0.8]],
+        w_v=[[0.5, 0.0, 0.0, 0.2], [0.0, 0.4, 0.3, 0.0], [0.0, -0.1, 0.7, 0.0], [0.2, 0.0, 0.0, 0.6]],
+        w_o=[[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]],
+        num_heads=2,
+        gamma2=[0.7, -1.2, 1.0, 0.5],
+        beta2=[-0.2, 0.0, 0.1, -0.1],
+        w1=[[0.4, -0.1, 0.0, 0.2, -0.3, 0.5, 0.1, 0.0], [0.0, 0.6, -0.2, 0.0, 0.1, -0.1, 0.3, 0.2], [0.2, 0.0, 0.5, -0.4, 0.0, 0.2, -0.2, 0.1], [-0.1, 0.3, 0.0, 0.4, 0.2, 0.0, 0.1, -0.3]],
+        b1=[0.0, 0.05, -0.05, 0.1, -0.1, 0.0, 0.02, -0.02],
+        w2=[[0.3, 0.0, -0.1, 0.2], [0.0, 0.4, 0.2, -0.2], [-0.3, 0.1, 0.5, 0.0], [0.1, -0.2, 0.0, 0.4], [0.5, 0.0, 0.1, -0.1], [0.0, 0.3, -0.4, 0.2], [0.2, -0.1, 0.0, 0.1], [-0.1, 0.2, 0.3, 0.0]],
+        b2=[0.05, -0.05, 0.1, 0.0],
+    )
+    append_case(
+        "regression",
+        x=[[1.0, 0.0, 0.0, 2.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0, 3.0, 0.0], [0.0, 0.0, 1.0, 0.0, 0.0, 4.0]],
+        gamma1=[1.0] * 6,
+        beta1=[0.0] * 6,
+        w_q=_identity(6),
+        w_k=_identity(6),
+        w_v=_identity(6),
+        w_o=[[1.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]],
+        num_heads=3,
+        gamma2=[1.0] * 6,
+        beta2=[0.0] * 6,
+        w1=_zeros(6, 12),
+        b1=[0.0] * 12,
+        w2=_zeros(12, 6),
+        b2=[0.0] * 6,
+    )
+    append_case(
+        "regression",
+        x=[[-1.5, 0.5, 1.0, -0.5], [0.25, -0.75, 1.25, -1.25]],
+        gamma1=[1.0, 1.0, 1.0, 1.0],
+        beta1=[0.0, 0.0, 0.0, 0.0],
+        w_q=_zeros(4, 4),
+        w_k=_zeros(4, 4),
+        w_v=_zeros(4, 4),
+        w_o=_zeros(4, 4),
+        num_heads=2,
+        gamma2=[1.5, -0.5, 0.75, -1.25],
+        beta2=[0.1, -0.1, 0.2, 0.0],
+        w1=[[0.6, -0.4, 0.2, -0.7, 0.3, 0.1, -0.5, 0.4], [-0.2, 0.5, -0.6, 0.1, 0.4, -0.3, 0.2, 0.0], [0.3, 0.1, 0.7, -0.5, 0.0, 0.2, -0.4, 0.6], [-0.4, 0.0, 0.3, 0.2, -0.6, 0.5, 0.1, -0.2]],
+        b1=[0.2, -0.1, 0.0, 0.15, -0.05, 0.1, -0.2, 0.05],
+        w2=[[0.3, -0.2, 0.1, 0.4], [0.2, 0.5, -0.3, 0.0], [-0.4, 0.1, 0.6, -0.2], [0.1, -0.3, 0.2, 0.5], [0.5, 0.0, -0.1, 0.2], [-0.2, 0.4, 0.3, -0.1], [0.0, -0.1, 0.4, 0.3], [0.2, 0.2, -0.2, 0.1]],
+        b2=[0.05, -0.05, 0.1, 0.0],
+    )
+    append_case(
+        "regression",
+        x=[[3.0, -1.0, 0.5, 2.0], [-2.0, 1.0, -0.5, 0.0], [0.5, 0.5, -1.5, 1.5]],
+        gamma1=[0.8, -1.1, 1.4, 0.6],
+        beta1=[0.2, -0.2, 0.0, 0.1],
+        w_q=[[0.9, 0.0, 0.2, 0.0], [0.0, 0.7, 0.0, -0.2], [0.1, 0.0, 0.8, 0.0], [0.0, 0.3, 0.0, 0.6]],
+        w_k=[[0.8, 0.0, 0.0, 0.1], [0.0, 0.9, -0.2, 0.0], [0.0, 0.2, 0.7, 0.0], [0.1, 0.0, 0.0, 0.8]],
+        w_v=[[0.7, 0.0, 0.0, 0.2], [0.0, 0.6, 0.1, 0.0], [0.0, -0.2, 0.8, 0.0], [0.2, 0.0, 0.0, 0.7]],
+        w_o=[[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]],
+        num_heads=2,
+        gamma2=[-0.9, 1.3, 0.5, -1.1],
+        beta2=[0.0, 0.15, -0.05, 0.1],
+        w1=[[0.5, -0.2, 0.3, 0.0, -0.4, 0.2, 0.1, -0.1], [0.1, 0.4, -0.3, 0.2, 0.0, -0.1, 0.3, 0.0], [0.0, -0.5, 0.6, 0.1, 0.2, 0.0, -0.2, 0.4], [0.3, 0.0, 0.1, -0.2, 0.4, 0.5, 0.0, -0.3]],
+        b1=[0.0, 0.1, -0.1, 0.05, 0.0, -0.05, 0.02, -0.02],
+        w2=[[0.2, 0.0, -0.1, 0.3], [0.0, 0.4, 0.2, -0.2], [-0.3, 0.1, 0.5, 0.0], [0.1, -0.2, 0.0, 0.4], [0.5, 0.0, 0.1, -0.1], [0.0, 0.3, -0.4, 0.2], [0.2, -0.1, 0.0, 0.1], [-0.1, 0.2, 0.3, 0.0]],
+        b2=[0.05, -0.05, 0.1, 0.0],
+    )
+
+    for seq_len, d_model, num_heads, d_ff in [(12, 12, 3, 36), (10, 16, 4, 48), (8, 24, 6, 48), (14, 8, 2, 24)]:
+        x = _random_matrix(rng, seq_len, d_model, low=-1.5, high=1.5)
+        gamma1 = [round(rng.uniform(-1.2, 1.2), 4) for _ in range(d_model)]
+        beta1 = [round(rng.uniform(-0.4, 0.4), 4) for _ in range(d_model)]
+        w_q = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
+        w_k = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
+        w_v = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
+        w_o = _random_matrix(rng, d_model, d_model, low=-0.8, high=0.8)
+        gamma2 = [round(rng.uniform(-1.2, 1.2), 4) for _ in range(d_model)]
+        beta2 = [round(rng.uniform(-0.4, 0.4), 4) for _ in range(d_model)]
+        w1 = _random_matrix(rng, d_model, d_ff, low=-0.8, high=0.8)
+        b1 = [round(rng.uniform(-0.3, 0.3), 4) for _ in range(d_ff)]
+        w2 = _random_matrix(rng, d_ff, d_model, low=-0.8, high=0.8)
+        b2 = [round(rng.uniform(-0.3, 0.3), 4) for _ in range(d_model)]
+        append_case(
+            "stress",
+            x=x,
+            gamma1=gamma1,
+            beta1=beta1,
+            w_q=w_q,
+            w_k=w_k,
+            w_v=w_v,
+            w_o=w_o,
+            num_heads=num_heads,
+            gamma2=gamma2,
+            beta2=beta2,
+            w1=w1,
+            b1=b1,
+            w2=w2,
+            b2=b2,
+        )
+
+    for _ in range(8):
+        d_model = rng.choice([4, 6, 8, 12])
+        num_heads = rng.choice([head for head in [2, 3, 4, 6] if d_model % head == 0])
+        seq_len = rng.randint(2, 10)
+        d_ff = rng.choice([d_model * 2, d_model * 3])
+
+        x = _random_matrix(rng, seq_len, d_model, low=-2.0, high=2.0)
+        gamma1 = [round(rng.uniform(-1.5, 1.5), 4) for _ in range(d_model)]
+        beta1 = [round(rng.uniform(-0.4, 0.4), 4) for _ in range(d_model)]
+        w_q = _random_matrix(rng, d_model, d_model, low=-1.0, high=1.0)
+        w_k = _random_matrix(rng, d_model, d_model, low=-1.0, high=1.0)
+        w_v = _random_matrix(rng, d_model, d_model, low=-1.0, high=1.0)
+        w_o = _random_matrix(rng, d_model, d_model, low=-1.0, high=1.0)
+        gamma2 = [round(rng.uniform(-1.5, 1.5), 4) for _ in range(d_model)]
+        beta2 = [round(rng.uniform(-0.4, 0.4), 4) for _ in range(d_model)]
+        w1 = _random_matrix(rng, d_model, d_ff, low=-1.0, high=1.0)
+        b1 = [round(rng.uniform(-0.3, 0.3), 4) for _ in range(d_ff)]
+        w2 = _random_matrix(rng, d_ff, d_model, low=-1.0, high=1.0)
+        b2 = [round(rng.uniform(-0.3, 0.3), 4) for _ in range(d_model)]
+        append_case(
+            "random",
+            x=x,
+            gamma1=gamma1,
+            beta1=beta1,
+            w_q=w_q,
+            w_k=w_k,
+            w_v=w_v,
+            w_o=w_o,
+            num_heads=num_heads,
+            gamma2=gamma2,
+            beta2=beta2,
+            w1=w1,
+            b1=b1,
+            w2=w2,
+            b2=b2,
+        )
+
+    return cases
+
+
 PROBLEM_GENERATORS: dict[str, ProblemGenerator] = {
     "build-gpt/01-from-text-to-bytes/01-encoder": _gen_encoder,
     "build-gpt/01-from-text-to-bytes/02-byte-inspector": _gen_byte_inspector,
@@ -1920,6 +2347,7 @@ PROBLEM_GENERATORS: dict[str, ProblemGenerator] = {
     "build-gpt/07-feed-forward-networks/02-ffn-forward-pass": _gen_ffn_forward_pass,
     "build-gpt/08-residuals-and-normalization/01-layer-normalization": _gen_layer_normalization,
     "build-gpt/08-residuals-and-normalization/02-pre-norm-residual-block": _gen_pre_norm_residual_block,
+    "build-gpt/09-the-transformer-block/01-transformer-block": _gen_transformer_block,
 }
 
 
@@ -1943,6 +2371,7 @@ PROBLEM_SEEDS: dict[str, int] = {
     "build-gpt/07-feed-forward-networks/02-ffn-forward-pass": 702,
     "build-gpt/08-residuals-and-normalization/01-layer-normalization": 801,
     "build-gpt/08-residuals-and-normalization/02-pre-norm-residual-block": 802,
+    "build-gpt/09-the-transformer-block/01-transformer-block": 901,
 }
 
 PUBLIC_CASE_COUNT_OVERRIDES: dict[str, int] = {
