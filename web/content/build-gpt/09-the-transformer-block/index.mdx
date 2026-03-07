@@ -453,12 +453,17 @@ x = token_emb + pos_emb
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Output Processing</h4>
 
   <Description>
-    The Pre-Norm arrangement leaves the residual stream unnormalized after the final block. A dedicated LayerNorm, **ln_f**, corrects this before the output stage.
+    The Pre-Norm arrangement leaves the residual stream unnormalized after the final block. A dedicated LayerNorm, **ln_f**, corrects this before the output stage. At each position, the model now has a final hidden state: a single `d_model`-dimensional vector summarizing what it has computed at that position.
   </Description>
 
   <Description>
-    The **output projection** maps each position's `d_model`-dimensional vector to a raw score for every token in the vocabulary, producing what are called **logits**. **Softmax** then converts them into a probability distribution.
+    The **output projection** turns that vector into logits over the vocabulary. It produces one raw score, called a **logit**, for every token ID, so a single hidden state becomes a vector of length `vocab_size`. Entry `i` is the logit for token `i`, and **softmax** converts those logits into probabilities.
   </Description>
+
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm space-y-2 text-center">
+    <div className="text-primary">logits = h × W_proj</div>
+    <div className="text-muted">h: (1 × d_model)&ensp;&ensp;W_proj: (d_model × vocab_size)&ensp;&ensp;logits: (1 × vocab_size)</div>
+  </div>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Weight Tying</h4>
 
