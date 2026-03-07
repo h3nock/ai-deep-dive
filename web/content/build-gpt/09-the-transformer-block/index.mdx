@@ -4,4 +4,559 @@ step: 9
 description: "How all components combine into the repeatable transformer block."
 ---
 
-<ComingSoon />
+<Description>
+  Over the last eight chapters, we have covered the major components of a Transformer-based language model from token embeddings and positional encodings through multi-head attention and feed-forward networks. In this chapter we will bring these components together into a complete architecture.
+</Description>
+
+<Description>
+  The GPT architecture arranges these components into a single repeating unit called the **Transformer block**. The complete model stacks `N` of these identical blocks between input processing that converts token IDs to vectors and output processing that converts vectors to predictions.
+</Description>
+
+{/* High-level architecture overview */}
+<div className="my-8 flex justify-center">
+  <svg viewBox="0 0 260 280" className="w-full" style={{ maxWidth: "320px", display: "block" }}>
+    {/* Token IDs */}
+    <rect x="80" y="6" width="100" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
+    <text x="130" y="23" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Token IDs</text>
+
+    {/* Arrow */}
+    <line x1="130" y1="32" x2="130" y2="50" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+    <polygon points="126,44 130,52 134,44" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+    {/* Input Processing */}
+    <rect x="56" y="52" width="148" height="36" rx="6" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 25%, transparent)" strokeWidth="1" />
+    <text x="130" y="74" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontWeight="600">Input Processing</text>
+
+    {/* Arrow */}
+    <line x1="130" y1="88" x2="130" y2="106" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+    <polygon points="126,100 130,108 134,100" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+    {/* Transformer Block x N */}
+    <rect x="40" y="108" width="180" height="68" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 10%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 35%, transparent)" strokeWidth="1" strokeDasharray="4 3" />
+    <text x="130" y="138" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Transformer Block</text>
+    <text x="130" y="155" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN</text>
+    <text x="226" y="148" textAnchor="start" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">×N</text>
+
+    {/* Arrow */}
+    <line x1="130" y1="176" x2="130" y2="194" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+    <polygon points="126,188 130,196 134,188" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+    {/* Output Processing */}
+    <rect x="48" y="196" width="164" height="36" rx="6" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 25%, transparent)" strokeWidth="1" />
+    <text x="130" y="218" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontWeight="600">Output Processing</text>
+
+    {/* Arrow */}
+    <line x1="130" y1="232" x2="130" y2="250" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+    <polygon points="126,244 130,252 134,244" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+    {/* Probabilities */}
+    <rect x="72" y="252" width="116" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
+    <text x="130" y="269" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Probabilities</text>
+  </svg>
+</div>
+
+
+<Step title="Inside the Block">
+  <Description>
+    A single Transformer block contains two sub-blocks arranged in sequence. The first is the **attention sub-block**, where multi-head attention lets tokens exchange information across positions. The second is the **FFN sub-block**, where the feed-forward network transforms each token's representation independently.
+  </Description>
+
+  {/* Single Transformer Block — Pre-Norm internal structure */}
+  <div className="my-8 flex justify-center">
+    <svg viewBox="0 0 220 406" className="w-full" style={{ maxWidth: "220px", display: "block" }}>
+      {/* Input */}
+      <rect x="37" y="6" width="56" height="22" rx="4" fill="var(--color-surface)" stroke="var(--color-border)" strokeWidth="1" />
+      <text x="65" y="21" textAnchor="middle" fill="var(--color-primary)" fontSize="10" fontFamily="var(--font-mono)">input</text>
+
+      {/* === Attention Sub-Block === */}
+
+      {/* Input to fork */}
+      <line x1="65" y1="28" x2="65" y2="46" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+
+      {/* Fork dot */}
+      <circle cx="65" cy="46" r="4" fill="var(--color-accent-2)" />
+
+      {/* Identity path (straight through to addition) */}
+      <line x1="65" y1="46" x2="65" y2="164" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+
+      {/* Branch: horizontal from fork */}
+      <line x1="65" y1="46" x2="158" y2="46" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Branch: down to LayerNorm */}
+      <line x1="158" y1="46" x2="158" y2="70" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="154,64 158,72 162,64" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* LayerNorm 1 */}
+      <rect x="111" y="72" width="94" height="26" rx="5" fill="color-mix(in srgb, var(--color-accent-1) 10%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
+      <text x="158" y="89" textAnchor="middle" fill="var(--color-accent-1)" fontSize="9" fontFamily="var(--font-mono)">LayerNorm</text>
+
+      {/* Down to Attention */}
+      <line x1="158" y1="98" x2="158" y2="112" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="154,106 158,114 162,106" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* Multi-Head Attention */}
+      <rect x="100" y="114" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-4) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 30%, transparent)" strokeWidth="1" />
+      <text x="158" y="132" textAnchor="middle" fill="var(--color-accent-4)" fontSize="10" fontFamily="var(--font-mono)">Multi-Head Attn</text>
+
+      {/* Return: down from Attn, rounded corner, left to + */}
+      <path d="M 158 142 L 158 170 Q 158 176 152 176 L 77 176" fill="none" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Addition circle 1 */}
+      <circle cx="65" cy="176" r="12" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="65" y="181" textAnchor="middle" fill="var(--color-accent-2)" fontSize="14" fontWeight="bold">+</text>
+
+      {/* === FFN Sub-Block === */}
+
+      {/* Addition to fork */}
+      <line x1="65" y1="188" x2="65" y2="210" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+
+      {/* Fork dot */}
+      <circle cx="65" cy="210" r="4" fill="var(--color-accent-2)" />
+
+      {/* Identity path (straight through to addition) */}
+      <line x1="65" y1="210" x2="65" y2="328" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+
+      {/* Branch: horizontal from fork */}
+      <line x1="65" y1="210" x2="158" y2="210" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Branch: down to LayerNorm */}
+      <line x1="158" y1="210" x2="158" y2="234" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="154,228 158,236 162,228" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* LayerNorm 2 */}
+      <rect x="111" y="236" width="94" height="26" rx="5" fill="color-mix(in srgb, var(--color-accent-1) 10%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
+      <text x="158" y="253" textAnchor="middle" fill="var(--color-accent-1)" fontSize="9" fontFamily="var(--font-mono)">LayerNorm</text>
+
+      {/* Down to FFN */}
+      <line x1="158" y1="262" x2="158" y2="276" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="154,270 158,278 162,270" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* FFN */}
+      <rect x="120" y="278" width="76" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-4) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 30%, transparent)" strokeWidth="1" />
+      <text x="158" y="296" textAnchor="middle" fill="var(--color-accent-4)" fontSize="10" fontFamily="var(--font-mono)">FFN</text>
+
+      {/* Return: down from FFN, rounded corner, left to + */}
+      <path d="M 158 306 L 158 334 Q 158 340 152 340 L 77 340" fill="none" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Addition circle 2 */}
+      <circle cx="65" cy="340" r="12" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="65" y="345" textAnchor="middle" fill="var(--color-accent-2)" fontSize="14" fontWeight="bold">+</text>
+
+      {/* Output */}
+      <line x1="65" y1="352" x2="65" y2="374" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+      <polygon points="61,368 65,376 69,368" fill="var(--color-accent-2)" fillOpacity="0.7" />
+      <rect x="37" y="378" width="56" height="22" rx="4" fill="var(--color-surface)" stroke="var(--color-border)" strokeWidth="1" />
+      <text x="65" y="393" textAnchor="middle" fill="var(--color-primary)" fontSize="10" fontFamily="var(--font-mono)">output</text>
+    </svg>
+  </div>
+
+  <Description>
+    Both sub-blocks share the same structural pattern. They normalize the input, apply their specific transformation, and add the result back into the residual stream. This is the Pre-Norm arrangement from the previous chapter, and it keeps the main identity path completely clean.
+  </Description>
+
+  <div className="my-6 p-5 bg-terminal rounded-xl border border-border-hover space-y-4">
+    {[
+      { label: 'Attention sub-block', fn: 'MultiHeadAttention', inVar: 'x', outVar: 'x₁' },
+      { label: 'FFN sub-block', fn: 'FFN', inVar: 'x₁', outVar: 'x₂' },
+    ].map(({ label, fn, inVar, outVar }, i) => (
+      <div key={i}>
+        <div className="text-xs tracking-wide text-muted mb-1.5 uppercase font-mono">{label}</div>
+        <div className="text-lg" style={{ fontFamily: 'KaTeX_Main, "Times New Roman", serif' }}>
+          <span className="text-primary" style={{ fontFamily: 'KaTeX_Math, "Times New Roman", serif', fontStyle: 'italic' }}>{outVar}</span>
+          <span className="text-muted"> = </span>
+          <span className="text-primary" style={{ fontFamily: 'KaTeX_Math, "Times New Roman", serif', fontStyle: 'italic' }}>{inVar}</span>
+          <span style={{ color: 'var(--color-accent-2)' }}> + </span>
+          <span style={{ color: 'var(--color-accent-4)', fontSize: '0.85em' }}>{fn}</span>
+          <span className="text-muted">(</span>
+          <span style={{ color: 'var(--color-accent-1)', fontSize: '0.85em' }}>LayerNorm</span>
+          <span className="text-muted">(</span>
+          <span className="text-primary" style={{ fontFamily: 'KaTeX_Math, "Times New Roman", serif', fontStyle: 'italic' }}>{inVar}</span>
+          <span className="text-muted">))</span>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <Description>
+    The attention sub-block lets each position gather information from across the full sequence, enriching its representation with context from other tokens. The FFN sub-block then processes each of these representations individually, transforming them through its expand-activate-contract pipeline. Together, one round of cross-token communication followed by one round of per-token transformation completes a single block.
+  </Description>
+
+```python
+class Block(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.ln1 = nn.LayerNorm(config.d_model)
+        self.attn = MultiHeadAttention(config)
+        self.ln2 = nn.LayerNorm(config.d_model)
+        self.ffn = FeedForward(config)
+
+    def forward(self, x):
+        x = x + self.attn(self.ln1(x))
+        x = x + self.ffn(self.ln2(x))
+        return x
+```
+
+</Step>
+
+
+<Step title="Stacking Blocks">
+  <Description>
+    A single block refines each token's representation once, performing one round of multi-head self-attention followed by one round of FFN. No matter how wide the block is in terms of `d_model`, it remains limited to a single step of contextual aggregation and non-linear transformation on the input it receives. As a result, a single block can only capture relatively shallow interactions and lacks the iterative depth needed to progressively build more abstract hierarchical understanding from raw token embeddings.
+  </Description>
+
+  <Description>
+    Stacking blocks solves this limitation by enabling the model to perform iterative refinement through sequential depth. Each subsequent block operates on representations already refined by every preceding block, allowing the model to compose increasingly complex features, from lower-level patterns in early blocks to more abstract relationships in later ones.
+  </Description>
+
+  <Description>
+    Every block in the stack shares the same internal structure, the same two sub-blocks in the same Pre-Norm arrangement. What differs is their learned weights, which determine what each block's attention focuses on and what its FFN computes.
+  </Description>
+
+  {/* Stacked Transformer Blocks — showing residual stream as continuous path */}
+  <div className="my-8 flex justify-center">
+    <svg viewBox="0 0 260 380" className="w-full" style={{ maxWidth: "340px", display: "block" }}>
+      {/* Residual stream — continuous vertical line */}
+      <line x1="48" y1="24" x2="48" y2="358" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.6" />
+
+      {/* Residual stream label */}
+      <text x="16" y="190" textAnchor="middle" fill="var(--color-accent-2)" fontSize="9" fontFamily="var(--font-mono)" transform="rotate(-90, 16, 190)" fillOpacity="0.6">residual stream</text>
+
+      {/* Input */}
+      <text x="48" y="16" textAnchor="middle" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">input</text>
+
+      {/* === Block 1 === */}
+      {/* Fork dot */}
+      <circle cx="48" cy="48" r="3" fill="var(--color-accent-2)" />
+
+      {/* Branch to block center-top */}
+      <line x1="48" y1="48" x2="158" y2="48" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="48" x2="158" y2="56" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Block 1 box */}
+      <rect x="80" y="56" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
+      <text x="158" y="74" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block 1</text>
+      <text x="158" y="90" textAnchor="middle" fill="var(--color-muted)" fontSize="9.5" fontFamily="var(--font-mono)">Attn + FFN · weights₁</text>
+
+      {/* Return from block center-bottom */}
+      <line x1="158" y1="100" x2="158" y2="112" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="112" x2="60" y2="112" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="60,108.5 52,112 60,115.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* + node */}
+      <circle cx="48" cy="112" r="9" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="48" y="116" textAnchor="middle" fill="var(--color-accent-2)" fontSize="12" fontWeight="bold">+</text>
+
+      {/* === Block 2 === */}
+      {/* Fork dot */}
+      <circle cx="48" cy="148" r="3" fill="var(--color-accent-2)" />
+
+      {/* Branch to block center-top */}
+      <line x1="48" y1="148" x2="158" y2="148" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="148" x2="158" y2="156" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Block 2 box */}
+      <rect x="80" y="156" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
+      <text x="158" y="174" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block 2</text>
+      <text x="158" y="190" textAnchor="middle" fill="var(--color-muted)" fontSize="9.5" fontFamily="var(--font-mono)">Attn + FFN · weights₂</text>
+
+      {/* Return from block center-bottom */}
+      <line x1="158" y1="200" x2="158" y2="212" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="212" x2="60" y2="212" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="60,208.5 52,212 60,215.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* + node */}
+      <circle cx="48" cy="212" r="9" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="48" y="216" textAnchor="middle" fill="var(--color-accent-2)" fontSize="12" fontWeight="bold">+</text>
+
+      {/* Dots */}
+      <text x="158" y="248" textAnchor="middle" fill="var(--color-muted)" fontSize="16">···</text>
+
+      {/* === Block N === */}
+      {/* Fork dot */}
+      <circle cx="48" cy="268" r="3" fill="var(--color-accent-2)" />
+
+      {/* Branch to block center-top */}
+      <line x1="48" y1="268" x2="158" y2="268" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="268" x2="158" y2="276" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* Block N box */}
+      <rect x="80" y="276" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
+      <text x="158" y="294" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block N</text>
+      <text x="158" y="310" textAnchor="middle" fill="var(--color-muted)" fontSize="9.5" fontFamily="var(--font-mono)">Attn + FFN · weightsₙ</text>
+
+      {/* Return from block center-bottom */}
+      <line x1="158" y1="320" x2="158" y2="332" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="158" y1="332" x2="60" y2="332" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="60,328.5 52,332 60,335.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      {/* + node */}
+      <circle cx="48" cy="332" r="9" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="48" y="336" textAnchor="middle" fill="var(--color-accent-2)" fontSize="12" fontWeight="bold">+</text>
+
+      {/* Output arrow */}
+      <polygon points="44,352 48,360 52,352" fill="var(--color-accent-2)" fillOpacity="0.7" />
+
+      {/* Output */}
+      <text x="48" y="376" textAnchor="middle" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">output</text>
+    </svg>
+  </div>
+
+  <Description>
+    The residual stream connects this entire stack, running as a continuous path from the first block's input to the last block's output. Each block reads from the stream, applies its attention and FFN, and adds the result back. The stream accumulates contributions from every block it has passed through.
+  </Description>
+</Step>
+
+
+<Step title="The Full Architecture">
+  <Description>
+    The full architecture assembles everything covered so far into three stages: input processing converts token IDs into vectors, the block stack refines those vectors, and output processing converts the final vectors into predictions.
+  </Description>
+
+  {/* Full GPT Architecture — straight residual stream, blocks branch right */}
+  <div className="my-8 flex justify-center">
+    <svg viewBox="-30 0 330 560" className="w-full" style={{ maxWidth: "400px", display: "block" }}>
+
+      {/* === Input section — sequential flow arrows, no stream line === */}
+
+      {/* Token IDs */}
+      <rect x="10" y="6" width="100" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <text x="60" y="23" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Token IDs</text>
+
+      {/* Arrow: Token IDs → Token Embed */}
+      <line x1="60" y1="32" x2="60" y2="46" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="56,40 60,48 64,40" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+      {/* Token Embeddings */}
+      <rect x="2" y="48" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 30%, transparent)" strokeWidth="1" />
+      <text x="60" y="66" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontFamily="var(--font-mono)">Token Embed</text>
+
+      {/* Arrow: Token Embed → + */}
+      <line x1="60" y1="76" x2="60" y2="84" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* + Positional Embeddings */}
+      <circle cx="60" cy="96" r="10" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="60" y="100" textAnchor="middle" fill="var(--color-accent-2)" fontSize="13" fontWeight="bold">+</text>
+      <text x="80" y="100" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Pos Embed</text>
+
+      {/* Arrow: + → block stack */}
+      <line x1="60" y1="106" x2="60" y2="126" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      {/* === Block stack section — residual stream only here === */}
+
+      {/* Residual stream line — only spans the block section */}
+      <line x1="60" y1="126" x2="60" y2="390" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.5" />
+
+      {/* Block group dashed outline */}
+      <rect x="36" y="118" width="230" height="280" rx="8" fill="none" stroke="var(--color-border)" strokeWidth="1" strokeDasharray="4 3" />
+      <text x="270" y="260" textAnchor="start" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">×N</text>
+
+      {/* === Block 1 === */}
+      <circle cx="60" cy="144" r="3" fill="var(--color-accent-2)" />
+      <line x1="60" y1="144" x2="170" y2="144" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="170" y1="144" x2="170" y2="152" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      <rect x="92" y="152" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
+      <text x="170" y="170" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block 1</text>
+      <text x="170" y="186" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN · weights₁</text>
+
+      <line x1="170" y1="196" x2="170" y2="208" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="170" y1="208" x2="72" y2="208" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="72,204.5 64,208 72,211.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      <circle cx="60" cy="208" r="10" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="60" y="212" textAnchor="middle" fill="var(--color-accent-2)" fontSize="13" fontWeight="bold">+</text>
+
+      {/* Dots */}
+      <text x="170" y="248" textAnchor="middle" fill="var(--color-muted)" fontSize="18">···</text>
+
+      {/* === Block N === */}
+      <circle cx="60" cy="272" r="3" fill="var(--color-accent-2)" />
+      <line x1="60" y1="272" x2="170" y2="272" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="170" y1="272" x2="170" y2="280" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+
+      <rect x="92" y="280" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
+      <text x="170" y="298" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block N</text>
+      <text x="170" y="314" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN · weightsₙ</text>
+
+      <line x1="170" y1="324" x2="170" y2="336" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="170" y1="336" x2="72" y2="336" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="72,332.5 64,336 72,339.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+
+      <circle cx="60" cy="336" r="10" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
+      <text x="60" y="340" textAnchor="middle" fill="var(--color-accent-2)" fontSize="13" fontWeight="bold">+</text>
+
+      {/* === Output section — sequential flow arrows, no stream line === */}
+
+      {/* Arrow: block stack → ln_f */}
+      <line x1="60" y1="390" x2="60" y2="408" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="56,402 60,410 64,402" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+      {/* ln_f */}
+      <rect x="2" y="410" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-1) 10%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
+      <text x="60" y="428" textAnchor="middle" fill="var(--color-accent-1)" fontSize="11" fontFamily="var(--font-mono)">ln_f (LayerNorm)</text>
+
+      {/* Arrow: ln_f → Output Proj */}
+      <line x1="60" y1="438" x2="60" y2="452" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="56,446 60,454 64,446" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+      {/* Output Projection */}
+      <rect x="2" y="454" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 30%, transparent)" strokeWidth="1" />
+      <text x="60" y="472" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontFamily="var(--font-mono)">Output Proj</text>
+      <text x="128" y="472" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">→ vocab size</text>
+
+      {/* Weight tying annotation */}
+      <path d="M 2 62 C -28 62 -28 468 2 468" fill="none" stroke="var(--color-muted)" strokeWidth="0.8" strokeDasharray="3 2" />
+      <text x="-14" y="266" textAnchor="middle" fill="var(--color-muted)" fontSize="9" fontFamily="var(--font-mono)" transform="rotate(-90, -14, 266)">weight tying</text>
+
+      {/* Arrow: Output Proj → Softmax */}
+      <line x1="60" y1="482" x2="60" y2="496" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="56,490 60,498 64,490" fill="var(--color-accent-2)" fillOpacity="0.5" />
+      <text x="76" y="493" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">logits</text>
+
+      {/* Softmax */}
+      <rect x="16" y="498" width="88" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <text x="60" y="515" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Softmax</text>
+
+      {/* Arrow: Softmax → probabilities */}
+      <line x1="60" y1="524" x2="60" y2="536" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <polygon points="56,530 60,538 64,530" fill="var(--color-accent-2)" fillOpacity="0.5" />
+
+      {/* Probabilities */}
+      <text x="60" y="552" textAnchor="middle" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">next-token probs</text>
+    </svg>
+  </div>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Input Processing</h4>
+
+  <Description>
+    The token embedding table from Chapter 3 is a learned matrix of shape `vocab_size × d_model`, where each row is the embedding for one token. Retrieving an embedding is a direct index operation: use the token ID to select the corresponding row. These row vectors encode semantic properties of each token but no positional information.
+  </Description>
+
+  <Description>
+    Token embeddings carry no positional information, so in Chapter 4 we built sinusoidal positional encoding, computing a fixed vector for each position from sine and cosine waves. GPT-2 replaces the formula with **learned positional embeddings** (`nn.Embedding(context_length, d_model)`), where each row is trained directly from data. This gives the model flexibility to discover whatever positional patterns prove useful, but the table only covers positions seen during training. These vectors are added element-wise to the token embeddings, and the combined representations flow into the first block.
+  </Description>
+
+```python
+x = token_emb + pos_emb
+```
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">The Block Stack</h4>
+
+  <Description>
+    These representations pass through all N blocks in order, each one refining them and adding its output back to the residual stream. After the final block, the stream enters the output stage.
+  </Description>
+
+  <Callout type="note" title="Dropout">
+    GPT-2 applies dropout during training, randomly zeroing 10% of activations at two points: after the attention weights and before each residual addition. Many newer models skip it entirely, relying on large data volumes as a natural regularizer.
+  </Callout>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Output Processing</h4>
+
+  <Description>
+    The Pre-Norm arrangement leaves the residual stream unnormalized after the final block. A dedicated LayerNorm, **ln_f**, corrects this before the output stage. At each position, the model now has a final hidden state: a single `d_model`-dimensional vector summarizing what it has computed at that position.
+  </Description>
+
+  <Description>
+    The **output projection** turns that vector into logits over the vocabulary. It produces one raw score, called a **logit**, for every token ID, so a single hidden state becomes a vector of length `vocab_size`. Entry `i` is the logit for token `i`, and **softmax** converts those logits into probabilities.
+  </Description>
+
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm space-y-2 text-center">
+    <div className="text-primary">logits = h × W_proj</div>
+    <div className="text-muted">h: (1 × d_model)&ensp;&ensp;W_proj: (d_model × vocab_size)&ensp;&ensp;logits: (1 × vocab_size)</div>
+  </div>
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">Weight Tying</h4>
+
+  <Description>
+    GPT-2 uses **weight tying**, which means the output layer reuses the token embedding matrix instead of learning a separate output matrix. The embedding matrix is a learned vocabulary table that maps each token ID to a vector. At the input, the model uses that table to turn token IDs into vectors. At the output, it compares the final hidden state with the learned vector for each token. Reusing the same token vectors for both jobs avoids learning a second vocabulary-sized matrix.
+  </Description>
+
+  <Description>
+    With weight tying, the output projection is just the transpose of the embedding matrix.
+  </Description>
+
+  <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm space-y-2 text-center">
+    <div className="text-primary">W_proj = E^T</div>
+    <div className="text-primary">logits = h × E^T</div>
+    <div className="text-muted">E: (vocab_size × d_model)&ensp;&ensp;h: (1 × d_model)&ensp;&ensp;logits: (1 × vocab_size)</div>
+  </div>
+
+  <Description>
+    In GPT-2 Small, this avoids learning a second `50,257 × 768` matrix, which would add `38,597,376` parameters.
+  </Description>
+
+```python
+class GPT(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        # token embeddings
+        self.wte = nn.Embedding(config.vocab_size, config.d_model)
+        # positional embeddings
+        self.wpe = nn.Embedding(config.context_length, config.d_model)
+        self.blocks = nn.ModuleList([Block(config) for _ in range(config.n_layers)])
+        self.ln_f = nn.LayerNorm(config.d_model)
+        self.lm_head = nn.Linear(config.d_model, config.vocab_size, bias=False)
+        self.lm_head.weight = self.wte.weight  # weight tying
+
+    def forward(self, idx):
+        tok_emb = self.wte(idx)
+        pos_emb = self.wpe(torch.arange(idx.shape[1]))
+        x = tok_emb + pos_emb
+        for block in self.blocks:
+            x = block(x)
+        x = self.ln_f(x)
+        return self.lm_head(x)
+```
+
+  <h4 className="text-base font-semibold text-primary mt-8 mb-3">GPT-2 Small</h4>
+
+  <Description>
+    The model we implement in the next chapter is GPT-2 Small: 12 blocks, `d_model = 768`, roughly 124 million parameters.
+  </Description>
+
+  <div className="my-6 overflow-x-auto">
+    <table className="w-full text-sm border-collapse">
+      <thead>
+        <tr className="border-b border-border">
+          <th className="py-2.5 pr-4 font-mono text-muted text-left text-xs uppercase tracking-wide whitespace-nowrap">Parameter</th>
+          <th className="py-2.5 pr-4 font-mono text-muted text-left text-xs uppercase tracking-wide whitespace-nowrap">Value</th>
+          <th className="py-2.5 text-muted text-left text-xs uppercase tracking-wide">Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {[
+          ['d_model', '768', 'Embedding dimension'],
+          ['n_heads', '12', 'Attention heads per block'],
+          ['n_layers', '12', 'Transformer blocks'],
+          ['d_ff', '3072', '4 × d_model'],
+          ['vocab_size', '50,257', 'BPE token vocabulary'],
+          ['context_length', '1024', 'Maximum sequence length'],
+          ['dropout', '0.1', 'Dropout rate'],
+          ['params', '~124M', 'Total trainable parameters'],
+        ].map(([param, value, note], i) => (
+          <tr key={i} className="border-b border-border last:border-b-0">
+            <td className="py-2.5 pr-4 font-mono text-accent-4 whitespace-nowrap">{param}</td>
+            <td className="py-2.5 pr-4 font-mono text-primary whitespace-nowrap">{value}</td>
+            <td className="py-2.5 text-muted">{note}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</Step>
+
+
+<Callout type="success" title="Summary">
+  * A Transformer block applies two sub-blocks in sequence: multi-head attention for cross-token communication, then FFN for per-token transformation
+  * Each sub-block uses the Pre-Norm arrangement: normalize, transform, add the residual
+  * Every block shares the same structure but has its own independent set of learned weights
+  * Stacking blocks allows the model to compose multi-step relationships, with each block building on representations shaped by all earlier blocks
+  * The residual stream runs continuously through the stack, accumulating each block's contribution
+  * The full architecture wraps the block stack with input processing (token + learned positional embeddings) and output processing (final LayerNorm, linear projection to vocabulary, softmax)
+  * Weight tying reuses the token embedding matrix for the output projection, using the transpose of the embedding table to produce logits
+  * Dropout zeros out random activations during training to prevent over-reliance on individual features, applied after attention weights and before each residual addition
+</Callout>
+
+<Description>
+  The full GPT-2 architecture is now in place. In the next chapter, we assemble these components into a working model, train it end to end, and generate text with it.
+</Description>
