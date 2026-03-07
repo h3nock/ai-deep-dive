@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "case1",
+      "input_code": "x = torch.tensor(\n  [[1.0, 0.0, 1.0, 0.0],\n   [0.0, 1.0, 0.0, 1.0]],\n  dtype=torch.float32,\n)\n\nI = torch.eye(4, dtype=torch.float32)\nZ_ff = torch.zeros((4, 6), dtype=torch.float32)\nZ_out = torch.zeros((6, 4), dtype=torch.float32)\n\ngamma1 = torch.ones(4, dtype=torch.float32)\nbeta1 = torch.zeros(4, dtype=torch.float32)\nW_Q = I\nW_K = I\nW_V = I\nW_O = I\nnum_heads = 2\n\ngamma2 = torch.ones(4, dtype=torch.float32)\nbeta2 = torch.zeros(4, dtype=torch.float32)\nW1 = Z_ff\nb1 = torch.zeros(6, dtype=torch.float32)\nW2 = Z_out\nb2 = torch.zeros(4, dtype=torch.float32)\n",
+      "expected": [
+        [
+          1.99997997,
+          -0.99997997,
+          1.99997997,
+          -0.99997997
+        ],
+        [
+          -0.88835585,
+          1.88835585,
+          -0.88835585,
+          1.88835585
+        ]
+      ]
+    },
+    {
+      "id": "case2",
+      "input_code": "x = torch.tensor([[1.0, -1.0, 0.5, 0.0], [0.0, 2.0, -1.0, 1.0], [1.5, 0.5, 0.0, -0.5]], dtype=torch.float32)\n\ngamma1 = torch.tensor([1.0, 0.5, -1.0, 1.5], dtype=torch.float32)\nbeta1 = torch.tensor([0.1, -0.2, 0.0, 0.2], dtype=torch.float32)\n\nW_Q = torch.tensor([[0.8, 0.0, 0.2, 0.0], [0.0, 0.6, 0.0, -0.3], [0.1, 0.0, 0.7, 0.0], [0.0, 0.2, 0.0, 0.9]], dtype=torch.float32)\nW_K = torch.tensor([[0.7, 0.0, 0.0, 0.2], [0.0, 0.9, -0.1, 0.0], [0.0, 0.3, 0.8, 0.0], [0.2, 0.0, 0.0, 0.6]], dtype=torch.float32)\nW_V = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 0.5, 0.2, 0.0], [0.0, 0.0, 0.8, 0.1], [0.1, 0.0, 0.0, 0.9]], dtype=torch.float32)\nW_O = torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)\nnum_heads = 2\n\ngamma2 = torch.tensor([1.2, -0.8, 0.7, 1.1], dtype=torch.float32)\nbeta2 = torch.tensor([0.0, 0.1, -0.1, 0.0], dtype=torch.float32)\n\nW1 = torch.tensor([[0.5, -0.2, 0.3, 0.0, -0.4, 0.2], [0.1, 0.4, -0.3, 0.2, 0.0, -0.1], [0.0, -0.5, 0.6, 0.1, 0.2, 0.0], [0.3, 0.0, 0.1, -0.2, 0.4, 0.5]], dtype=torch.float32)\nb1 = torch.tensor([0.0, 0.1, -0.1, 0.05, 0.0, -0.05], dtype=torch.float32)\nW2 = torch.tensor([[0.2, 0.0, -0.1, 0.3], [0.0, 0.4, 0.2, -0.2], [-0.3, 0.1, 0.5, 0.0], [0.1, -0.2, 0.0, 0.4], [0.5, 0.0, 0.1, -0.1], [0.0, 0.3, -0.4, 0.2]], dtype=torch.float32)\nb2 = torch.tensor([0.05, -0.05, 0.1, 0.0], dtype=torch.float32)\n",
+      "expected": [
+        [
+          2.4244771,
+          -1.60418558,
+          0.02919203,
+          0.21532929
+        ],
+        [
+          0.39498407,
+          2.76041198,
+          -0.96798086,
+          1.51871145
+        ],
+        [
+          2.71973348,
+          0.79865354,
+          -0.13249332,
+          -0.89058411
+        ]
+      ]
+    }
+  ]
+}
