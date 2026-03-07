@@ -35,8 +35,11 @@ It also configures Redis durability/safety settings (`appendonly yes`,
 
 ```bash
 cd /opt/ai-deep-dive
-sudo -u judge git pull --ff-only
+sudo -u judge git fetch --prune origin
+sudo -u judge git reset --hard origin/main
+sudo -u judge git clean -fd
 cd /opt/ai-deep-dive/judge
+sudo -u judge env PYTHONPATH=src .venv/bin/python scripts/export_tests_endpoint.py --out-root /opt/ai-deep-dive/judge/tests
 sudo JUDGE_DOMAIN=judge.example.com ./deploy/apply.sh
 sudo ./deploy/verify.sh
 ```
