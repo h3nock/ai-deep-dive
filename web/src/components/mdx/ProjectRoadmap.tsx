@@ -26,7 +26,7 @@ export function ProjectRoadmap({ courseId, prefix }: ProjectRoadmapProps) {
     .sort((a, b) => a.step - b.step);
 
   return (
-    <div className="not-prose" style={{ marginTop: "var(--space-connected)" }}>
+    <div className="not-prose" style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-connected)" }}>
       {/* Navigation Timeline - matches Course Homepage pattern */}
       <div className="relative ml-3 pl-6 border-l border-border">
         {projectSteps.map((post, index) => {
