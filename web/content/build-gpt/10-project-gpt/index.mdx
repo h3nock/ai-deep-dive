@@ -1,19 +1,23 @@
 ---
 title: "Project: Building GPT"
 step: 10
-description: "Build, train, and generate text with your own language model."
+description: "Build GPT-2 Small end to end: prepare data, train the model, and generate text."
 ---
 
-<SplitLayout>
-  <Step>
-    <Description>
-      This is it. We are going to build a GPT model from scratch, train it on real data, and watch it generate text.
+<Description>
+  The earlier chapters built each component in isolation. This project assembles them into a single codebase that prepares data, trains a model, and generates text. Each stage builds directly on the previous one, so work through them in order.
+</Description>
 
-      This project is massive, so we have split it into 4 distinct phases.
+<ProjectRoadmap courseId="build-gpt" prefix="gpt" />
 
-      ### The Roadmap
+<Description>
+  We will train GPT-2 Small: 12 layers, 12 attention heads, 768-dimensional embeddings, roughly 124 million parameters. The training data is FineWeb-Edu, a high-quality filtered web corpus. Training at this scale requires a CUDA GPU. If you are on a CPU or Apple Silicon, the architecture chapter includes a smaller configuration with fewer layers and a narrower embedding that keeps all the code identical.
+</Description>
 
-      <ProjectRoadmap courseId="build-gpt" prefix="gpt" />
-    </Description>
-  </Step>
-</SplitLayout>
+<Callout type="note" title="By The End Of The Project">
+  * `prepare_data.py` tokenizes FineWeb-Edu shards into `train.bin` and `val.bin`
+  * `data.py` serves aligned `x` / `y` batches from those files
+  * `model.py` wraps the Transformer stack into a trainable GPT
+  * `train.py` runs the training loop and saves checkpoints
+  * `generate.py` loads a checkpoint and samples continuations from a prompt
+</Callout>
