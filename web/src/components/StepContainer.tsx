@@ -230,6 +230,16 @@ export function StepContainer({
 
   // Smart Back Link Logic
   const getBackLink = () => {
+    if (post.hidden) {
+      const parentStep = Math.floor(post.step || 0);
+      const parentPost = allPosts.find((candidate) => !candidate.hidden && candidate.step === parentStep);
+      if (parentPost) {
+        return {
+          href: `/${collection}/${parentPost.slug}`,
+          label: `Back to ${parentPost.title}`,
+        };
+      }
+    }
     if (post.slug.startsWith("p1-")) {
       return {
         href: `/${collection}/09-project-translator`,
