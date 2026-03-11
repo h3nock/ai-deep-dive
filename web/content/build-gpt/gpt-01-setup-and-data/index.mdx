@@ -108,3 +108,56 @@ def download_shards(cfg: DataConfig) -> list[Path]:
   </Description>
 </Step>
 
+
+<Step title="Explore the Raw Documents">
+  <Description>
+    Before encoding anything, it helps to look at what the raw documents contain.
+    Each parquet file stores its rows in small groups, with each row holding a
+    single document in a `text` column. By reading one group at a time, we can
+    stream through the file without loading it all into memory.
+  </Description>
+
+```python
+# prepare_data.py (continued)
+import pyarrow.parquet as pq
+
+
+def iter_documents(parquet_path: Path):
+    pf = pq.ParquetFile(parquet_path)
+    for row_group_idx in range(pf.num_row_groups):
+        table = pf.read_row_group(row_group_idx, columns=["text"])
+        yield from table.column("text").to_pylist()
+
+
+cfg = DataConfig()
+shard_path = sorted(cfg.raw_dir.glob("*.parquet"))[0]
+docs = iter_documents(shard_path)
+sample = next(docs)
+
+print(sample[:500])
+print("chars:", len(sample))
+```
+
+  <Description attached>
+    Running this should produce something like:
+  </Description>
+
+```text
+Shipment & Transport-Sea, Air, Rail, Road, Pipeline
+The mode of transportation is an important consideration when planning the
+shipment process. Besides the costs, the urgency of the shipment, the value
+of the goods being shipped as well as the size and weight of the goods need
+to be evaluated when determining the form of transportation.
+Seaborne trade accounts for about 90% of the global trade, and as per
+UNCTAD, 1687 million tons (2015 estimate) were carried in around 177.6
+million containers
+chars: 8657
+```
+
+  <Description>
+    Now that we know what the raw data looks like, the next step is to convert
+    these strings into token IDs for training.
+  </Description>
+</Step>
+
+
