@@ -5,4 +5,21 @@ description: "Download FineWeb-Edu shards, encode them to token IDs, and build t
 hidden: true
 ---
 
-<ComingSoon />
+<Description>
+  This chapter builds the data pipeline that feeds the rest of the project.
+  `prepare_data.py` runs once to download raw text, tokenize it, and write the
+  result to `train.bin` and `val.bin`. `data.py` memory-maps those files and
+  serves aligned `x` / `y` batches that the training loop will consume.
+</Description>
+
+<Callout type="note" title="Install the Project Dependencies First">
+  ```bash
+  pip install torch numpy tiktoken pyarrow huggingface_hub
+  ```
+  `torch` and `numpy` handle model computation and array manipulation.
+  `tiktoken` provides GPT-2's tokenizer: 50,257 tokens, the same vocabulary
+  the original model used. We reuse it rather than train a new one. `pyarrow`
+  reads the parquet files the dataset ships as; `huggingface_hub` downloads
+  individual files from Hugging Face.
+</Callout>
+
