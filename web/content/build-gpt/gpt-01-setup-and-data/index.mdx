@@ -1,8 +1,361 @@
 ---
 title: "Setup & Data"
 step: 10.1
-description: "Prepare the environment and data pipelines."
+description: "Download FineWeb-Edu shards, encode them to token IDs, and build the training batch pipeline."
 hidden: true
 ---
 
-<ComingSoon />
+<Description>
+  This chapter builds the data pipeline that feeds the rest of the project.
+  `prepare_data.py` runs once to download raw text, tokenize it, and write the
+  result to `train.bin` and `val.bin`. `data.py` reads from those files and
+  serves aligned `x` / `y` batches that the training loop will consume.
+</Description>
+
+<Callout type="note" title="Install the Project Dependencies First">
+  ```bash
+  pip install torch numpy tiktoken pyarrow huggingface_hub
+  ```
+  `torch` and `numpy` handle model computation and array manipulation.
+  `tiktoken` provides GPT-2's tokenizer: 50,257 tokens, the same vocabulary
+  the original model used. We reuse it rather than train a new one. `pyarrow`
+  reads the parquet files the dataset ships as; `huggingface_hub` downloads
+  individual files from Hugging Face.
+</Callout>
+
+
+<Step title="Download the Training Data">
+  <Description>
+    The training data comes from [FineWeb-Edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu),
+    a filtered subset of Common Crawl curated by Hugging Face for educational
+    quality. Andrej Karpathy published a pre-shuffled, 100B-token slice of it
+    called [fineweb-edu-100b-shuffle](https://huggingface.co/datasets/karpathy/fineweb-edu-100b-shuffle),
+    split into 1,823 parquet shards. That is our dataset.
+  </Description>
+
+  <Description>
+    Each shard contains roughly 53,000 documents and 55 million GPT-2 tokens.
+    To size the download, the [Chinchilla
+    paper](https://arxiv.org/abs/2203.15556) estimates that a model trains most
+    efficiently on roughly 20 tokens per parameter. For GPT-2 Small's 124M
+    parameters, that works out to about 2.5 billion tokens, or 45 shards.
+    Training beyond that point still improves results, so more shards will
+    give you a stronger model if you have the compute.
+  </Description>
+
+  <Description>
+    A shared config holds the dataset source, shard count, and output paths so every script in the project reads from the same place.
+  </Description>
+
+```python
+# config.py
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass
+class DataConfig:
+    dataset_repo: str = "karpathy/fineweb-edu-100b-shuffle"
+    num_shards: int = 46  # one extra shard is reserved for validation
+    raw_dir: Path = Path("data/raw")
+    train_bin: Path = Path("data/tokens/train.bin")
+    val_bin: Path = Path("data/tokens/val.bin")
+```
+
+  <Description>
+    The downloader fetches the first `num_shards` parquet files from Hugging Face. `hf_hub_download` caches each file locally, so re-running the script skips shards that are already on disk.
+  </Description>
+
+```python
+# prepare_data.py
+from pathlib import Path
+from huggingface_hub import hf_hub_download, list_repo_files
+
+from config import DataConfig
+
+
+def download_shards(cfg: DataConfig) -> list[Path]:
+    files = sorted(
+        f for f in list_repo_files(cfg.dataset_repo, repo_type="dataset")
+        if f.endswith(".parquet")
+    )[: cfg.num_shards]
+
+    cfg.raw_dir.mkdir(parents=True, exist_ok=True)
+
+    local_paths = []
+    for filename in files:
+        path = hf_hub_download(
+            repo_id=cfg.dataset_repo,
+            repo_type="dataset",
+            filename=filename,
+            local_dir=cfg.raw_dir,
+        )
+        local_paths.append(Path(path))
+
+    return local_paths
+```
+
+  <Description>
+    After the downloader runs, `data/raw/` should look like this:
+
+    ```
+    data/
+    └── raw/
+        ├── shard_00000.parquet
+        ├── shard_00001.parquet
+        └── ...  (N shards total)
+    ```
+  </Description>
+</Step>
+
+
+<Step title="Explore the Raw Documents">
+  <Description>
+    Before encoding anything, it helps to look at what the raw documents contain.
+    Each parquet file stores its rows in small groups, with each row holding a
+    single document in a `text` column. By reading one group at a time, we can
+    stream through the file without loading it all into memory.
+  </Description>
+
+```python
+# prepare_data.py (continued)
+import pyarrow.parquet as pq
+
+
+def iter_documents(parquet_path: Path):
+    pf = pq.ParquetFile(parquet_path)
+    for row_group_idx in range(pf.num_row_groups):
+        table = pf.read_row_group(row_group_idx, columns=["text"])
+        yield from table.column("text").to_pylist()
+
+
+cfg = DataConfig()
+shard_path = sorted(cfg.raw_dir.glob("*.parquet"))[0]
+docs = iter_documents(shard_path)
+sample = next(docs)
+
+print(sample[:500])
+print("chars:", len(sample))
+```
+
+  <Description attached>
+    Running this should produce something like:
+  </Description>
+
+```text
+Shipment & Transport-Sea, Air, Rail, Road, Pipeline
+The mode of transportation is an important consideration when planning the
+shipment process. Besides the costs, the urgency of the shipment, the value
+of the goods being shipped as well as the size and weight of the goods need
+to be evaluated when determining the form of transportation.
+Seaborne trade accounts for about 90% of the global trade, and as per
+UNCTAD, 1687 million tons (2015 estimate) were carried in around 177.6
+million containers
+chars: 8657
+```
+
+  <Description>
+    Now that we know what the raw data looks like, the next step is to convert
+    these strings into token IDs for training.
+  </Description>
+</Step>
+
+
+<Step title="Tokenize and Store">
+  <Description>
+    GPT-2's tokenizer (loaded via `tiktoken`) converts every document into a
+    sequence of token IDs. The full result is written to `train.bin` and
+    `val.bin`. Because encoding billions of tokens is CPU-bound and the result
+    never changes, we run tokenization as a separate preprocessing step rather
+    than doing it on the fly during training.
+  </Description>
+
+  <Description>
+    `train.bin` and `val.bin` are flat `uint16` sequences of token IDs with no
+    headers, no padding, and no metadata. `uint16` is wide enough to store every
+    token ID, since GPT-2's vocabulary of 50,257 tokens fits in 16 bits. Inside
+    each file, documents are laid out back to back as one continuous stream
+    of token IDs, with an end-of-text token after each one to mark the boundary.
+  </Description>
+
+```python
+# prepare_data.py (continued)
+import numpy as np
+import tiktoken
+
+
+enc = tiktoken.get_encoding("gpt2")
+eot = enc.eot_token
+
+
+def write_split(shards: list[Path], out_path: Path):
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "wb") as f:
+        for shard in shards:
+            for text in iter_documents(shard):
+                ids = enc.encode_ordinary(text)
+                arr = np.array(ids + [eot], dtype=np.uint16)
+                f.write(arr.tobytes())
+
+
+cfg = DataConfig()
+shard_paths = download_shards(cfg)
+train_shards = shard_paths[:-1]
+val_shards = shard_paths[-1:]
+
+write_split(train_shards, cfg.train_bin)
+write_split(val_shards, cfg.val_bin)
+```
+
+  <Description>
+    `encode_ordinary` tokenizes the text without processing special tokens,
+    so `eot` never appears in the output unless we add it ourselves. We append
+    it once after each document to mark the boundary in the token stream.
+  </Description>
+
+  <Description attached>
+    After both files are written, the project directory looks like this:
+  </Description>
+
+```text
+data/
+├── raw/       (parquet shards, safe to delete after tokenizing)
+└── tokens/
+    ├── train.bin
+    └── val.bin
+```
+</Step>
+
+
+<Step title="The Batch Pipeline">
+  <Description>
+    Now that `train.bin` and `val.bin` are on disk, the final piece is a
+    function that serves training batches from them. For each training
+    example, the function picks a random starting index in the file, reads
+    `seq_len` tokens as the input `x`, and reads another `seq_len` tokens
+    starting one position forward as the target `y`.
+  </Description>
+
+  <Description attached>
+    With `seq_len = 4`, a training example would look like this:
+  </Description>
+
+<div className="my-6 p-5 bg-terminal rounded-lg border border-border overflow-x-auto">
+  <div className="inline-flex flex-col gap-4 font-mono text-sm">
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center">
+        <div className="w-10 text-right pr-3 text-accent-2 font-bold shrink-0">x</div>
+        <div className="flex gap-1.5">
+          {[11, 318, 257, 922].map((tok, i) => (
+            <div key={i} className="w-14 h-10 flex items-center justify-center bg-accent-2/15 rounded border border-accent-2/40 text-accent-2 font-bold">{tok}</div>
+          ))}
+          <div className="w-14 h-10 shrink-0" />
+        </div>
+      </div>
+      <div className="flex items-center">
+        <div className="w-10 text-right pr-3 text-accent-1 font-bold shrink-0">y</div>
+        <div className="flex gap-1.5">
+          <div className="w-14 h-10 shrink-0" />
+          {[318, 257, 922, 1621].map((tok, i) => (
+            <div key={i} className="w-14 h-10 flex items-center justify-center bg-accent-1/15 rounded border border-accent-1/40 text-accent-1 font-bold">{tok}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div className="border-t border-border" />
+
+    <div className="flex flex-col gap-2">
+      <div className="text-xs text-muted uppercase tracking-wider">At each position, predict the next token</div>
+      {[
+        { ctx: [11], target: 318 },
+        { ctx: [11, 318], target: 257 },
+        { ctx: [11, 318, 257], target: 922 },
+        { ctx: [11, 318, 257, 922], target: 1621 },
+      ].map((ex, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <div className="flex gap-1">
+            {ex.ctx.map((tok, j) => (
+              <div key={j} className="w-11 h-8 flex items-center justify-center bg-accent-2/15 rounded text-accent-2 text-xs font-bold">{tok}</div>
+            ))}
+          </div>
+          <span className="text-muted">→</span>
+          <div className="w-11 h-8 flex items-center justify-center bg-accent-1/15 rounded text-accent-1 text-xs font-bold">{ex.target}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+  <Description>
+    `data.py` opens both token files with `np.memmap`, which treats each one
+    as a NumPy array without loading it into memory. When the training loop
+    calls `get_batch`, it slices directly into that array and reads only the
+    tokens it needs into memory.
+  </Description>
+
+```python
+# data.py
+import numpy as np
+import torch
+
+from config import DataConfig
+
+
+cfg = DataConfig()
+train_data = np.memmap(cfg.train_bin, dtype=np.uint16, mode="r")
+val_data = np.memmap(cfg.val_bin, dtype=np.uint16, mode="r")
+
+
+def get_batch(split: str, batch_size: int, seq_len: int, device: str):
+    if split == "train":
+        data = train_data
+    elif split == "val":
+        data = val_data
+    else:
+        raise ValueError(f"unknown split: {split}")
+    starts = torch.randint(0, len(data) - seq_len, (batch_size,))
+
+    x = torch.stack([
+        torch.from_numpy(np.array(data[i : i + seq_len], dtype=np.int64))
+        for i in starts.tolist()
+    ])
+    y = torch.stack([
+        torch.from_numpy(np.array(data[i + 1 : i + 1 + seq_len], dtype=np.int64))
+        for i in starts.tolist()
+    ])
+
+    return x.to(device), y.to(device)
+```
+
+```python
+# quick sanity check
+x, y = get_batch("train", batch_size=4, seq_len=8, device="cpu")
+print(x.shape)  # (4, 8)
+print(y.shape)  # (4, 8)
+print(x[0])
+print(y[0])
+
+import tiktoken
+enc = tiktoken.get_encoding("gpt2")
+print(enc.decode(x[0].tolist()))
+print(enc.decode(y[0].tolist()))
+```
+
+  <Description>
+    If `get_batch()` is correct, decoding both tensors should show `y` as
+    `x` shifted forward by one token.
+  </Description>
+
+  <Callout type="success" title="Milestone">
+    `prepare_data.py` can now download the first `N` shuffled shards and write
+    `train.bin` and `val.bin`. `data.py` reads from those files and returns
+    aligned `x` / `y` batches. That is the complete data pipeline for the
+    project.
+  </Callout>
+
+  <Description>
+    The data pipeline is complete. In the next chapter, we build the model
+    that trains on these batches.
+  </Description>
+</Step>
