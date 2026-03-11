@@ -23,3 +23,88 @@ hidden: true
   individual files from Hugging Face.
 </Callout>
 
+
+<Step title="Download the Training Data">
+  <Description>
+    The training data comes from [FineWeb-Edu](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu),
+    a filtered subset of Common Crawl curated by Hugging Face for educational
+    quality. Andrej Karpathy published a pre-shuffled, 100B-token slice of it
+    called [fineweb-edu-100b-shuffle](https://huggingface.co/datasets/karpathy/fineweb-edu-100b-shuffle),
+    split into 1,823 parquet shards. That is our dataset.
+  </Description>
+
+  <Description>
+    Each shard contains roughly 53,000 documents and 55 million GPT-2 tokens.
+    To size the download, the [Chinchilla
+    paper](https://arxiv.org/abs/2203.15556) estimates that a model trains most
+    efficiently on roughly 20 tokens per parameter. For GPT-2 Small's 124M
+    parameters, that works out to about 2.5 billion tokens, or 45 shards.
+    Training beyond that point still improves results, so more shards will
+    give you a stronger model if you have the compute.
+  </Description>
+
+  <Description>
+    A shared config holds the dataset source, shard count, and output paths so every script in the project reads from the same place.
+  </Description>
+
+```python
+# config.py
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass
+class DataConfig:
+    dataset_repo: str = "karpathy/fineweb-edu-100b-shuffle"
+    num_shards: int = 46  # one extra shard is reserved for validation
+    raw_dir: Path = Path("data/raw")
+    train_bin: Path = Path("data/tokens/train.bin")
+    val_bin: Path = Path("data/tokens/val.bin")
+```
+
+  <Description>
+    The downloader fetches the first `num_shards` parquet files from Hugging Face. `hf_hub_download` caches each file locally, so re-running the script skips shards that are already on disk.
+  </Description>
+
+```python
+# prepare_data.py
+from pathlib import Path
+from huggingface_hub import hf_hub_download, list_repo_files
+
+from config import DataConfig
+
+
+def download_shards(cfg: DataConfig) -> list[Path]:
+    files = sorted(
+        f for f in list_repo_files(cfg.dataset_repo, repo_type="dataset")
+        if f.endswith(".parquet")
+    )[: cfg.num_shards]
+
+    cfg.raw_dir.mkdir(parents=True, exist_ok=True)
+
+    local_paths = []
+    for filename in files:
+        path = hf_hub_download(
+            repo_id=cfg.dataset_repo,
+            repo_type="dataset",
+            filename=filename,
+            local_dir=cfg.raw_dir,
+        )
+        local_paths.append(Path(path))
+
+    return local_paths
+```
+
+  <Description>
+    After the downloader runs, `data/raw/` should look like this:
+
+    ```
+    data/
+    └── raw/
+        ├── shard_00000.parquet
+        ├── shard_00001.parquet
+        └── ...  (N shards total)
+    ```
+  </Description>
+</Step>
+
