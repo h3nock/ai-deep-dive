@@ -8,7 +8,7 @@ hidden: true
 <Description>
   This chapter builds the data pipeline that feeds the rest of the project.
   `prepare_data.py` runs once to download raw text, tokenize it, and write the
-  result to `train.bin` and `val.bin`. `data.py` memory-maps those files and
+  result to `train.bin` and `val.bin`. `data.py` reads from those files and
   serves aligned `x` / `y` batches that the training loop will consume.
 </Description>
 
