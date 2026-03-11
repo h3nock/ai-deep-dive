@@ -161,3 +161,68 @@ chars: 8657
 </Step>
 
 
+<Step title="Tokenize and Store">
+  <Description>
+    GPT-2's tokenizer (loaded via `tiktoken`) converts every document into a
+    sequence of token IDs. The full result is written to `train.bin` and
+    `val.bin`. Because encoding billions of tokens is CPU-bound and the result
+    never changes, we run tokenization as a separate preprocessing step rather
+    than doing it on the fly during training.
+  </Description>
+
+  <Description>
+    `train.bin` and `val.bin` are flat `uint16` sequences of token IDs with no
+    headers, no padding, and no metadata. `uint16` is wide enough to store every
+    token ID, since GPT-2's vocabulary of 50,257 tokens fits in 16 bits. Inside
+    each file, documents are laid out back to back as one continuous stream
+    of token IDs, with an end-of-text token after each one to mark the boundary.
+  </Description>
+
+```python
+# prepare_data.py (continued)
+import numpy as np
+import tiktoken
+
+
+enc = tiktoken.get_encoding("gpt2")
+eot = enc.eot_token
+
+
+def write_split(shards: list[Path], out_path: Path):
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "wb") as f:
+        for shard in shards:
+            for text in iter_documents(shard):
+                ids = enc.encode_ordinary(text)
+                arr = np.array(ids + [eot], dtype=np.uint16)
+                f.write(arr.tobytes())
+
+
+cfg = DataConfig()
+shard_paths = download_shards(cfg)
+train_shards = shard_paths[:-1]
+val_shards = shard_paths[-1:]
+
+write_split(train_shards, cfg.train_bin)
+write_split(val_shards, cfg.val_bin)
+```
+
+  <Description>
+    `encode_ordinary` tokenizes the text without processing special tokens,
+    so `eot` never appears in the output unless we add it ourselves. We append
+    it once after each document to mark the boundary in the token stream.
+  </Description>
+
+  <Description attached>
+    After both files are written, the project directory looks like this:
+  </Description>
+
+```text
+data/
+├── raw/       (parquet shards, safe to delete after tokenizing)
+└── tokens/
+    ├── train.bin
+    └── val.bin
+```
+</Step>
+
