@@ -341,3 +341,16 @@ print(enc.decode(y[0].tolist()))
     If `get_batch()` is correct, decoding both tensors should show `y` as
     `x` shifted forward by one token.
   </Description>
+
+  <Callout type="success" title="Milestone">
+    `prepare_data.py` can now download the first `N` shuffled shards and write
+    `train.bin` and `val.bin`. `data.py` reads from those files and returns
+    aligned `x` / `y` batches. That is the complete data pipeline for the
+    project.
+  </Callout>
+
+  <Description>
+    The data pipeline is complete. In the next chapter, we build the model
+    that trains on these batches.
+  </Description>
+</Step>
