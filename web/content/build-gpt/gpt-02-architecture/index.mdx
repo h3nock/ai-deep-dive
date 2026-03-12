@@ -165,3 +165,43 @@ class GPT(nn.Module):
   </Description>
 </Step>
 
+
+<Step title="Initialize the Weights">
+  <Description>
+    At this point the model has the right structure but its parameters are still at PyTorch's defaults. In a model this deep, initial values compound through the layers, so GPT-2 uses a tailored initialization scheme to keep early training stable.
+  </Description>
+
+  <Description>
+    Embeddings and linear layers are initialized from a normal distribution with standard deviation `0.02`. The `c_proj` output projections get an additional scale-down by `1 / sqrt(2 * n_layers)`, so that as depth increases, each block's contribution to the residual stream starts proportionally smaller.
+  </Description>
+
+  <Description>
+    Both `MultiHeadAttention` and `FeedForward` flag their `c_proj` layers with `scale_init = True`, which tells `_init_weights` to initialize them with the smaller standard deviation.
+  </Description>
+
+```python
+# model.py (continued)
+class GPT(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        ...
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            std = 0.02
+            if getattr(module, "scale_init", False):
+                std *= (2 * self.config.n_layers) ** -0.5
+            nn.init.normal_(module.weight, mean=0.0, std=std)
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+```
+
+
+  <Description>
+    If the initialization is correct, the model should assign roughly equal probability to all 50,257 tokens. We verify this in the next step.
+  </Description>
+</Step>
+
