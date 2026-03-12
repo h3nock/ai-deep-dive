@@ -53,3 +53,115 @@ def get_device() -> str:
 </Step>
 
 
+<Step title="Assemble the Modules">
+  <Description>
+    `model.py` defines the full GPT model as four classes. `MultiHeadAttention` and `FeedForward` handle the two operations inside each transformer layer. `Block` pairs them with residual connections and layer norms to form one transformer layer, and `GPT` then stacks those layers between the embedding tables and the output head.
+  </Description>
+
+  <Description>
+    Both classes implement the same attention and feed-forward logic from chapters 6 and 7. The attribute names `c_attn`, `c_fc`, and `c_proj` match GPT-2's weight names so that pretrained weights can be loaded directly to verify the implementation.
+  </Description>
+
+```python
+# model.py
+import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class MultiHeadAttention(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        assert config.d_model % config.n_heads == 0
+        self.n_heads = config.n_heads
+        self.head_dim = config.d_model // config.n_heads
+        self.c_attn = nn.Linear(config.d_model, 3 * config.d_model)
+        self.c_proj = nn.Linear(config.d_model, config.d_model)
+        self.c_proj.scale_init = True  # flagged for scaled initialization, see _init_weights
+        self.attn_dropout = nn.Dropout(config.dropout)
+        self.resid_dropout = nn.Dropout(config.dropout)
+        mask = torch.tril(torch.ones(config.context_length, config.context_length))
+        self.register_buffer(
+            "bias",  # causal mask, named to match the GPT-2-style state dict convention
+            mask.view(1, 1, config.context_length, config.context_length),
+        )
+
+    def forward(self, x):
+        B, T, C = x.shape
+        qkv = self.c_attn(x)
+        q, k, v = qkv.split(C, dim=2)
+
+        q = q.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+        k = k.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+        v = v.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))
+        att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
+        att = F.softmax(att, dim=-1)
+        att = self.attn_dropout(att)
+
+        y = att @ v
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        y = self.resid_dropout(self.c_proj(y))
+        return y
+
+
+class FeedForward(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.c_fc = nn.Linear(config.d_model, 4 * config.d_model)
+        self.gelu = nn.GELU(approximate="tanh")
+        self.c_proj = nn.Linear(4 * config.d_model, config.d_model)
+        self.c_proj.scale_init = True  # flagged for scaled initialization, see _init_weights
+        self.dropout = nn.Dropout(config.dropout)
+
+    def forward(self, x):
+        x = self.c_fc(x)
+        x = self.gelu(x)
+        x = self.c_proj(x)
+        return self.dropout(x)
+```
+
+```python
+# model.py (continued)
+
+
+class Block(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.ln_1 = nn.LayerNorm(config.d_model)
+        self.attn = MultiHeadAttention(config)
+        self.ln_2 = nn.LayerNorm(config.d_model)
+        self.mlp = FeedForward(config)
+
+    def forward(self, x):
+        x = x + self.attn(self.ln_1(x))
+        x = x + self.mlp(self.ln_2(x))
+        return x
+
+
+class GPT(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.transformer = nn.ModuleDict(dict(
+            wte=nn.Embedding(config.vocab_size, config.d_model),
+            wpe=nn.Embedding(config.context_length, config.d_model),
+            drop=nn.Dropout(config.dropout),
+            h=nn.ModuleList([Block(config) for _ in range(config.n_layers)]),
+            ln_f=nn.LayerNorm(config.d_model),
+        ))
+        self.lm_head = nn.Linear(config.d_model, config.vocab_size, bias=False)
+        self.lm_head.weight = self.transformer["wte"].weight
+```
+
+  <Description>
+    `GPT` stores its submodules in an `nn.ModuleDict` rather than as direct attributes. Like the attribute names inside each class, the dictionary keys (`wte`, `wpe`, `h`, `ln_f`) match GPT-2's weight names for the same reason.
+  </Description>
+
+  <Description>
+    The output head is tied to the token embedding table, reusing the same matrix for both input lookup and output prediction. As covered in chapter 9, this avoids learning a second `vocab_size × d_model` matrix.
+  </Description>
+</Step>
+
