@@ -10,3 +10,46 @@ hidden: true
 </Description>
 
 
+<Step title="Define the Config">
+  <Description>
+    The model hyperparameters go into a `GPTConfig` dataclass so every module in the project reads from the same values.
+  </Description>
+
+  <Description>
+    `GPTConfig` goes into the same `config.py` that already holds `DataConfig`, along with a `get_device()` helper that gives the data loader, model, and training script a shared device-detection path.
+  </Description>
+
+```python
+# config.py (continued)
+from dataclasses import dataclass
+import torch
+
+
+@dataclass
+class GPTConfig:
+    context_length: int = 1024
+    vocab_size: int = 50257
+    n_layers: int = 12
+    n_heads: int = 12
+    d_model: int = 768
+    dropout: float = 0.1
+
+
+def get_device() -> str:
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+```
+
+  <Callout type="note" title="Smaller Config for Local Runs">
+    The defaults match GPT-2 Small (124M parameters). For a lighter run on a laptop or small GPU, try `n_layers=6, n_heads=6, d_model=384`. The rest of the project code is unchanged.
+  </Callout>
+
+  <Description>
+    With the config in place, the rest of the project has one shared definition for every architectural hyperparameter.
+  </Description>
+</Step>
+
+
