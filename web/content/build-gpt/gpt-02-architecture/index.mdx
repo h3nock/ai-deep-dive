@@ -272,4 +272,11 @@ print(f"parameters: {n_params / 1e6:.1f}M")  # about 124M for GPT-2 Small
     With random initialization, the loss should start near `ln(50,257) ≈ 10.82`, which is the random-chance baseline for this vocabulary size. It will not be exact, but it should be in that neighborhood. If it is wildly off, something is wrong in the batching, output head, or loss computation.
   </Description>
 
+  <Callout type="success" title="Milestone">
+    `model.py` is complete. The project can take a batch of tokens and produce a loss.
+  </Callout>
+
+  <Description>
+    In the next chapter, we use that loss to train the model.
+  </Description>
 </Step>
