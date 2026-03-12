@@ -205,3 +205,71 @@ class GPT(nn.Module):
   </Description>
 </Step>
 
+
+<Step title="Compute the Loss">
+  <Description>
+    Neural networks learn by making predictions, measuring the error, and adjusting weights to reduce it. That error measurement is the loss.
+  </Description>
+
+  <Description>
+    Our forward pass predicts which token comes next at every position in the sequence. To measure how far off those predictions are, we use cross-entropy loss. Cross-entropy uses softmax to convert the model's raw scores across the full vocabulary into probabilities between 0 and 1 that sum to 1. We want the probability on the correct next token, `p_correct`, to be as high as possible. Cross-entropy reframes this as minimization by taking the negative log of `p_correct`: `-ln(p_correct)`. As `p_correct` goes up, `-ln(p_correct)` goes down, so reducing the loss is the same as increasing the probability of the correct token.
+  </Description>
+
+  <Description>
+    When the model assigns 0.9 to the right token, `-ln(0.9) ≈ 0.105`, a small loss. When it assigns only 0.01, `-ln(0.01) ≈ 4.6`, a much larger one. The steeper growth at low probabilities gives the model a stronger push to fix its worst predictions.
+  </Description>
+
+```python
+# model.py (continued)
+class GPT(nn.Module):
+    ...
+    def forward(self, idx, targets=None):
+        B, T = idx.shape
+        if T > self.config.context_length:
+            raise ValueError("sequence length exceeds context length")
+
+        pos = torch.arange(0, T, device=idx.device)
+        tok_emb = self.transformer["wte"](idx)
+        pos_emb = self.transformer["wpe"](pos)
+        x = self.transformer["drop"](tok_emb + pos_emb)
+
+        for block in self.transformer["h"]:
+            x = block(x)
+
+        x = self.transformer["ln_f"](x)
+        logits = self.lm_head(x)
+
+        loss = None
+        if targets is not None:
+            loss = F.cross_entropy(
+                logits.reshape(-1, logits.size(-1)),
+                targets.reshape(-1),
+            )
+
+        return logits, loss
+```
+
+  <Description>
+    The reshape flattens batch and sequence into a single list: logits go from `(B, T, vocab_size)` to `(B*T, vocab_size)`, targets from `(B, T)` to `(B*T,)`. Cross-entropy scores each of the `B × T` positions independently, comparing the model's prediction against the actual next token.
+  </Description>
+
+```python
+# quick sanity check
+device = get_device()
+config = GPTConfig()
+model = GPT(config).to(device)
+
+x, y = get_batch("train", batch_size=4, seq_len=16, device=device)
+logits, loss = model(x, y)
+n_params = sum(p.numel() for p in model.parameters())
+
+print(logits.shape)  # (4, 16, 50257)
+print(loss.item())
+print(f"parameters: {n_params / 1e6:.1f}M")  # about 124M for GPT-2 Small
+```
+
+  <Description>
+    With random initialization, the loss should start near `ln(50,257) ≈ 10.82`, which is the random-chance baseline for this vocabulary size. It will not be exact, but it should be in that neighborhood. If it is wildly off, something is wrong in the batching, output head, or loss computation.
+  </Description>
+
+</Step>
