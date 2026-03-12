@@ -1,8 +1,282 @@
 ---
 title: "GPT Architecture"
 step: 10.2
-description: "Assembling the full GPT model."
+description: "Implement the GPT model and write the forward pass with cross-entropy loss."
 hidden: true
 ---
 
-<ComingSoon />
+<Description>
+  This chapter implements the architecture from chapter 9 as `model.py`. We define the model config, assemble the full GPT module, initialize its weights, and verify it produces the expected output shapes and a reasonable initial loss.
+</Description>
+
+
+<Step title="Define the Config">
+  <Description>
+    The model hyperparameters go into a `GPTConfig` dataclass so every module in the project reads from the same values.
+  </Description>
+
+  <Description>
+    `GPTConfig` goes into the same `config.py` that already holds `DataConfig`, along with a `get_device()` helper that gives the data loader, model, and training script a shared device-detection path.
+  </Description>
+
+```python
+# config.py (continued)
+from dataclasses import dataclass
+import torch
+
+
+@dataclass
+class GPTConfig:
+    context_length: int = 1024
+    vocab_size: int = 50257
+    n_layers: int = 12
+    n_heads: int = 12
+    d_model: int = 768
+    dropout: float = 0.1
+
+
+def get_device() -> str:
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+```
+
+  <Callout type="note" title="Smaller Config for Local Runs">
+    The defaults match GPT-2 Small (124M parameters). For a lighter run on a laptop or small GPU, try `n_layers=6, n_heads=6, d_model=384`. The rest of the project code is unchanged.
+  </Callout>
+
+  <Description>
+    With the config in place, the rest of the project has one shared definition for every architectural hyperparameter.
+  </Description>
+</Step>
+
+
+<Step title="Assemble the Modules">
+  <Description>
+    `model.py` defines the full GPT model as four classes. `MultiHeadAttention` and `FeedForward` handle the two operations inside each transformer layer. `Block` pairs them with residual connections and layer norms to form one transformer layer, and `GPT` then stacks those layers between the embedding tables and the output head.
+  </Description>
+
+  <Description>
+    Both classes implement the same attention and feed-forward logic from chapters 6 and 7. The attribute names `c_attn`, `c_fc`, and `c_proj` match GPT-2's weight names so that pretrained weights can be loaded directly to verify the implementation.
+  </Description>
+
+```python
+# model.py
+import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class MultiHeadAttention(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        assert config.d_model % config.n_heads == 0
+        self.n_heads = config.n_heads
+        self.head_dim = config.d_model // config.n_heads
+        self.c_attn = nn.Linear(config.d_model, 3 * config.d_model)
+        self.c_proj = nn.Linear(config.d_model, config.d_model)
+        self.c_proj.scale_init = True  # flagged for scaled initialization, see _init_weights
+        self.attn_dropout = nn.Dropout(config.dropout)
+        self.resid_dropout = nn.Dropout(config.dropout)
+        mask = torch.tril(torch.ones(config.context_length, config.context_length))
+        self.register_buffer(
+            "bias",  # causal mask, named to match the GPT-2-style state dict convention
+            mask.view(1, 1, config.context_length, config.context_length),
+        )
+
+    def forward(self, x):
+        B, T, C = x.shape
+        qkv = self.c_attn(x)
+        q, k, v = qkv.split(C, dim=2)
+
+        q = q.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+        k = k.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+        v = v.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(self.head_dim))
+        att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
+        att = F.softmax(att, dim=-1)
+        att = self.attn_dropout(att)
+
+        y = att @ v
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        y = self.resid_dropout(self.c_proj(y))
+        return y
+
+
+class FeedForward(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.c_fc = nn.Linear(config.d_model, 4 * config.d_model)
+        self.gelu = nn.GELU(approximate="tanh")
+        self.c_proj = nn.Linear(4 * config.d_model, config.d_model)
+        self.c_proj.scale_init = True  # flagged for scaled initialization, see _init_weights
+        self.dropout = nn.Dropout(config.dropout)
+
+    def forward(self, x):
+        x = self.c_fc(x)
+        x = self.gelu(x)
+        x = self.c_proj(x)
+        return self.dropout(x)
+```
+
+```python
+# model.py (continued)
+
+
+class Block(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.ln_1 = nn.LayerNorm(config.d_model)
+        self.attn = MultiHeadAttention(config)
+        self.ln_2 = nn.LayerNorm(config.d_model)
+        self.mlp = FeedForward(config)
+
+    def forward(self, x):
+        x = x + self.attn(self.ln_1(x))
+        x = x + self.mlp(self.ln_2(x))
+        return x
+
+
+class GPT(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.transformer = nn.ModuleDict(dict(
+            wte=nn.Embedding(config.vocab_size, config.d_model),
+            wpe=nn.Embedding(config.context_length, config.d_model),
+            drop=nn.Dropout(config.dropout),
+            h=nn.ModuleList([Block(config) for _ in range(config.n_layers)]),
+            ln_f=nn.LayerNorm(config.d_model),
+        ))
+        self.lm_head = nn.Linear(config.d_model, config.vocab_size, bias=False)
+        self.lm_head.weight = self.transformer["wte"].weight
+```
+
+  <Description>
+    `GPT` stores its submodules in an `nn.ModuleDict` rather than as direct attributes. Like the attribute names inside each class, the dictionary keys (`wte`, `wpe`, `h`, `ln_f`) match GPT-2's weight names for the same reason.
+  </Description>
+
+  <Description>
+    The output head is tied to the token embedding table, reusing the same matrix for both input lookup and output prediction. As covered in chapter 9, this avoids learning a second `vocab_size × d_model` matrix.
+  </Description>
+</Step>
+
+
+<Step title="Initialize the Weights">
+  <Description>
+    At this point the model has the right structure but its parameters are still at PyTorch's defaults. In a model this deep, initial values compound through the layers, so GPT-2 uses a tailored initialization scheme to keep early training stable.
+  </Description>
+
+  <Description>
+    Embeddings and linear layers are initialized from a normal distribution with standard deviation `0.02`. The `c_proj` output projections get an additional scale-down by `1 / sqrt(2 * n_layers)`, so that as depth increases, each block's contribution to the residual stream starts proportionally smaller.
+  </Description>
+
+  <Description>
+    Both `MultiHeadAttention` and `FeedForward` flag their `c_proj` layers with `scale_init = True`, which tells `_init_weights` to initialize them with the smaller standard deviation.
+  </Description>
+
+```python
+# model.py (continued)
+class GPT(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        ...
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            std = 0.02
+            if getattr(module, "scale_init", False):
+                std *= (2 * self.config.n_layers) ** -0.5
+            nn.init.normal_(module.weight, mean=0.0, std=std)
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+```
+
+
+  <Description>
+    If the initialization is correct, the model should assign roughly equal probability to all 50,257 tokens. We verify this in the next step.
+  </Description>
+</Step>
+
+
+<Step title="Compute the Loss">
+  <Description>
+    Neural networks learn by making predictions, measuring the error, and adjusting weights to reduce it. That error measurement is the loss.
+  </Description>
+
+  <Description>
+    Our forward pass predicts which token comes next at every position in the sequence. To measure how far off those predictions are, we use cross-entropy loss. Cross-entropy uses softmax to convert the model's raw scores across the full vocabulary into probabilities between 0 and 1 that sum to 1. We want the probability on the correct next token, `p_correct`, to be as high as possible. Cross-entropy reframes this as minimization by taking the negative log of `p_correct`: `-ln(p_correct)`. As `p_correct` goes up, `-ln(p_correct)` goes down, so reducing the loss is the same as increasing the probability of the correct token.
+  </Description>
+
+  <Description>
+    When the model assigns 0.9 to the right token, `-ln(0.9) ≈ 0.105`, a small loss. When it assigns only 0.01, `-ln(0.01) ≈ 4.6`, a much larger one. The steeper growth at low probabilities gives the model a stronger push to fix its worst predictions.
+  </Description>
+
+```python
+# model.py (continued)
+class GPT(nn.Module):
+    ...
+    def forward(self, idx, targets=None):
+        B, T = idx.shape
+        if T > self.config.context_length:
+            raise ValueError("sequence length exceeds context length")
+
+        pos = torch.arange(0, T, device=idx.device)
+        tok_emb = self.transformer["wte"](idx)
+        pos_emb = self.transformer["wpe"](pos)
+        x = self.transformer["drop"](tok_emb + pos_emb)
+
+        for block in self.transformer["h"]:
+            x = block(x)
+
+        x = self.transformer["ln_f"](x)
+        logits = self.lm_head(x)
+
+        loss = None
+        if targets is not None:
+            loss = F.cross_entropy(
+                logits.reshape(-1, logits.size(-1)),
+                targets.reshape(-1),
+            )
+
+        return logits, loss
+```
+
+  <Description>
+    The reshape flattens batch and sequence into a single list: logits go from `(B, T, vocab_size)` to `(B*T, vocab_size)`, targets from `(B, T)` to `(B*T,)`. Cross-entropy scores each of the `B × T` positions independently, comparing the model's prediction against the actual next token.
+  </Description>
+
+```python
+# quick sanity check
+device = get_device()
+config = GPTConfig()
+model = GPT(config).to(device)
+
+x, y = get_batch("train", batch_size=4, seq_len=16, device=device)
+logits, loss = model(x, y)
+n_params = sum(p.numel() for p in model.parameters())
+
+print(logits.shape)  # (4, 16, 50257)
+print(loss.item())
+print(f"parameters: {n_params / 1e6:.1f}M")  # about 124M for GPT-2 Small
+```
+
+  <Description>
+    With random initialization, the loss should start near `ln(50,257) ≈ 10.82`, which is the random-chance baseline for this vocabulary size. It will not be exact, but it should be in that neighborhood. If it is wildly off, something is wrong in the batching, output head, or loss computation.
+  </Description>
+
+  <Callout type="success" title="Milestone">
+    `model.py` is complete. The project can take a batch of tokens and produce a loss.
+  </Callout>
+
+  <Description>
+    In the next chapter, we use that loss to train the model.
+  </Description>
+</Step>
