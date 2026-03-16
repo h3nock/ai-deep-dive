@@ -141,3 +141,67 @@ optimizer.step()
 </Step>
 
 
+<Step title="Build the Training Loop">
+  <Description>
+    The full loop repeats that training step for `max_steps` iterations, adjusting the learning rate at each one and running validation every 200 steps to log progress and save checkpoints.
+  </Description>
+
+```python
+# train.py
+eval_interval = 200
+eval_batches = 20
+best_val_loss = float("inf")
+
+
+@torch.no_grad()
+def estimate_val_loss():
+    model.eval()
+    vals = torch.zeros(eval_batches)
+    for k in range(eval_batches):
+        x, y = get_batch("val", batch_size=micro_batch_size, seq_len=config.context_length, device=device)
+        _, loss = model(x, y)
+        vals[k] = loss.item()
+    model.train()
+    return vals.mean().item()
+
+
+for step in range(max_steps):
+    lr = get_lr(step)
+    for group in optimizer.param_groups:
+        group["lr"] = lr
+
+    optimizer.zero_grad()
+    train_loss = 0.0
+    for micro_step in range(grad_accum_steps):
+        x, y = get_batch("train", batch_size=micro_batch_size, seq_len=config.context_length, device=device)
+        _, loss = model(x, y)
+        loss = loss / grad_accum_steps
+        train_loss += loss.item()
+        loss.backward()
+
+    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+    optimizer.step()
+
+    if step % eval_interval == 0:
+        val_loss = estimate_val_loss()
+        print(
+            f"step {step:5d} | "
+            f"train {train_loss:.4f} | "
+            f"val {val_loss:.4f} | "
+            f"lr {lr:.6f}"
+        )
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            save_checkpoint(step, best_val_loss)
+```
+
+  <Description>
+    `estimate_val_loss()` switches to eval mode and measures loss on the validation split without affecting training. The `@torch.no_grad()` decorator tells PyTorch not to build computation graphs during these forward passes, since no weight updates happen during evaluation. Without it, every eval pass would allocate memory for a graph that is never used.
+  </Description>
+
+  <Callout type="note" title="Sanity Check">
+    The initial loss should be near `ln(50257) ≈ 10.8`, the expected value when the model assigns equal probability across GPT-2's vocabulary. It should decrease over the first few hundred steps.
+  </Callout>
+
+</Step>
+
