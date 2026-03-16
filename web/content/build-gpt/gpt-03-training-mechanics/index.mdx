@@ -111,3 +111,33 @@ optimizer = torch.optim.AdamW(
 ```
 </Step>
 
+
+<Step title="Run One Training Step">
+  <Description>
+    A single training step processes `total_batch_size` tokens and produces one weight update. If you understand this block of code, the full loop is just repetition around it.
+  </Description>
+
+```python
+# train.py
+model.train()
+optimizer.zero_grad()
+train_loss = 0.0
+
+for micro_step in range(grad_accum_steps):
+    x, y = get_batch("train", batch_size=micro_batch_size, seq_len=config.context_length, device=device)
+    _, loss = model(x, y)
+    loss = loss / grad_accum_steps
+    train_loss += loss.item()
+    loss.backward()
+
+torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+optimizer.step()
+```
+
+  <Description>
+    `model.train()` enables training behavior like dropout, and `zero_grad()` clears gradients from the previous step. The loop runs `grad_accum_steps` micro-batches, each through a forward and backward pass. It divides each loss by `grad_accum_steps` before `backward()` so the accumulated gradients average out to the same result as processing all 524,288 tokens at once. After the loop, `clip_grad_norm_()` caps the gradient norm at 1.0 and `optimizer.step()` applies the update.
+  </Description>
+
+</Step>
+
+
