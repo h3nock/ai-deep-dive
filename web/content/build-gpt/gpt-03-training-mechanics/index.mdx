@@ -205,3 +205,61 @@ for step in range(max_steps):
 
 </Step>
 
+
+<Step title="Save and Resume Training">
+  <Description>
+    A checkpoint captures the full training state so a run can resume after an interruption or the model can be loaded for generation.
+  </Description>
+
+```python
+# train.py
+from dataclasses import asdict
+from pathlib import Path
+
+
+out_dir = Path("out")
+out_dir.mkdir(exist_ok=True)
+checkpoint_path = out_dir / "ckpt.pt"
+
+
+def save_checkpoint(step: int, best_val_loss: float):
+    torch.save(
+        {
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "config": asdict(config),
+            "step": step,
+            "best_val_loss": best_val_loss,
+        },
+        checkpoint_path,
+    )
+```
+
+  <Description>
+    The checkpoint saves the optimizer state alongside the model weights. AdamW builds up momentum and variance estimates that tune its step size to each parameter individually, and losing that history would force it to recalibrate from scratch.
+  </Description>
+
+```python
+# train.py — resume path
+checkpoint = torch.load(checkpoint_path, weights_only=False, map_location=device)
+config = GPTConfig(**checkpoint["config"])
+model = GPT(config).to(device)
+model.load_state_dict(checkpoint["model"])
+
+optimizer = torch.optim.AdamW(
+    model.parameters(),
+    lr=max_lr,
+    betas=(0.9, 0.95),
+    weight_decay=weight_decay,
+)
+optimizer.load_state_dict(checkpoint["optimizer"])
+
+start_step = checkpoint["step"] + 1
+best_val_loss = checkpoint["best_val_loss"]
+```
+
+  <Description>
+    The optimizer is constructed with the model's parameters first, so `load_state_dict` can map the saved momentum and variance estimates back to each parameter. The training loop then starts from `range(start_step, max_steps)` instead of `range(max_steps)`.
+  </Description>
+
+</Step>
