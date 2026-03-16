@@ -10,3 +10,104 @@ hidden: true
 </Description>
 
 
+<Step title="Set Up Optimization">
+  <Description>
+    After each forward pass, backpropagation computes a gradient for every weight: a signal that says which direction to adjust it and by how much to reduce the loss. The optimizer uses these gradients to update the weights. The simplest update rule is `w = w - lr * gradient`.
+  </Description>
+
+  <Description>
+    **AdamW** improves on this by adapting the step size per weight based on its gradient history: weights with large, noisy gradients get smaller steps to avoid overshooting, while weights with small, steady gradients get larger ones. It also applies weight decay, shrinking all weights slightly toward zero after each update to keep the model from relying too heavily on any single parameter.
+  </Description>
+
+  <Description>
+    The learning rate `lr` controls how much weights change per step. Rather than holding it fixed, we vary it over training with a schedule. **Linear warmup** ramps the learning rate from near zero up to the peak over the first few hundred steps, giving the optimizer time to calibrate before making large updates. **Cosine decay** then smoothly reduces it to one-tenth of the peak. As the weights improve, they need finer updates to keep learning without undoing previous progress.
+  </Description>
+
+  <div className="my-6 flex justify-center overflow-x-auto">
+    <svg viewBox="0 0 500 200" className="w-full" style={{ maxWidth: "500px", display: "block" }}>
+      {/* Y axis */}
+      <line x1="50" y1="15" x2="50" y2="175" stroke="var(--color-border)" strokeWidth="1" />
+      {/* X axis */}
+      <line x1="50" y1="175" x2="475" y2="175" stroke="var(--color-border)" strokeWidth="1" />
+
+      {/* max_lr dashed line */}
+      <line x1="50" y1="25" x2="475" y2="25" stroke="var(--color-border)" strokeWidth="0.5" strokeDasharray="4 4" />
+      <text x="46" y="29" textAnchor="end" fill="var(--color-muted)" fontSize="9" fontFamily="var(--font-mono)">max_lr</text>
+
+      {/* min_lr dashed line */}
+      <line x1="50" y1="155" x2="475" y2="155" stroke="var(--color-border)" strokeWidth="0.5" strokeDasharray="4 4" />
+      <text x="46" y="159" textAnchor="end" fill="var(--color-muted)" fontSize="9" fontFamily="var(--font-mono)">min_lr</text>
+
+      {/* Warmup boundary dashed line */}
+      <line x1="120" y1="15" x2="120" y2="175" stroke="var(--color-border)" strokeWidth="0.5" strokeDasharray="4 4" />
+
+      {/* LR curve: warmup (linear) + cosine decay */}
+      <polyline
+        points="50,170 120,25 138,26 155,28 173,32 190,37 208,44 225,52 243,61 260,70 278,80 295,90 313,100 330,110 348,120 365,128 383,136 400,143 418,148 435,152 453,154 470,155"
+        fill="none"
+        stroke="var(--color-primary)"
+        strokeWidth="2"
+      />
+
+      {/* Phase labels */}
+      <text x="85" y="192" textAnchor="middle" fill="var(--color-muted)" fontSize="9" fontFamily="var(--font-mono)">warmup</text>
+      <text x="295" y="192" textAnchor="middle" fill="var(--color-muted)" fontSize="9" fontFamily="var(--font-mono)">cosine decay</text>
+
+      {/* Axis label */}
+      <text x="262" y="192" textAnchor="middle" fill="var(--color-muted)" fontSize="9" fontFamily="var(--font-mono)"></text>
+    </svg>
+  </div>
+
+  <Description>
+    Each training step computes a gradient from a batch of tokens. The size of that batch is the next choice to get right. With too few tokens, the gradient reflects noise from the specific batch more than the actual patterns in the data. With too many, the noise has already been averaged out and further improvements cost disproportionately more compute. For this model size, the threshold is around 500,000 tokens per step. We use 524,288.
+  </Description>
+
+  <Callout type="note" title="Why ~500K Tokens?">
+    The 500,000 figure comes from the critical batch size framework (McCandlish et al., 2018; Kaplan et al., 2020), which measures where gradient noise stops being the bottleneck. For a 124M model at convergence, it falls between 500,000 and 700,000 tokens. GPT-3 used 0.5M for its 125M model.
+  </Callout>
+
+  <Description>
+    Typically, an optimizer step needs more tokens than a single forward pass can fit in memory. **Gradient accumulation** solves this by splitting each step into multiple smaller forward passes. Each pass processes a micro-batch and computes gradients, but rather than updating the weights immediately, those gradients accumulate across passes. The weights update only once all the batch tokens have been processed.
+  </Description>
+
+  <Description>
+    The micro-batch size, the number of sequences per forward pass, depends on available memory. With a micro-batch of 16 samples and a context length of 1024, each pass processes 16,384 tokens. Reaching 524,288 per step takes 32 passes. Across the full dataset of roughly 2.5 billion tokens (the Chinchilla recommendation of 20 tokens per parameter), training takes about 4,768 of these steps. That determines `max_steps` and the window the learning-rate schedule decays over.
+  </Description>
+
+```python
+# train.py
+import math
+import torch
+
+
+total_batch_size = 524_288
+micro_batch_size = 16
+grad_accum_steps = total_batch_size // (micro_batch_size * config.context_length)
+
+max_lr = 6e-4
+min_lr = 6e-5
+warmup_steps = 200
+max_steps = 4_768
+weight_decay = 0.1
+
+
+def get_lr(step: int) -> float:
+    if step < warmup_steps:
+        return max_lr * (step + 1) / warmup_steps
+    if step >= max_steps:
+        return min_lr
+
+    decay_ratio = (step - warmup_steps) / (max_steps - warmup_steps)
+    coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
+    return min_lr + coeff * (max_lr - min_lr)
+
+
+optimizer = torch.optim.AdamW(
+    model.parameters(),
+    lr=max_lr,
+    betas=(0.9, 0.95),
+    weight_decay=weight_decay,
+)
+```
+</Step>
+
