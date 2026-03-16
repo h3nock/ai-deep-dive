@@ -262,4 +262,11 @@ best_val_loss = checkpoint["best_val_loss"]
     The optimizer is constructed with the model's parameters first, so `load_state_dict` can map the saved momentum and variance estimates back to each parameter. The training loop then starts from `range(start_step, max_steps)` instead of `range(max_steps)`.
   </Description>
 
+  <Callout type="success" title="Milestone">
+    `train.py` can now train the model end to end and save checkpoints along the way.
+  </Callout>
+
+  <Description>
+    In the next chapter, we load a checkpoint and generate text from the trained model.
+  </Description>
 </Step>
