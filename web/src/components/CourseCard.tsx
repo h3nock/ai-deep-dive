@@ -15,6 +15,7 @@ interface CourseCardProps {
   status: "available" | "coming-soon" | "planned";
   courseId?: string;
   totalSteps?: number;
+  totalChallenges?: number;
 }
 
 export function CourseCard({
@@ -26,6 +27,7 @@ export function CourseCard({
   status,
   courseId,
   totalSteps = 0,
+  totalChallenges = 0,
 }: CourseCardProps) {
   const isAvailable = status === "available";
   const Component = isAvailable && href ? Link : "div";
@@ -68,7 +70,7 @@ export function CourseCard({
         {description}
       </p>
 
-      <div className="flex flex-wrap gap-1.5 mb-4">
+      <div className="flex flex-wrap gap-1.5 mb-3">
         {tags.map((tag) => (
           <span
             key={tag}
@@ -78,6 +80,13 @@ export function CourseCard({
           </span>
         ))}
       </div>
+
+      {isAvailable && totalSteps > 0 && (
+        <p className="text-xs text-muted mb-4">
+          {totalSteps} chapters
+          {totalChallenges > 0 && <> &middot; {totalChallenges} problems</>}
+        </p>
+      )}
 
       {/* Progress Bar (only for available courses with progress) */}
       {isAvailable && courseId && totalSteps > 0 && (
