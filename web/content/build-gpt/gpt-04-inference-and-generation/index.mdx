@@ -10,3 +10,33 @@ hidden: true
 </Description>
 
 
+<Step title="Load the Checkpoint">
+  <Description>
+    To generate text, we first reconstruct the trained model from its checkpoint: load the config, restore the weights, and switch to eval mode.
+  </Description>
+
+```python
+# generate.py
+import torch
+import tiktoken
+
+from config import GPTConfig, get_device
+from model import GPT
+
+
+device = get_device()
+checkpoint = torch.load("out/ckpt.pt", map_location=device)
+
+config = GPTConfig(**checkpoint["config"])
+model = GPT(config).to(device)
+model.load_state_dict(checkpoint["model"])
+model.eval()
+
+enc = tiktoken.get_encoding("gpt2")
+```
+
+  <Description>
+    `model.eval()` disables dropout, which is only needed during training as regularization. Since generation never updates weights, we also turn off gradient tracking with `@torch.inference_mode()` on the generation method in the next step.
+  </Description>
+</Step>
+
