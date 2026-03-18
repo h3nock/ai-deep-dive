@@ -337,6 +337,7 @@ export default async function Home() {
                     course.status === "available" ? course.id : undefined
                   }
                   totalSteps={course.totalSteps}
+                  totalChallenges={course.totalChallenges}
                 />
               ))}
             </div>
