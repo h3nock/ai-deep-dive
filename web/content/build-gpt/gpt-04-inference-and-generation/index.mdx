@@ -139,4 +139,16 @@ print(enc.decode(out[0].tolist()))
   <Description>
     If changing these values makes no noticeable difference, or if every setting produces equally broken output, the checkpoint is likely still undertrained.
   </Description>
+
+  <Callout type="success" title="Milestone">
+    `generate.py` can now load a trained checkpoint, encode a prompt, and generate text from it.
+  </Callout>
+
+  <Description>
+    The pretraining pipeline is now complete: raw text becomes tokens, the model trains on those tokens, and the trained checkpoint generates text from a prompt.
+  </Description>
+
+  <Description>
+    Turning that base model into a chatbot involves post-training, starting with supervised fine-tuning (SFT), which reuses the same next-token training on instruction-and-response data, often followed by preference tuning such as RLHF. To explore that pipeline, see Karpathy's [nanochat](https://github.com/karpathy/nanochat).
+  </Description>
 </Step>
