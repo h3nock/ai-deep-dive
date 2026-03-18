@@ -4,7 +4,7 @@ import React, { useEffect, useCallback, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, PanelLeftClose } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, PanelLeftClose } from "lucide-react";
 import { PostData } from "@/lib/posts";
 import { cn } from "@/lib/utils";
 import { getCourseConfig } from "@/lib/course-config";
@@ -14,6 +14,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { CodeBlockCopyButtons } from "./CodeBlockCopyButton";
 import { useProgress } from "@/lib/progress-context";
 import { useChallengeProgress } from "@/lib/use-challenge-progress";
+import { isChallengeSolved } from "@/lib/challenge-storage";
 import type { ChallengeWorkspaceProps } from "./ChallengeWorkspace";
 import {
   lessonChallengePath,
@@ -260,6 +261,22 @@ export function StepContainer({
 
   const backLink = getBackLink();
 
+  // Compute the practice CTA target: first unsolved challenge, or the list if none started
+  const practiceHref = useMemo(() => {
+    if (!hasChallenges || !isChallengesLoaded) return challengesHref;
+    if (solvedChallenges >= totalChallenges) return null; // all solved, no CTA link needed
+
+    const firstUnsolved = post.challenges?.find(
+      (c) => !isChallengeSolved(collection, c.id)
+    );
+    if (!firstUnsolved) return challengesHref;
+
+    // If no challenges solved yet, link to the list rather than a specific challenge
+    if (solvedChallenges === 0) return challengesHref;
+
+    return lessonChallengePath(collection, post.slug, firstUnsolved.id);
+  }, [hasChallenges, isChallengesLoaded, solvedChallenges, totalChallenges, post.challenges, post.slug, collection, challengesHref]);
+
   const courseConfig = getCourseConfig(collection);
   const phases = courseConfig?.phases ?? [];
 
@@ -408,6 +425,33 @@ export function StepContainer({
                       }
                     />
                   </div>
+
+                  {/* Practice CTA — visible immediately for discoverability */}
+                  {hasChallenges && (
+                    isChallengesLoaded && solvedChallenges >= totalChallenges ? (
+                      <div className="mb-8 flex items-center gap-2 text-sm text-success">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>All {totalChallenges} problems solved</span>
+                      </div>
+                    ) : practiceHref ? (
+                      <Link
+                        href={practiceHref}
+                        className="group mb-8 flex items-center gap-4 p-5 rounded-xl bg-surface/50 border border-border hover:border-border-hover transition-all"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-primary">
+                            Practice What You Learned
+                          </span>
+                          <span className="block text-xs text-muted mt-0.5">
+                            {isChallengesLoaded && solvedChallenges > 0
+                              ? `${solvedChallenges}/${totalChallenges} solved`
+                              : `${totalChallenges} problems`}
+                          </span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-border group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                      </Link>
+                    ) : null
+                  )}
 
                   {/* Navigation — asymmetric: prev subtle, next prominent */}
                   <div className="flex items-start justify-between gap-4">
