@@ -7,10 +7,9 @@ import { ChallengeProgressPill } from "@/components/ChallengeProgressPill";
 import { ChapterCheckbox } from "@/components/ChapterCheckbox";
 import { ContinueButton } from "@/components/ContinueButton";
 import { getCourseConfig } from "@/lib/course-config";
+import { getChallengeIdsForSlug } from "@/lib/challenges";
 import { isSafePathSegment } from "@/lib/path-safety";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import fs from "fs";
-import path from "path";
 
 export const dynamic = "force-static";
 export const dynamicParams = false;
@@ -45,34 +44,6 @@ export default async function RoadmapPage({
 
   const visiblePosts = posts.filter((post) => !post.hidden);
 
-  const contentDir = path.join(process.cwd(), "content");
-  const getChallengeIdsForSlug = (slug: string): string[] => {
-    if (!isSafePathSegment(slug)) return [];
-
-    const chapterMatch = slug.match(/^(\d+)/);
-    const chapterNumber = chapterMatch ? chapterMatch[1] : undefined;
-
-    const coLocatedChallenges = path.join(contentDir, courseId, slug, "challenges");
-    const legacyChallenges = path.join(contentDir, "challenges", courseId, slug);
-    const challengesDir = fs.existsSync(coLocatedChallenges)
-      ? coLocatedChallenges
-      : legacyChallenges;
-
-    if (!fs.existsSync(challengesDir)) return [];
-
-    const challengeBundles = fs
-      .readdirSync(challengesDir, { withFileTypes: true })
-      .filter((dirent) => dirent.isDirectory() && isSafePathSegment(dirent.name))
-      .map((dirent) => dirent.name)
-      .sort();
-
-    return challengeBundles.map((bundleName) => {
-      const problemMatch = bundleName.match(/^(\d+)/);
-      const problemNumber = problemMatch ? problemMatch[1] : undefined;
-      return chapterNumber && problemNumber ? `${chapterNumber}-${problemNumber}` : bundleName;
-    });
-  };
-
   // Only count main chapters (whole numbers) for progress tracking
   // Sub-steps like 9.1, 9.2 are part of projects and tracked separately
   const mainChapterSteps = visiblePosts
@@ -90,7 +61,7 @@ export default async function RoadmapPage({
   const challengeIdsBySlug: Record<string, string[]> = {};
   const allChallengeIdSet = new Set<string>();
   for (const post of visiblePosts) {
-    const ids = getChallengeIdsForSlug(post.slug);
+    const ids = getChallengeIdsForSlug(courseId, post.slug);
     if (ids.length > 0) {
       challengeIdsBySlug[post.slug] = ids;
       ids.forEach((id) => allChallengeIdSet.add(id));
