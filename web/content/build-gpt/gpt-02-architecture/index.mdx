@@ -43,8 +43,8 @@ def get_device() -> str:
     return "cpu"
 ```
 
-  <Callout type="note" title="Smaller Config for Local Runs">
-    The defaults match GPT-2 Small (124M parameters). For a lighter run on a laptop or small GPU, try `n_layers=6, n_heads=6, d_model=384`. The rest of the project code is unchanged.
+  <Callout type="note" title="Lighter Config for Local Runs">
+    The defaults match GPT-2 Small (124M parameters). For CPU, Apple Silicon, or a smaller GPU, try `n_layers=6, n_heads=6, d_model=384` (~30M parameters). No other code changes needed.
   </Callout>
 
   <Description>
