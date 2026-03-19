@@ -62,6 +62,10 @@ class DataConfig:
     val_bin: Path = Path("data/tokens/val.bin")
 ```
 
+  <Callout type="note" title="Lighter Config">
+    For the lighter model (~30M parameters), Chinchilla scaling gives 20 × 30M = 600M tokens, or about 11 training shards. Set `num_shards=12` to include one for validation.
+  </Callout>
+
   <Description>
     The downloader fetches the first `num_shards` parquet files from Hugging Face. `hf_hub_download` caches each file locally, so re-running the script skips shards that are already on disk.
   </Description>
