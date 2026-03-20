@@ -82,6 +82,10 @@ hidden: true
     The micro-batch size, the number of sequences per forward pass, depends on available memory. With a micro-batch of 16 samples and a context length of 1024, each pass processes 16,384 tokens. Reaching 524,288 per step takes 32 passes. Across the full dataset of roughly 2.5 billion tokens (the Chinchilla recommendation of 20 tokens per parameter), training takes about 4,768 of these steps. That determines `max_steps` and the window the learning-rate schedule decays over.
   </Description>
 
+  <Description>
+    `weight_decay=0.1` and `betas=(0.9, 0.95)` are common decoder-only pretraining defaults, used in GPT-3 and OLMo among others. The β2 of 0.95 gives Adam a shorter memory for gradient variance than PyTorch's default of 0.999, making it adapt faster as training progresses. Both values matter less to tune than the learning rate and batch size.
+  </Description>
+
 ```python
 # train.py
 import math
