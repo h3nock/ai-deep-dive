@@ -59,6 +59,10 @@ hidden: true
   </div>
 
   <Description>
+    The peak learning rate is the main hyperparameter to get right. The practical workflow is to start from a published rate at your model size, then sweep nearby values in short runs. For reference, GPT-3 used `6e-4` for its 125M model, `3e-4` for 350M, `2e-4` for 1.3B, and `6e-5` for 175B. Pythia's smaller models follow the same trend: `1e-3` for 70M, `6e-4` for 160M, `3e-4` for 410M. Once you have a starting point, sweep nearby rates for a few hundred steps and pick the one where loss falls fastest without becoming unstable.
+  </Description>
+
+  <Description>
     Each training step computes a gradient from a batch of tokens. The size of that batch is the next choice to get right. With too few tokens, the gradient reflects noise from the specific batch more than the actual patterns in the data. With too many, the noise has already been averaged out and further improvements cost disproportionately more compute. For this model size, the threshold is around 500,000 tokens per step. We use 524,288.
   </Description>
 
