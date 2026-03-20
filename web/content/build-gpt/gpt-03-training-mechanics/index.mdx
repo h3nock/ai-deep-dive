@@ -121,6 +121,10 @@ optimizer = torch.optim.AdamW(
     weight_decay=weight_decay,
 )
 ```
+
+  <Callout type="note" title="Lighter Config Adjustments">
+    For the lighter model (~30M parameters), we follow llama2.c's training recipe: `total_batch_size=131_072`, `max_lr=5e-4`, `min_lr=5e-5`. That gives 8 accumulation steps at micro-batch 16. From the data budget of ~600M tokens (20 per parameter), training takes roughly 4,600 steps. The warmup, weight decay, betas, and remaining settings stay the same.
+  </Callout>
 </Step>
 
 
