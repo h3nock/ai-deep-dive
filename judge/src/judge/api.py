@@ -21,17 +21,20 @@ from judge.metrics import (
     update_runtime_metrics,
 )
 from judge.models import (
+    AcceptedResponse,
+    ApiTestCase,
     JobResult,
     ProblemInfo,
     ReadinessCheck,
     ReadinessChecks,
     ReadinessResponse,
+    RunRequest,
     SubmitRequest,
-    SubmitResponse,
 )
 from judge.services import (
     DEFAULT_STREAM_ROUTING,
     InvalidProblemError,
+    InvalidRunRequestError,
     ProblemNotFoundError,
     QueueFullError,
     QueueUnavailableError,
@@ -133,9 +136,9 @@ def _check_db_ready(dependencies: ApiDependencies) -> ReadinessCheck:
     return ReadinessCheck(ok=True, detail="ok")
 
 
-def _problem_manifests_available(root: Path) -> bool:
+def _canonical_problems_available(root: Path) -> bool:
     try:
-        return any(root.rglob("manifest.json"))
+        return any(root.rglob("problem.json"))
     except OSError:
         logger.exception("Readiness check failed: problem repository scan failed")
         return False
@@ -147,9 +150,20 @@ def _check_problems_ready(dependencies: ApiDependencies) -> ReadinessCheck:
         return ReadinessCheck(ok=False, detail="missing")
     if not root.is_dir():
         return ReadinessCheck(ok=False, detail="invalid")
-    if not _problem_manifests_available(root):
+    if not _canonical_problems_available(root):
         return ReadinessCheck(ok=False, detail="empty")
     return ReadinessCheck(ok=True, detail="ok")
+
+
+def _to_domain_test_case(case: ApiTestCase):
+    from judge.problems import TestCase
+
+    return TestCase(
+        id=case.id,
+        inputs=dict(case.inputs),
+        expected_literal=case.expected_literal,
+        explanation=case.explanation,
+    )
 
 
 def create_app(
@@ -243,26 +257,24 @@ def create_app(
     def get_problem(problem_id: str) -> ProblemInfo:
         deps = _deps()
         try:
-            problem = deps.problems.get_route_info(problem_id)
+            problem = deps.problems.get_problem_spec(problem_id)
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail="Problem not found")
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid problem id")
         return ProblemInfo(
-            id=problem.id,
-            version=problem.version,
-            requires_torch=problem.requires_torch,
+            id=problem.problem_id,
+            execution_profile=problem.execution_profile,
             time_limit_s=problem.time_limit_s,
             memory_mb=problem.memory_mb,
         )
 
-    @app.post("/submit", response_model=SubmitResponse)
-    def submit(request: SubmitRequest) -> SubmitResponse:
+    @app.post("/submit", response_model=AcceptedResponse)
+    def submit(request: SubmitRequest) -> AcceptedResponse:
         deps = _deps()
         try:
-            queued = deps.submission.submit(
-                problem_key=request.problem_id,
-                kind=request.kind,
+            queued = deps.submission.enqueue_submit(
+                problem_id=request.problem_id,
                 code=request.code,
             )
         except ProblemNotFoundError:
@@ -274,7 +286,29 @@ def create_app(
         except QueueUnavailableError as exc:
             raise HTTPException(status_code=503, detail=str(exc))
 
-        return SubmitResponse(job_id=queued.job_id, status=queued.status)
+        return AcceptedResponse(job_id=queued.job_id, status=queued.status)
+
+    @app.post("/run", response_model=AcceptedResponse)
+    def run(request: RunRequest) -> AcceptedResponse:
+        deps = _deps()
+        try:
+            queued = deps.submission.enqueue_run(
+                problem_id=request.problem_id,
+                code=request.code,
+                cases=[_to_domain_test_case(case) for case in request.cases],
+            )
+        except ProblemNotFoundError:
+            raise HTTPException(status_code=404, detail="Problem not found")
+        except InvalidProblemError:
+            raise HTTPException(status_code=400, detail="Invalid problem id")
+        except InvalidRunRequestError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        except QueueFullError as exc:
+            raise HTTPException(status_code=503, detail=str(exc))
+        except QueueUnavailableError as exc:
+            raise HTTPException(status_code=503, detail=str(exc))
+
+        return AcceptedResponse(job_id=queued.job_id, status=queued.status)
 
     @app.get("/result/{job_id}", response_model=JobResult)
     def get_result(job_id: str) -> JobResult:

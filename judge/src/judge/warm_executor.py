@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from judge.problems import Problem
+from judge.problems import ExecutionPlan
 from judge.runner import (
     HARNESS_CODE,
     IsolateConfig,
@@ -385,26 +385,24 @@ class WarmForkExecutor:
     # Public entry point
     # ------------------------------------------------------------------
 
-    def run_problem(
+    def run_execution_plan(
         self,
-        problem: Problem,
+        plan: ExecutionPlan,
         user_code: str,
         max_output_chars: int,
-        include_hidden: bool = True,
-        detail_mode: str = "all",
         isolate: IsolateConfig | None = None,
     ) -> dict[str, Any]:
         if isolate is None:
             raise ValueError("isolate configuration is required")
 
-        config = _build_test_config(problem, include_hidden)
+        config = _build_test_config(plan)
         total_cases = len(config["cases"])
-        wall_time = max(problem.time_limit_s + isolate.wall_time_extra_s, problem.time_limit_s + 1)
+        wall_time = max(plan.time_limit_s + isolate.wall_time_extra_s, plan.time_limit_s + 1)
         timeout_s = wall_time + isolate.timeout_grace_s
 
         try:
             child = self._run_child(
-                problem=problem,
+                plan=plan,
                 user_code=user_code,
                 config=config,
                 isolate=isolate,
@@ -413,7 +411,7 @@ class WarmForkExecutor:
         except Exception as exc:
             return {
                 "status": "Runtime Error",
-                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "summary": _build_error_summary(total_cases),
                 "tests": [],
                 "error": f"Warm executor failed: {exc}",
                 "error_kind": "internal",
@@ -422,18 +420,18 @@ class WarmForkExecutor:
         if child.oom_killed:
             return {
                 "status": "Memory Limit Exceeded",
-                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "summary": _build_error_summary(total_cases),
                 "tests": [],
-                "error": f"Memory Limit Exceeded ({problem.memory_mb}MB)",
+                "error": f"Memory Limit Exceeded ({plan.memory_mb}MB)",
                 "error_kind": "user",
             }
 
         if child.timed_out:
             return {
                 "status": "Time Limit Exceeded",
-                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "summary": _build_error_summary(total_cases),
                 "tests": [],
-                "error": f"Time Limit Exceeded ({problem.time_limit_s}s)",
+                "error": f"Time Limit Exceeded ({plan.time_limit_s}s)",
                 "error_kind": "user",
             }
 
@@ -445,7 +443,7 @@ class WarmForkExecutor:
                 detail = f"Runner killed by signal {child.signum}"
             return {
                 "status": "Runtime Error",
-                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "summary": _build_error_summary(total_cases),
                 "tests": [],
                 "error": detail,
                 "error_kind": error_kind,
@@ -455,7 +453,7 @@ class WarmForkExecutor:
             cap_mb = _MAX_CHILD_OUTPUT_BYTES // (1024 * 1024)
             return {
                 "status": "Runtime Error",
-                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "summary": _build_error_summary(total_cases),
                 "tests": [],
                 "error": f"Output Limit Exceeded ({cap_mb}MB)",
                 "error_kind": "user",
@@ -466,7 +464,7 @@ class WarmForkExecutor:
         except json.JSONDecodeError:
             return {
                 "status": "Runtime Error",
-                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "summary": _build_error_summary(total_cases),
                 "tests": [],
                 "error": f"Invalid runner output. Stdout: {child.stdout}\nStderr: {child.stderr}",
                 "error_kind": "internal",
@@ -477,7 +475,7 @@ class WarmForkExecutor:
         if summary["failed"] > 0 and first_failed is not None:
             status = first_failed.get("status", "Wrong Answer")
 
-        if detail_mode == "first_failure":
+        if plan.detail_mode == "first_failure":
             tests = (
                 [_sanitize_item(first_failed, max_output_chars)]
                 if first_failed is not None
@@ -500,7 +498,7 @@ class WarmForkExecutor:
     def _run_child(
         self,
         *,
-        problem: Problem,
+        plan: ExecutionPlan,
         user_code: str,
         config: dict[str, Any],
         isolate: IsolateConfig,
@@ -510,7 +508,7 @@ class WarmForkExecutor:
         cgroup_name = f"job-{self._job_seq}"
         cgroup_path = self._cgroup.create_child(
             cgroup_name,
-            memory_bytes=max(problem.memory_mb, 1) * 1024 * 1024,
+            memory_bytes=max(plan.memory_mb, 1) * 1024 * 1024,
             pids_max=max(isolate.process_limit, 1),
         )
 
@@ -539,7 +537,7 @@ class WarmForkExecutor:
                 stdout_fd=stdout_w,
                 stderr_fd=stderr_w,
                 cgroup_path=cgroup_path,
-                problem=problem,
+                plan=plan,
                 user_code=user_code,
                 config=config,
                 isolate=isolate,
@@ -572,7 +570,7 @@ class WarmForkExecutor:
         stdout_fd: int,
         stderr_fd: int,
         cgroup_path: Path | None,
-        problem: Problem,
+        plan: ExecutionPlan,
         user_code: str,
         config: dict[str, Any],
         isolate: IsolateConfig,
@@ -587,7 +585,7 @@ class WarmForkExecutor:
                 stdout_fd=stdout_fd,
                 stderr_fd=stderr_fd,
             )
-            self._prepare_child_sandbox(problem=problem, isolate=isolate)
+            self._prepare_child_sandbox(plan=plan, isolate=isolate)
             self._execute_harness(
                 user_code=user_code,
                 config=config,
@@ -640,7 +638,7 @@ class WarmForkExecutor:
     def _prepare_child_sandbox(
         self,
         *,
-        problem: Problem,
+        plan: ExecutionPlan,
         isolate: IsolateConfig,
     ) -> None:
         try:
@@ -652,7 +650,7 @@ class WarmForkExecutor:
         os.umask(0o077)
         if self.enable_no_new_privs:
             self._set_no_new_privs()
-        self._apply_resource_limits(problem=problem, isolate=isolate)
+        self._apply_resource_limits(plan=plan, isolate=isolate)
         if self.enable_seccomp:
             self._apply_seccomp_filter()
         self._close_inherited_fds()
@@ -1005,9 +1003,9 @@ class WarmForkExecutor:
         finally:
             lib.seccomp_release(ctx)
 
-    def _apply_resource_limits(self, *, problem: Problem, isolate: IsolateConfig) -> None:
-        cpu_seconds = max(problem.time_limit_s, 1)
-        memory_bytes = max(problem.memory_mb, 1) * 1024 * 1024
+    def _apply_resource_limits(self, *, plan: ExecutionPlan, isolate: IsolateConfig) -> None:
+        cpu_seconds = max(plan.time_limit_s, 1)
+        memory_bytes = max(plan.memory_mb, 1) * 1024 * 1024
         fsize_bytes = max(isolate.fsize_kb, 1) * 1024
         proc_limit = max(isolate.process_limit, 1)
         nofile_limit = max(self.child_nofile_limit, 16)

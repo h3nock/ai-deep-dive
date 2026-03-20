@@ -18,7 +18,7 @@ class ResultsStoreIdempotencyTests(TestCase):
                 job_id="job-1",
                 problem_id="sample/01-basics/01-add",
                 profile="light",
-                kind="submit",
+                operation="submit",
                 created_at=1700000000,
             )
 
@@ -52,7 +52,7 @@ class ResultsStoreIdempotencyTests(TestCase):
                 job_id="job-2",
                 problem_id="sample/01-basics/01-add",
                 profile="light",
-                kind="submit",
+                operation="submit",
                 created_at=1700000000,
             )
 
@@ -75,7 +75,7 @@ class ResultsStoreIdempotencyTests(TestCase):
                 job_id="job-3",
                 problem_id="sample/01-basics/01-add",
                 profile="light",
-                kind="submit",
+                operation="submit",
                 created_at=1700000000,
             )
 
@@ -94,4 +94,3 @@ class ResultsStoreIdempotencyTests(TestCase):
         assert job is not None
         self.assertEqual(job["status"], "error")
         self.assertEqual(job["error"], "Failed to enqueue job")
-

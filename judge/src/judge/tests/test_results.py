@@ -18,7 +18,7 @@ class ResultsStoreTests(TestCase):
                 job_id="job-1",
                 problem_id="sample/01-basics/01-add",
                 profile="light",
-                kind="submit",
+                operation="submit",
                 created_at=1700000000,
             )
 

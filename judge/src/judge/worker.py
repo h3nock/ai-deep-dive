@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import socket
@@ -122,17 +123,31 @@ def _parse_queue_message(fields: dict[str, str]) -> tuple[dict[str, Any], str | 
     if not job_id:
         return {}, "missing job_id"
 
-    problem_key = fields.get("problem_key", "").strip() or fields.get("problem_id", "").strip()
-    if not problem_key:
-        return {}, "missing problem_key/problem_id"
+    problem_id = fields.get("problem_id", "").strip()
+    if not problem_id:
+        return {}, "missing problem_id"
 
-    kind = fields.get("kind", "submit").strip()
-    if kind not in {"run", "submit"}:
-        return {}, f"invalid kind: {kind or '<empty>'}"
+    operation = fields.get("operation", "").strip()
+    if operation not in {"run", "submit"}:
+        return {}, f"invalid operation: {operation or '<empty>'}"
 
     code = fields.get("code", "")
     if not isinstance(code, str):
         return {}, "invalid code field"
+
+    cases_json = fields.get("cases_json", "")
+    if operation == "run" and not cases_json.strip():
+        return {}, "missing cases_json for run job"
+    if operation == "submit":
+        cases_payload = None
+    else:
+        try:
+            decoded_cases = json.loads(cases_json)
+        except json.JSONDecodeError as exc:
+            return {}, f"invalid cases_json: {exc.msg}"
+        if not isinstance(decoded_cases, list):
+            return {}, "invalid cases_json: expected a list"
+        cases_payload = decoded_cases
 
     created_at_raw = fields.get("created_at", "").strip()
     if created_at_raw and not created_at_raw.isdigit():
@@ -140,9 +155,10 @@ def _parse_queue_message(fields: dict[str, str]) -> tuple[dict[str, Any], str | 
 
     return {
         "job_id": job_id,
-        "problem_key": problem_key,
-        "kind": kind,
+        "problem_id": problem_id,
+        "operation": operation,
         "code": code,
+        "cases_payload": cases_payload,
         "created_at": int(created_at_raw) if created_at_raw else None,
     }, None
 
@@ -173,7 +189,7 @@ def build_worker_dependencies(
     )
 
     warm_executor_instance: WarmForkExecutor | None = None
-    run_problem_fn = None
+    run_execution_plan_fn = None
     if stream == "queue:torch" and resolved_settings.torch_execution_mode == "warm_fork":
         warm_executor_instance = WarmForkExecutor(
             enable_no_new_privs=resolved_settings.warm_fork_enable_no_new_privs,
@@ -186,7 +202,7 @@ def build_worker_dependencies(
             enable_cgroup=resolved_settings.warm_fork_enable_cgroup,
             max_jobs=resolved_settings.warm_fork_max_jobs,
         )
-        run_problem_fn = warm_executor_instance.run_problem
+        run_execution_plan_fn = warm_executor_instance.run_execution_plan
         logger.info(
             "Torch worker execution mode enabled: warm_fork (consumer=%s, max_jobs=%d)",
             consumer,
@@ -194,8 +210,8 @@ def build_worker_dependencies(
         )
 
     execution_kwargs: dict[str, Any] = {}
-    if run_problem_fn is not None:
-        execution_kwargs["run_problem_fn"] = run_problem_fn
+    if run_execution_plan_fn is not None:
+        execution_kwargs["run_execution_plan_fn"] = run_execution_plan_fn
 
     execution = WorkerExecutionService(
         results=results,
@@ -272,9 +288,10 @@ def _process_queue_entry(
 
     job = WorkerJob(
         job_id=parsed["job_id"],
-        problem_key=parsed["problem_key"],
-        kind=parsed["kind"],
+        problem_id=parsed["problem_id"],
+        operation=parsed["operation"],
         code=parsed["code"],
+        cases_payload=parsed["cases_payload"],
     )
     created_at = parsed["created_at"]
 
@@ -283,7 +300,7 @@ def _process_queue_entry(
     def _on_started() -> None:
         nonlocal execution_started_at
         execution_started_at = time.perf_counter()
-        job_started(worker_profile, job.kind)
+        job_started(worker_profile, job.operation)
         observe_job_queue_wait(worker_profile, created_at)
 
     outcome = execution.execute(job, on_started=_on_started)

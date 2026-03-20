@@ -36,9 +36,8 @@ class RedisQueueEnqueueValidationTests(TestCase):
         return {
             "job_id": "job-1",
             "problem_id": "sample/01-basics/01-add",
-            "problem_key": "sample/01-basics/01-add",
             "profile": "light",
-            "kind": "submit",
+            "operation": "submit",
             "code": "def add(a, b):\n    return a + b\n",
             "created_at": 1700000000,
         }
@@ -54,10 +53,10 @@ class RedisQueueEnqueueValidationTests(TestCase):
             {
                 "job_id": "job-1",
                 "problem_id": "sample/01-basics/01-add",
-                "problem_key": "sample/01-basics/01-add",
                 "profile": "light",
-                "kind": "submit",
+                "operation": "submit",
                 "code": "def add(a, b):\n    return a + b\n",
+                "cases_json": "",
                 "created_at": "1700000000",
             },
         )
@@ -71,11 +70,20 @@ class RedisQueueEnqueueValidationTests(TestCase):
 
         self.queue.client.xadd.assert_not_called()
 
-    def test_enqueue_rejects_invalid_kind(self) -> None:
+    def test_enqueue_rejects_invalid_operation(self) -> None:
         payload = self._payload()
-        payload["kind"] = "execute"
+        payload["operation"] = "execute"
 
-        with self.assertRaisesRegex(ValueError, "kind"):
+        with self.assertRaisesRegex(ValueError, "operation"):
+            self.queue.enqueue("queue:light", payload)
+
+        self.queue.client.xadd.assert_not_called()
+
+    def test_enqueue_run_requires_cases_json(self) -> None:
+        payload = self._payload()
+        payload["operation"] = "run"
+
+        with self.assertRaisesRegex(ValueError, "cases_json"):
             self.queue.enqueue("queue:light", payload)
 
         self.queue.client.xadd.assert_not_called()

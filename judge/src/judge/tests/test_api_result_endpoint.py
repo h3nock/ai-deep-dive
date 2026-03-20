@@ -46,6 +46,7 @@ class ResultEndpointTests(TestCase):
             "status": "done",
             "problem_id": "sample/01-basics/01-add",
             "profile": "light",
+            "operation": "submit",
             "created_at": 1700000000,
             "started_at": 1700000001,
             "finished_at": 1700000002,

@@ -9,7 +9,7 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 from judge.config import Settings
-from judge.runner import run_problem
+from judge.runner import run_execution_plan
 from judge.worker import build_worker_dependencies
 
 
@@ -100,7 +100,7 @@ class WorkerDependencyWiringTests(TestCase):
             enable_cgroup=True,
             max_jobs=500,
         )
-        self.assertIs(deps.execution.run_problem_fn, warm_executor_instance.run_problem)
+        self.assertIs(deps.execution.run_execution_plan_fn, warm_executor_instance.run_execution_plan)
         self.assertIs(deps.warm_executor, warm_executor_instance)
 
     def test_torch_stream_defaults_to_isolate_executor(self) -> None:
@@ -126,7 +126,7 @@ class WorkerDependencyWiringTests(TestCase):
             )
 
         warm_cls.assert_not_called()
-        self.assertIs(deps.execution.run_problem_fn, run_problem)
+        self.assertIs(deps.execution.run_execution_plan_fn, run_execution_plan)
         self.assertIsNone(deps.warm_executor)
 
     def test_light_stream_never_uses_warm_executor(self) -> None:
@@ -152,5 +152,5 @@ class WorkerDependencyWiringTests(TestCase):
             )
 
         warm_cls.assert_not_called()
-        self.assertIs(deps.execution.run_problem_fn, run_problem)
+        self.assertIs(deps.execution.run_execution_plan_fn, run_execution_plan)
         self.assertIsNone(deps.warm_executor)

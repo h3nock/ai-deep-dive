@@ -5,10 +5,11 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import Mock
 
-from judge.problems import ProblemRouteInfo
+from judge.problems import ArgumentSpec, Comparison, ProblemSpec, TestCase as ProblemTestCase, TestCaseCompiler
 from judge.services import (
     DEFAULT_STREAM_ROUTING,
     InvalidProblemError,
+    InvalidRunRequestError,
     ProblemNotFoundError,
     QueueFullError,
     QueueUnavailableError,
@@ -17,11 +18,13 @@ from judge.services import (
 
 
 class SubmissionServiceEdgeTests(TestCase):
-    def _problem(self) -> ProblemRouteInfo:
-        return ProblemRouteInfo(
-            id="sample/01-basics/01-add",
-            version="v1",
-            requires_torch=False,
+    def _problem(self) -> ProblemSpec:
+        return ProblemSpec(
+            problem_id="sample/01-basics/01-add",
+            arguments=(ArgumentSpec("a"), ArgumentSpec("b")),
+            runner="add(a, b)",
+            execution_profile="light",
+            comparison=Comparison(type="exact"),
             time_limit_s=5,
             memory_mb=1024,
         )
@@ -30,7 +33,7 @@ class SubmissionServiceEdgeTests(TestCase):
         queue = Mock()
         results = Mock()
         problems = Mock()
-        problems.get_route_info.side_effect = FileNotFoundError("missing")
+        problems.get_problem_spec.side_effect = FileNotFoundError("missing")
         service = SubmissionService(
             queue=queue,
             results=results,
@@ -40,7 +43,7 @@ class SubmissionServiceEdgeTests(TestCase):
         )
 
         with self.assertRaises(ProblemNotFoundError):
-            service.submit(problem_key="sample/missing", kind="submit", code="pass")
+            service.enqueue_submit(problem_id="sample/missing", code="pass")
 
         results.create_job.assert_not_called()
         queue.enqueue.assert_not_called()
@@ -49,7 +52,7 @@ class SubmissionServiceEdgeTests(TestCase):
         queue = Mock()
         results = Mock()
         problems = Mock()
-        problems.get_route_info.side_effect = ValueError("invalid problem id")
+        problems.get_problem_spec.side_effect = ValueError("invalid problem id")
         service = SubmissionService(
             queue=queue,
             results=results,
@@ -59,7 +62,7 @@ class SubmissionServiceEdgeTests(TestCase):
         )
 
         with self.assertRaises(InvalidProblemError):
-            service.submit(problem_key="bad//id", kind="submit", code="pass")
+            service.enqueue_submit(problem_id="bad//id", code="pass")
 
         results.create_job.assert_not_called()
         queue.enqueue.assert_not_called()
@@ -69,7 +72,7 @@ class SubmissionServiceEdgeTests(TestCase):
         queue.backlog.side_effect = RuntimeError("redis down")
         results = Mock()
         problems = Mock()
-        problems.get_route_info.return_value = self._problem()
+        problems.get_problem_spec.return_value = self._problem()
         service = SubmissionService(
             queue=queue,
             results=results,
@@ -79,9 +82,8 @@ class SubmissionServiceEdgeTests(TestCase):
         )
 
         with self.assertRaises(QueueUnavailableError):
-            service.submit(
-                problem_key="sample/01-basics/01-add",
-                kind="submit",
+            service.enqueue_submit(
+                problem_id="sample/01-basics/01-add",
                 code="def add(a, b):\n    return a + b\n",
             )
 
@@ -93,7 +95,7 @@ class SubmissionServiceEdgeTests(TestCase):
         queue.backlog.return_value = 100
         results = Mock()
         problems = Mock()
-        problems.get_route_info.return_value = self._problem()
+        problems.get_problem_spec.return_value = self._problem()
         service = SubmissionService(
             queue=queue,
             results=results,
@@ -103,9 +105,8 @@ class SubmissionServiceEdgeTests(TestCase):
         )
 
         with self.assertRaises(QueueFullError):
-            service.submit(
-                problem_key="sample/01-basics/01-add",
-                kind="submit",
+            service.enqueue_submit(
+                problem_id="sample/01-basics/01-add",
                 code="def add(a, b):\n    return a + b\n",
             )
 
@@ -118,7 +119,7 @@ class SubmissionServiceEdgeTests(TestCase):
         queue.enqueue.side_effect = RuntimeError("enqueue failed")
         results = Mock()
         problems = Mock()
-        problems.get_route_info.return_value = self._problem()
+        problems.get_problem_spec.return_value = self._problem()
         service = SubmissionService(
             queue=queue,
             results=results,
@@ -130,9 +131,8 @@ class SubmissionServiceEdgeTests(TestCase):
         )
 
         with self.assertRaises(QueueUnavailableError):
-            service.submit(
-                problem_key="sample/01-basics/01-add",
-                kind="submit",
+            service.enqueue_submit(
+                problem_id="sample/01-basics/01-add",
                 code="def add(a, b):\n    return a + b\n",
             )
 
@@ -148,3 +148,33 @@ class SubmissionServiceEdgeTests(TestCase):
             "Failed to enqueue job",
             error_kind="internal",
         )
+
+    def test_enqueue_run_raises_invalid_run_request_for_bad_cases(self) -> None:
+        queue = Mock()
+        results = Mock()
+        problems = Mock()
+        problems.get_problem_spec.return_value = self._problem()
+        problems.compiler = TestCaseCompiler()
+        service = SubmissionService(
+            queue=queue,
+            results=results,
+            problems=problems,
+            queue_maxlen=100,
+            stream_routing=DEFAULT_STREAM_ROUTING,
+        )
+
+        with self.assertRaises(InvalidRunRequestError):
+            service.enqueue_run(
+                problem_id="sample/01-basics/01-add",
+                code="def add(a, b):\n    return a + b\n",
+                cases=[
+                    ProblemTestCase(
+                        id="case1",
+                        inputs={"a": "1", "c": "2"},
+                        expected_literal="3",
+                    )
+                ],
+            )
+
+        results.create_job.assert_not_called()
+        queue.enqueue.assert_not_called()

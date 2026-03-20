@@ -19,21 +19,25 @@ class SubmitQueueCapacityTests(TestCase):
         from fastapi.testclient import TestClient
 
         from judge.api import ApiDependencies, create_app
-        from judge.problems import ProblemRouteInfo
+        from judge.problems import ArgumentSpec, Comparison, ProblemSpec
         from judge.services import DEFAULT_STREAM_ROUTING, SubmissionService
 
         self.TestClient = TestClient
         self.ApiDependencies = ApiDependencies
         self.create_app = create_app
-        self.ProblemRouteInfo = ProblemRouteInfo
+        self.ArgumentSpec = ArgumentSpec
+        self.Comparison = Comparison
+        self.ProblemSpec = ProblemSpec
         self.DEFAULT_STREAM_ROUTING = DEFAULT_STREAM_ROUTING
         self.SubmissionService = SubmissionService
 
     def _problem(self) -> object:
-        return self.ProblemRouteInfo(
-            id="sample/01-basics/01-add",
-            version="v1",
-            requires_torch=False,
+        return self.ProblemSpec(
+            problem_id="sample/01-basics/01-add",
+            arguments=(self.ArgumentSpec("a"), self.ArgumentSpec("b")),
+            runner="add(a, b)",
+            execution_profile="light",
+            comparison=self.Comparison(type="exact"),
             time_limit_s=10,
             memory_mb=1024,
         )
@@ -68,7 +72,7 @@ class SubmitQueueCapacityTests(TestCase):
         queue = Mock()
         queue.backlog.return_value = 10000
         problems = Mock()
-        problems.get_route_info.return_value = self._problem()
+        problems.get_problem_spec.return_value = self._problem()
         results = Mock()
 
         client = self._build_client(
@@ -82,7 +86,6 @@ class SubmitQueueCapacityTests(TestCase):
             "/submit",
             json={
                 "problem_id": "sample/01-basics/01-add",
-                "kind": "submit",
                 "code": "def add(a, b):\n    return a + b\n",
             },
         )
@@ -97,7 +100,7 @@ class SubmitQueueCapacityTests(TestCase):
         queue = Mock()
         queue.backlog.side_effect = RuntimeError("redis unavailable")
         problems = Mock()
-        problems.get_route_info.return_value = self._problem()
+        problems.get_problem_spec.return_value = self._problem()
         results = Mock()
 
         client = self._build_client(
@@ -111,7 +114,6 @@ class SubmitQueueCapacityTests(TestCase):
             "/submit",
             json={
                 "problem_id": "sample/01-basics/01-add",
-                "kind": "submit",
                 "code": "def add(a, b):\n    return a + b\n",
             },
         )
@@ -126,7 +128,7 @@ class SubmitQueueCapacityTests(TestCase):
         queue = Mock()
         queue.enqueue.return_value = "1-0"
         problems = Mock()
-        problems.get_route_info.return_value = self._problem()
+        problems.get_problem_spec.return_value = self._problem()
         results = Mock()
 
         client = self._build_client(
@@ -140,7 +142,6 @@ class SubmitQueueCapacityTests(TestCase):
             "/submit",
             json={
                 "problem_id": "sample/01-basics/01-add",
-                "kind": "submit",
                 "code": "def add(a, b):\n    return a + b\n",
             },
         )

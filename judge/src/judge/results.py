@@ -37,7 +37,7 @@ class ResultsStore:
                     status TEXT NOT NULL,
                     profile TEXT NOT NULL,
                     problem_id TEXT NOT NULL,
-                    kind TEXT NOT NULL,
+                    operation TEXT NOT NULL,
                     created_at INTEGER NOT NULL,
                     started_at INTEGER,
                     finished_at INTEGER,
@@ -63,17 +63,17 @@ class ResultsStore:
         job_id: str,
         problem_id: str,
         profile: str,
-        kind: str,
+        operation: str,
         created_at: int | None = None,
     ) -> None:
         now = created_at if created_at is not None else int(time.time())
         with self._connect() as conn:
             conn.execute(
                 """
-                INSERT INTO jobs (id, status, profile, problem_id, kind, created_at)
+                INSERT INTO jobs (id, status, profile, problem_id, operation, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (job_id, "queued", profile, problem_id, kind, now),
+                (job_id, "queued", profile, problem_id, operation, now),
             )
 
     def mark_running(self, job_id: str) -> bool:
@@ -136,7 +136,7 @@ class ResultsStore:
             "status": row["status"],
             "profile": row["profile"],
             "problem_id": row["problem_id"],
-            "kind": row["kind"],
+            "operation": row["operation"],
             "created_at": row["created_at"],
             "started_at": row["started_at"],
             "finished_at": row["finished_at"],

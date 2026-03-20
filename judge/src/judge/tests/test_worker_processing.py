@@ -44,7 +44,7 @@ class WorkerProcessEntryTests(TestCase):
         return queue, results, execution
 
     def test_invalid_payload_without_job_id_is_acked_and_not_executed(self) -> None:
-        queue, results, execution = self._run_entry(fields={"problem_key": "sample/01-basics/01-add"})
+        queue, results, execution = self._run_entry(fields={"problem_id": "sample/01-basics/01-add"})
 
         execution.execute.assert_not_called()
         results.mark_error.assert_not_called()
@@ -53,8 +53,8 @@ class WorkerProcessEntryTests(TestCase):
     def test_invalid_payload_with_job_id_is_persisted_and_acked(self) -> None:
         fields = {
             "job_id": "job-invalid",
-            "problem_key": "sample/01-basics/01-add",
-            "kind": "submit",
+            "problem_id": "sample/01-basics/01-add",
+            "operation": "submit",
             "code": "pass",
             "created_at": "not-a-number",
         }
@@ -67,8 +67,8 @@ class WorkerProcessEntryTests(TestCase):
     def test_processed_job_is_acked_when_execution_requests_ack(self) -> None:
         fields = {
             "job_id": "job-ack",
-            "problem_key": "sample/01-basics/01-add",
-            "kind": "submit",
+            "problem_id": "sample/01-basics/01-add",
+            "operation": "submit",
             "code": "pass",
             "created_at": "1700000000",
         }
@@ -89,8 +89,8 @@ class WorkerProcessEntryTests(TestCase):
     def test_processed_job_is_not_acked_when_execution_disables_ack(self) -> None:
         fields = {
             "job_id": "job-no-ack",
-            "problem_key": "sample/01-basics/01-add",
-            "kind": "submit",
+            "problem_id": "sample/01-basics/01-add",
+            "operation": "submit",
             "code": "pass",
             "created_at": "1700000000",
         }

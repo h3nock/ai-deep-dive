@@ -117,7 +117,6 @@ class RedisWorkerIntegrationTests(TestCase):
                 "/submit",
                 json={
                     "problem_id": "sample/01-basics/01-add",
-                    "kind": "submit",
                     "code": "def add(a, b):\n    return a + b\n",
                 },
             )
@@ -146,10 +145,6 @@ class RedisWorkerIntegrationTests(TestCase):
                         "total": 1,
                         "passed": 1,
                         "failed": 0,
-                        "public_total": 0,
-                        "public_passed": 0,
-                        "hidden_total": 1,
-                        "hidden_passed": 1,
                     },
                     "tests": [],
                     "error": None,
@@ -160,7 +155,7 @@ class RedisWorkerIntegrationTests(TestCase):
                 problems=problems,
                 isolate=self.IsolateConfig(executable="/usr/bin/isolate", box_id=1),
                 max_output_chars=2000,
-                run_problem_fn=_run_problem_ok,
+                run_execution_plan_fn=_run_problem_ok,
                 log=Mock(),
             )
 
@@ -248,7 +243,6 @@ class RedisWorkerIntegrationTests(TestCase):
                 "/submit",
                 json={
                     "problem_id": "sample/01-basics/01-add",
-                    "kind": "submit",
                     "code": "def add(a, b):\n    return a + b\n",
                 },
             )
@@ -284,10 +278,6 @@ class RedisWorkerIntegrationTests(TestCase):
                         "total": 1,
                         "passed": 1,
                         "failed": 0,
-                        "public_total": 0,
-                        "public_passed": 0,
-                        "hidden_total": 1,
-                        "hidden_passed": 1,
                     },
                     "tests": [],
                     "error": None,
@@ -298,7 +288,7 @@ class RedisWorkerIntegrationTests(TestCase):
                 problems=problems,
                 isolate=self.IsolateConfig(executable="/usr/bin/isolate", box_id=1),
                 max_output_chars=2000,
-                run_problem_fn=_run_problem_ok,
+                run_execution_plan_fn=_run_problem_ok,
                 log=Mock(),
             )
 
