@@ -75,7 +75,7 @@ hidden: true
   </Callout>
 
   <Description>
-    Typically, an optimizer step needs more tokens than a single forward pass can fit in memory. **Gradient accumulation** solves this by splitting each step into multiple smaller forward passes. Each pass processes a micro-batch and computes gradients, but rather than updating the weights immediately, those gradients accumulate across passes. The weights update only once all the batch tokens have been processed.
+    Typically, an optimizer step needs more tokens than a single forward pass can fit in memory. **Gradient accumulation** solves this by splitting each step into multiple smaller forward passes. Each pass processes a micro-batch and computes gradients without updating the weights. After `grad_accum_steps` passes, the optimizer applies a single update using the accumulated gradients.
   </Description>
 
   <Description>
