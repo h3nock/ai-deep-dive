@@ -745,21 +745,21 @@ def inline_assignment_aliases(
             return resolve_name(name, stack=stack)
 
         cloned = copy.deepcopy(expr)
-        for child in ast.walk(cloned):
-            for field_name, field_value in ast.iter_fields(child):
-                if isinstance(field_value, ast.expr):
-                    setattr(child, field_name, resolve_expr(field_value, stack=stack))
-                elif isinstance(field_value, list):
-                    replaced: list[Any] = []
-                    changed = False
-                    for item in field_value:
-                        if isinstance(item, ast.expr):
-                            replaced.append(resolve_expr(item, stack=stack))
-                            changed = True
-                        else:
-                            replaced.append(item)
-                    if changed:
-                        setattr(child, field_name, replaced)
+        for field_name, field_value in ast.iter_fields(cloned):
+            if isinstance(field_value, ast.expr):
+                setattr(cloned, field_name, resolve_expr(field_value, stack=stack))
+                continue
+            if isinstance(field_value, list):
+                replaced: list[Any] = []
+                changed = False
+                for item in field_value:
+                    if isinstance(item, ast.expr):
+                        replaced.append(resolve_expr(item, stack=stack))
+                        changed = True
+                    else:
+                        replaced.append(item)
+                if changed:
+                    setattr(cloned, field_name, replaced)
         return cloned
 
     def resolve_name(name: str, *, stack: tuple[str, ...]) -> ast.expr:
