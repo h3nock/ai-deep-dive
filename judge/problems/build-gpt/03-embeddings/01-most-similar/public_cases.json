@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "case1",
+      "inputs": {
+        "query_id": "0",
+        "embedding_matrix": "torch.tensor([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, 0.0], [0.0, 0.0]], dtype=torch.float32)",
+        "k": "2"
+      },
+      "expected_literal": "[2, 1]"
+    },
+    {
+      "id": "case2",
+      "inputs": {
+        "query_id": "1",
+        "embedding_matrix": "torch.tensor([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [-1.0, 0.0], [0.0, 0.0]], dtype=torch.float32)",
+        "k": "3"
+      },
+      "expected_literal": "[2, 0, 3]"
+    }
+  ]
+}

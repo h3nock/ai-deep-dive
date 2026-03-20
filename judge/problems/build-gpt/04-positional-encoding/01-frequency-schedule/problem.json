@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "arguments": [
+    {
+      "name": "d_model"
+    }
+  ],
+  "runner": "get_frequencies(d_model)",
+  "execution_profile": "torch",
+  "comparison": {
+    "type": "allclose",
+    "rtol": 1e-05,
+    "atol": 1e-06
+  },
+  "time_limit_s": 5,
+  "memory_mb": 1024
+}

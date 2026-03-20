@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "case1",
+      "inputs": {
+        "X": "torch.tensor([[1.0, 0.0], [0.0, 0.0]], dtype=torch.float32)",
+        "W_Q": "torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)",
+        "W_K": "torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)",
+        "W_V": "torch.tensor([[1.0, 0.0], [0.0, 1.0]], dtype=torch.float32)",
+        "W_O": "torch.tensor([[0.0, 1.0], [1.0, 0.0]], dtype=torch.float32)",
+        "num_heads": "2"
+      },
+      "expected_literal": "[[0.0, 1.0], [0.0, 0.5]]"
+    },
+    {
+      "id": "case2",
+      "inputs": {
+        "X": "torch.tensor([[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0]], dtype=torch.float32)",
+        "W_Q": "torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)",
+        "W_K": "torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)",
+        "W_V": "torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)",
+        "W_O": "torch.tensor([[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]], dtype=torch.float32)",
+        "num_heads": "2"
+      },
+      "expected_literal": "[[1.0, 1.0, 0.0, 0.0], [0.33023846, 0.33023846, 0.66976154, 0.66976154]]"
+    }
+  ]
+}

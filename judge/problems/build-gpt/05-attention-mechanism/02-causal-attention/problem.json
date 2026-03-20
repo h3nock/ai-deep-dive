@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "arguments": [
+    {
+      "name": "Q"
+    },
+    {
+      "name": "K"
+    },
+    {
+      "name": "V"
+    }
+  ],
+  "runner": "causal_attention(Q, K, V)",
+  "execution_profile": "torch",
+  "comparison": {
+    "type": "allclose",
+    "rtol": 1e-05,
+    "atol": 1e-06
+  },
+  "time_limit_s": 5,
+  "memory_mb": 1024
+}

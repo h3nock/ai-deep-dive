@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "arguments": [
+    {
+      "name": "ids"
+    },
+    {
+      "name": "pair"
+    },
+    {
+      "name": "new_id"
+    }
+  ],
+  "runner": "merge(ids, pair, new_id)",
+  "execution_profile": "light",
+  "comparison": {
+    "type": "exact"
+  },
+  "time_limit_s": 5,
+  "memory_mb": 1024
+}

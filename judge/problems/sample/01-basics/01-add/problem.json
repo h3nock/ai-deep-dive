@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "arguments": [
+    {
+      "name": "a"
+    },
+    {
+      "name": "b"
+    }
+  ],
+  "runner": "add(a, b)",
+  "execution_profile": "light",
+  "comparison": {
+    "type": "exact"
+  },
+  "time_limit_s": 5,
+  "memory_mb": 512
+}
