@@ -232,18 +232,11 @@ set -a
 source "$ENV_FILE"
 set +a
 
-JUDGE_TESTS_ROOT=${JUDGE_TESTS_ROOT:-/opt/ai-deep-dive/judge/tests}
-mkdir -p "$JUDGE_TESTS_ROOT"
-chown -R "$JUDGE_USER:$JUDGE_USER" "$JUDGE_TESTS_ROOT"
-
-info "Exporting judge tests bundle"
-sudo -u "$JUDGE_USER" env PYTHONPATH="$JUDGE_DIR/src" "$VENV_PY" "$JUDGE_DIR/scripts/export_tests_endpoint.py" --out-root "$JUDGE_TESTS_ROOT"
-
 info "Applying deploy configuration"
 if [[ -n "${JUDGE_CERT_DIR:-}" ]]; then
-  JUDGE_DOMAIN="$JUDGE_DOMAIN" JUDGE_CERT_DIR="$JUDGE_CERT_DIR" JUDGE_TESTS_ROOT="$JUDGE_TESTS_ROOT" "$JUDGE_DIR/deploy/apply.sh"
+  JUDGE_DOMAIN="$JUDGE_DOMAIN" JUDGE_CERT_DIR="$JUDGE_CERT_DIR" "$JUDGE_DIR/deploy/apply.sh"
 else
-  JUDGE_DOMAIN="$JUDGE_DOMAIN" JUDGE_TESTS_ROOT="$JUDGE_TESTS_ROOT" "$JUDGE_DIR/deploy/apply.sh"
+  JUDGE_DOMAIN="$JUDGE_DOMAIN" "$JUDGE_DIR/deploy/apply.sh"
 fi
 
 info "Running deploy verification"

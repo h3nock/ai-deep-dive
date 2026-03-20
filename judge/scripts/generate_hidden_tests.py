@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from judge.problems import TestCaseCompiler, load_problem_spec_file, load_public_cases_file
 
 ProblemGenerator = Callable[[random.Random], list["Case"]]
 
@@ -33,7 +34,6 @@ class Case:
     inputs: dict[str, Any] | None = None
     input_code: str | None = None
     expected: Any = None
-    expected_is_code: bool = False
 
 
 def _inputs_to_code(inputs: dict[str, Any]) -> str:
@@ -71,12 +71,7 @@ def _serialize_case(case_id: str, case: Case) -> dict[str, Any]:
         code += "\n"
 
     out["input_code"] = code
-
-    if case.expected_is_code:
-        out["expected"] = repr(case.expected)
-        out["expected_is_code"] = True
-    else:
-        out["expected"] = case.expected
+    out["expected_literal"] = repr(case.expected)
 
     return out
 
@@ -102,19 +97,11 @@ def _assign_hidden_ids(cases: list[Case]) -> list[dict[str, Any]]:
     return out
 
 
-def _assign_public_ids(cases: list[Case]) -> list[dict[str, Any]]:
-    return [
-        _serialize_case(f"case{index + 1}", case)
-        for index, case in enumerate(cases)
-    ]
-
-
-def _case_signature(case: Case) -> tuple[str, str, bool]:
+def _case_signature(case: Case) -> tuple[str, str]:
     serialized = _serialize_case("__sig__", case)
     return (
         serialized["input_code"],
-        json.dumps(serialized.get("expected"), sort_keys=True),
-        bool(serialized.get("expected_is_code", False)),
+        serialized["expected_literal"],
     )
 
 
@@ -849,7 +836,7 @@ def _gen_pair_counter(rng: random.Random) -> list[Case]:
 
     for bucket, ids in fixed:
         expected = _pair_stats(ids)
-        cases.append(Case(bucket, inputs={"ids": ids}, expected=expected, expected_is_code=True))
+        cases.append(Case(bucket, inputs={"ids": ids}, expected=expected))
 
     stress_lists = [
         [1, 2] * 600,
@@ -859,13 +846,13 @@ def _gen_pair_counter(rng: random.Random) -> list[Case]:
     ]
     for ids in stress_lists:
         expected = _pair_stats(ids)
-        cases.append(Case("stress", inputs={"ids": ids}, expected=expected, expected_is_code=True))
+        cases.append(Case("stress", inputs={"ids": ids}, expected=expected))
 
     for _ in range(8):
         length = rng.randint(80, 1400)
         ids = [rng.randint(-5, 25) for _ in range(length)]
         expected = _pair_stats(ids)
-        cases.append(Case("random", inputs={"ids": ids}, expected=expected, expected_is_code=True))
+        cases.append(Case("random", inputs={"ids": ids}, expected=expected))
 
     return cases
 
@@ -938,7 +925,7 @@ def _gen_bpe_trainer(rng: random.Random) -> list[Case]:
         ids, merges = _train_bpe(text, num_merges)
         expected = (ids, dict(merges))
         cases.append(
-            Case(bucket, inputs={"text": text, "num_merges": num_merges}, expected=expected, expected_is_code=True)
+            Case(bucket, inputs={"text": text, "num_merges": num_merges}, expected=expected)
         )
 
     stress = [
@@ -951,7 +938,7 @@ def _gen_bpe_trainer(rng: random.Random) -> list[Case]:
         ids, merges = _train_bpe(text, num_merges)
         expected = (ids, dict(merges))
         cases.append(
-            Case("stress", inputs={"text": text, "num_merges": num_merges}, expected=expected, expected_is_code=True)
+            Case("stress", inputs={"text": text, "num_merges": num_merges}, expected=expected)
         )
 
     alphabet = ["a", "b", "c", "d", " ", "e", "f", "g"]
@@ -966,7 +953,6 @@ def _gen_bpe_trainer(rng: random.Random) -> list[Case]:
                 "random",
                 inputs={"text": text, "num_merges": num_merges},
                 expected=expected,
-                expected_is_code=True,
             )
         )
 
@@ -2374,13 +2360,6 @@ PROBLEM_SEEDS: dict[str, int] = {
     "build-gpt/09-the-transformer-block/01-transformer-block": 901,
 }
 
-PUBLIC_CASE_COUNT_OVERRIDES: dict[str, int] = {
-    "build-gpt/02-tokenization/03-bpe-trainer": 1,
-    "build-gpt/02-tokenization/04-decoder": 1,
-    "build-gpt/02-tokenization/05-encoder": 1,
-}
-
-
 def _render_json(data: dict[str, Any]) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
@@ -2408,44 +2387,35 @@ def _json_equivalent(left: Any, right: Any) -> bool:
             return False
         return all(_json_equivalent(a, b) for a, b in zip(left, right))
     return left == right
+def _canonical_public_signatures(problem_id: str, problems_root: Path) -> set[tuple[str, str]]:
+    problem_dir = problems_root / problem_id
+    spec = load_problem_spec_file(problem_id, problem_dir / "problem.json")
+    public_cases = load_public_cases_file(problem_dir / "public_cases.json", spec)
+    compiler = TestCaseCompiler()
+    compiled_public = compiler.compile_cases(spec, list(public_cases))
+    return {(case.input_code, case.expected_literal) for case in compiled_public}
 
 
-
-def _public_case_count(problem_id: str) -> int:
-    return PUBLIC_CASE_COUNT_OVERRIDES.get(problem_id, 2)
-
-
-def generate_problem_tests(problem_id: str, problems_root: Path, seed_offset: int = 0) -> tuple[dict[str, Any], dict[str, Any]]:
+def generate_problem_tests(problem_id: str, problems_root: Path, seed_offset: int = 0) -> dict[str, Any]:
     generator = PROBLEM_GENERATORS[problem_id]
     base_seed = PROBLEM_SEEDS.get(problem_id, 0)
     rng = random.Random(base_seed + seed_offset)
     cases = generator(rng)
     _assert_case_count(problem_id, cases)
 
-    public_count = _public_case_count(problem_id)
-    if public_count < 1:
-        raise ValueError(f"{problem_id}: public case count must be >= 1")
-    if public_count > len(cases):
-        raise ValueError(
-            f"{problem_id}: requested {public_count} public cases but only {len(cases)} generated"
-        )
-
-    public_seed_cases = cases[:public_count]
-    hidden_seed_cases = cases[public_count:]
-    public_signatures = {_case_signature(case) for case in public_seed_cases}
+    public_signatures = _canonical_public_signatures(problem_id, problems_root)
     hidden_seed_cases = [
         case
-        for case in hidden_seed_cases
+        for case in cases
         if _case_signature(case) not in public_signatures
     ]
-    public_cases = _assign_public_ids(public_seed_cases)
     hidden_cases = _assign_hidden_ids(hidden_seed_cases)
 
-    return {"version": 1, "cases": public_cases}, {"version": 1, "cases": hidden_cases}
+    return {"schema_version": 1, "cases": hidden_cases}
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate deterministic public + hidden tests")
+    parser = argparse.ArgumentParser(description="Generate deterministic hidden tests")
     parser.add_argument(
         "--problems-root",
         default="problems",
@@ -2487,28 +2457,21 @@ def main() -> None:
         if not problem_dir.exists():
             raise SystemExit(f"Problem directory not found: {problem_dir}")
 
-        public_path = problem_dir / "public_tests.json"
         hidden_path = problem_dir / "hidden_tests.json"
 
-        generated_public, generated_hidden = generate_problem_tests(
+        generated_hidden = generate_problem_tests(
             problem_id,
             problems_root=problems_root,
             seed_offset=args.seed_offset,
         )
-        rendered_public = _render_json(generated_public)
         rendered_hidden = _render_json(generated_hidden)
 
-        existing_public = public_path.read_text() if public_path.exists() else None
         existing_hidden = hidden_path.read_text() if hidden_path.exists() else None
-        existing_public_obj = json.loads(existing_public) if existing_public is not None else None
         existing_hidden_obj = json.loads(existing_hidden) if existing_hidden is not None else None
 
         if args.check:
             checked += 1
             mismatched = False
-            if existing_public_obj is None or not _json_equivalent(existing_public_obj, generated_public):
-                mismatched = True
-                print(f"MISMATCH: {problem_id} (public_tests.json)")
             if existing_hidden_obj is None or not _json_equivalent(existing_hidden_obj, generated_hidden):
                 mismatched = True
                 print(f"MISMATCH: {problem_id} (hidden_tests.json)")
@@ -2516,9 +2479,6 @@ def main() -> None:
                 changed += 1
         else:
             updated_files = 0
-            if existing_public != rendered_public:
-                public_path.write_text(rendered_public)
-                updated_files += 1
             if existing_hidden != rendered_hidden:
                 hidden_path.write_text(rendered_hidden)
                 updated_files += 1
@@ -2531,9 +2491,9 @@ def main() -> None:
     if args.check:
         if changed:
             raise SystemExit(f"{changed}/{checked} problem(s) have out-of-date generated tests")
-        print(f"OK: {checked} problem(s) match generated public + hidden tests")
+        print(f"OK: {checked} problem(s) match generated hidden tests")
     else:
-        print(f"Done. Updated {changed} test file(s)")
+        print(f"Done. Updated {changed} hidden test file(s)")
 
 
 if __name__ == "__main__":

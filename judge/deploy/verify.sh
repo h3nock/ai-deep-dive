@@ -188,10 +188,12 @@ smoke_problem_id=${JUDGE_VERIFY_SMOKE_PROBLEM_ID:-sample/01-basics/01-add}
 default_smoke_code=$'def add(a, b):\n    return a + b\n'
 smoke_code=${JUDGE_VERIFY_SMOKE_CODE:-$default_smoke_code}
 smoke_expected_status=${JUDGE_VERIFY_SMOKE_EXPECTED_STATUS:-Accepted}
+default_smoke_run_cases='[{"id":"case1","inputs":{"a":"1","b":"2"},"expected_literal":"3"}]'
+smoke_run_cases=${JUDGE_VERIFY_SMOKE_RUN_CASES:-$default_smoke_run_cases}
 
-smoke_manifest="${JUDGE_PROBLEMS_ROOT%/}/${smoke_problem_id}/manifest.json"
-if [[ ! -f "$smoke_manifest" ]]; then
-  fail "Smoke problem not found at ${smoke_manifest}. Set JUDGE_VERIFY_SMOKE_PROBLEM_ID/JUDGE_VERIFY_SMOKE_CODE for your corpus."
+smoke_problem_path="${JUDGE_PROBLEMS_ROOT%/}/${smoke_problem_id}/problem.json"
+if [[ ! -f "$smoke_problem_path" ]]; then
+  fail "Smoke problem not found at ${smoke_problem_path}. Set JUDGE_VERIFY_SMOKE_PROBLEM_ID/JUDGE_VERIFY_SMOKE_CODE for your corpus."
 fi
 
 health_json=$(curl -fsS "${api_url}/health") || fail "Failed to query ${api_url}/health"
@@ -225,7 +227,6 @@ print(
     json.dumps(
         {
             "problem_id": os.environ["SMOKE_PROBLEM_ID"],
-            "kind": "submit",
             "code": os.environ["SMOKE_CODE"],
         }
     )
@@ -271,5 +272,54 @@ if [[ "$judge_status" != "$smoke_expected_status" ]]; then
   fail "Smoke submit result mismatch (job_id=${job_id}, expected=${smoke_expected_status}, actual=${judge_status})"
 fi
 pass "submit/result smoke test passed (job_id=${job_id}, problem_id=${smoke_problem_id})"
+
+run_payload=$(SMOKE_PROBLEM_ID="$smoke_problem_id" SMOKE_CODE="$smoke_code" SMOKE_RUN_CASES="$smoke_run_cases" python3 - <<'PY'
+import json
+import os
+print(
+    json.dumps(
+        {
+            "problem_id": os.environ["SMOKE_PROBLEM_ID"],
+            "code": os.environ["SMOKE_CODE"],
+            "cases": json.loads(os.environ["SMOKE_RUN_CASES"]),
+        }
+    )
+)
+PY
+)
+
+run_json=$(curl -fsS -H "content-type: application/json" -d "$run_payload" "${api_url}/run") || fail "Smoke run request failed"
+run_job_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("job_id",""))' <<<"$run_json")
+if [[ -z "$run_job_id" ]]; then
+  fail "Smoke run did not return a job_id"
+fi
+
+deadline=$((SECONDS + timeout_s))
+terminal_json=""
+while (( SECONDS < deadline )); do
+  result_json=$(curl -fsS "${api_url}/result/${run_job_id}") || fail "Smoke result polling failed for run job ${run_job_id}"
+  result_status=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("status",""))' <<<"$result_json")
+  if [[ "$result_status" == "done" || "$result_status" == "error" ]]; then
+    terminal_json="$result_json"
+    break
+  fi
+  sleep 1
+done
+
+if [[ -z "$terminal_json" ]]; then
+  fail "Smoke run did not reach terminal status within ${timeout_s}s (job_id=${run_job_id})"
+fi
+
+terminal_status=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("status",""))' <<<"$terminal_json")
+if [[ "$terminal_status" != "done" ]]; then
+  terminal_error=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("error",""))' <<<"$terminal_json")
+  fail "Smoke run failed (status=${terminal_status}, job_id=${run_job_id}, error=${terminal_error})"
+fi
+
+judge_status=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print((d.get("result") or {}).get("status",""))' <<<"$terminal_json")
+if [[ "$judge_status" != "$smoke_expected_status" ]]; then
+  fail "Smoke run result mismatch (job_id=${run_job_id}, expected=${smoke_expected_status}, actual=${judge_status})"
+fi
+pass "run/result smoke test passed (job_id=${run_job_id}, problem_id=${smoke_problem_id})"
 
 echo "[ok] verify completed successfully"

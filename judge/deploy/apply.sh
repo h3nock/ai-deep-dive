@@ -14,7 +14,6 @@ if [[ -z "$JUDGE_DOMAIN" ]]; then
 fi
 
 JUDGE_CERT_DIR=${JUDGE_CERT_DIR:-/etc/letsencrypt/live/$JUDGE_DOMAIN}
-JUDGE_TESTS_ROOT=${JUDGE_TESTS_ROOT:-/opt/ai-deep-dive/judge/tests}
 
 ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 JUDGE_USER=${JUDGE_USER:-judge}
@@ -159,9 +158,6 @@ mkdir -p /var/local/lib/isolate
 chown root:root /var/local/lib/isolate
 chmod 0755 /var/local/lib/isolate
 
-mkdir -p "$JUDGE_TESTS_ROOT"
-chown -R judge:judge "$JUDGE_TESTS_ROOT"
-
 # API service (binds locally)
 install -m 644 "$ROOT_DIR/deploy/judge-api.service" /etc/systemd/system/judge-api.service
 install -m 644 "$ROOT_DIR/deploy/judge-metrics-init.service" /etc/systemd/system/judge-metrics-init.service
@@ -181,7 +177,6 @@ fi
 
 sed -e "s|\${JUDGE_DOMAIN}|$JUDGE_DOMAIN|g" \
   -e "s|\${JUDGE_CERT_DIR}|$JUDGE_CERT_DIR|g" \
-  -e "s|\${JUDGE_TESTS_ROOT}|$JUDGE_TESTS_ROOT|g" \
   "$NGINX_TEMPLATE" \
   > /etc/nginx/sites-available/judge
 

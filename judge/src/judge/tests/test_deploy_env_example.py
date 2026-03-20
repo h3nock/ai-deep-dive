@@ -36,7 +36,6 @@ class DeployEnvExampleContractTests(TestCase):
             "JUDGE_API_WORKERS",
             "JUDGE_LIGHT_WORKERS",
             "JUDGE_TORCH_WORKERS",
-            "JUDGE_TESTS_ROOT",
         }
 
         expected_keys = runtime_keys | deploy_keys

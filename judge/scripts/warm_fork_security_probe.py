@@ -8,23 +8,21 @@ import statistics
 import time
 from pathlib import Path
 
-from judge.problems import Comparison, Problem, ProblemRepository
-from judge.problems import TestCase as ProblemTestCase
-from judge.runner import IsolateConfig, run_problem
+from judge.problems import CompiledTestCase, Comparison, ExecutionPlan, ExecutionPlanFactory, ProblemRepository
+from judge.runner import IsolateConfig, run_execution_plan
 from judge.warm_executor import WarmForkExecutor
 
 
-def _probe_problem(*, runner: str, expected: str) -> Problem:
-    return Problem(
-        id="security/probe",
-        version="v1",
+def _probe_plan(*, runner: str, expected: str) -> ExecutionPlan:
+    return ExecutionPlan(
+        problem_id="security/probe",
         runner=runner,
-        requires_torch=True,
+        execution_profile="torch",
+        comparison=Comparison(type="exact"),
         time_limit_s=3,
         memory_mb=256,
-        comparison=Comparison(type="exact", rtol=1e-5, atol=1e-8),
-        public_tests=[ProblemTestCase(id="probe", input_code="", expected=expected, hidden=False)],
-        hidden_tests=[],
+        cases=(CompiledTestCase(id="probe", input_code="", expected_literal=repr(expected)),),
+        detail_mode="all",
     )
 
 
@@ -36,12 +34,10 @@ def _run_probe(
     runner: str,
     code: str,
 ) -> dict[str, str]:
-    result = executor.run_problem(
-        _probe_problem(runner=runner, expected="blocked"),
+    result = executor.run_execution_plan(
+        _probe_plan(runner=runner, expected="blocked"),
         code,
         max_output_chars=2000,
-        include_hidden=False,
-        detail_mode="all",
         isolate=isolate,
     )
     tests = result.get("tests") or []
@@ -237,14 +233,14 @@ def main() -> None:
 
     if not args.skip_bench:
         repo = ProblemRepository(Path(args.problems_root))
-        problem = repo.get_for_submit(args.problem_id)
+        plan = ExecutionPlanFactory(repo).build_submit_plan(args.problem_id)
         solution = _accepted_solution()
 
         isolate_times: list[float] = []
         isolate_statuses: list[str] = []
         for _ in range(args.runs):
             t0 = time.perf_counter()
-            result = run_problem(problem, solution, 2000, True, "all", isolate)
+            result = run_execution_plan(plan, solution, 2000, isolate)
             isolate_times.append(time.perf_counter() - t0)
             isolate_statuses.append(result["status"])
 
@@ -252,7 +248,7 @@ def main() -> None:
         warm_statuses: list[str] = []
         for _ in range(args.runs):
             t0 = time.perf_counter()
-            result = executor.run_problem(problem, solution, 2000, True, "all", isolate)
+            result = executor.run_execution_plan(plan, solution, 2000, isolate)
             warm_times.append(time.perf_counter() - t0)
             warm_statuses.append(result["status"])
 

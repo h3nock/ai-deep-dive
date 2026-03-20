@@ -39,7 +39,6 @@ sudo -u judge git fetch --prune origin
 sudo -u judge git reset --hard origin/main
 sudo -u judge git clean -fd
 cd /opt/ai-deep-dive/judge
-sudo -u judge env PYTHONPATH=src .venv/bin/python scripts/export_tests_endpoint.py --out-root /opt/ai-deep-dive/judge/tests
 sudo JUDGE_DOMAIN=judge.example.com ./deploy/apply.sh
 sudo ./deploy/verify.sh
 ```
@@ -99,17 +98,10 @@ Worker template services run with systemd watchdog enabled (`Type=notify`).
 Workers send readiness/watchdog pings from the main loop, so systemd can
 restart hung worker processes even if the process does not exit on its own.
 
-### Test bundle export
+### Smoke verification
 
-Public bundles are served from `/judge-tests/`. Hidden tests are exported to
-the tests root for server-side execution and are not publicly served.
-
-`bootstrap.sh` exports bundles automatically. To refresh manually:
-
-```bash
-cd /opt/ai-deep-dive/judge
-sudo -u judge env PYTHONPATH=src .venv/bin/python scripts/export_tests_endpoint.py --out-root /opt/ai-deep-dive/judge/tests
-```
+`verify.sh` exercises both `/submit` and `/run` against the configured smoke
+problem after checking service health and worker state.
 
 ### Warm-fork security probe
 
