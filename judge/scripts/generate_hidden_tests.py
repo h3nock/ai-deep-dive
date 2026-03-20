@@ -2387,6 +2387,8 @@ def _json_equivalent(left: Any, right: Any) -> bool:
             return False
         return all(_json_equivalent(a, b) for a, b in zip(left, right))
     return left == right
+
+
 def _canonical_public_signatures(problem_id: str, problems_root: Path) -> set[tuple[str, str]]:
     problem_dir = problems_root / problem_id
     spec = load_problem_spec_file(problem_id, problem_dir / "problem.json")

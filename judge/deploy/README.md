@@ -57,6 +57,7 @@ Optional verify overrides:
 - `JUDGE_VERIFY_API_URL` (default `http://127.0.0.1:8000`)
 - `JUDGE_VERIFY_SMOKE_PROBLEM_ID` (default `sample/01-basics/01-add`)
 - `JUDGE_VERIFY_SMOKE_CODE` (default code for the sample add problem)
+- `JUDGE_VERIFY_SMOKE_RUN_CASES` (default one public-style add testcase JSON payload)
 - `JUDGE_VERIFY_SMOKE_EXPECTED_STATUS` (default `Accepted`)
 - `JUDGE_VERIFY_SMOKE_TIMEOUT_S` (default `30`)
 
