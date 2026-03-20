@@ -6,8 +6,10 @@ import json
 import tempfile
 from pathlib import Path
 from unittest import TestCase
+from unittest.mock import patch
 
 from judge.problem_migration import migrate_problem_corpus, migrate_problem_dir
+from judge.problems import load_problem_spec_file as real_load_problem_spec_file
 
 
 class ProblemMigrationTests(TestCase):
@@ -43,7 +45,7 @@ class ProblemMigrationTests(TestCase):
 }"""
             )
 
-            migrate_problem_dir(problem_dir)
+            migrate_problem_dir(problem_dir, problems_root=Path(tmp_dir) / "problems")
 
             problem_payload = json.loads((problem_dir / "problem.json").read_text())
             public_payload = json.loads((problem_dir / "public_cases.json").read_text())
@@ -108,7 +110,7 @@ class ProblemMigrationTests(TestCase):
 }"""
             )
 
-            migrate_problem_dir(problem_dir)
+            migrate_problem_dir(problem_dir, problems_root=Path(tmp_dir) / "problems")
 
             public_payload = json.loads((problem_dir / "public_cases.json").read_text())
 
@@ -157,3 +159,48 @@ class ProblemMigrationTests(TestCase):
             migrated = migrate_problem_corpus(root)
 
         self.assertEqual(migrated, [problem_dir])
+
+    def test_migrate_problem_dir_derives_problem_id_from_passed_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            workspace = Path(tmp_dir)
+            problems_root = workspace / "repo/judge/problems"
+            problem_dir = problems_root / "sample/fundamentals/01-basics/01-add"
+            problem_dir.mkdir(parents=True)
+            (problem_dir / "manifest.json").write_text(
+                """{
+  "id": "sample/fundamentals/01-basics/01-add",
+  "version": "v1",
+  "runner": "add(a, b)",
+  "requires_torch": false,
+  "time_limit_s": 5,
+  "memory_mb": 512,
+  "comparison": {"type": "exact"}
+}"""
+            )
+            (problem_dir / "public_tests.json").write_text(
+                """{
+  "version": 1,
+  "cases": [
+    {"id": "case1", "input_code": "a = 1\\nb = 2\\n", "expected": 3}
+  ]
+}"""
+            )
+            (problem_dir / "hidden_tests.json").write_text(
+                """{
+  "version": 1,
+  "cases": [
+    {"id": "h1", "input_code": "a = 5\\nb = 6\\n", "expected": 11}
+  ]
+}"""
+            )
+
+            captured_ids: list[str] = []
+
+            def _capture_problem_spec(problem_id: str, path: Path):
+                captured_ids.append(problem_id)
+                return real_load_problem_spec_file(problem_id, path)
+
+            with patch("judge.problem_migration.load_problem_spec_file", side_effect=_capture_problem_spec):
+                migrate_problem_dir(problem_dir, problems_root=problems_root)
+
+        self.assertEqual(captured_ids[-1], "sample/fundamentals/01-basics/01-add")

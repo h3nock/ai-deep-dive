@@ -167,7 +167,7 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n")
 
 
-def migrate_problem_dir(problem_dir: Path) -> None:
+def migrate_problem_dir(problem_dir: Path, *, problems_root: Path) -> None:
     manifest_path = problem_dir / _LEGACY_MANIFEST_NAME
     public_path = problem_dir / _LEGACY_PUBLIC_NAME
     hidden_path = problem_dir / _LEGACY_HIDDEN_NAME
@@ -175,7 +175,7 @@ def migrate_problem_dir(problem_dir: Path) -> None:
         if not required.exists():
             raise FileNotFoundError(f"missing legacy problem file: {required}")
 
-    problem_id = problem_dir.relative_to(problem_dir.parents[2]).as_posix()
+    problem_id = problem_dir.relative_to(problems_root).as_posix()
     problem_payload = _migrate_problem_spec(problem_id, manifest_path)
 
     problem_json_path = problem_dir / "problem.json"
@@ -198,6 +198,6 @@ def migrate_problem_corpus(problems_root: Path) -> list[Path]:
     migrated: list[Path] = []
     for manifest_path in sorted(problems_root.rglob(_LEGACY_MANIFEST_NAME)):
         problem_dir = manifest_path.parent
-        migrate_problem_dir(problem_dir)
+        migrate_problem_dir(problem_dir, problems_root=problems_root)
         migrated.append(problem_dir)
     return migrated

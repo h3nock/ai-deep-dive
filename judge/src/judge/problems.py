@@ -445,6 +445,15 @@ class TestCaseCompiler:
         if case.explanation is not None and not isinstance(case.explanation, str):
             raise ValueError(f"TestCase[{case_id}].explanation must be a string when provided")
 
+    def validate_cases(self, spec: ProblemSpec, cases: list[TestCase]) -> None:
+        seen: set[str] = set()
+        for case in cases:
+            case_id = case.id.strip()
+            if case_id in seen:
+                raise ValueError(f"Duplicate TestCase id: {case_id}")
+            seen.add(case_id)
+            self.validate(spec, case)
+
     def compile_case(self, spec: ProblemSpec, case: TestCase) -> CompiledTestCase:
         self.validate(spec, case)
         lines: list[str] = []
@@ -461,14 +470,23 @@ class TestCaseCompiler:
         )
 
     def compile_cases(self, spec: ProblemSpec, cases: list[TestCase]) -> list[CompiledTestCase]:
-        seen: set[str] = set()
+        self.validate_cases(spec, cases)
         compiled: list[CompiledTestCase] = []
         for case in cases:
-            case_id = case.id.strip()
-            if case_id in seen:
-                raise ValueError(f"Duplicate TestCase id: {case_id}")
-            seen.add(case_id)
-            compiled.append(self.compile_case(spec, case))
+            lines: list[str] = []
+            for argument in spec.arguments:
+                expression = case.inputs[argument.name].strip()
+                lines.append(f"{argument.name} = {expression}")
+            input_code = "\n".join(lines)
+            if input_code:
+                input_code += "\n"
+            compiled.append(
+                CompiledTestCase(
+                    id=case.id.strip(),
+                    input_code=input_code,
+                    expected_literal=case.expected_literal,
+                )
+            )
         return compiled
 
 
@@ -524,7 +542,7 @@ def load_public_cases_file(path: Path, spec: ProblemSpec, compiler: TestCaseComp
         raise ValueError(f"{context}.cases must contain objects only")
 
     validator = compiler or TestCaseCompiler()
-    validator.compile_cases(spec, list(loaded_cases))
+    validator.validate_cases(spec, list(loaded_cases))
     return loaded_cases
 
 
