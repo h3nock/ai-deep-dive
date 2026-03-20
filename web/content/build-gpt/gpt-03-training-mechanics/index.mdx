@@ -63,6 +63,10 @@ hidden: true
   </Description>
 
   <Description>
+    Warmup keeps the learning rate low at the start while Adam calibrates its per-weight estimates from real gradients. Without it, the full rate hits before those estimates are reliable, so early updates are large and poorly aimed. Like the learning rate, the warmup length is typically borrowed from a similar training run. If the loss becomes unstable as the rate approaches its peak, try extending the warmup, but going much longer means fewer steps at the peak rate where most learning happens.
+  </Description>
+
+  <Description>
     Each training step computes a gradient from a batch of tokens. The size of that batch is the next choice to get right. With too few tokens, the gradient reflects noise from the specific batch more than the actual patterns in the data. With too many, the noise has already been averaged out and further improvements cost disproportionately more compute. For this model size, the threshold is around 500,000 tokens per step. We use 524,288.
   </Description>
 
