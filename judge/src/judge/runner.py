@@ -149,6 +149,7 @@ def run_cases():
 
         status = "Accepted"
         output_str = ""
+        expected = None
         stdout_val = ""
         stderr_val = ""
 
