@@ -67,7 +67,7 @@ hidden: true
   </Description>
 
   <Callout type="note" title="Why ~500K Tokens?">
-    The 500,000 figure comes from the critical batch size framework (McCandlish et al., 2018; Kaplan et al., 2020), which measures where gradient noise stops being the bottleneck. For a 124M model at convergence, it falls between 500,000 and 700,000 tokens. GPT-3 used 0.5M for its 125M model.
+    GPT-3 used 0.5M tokens per batch for its 125M model, informed by the critical batch size framework (McCandlish et al., 2018), which measures where gradient noise stops being the bottleneck. Most reproductions at this scale, including nanoGPT and llm.c, adopted the same value.
   </Callout>
 
   <Description>
