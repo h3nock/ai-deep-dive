@@ -59,19 +59,31 @@ hidden: true
   </div>
 
   <Description>
+    The peak learning rate is the main hyperparameter to get right. The practical workflow is to start from a published rate at your model size, then sweep nearby values in short runs. For reference, GPT-3 used `6e-4` for its 125M model, `3e-4` for 350M, `2e-4` for 1.3B, and `6e-5` for 175B. Pythia's smaller models follow the same trend: `1e-3` for 70M, `6e-4` for 160M, `3e-4` for 410M. Once you have a starting point, sweep nearby rates for a few hundred steps and pick the one where loss falls fastest without becoming unstable.
+  </Description>
+
+  <Description>
+    Warmup keeps the learning rate low at the start while Adam calibrates its per-weight estimates from real gradients. Without it, the full rate hits before those estimates are reliable, so early updates are large and poorly aimed. Like the learning rate, the warmup length is typically borrowed from a similar training run. If the loss becomes unstable as the rate approaches its peak, try extending the warmup, but going much longer means fewer steps at the peak rate where most learning happens.
+  </Description>
+
+  <Description>
     Each training step computes a gradient from a batch of tokens. The size of that batch is the next choice to get right. With too few tokens, the gradient reflects noise from the specific batch more than the actual patterns in the data. With too many, the noise has already been averaged out and further improvements cost disproportionately more compute. For this model size, the threshold is around 500,000 tokens per step. We use 524,288.
   </Description>
 
   <Callout type="note" title="Why ~500K Tokens?">
-    The 500,000 figure comes from the critical batch size framework (McCandlish et al., 2018; Kaplan et al., 2020), which measures where gradient noise stops being the bottleneck. For a 124M model at convergence, it falls between 500,000 and 700,000 tokens. GPT-3 used 0.5M for its 125M model.
+    GPT-3 used 0.5M tokens per batch for its 125M model, informed by the critical batch size framework (McCandlish et al., 2018), which measures where gradient noise stops being the bottleneck. Most reproductions at this scale, including nanoGPT and llm.c, adopted the same value.
   </Callout>
 
   <Description>
-    Typically, an optimizer step needs more tokens than a single forward pass can fit in memory. **Gradient accumulation** solves this by splitting each step into multiple smaller forward passes. Each pass processes a micro-batch and computes gradients, but rather than updating the weights immediately, those gradients accumulate across passes. The weights update only once all the batch tokens have been processed.
+    Typically, an optimizer step needs more tokens than a single forward pass can fit in memory. **Gradient accumulation** solves this by splitting each step into multiple smaller forward passes. Each pass processes a micro-batch and computes gradients without updating the weights. After `grad_accum_steps` passes, the optimizer applies a single update using the accumulated gradients.
   </Description>
 
   <Description>
     The micro-batch size, the number of sequences per forward pass, depends on available memory. With a micro-batch of 16 samples and a context length of 1024, each pass processes 16,384 tokens. Reaching 524,288 per step takes 32 passes. Across the full dataset of roughly 2.5 billion tokens (the Chinchilla recommendation of 20 tokens per parameter), training takes about 4,768 of these steps. That determines `max_steps` and the window the learning-rate schedule decays over.
+  </Description>
+
+  <Description>
+    `weight_decay=0.1` and `betas=(0.9, 0.95)` are common decoder-only pretraining defaults, used in GPT-3 and OLMo among others. The β2 of 0.95 gives Adam a shorter memory for gradient variance than PyTorch's default of 0.999, making it adapt faster as training progresses. Both values matter less to tune than the learning rate and batch size.
   </Description>
 
 ```python
@@ -109,6 +121,10 @@ optimizer = torch.optim.AdamW(
     weight_decay=weight_decay,
 )
 ```
+
+  <Callout type="note" title="Lighter Config Adjustments">
+    For the lighter model (~30M parameters), we follow llama2.c's training recipe: `total_batch_size=131_072`, `max_lr=5e-4`, `min_lr=5e-5`. That gives 8 accumulation steps at micro-batch 16. From the data budget of ~600M tokens (20 per parameter), training takes roughly 4,600 steps. The warmup, weight decay, betas, and remaining settings stay the same.
+  </Callout>
 </Step>
 
 
