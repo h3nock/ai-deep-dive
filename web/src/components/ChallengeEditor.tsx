@@ -86,6 +86,12 @@ export interface ChallengeEditorProps {
   setActiveChallengeIndex: (index: number | null) => void;
 }
 
+function cleanDisplayValue(value: string): string {
+  return value.replace(/, dtype=torch\.float32/g, "");
+}
+
+const EXAMPLE_COLLAPSED_ARG_LIMIT = 6;
+
 function ExampleCard({
   testCase,
   argOrder,
@@ -94,6 +100,11 @@ function ExampleCard({
   argOrder: Challenge["arguments"];
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showAllArgs, setShowAllArgs] = useState(false);
+  const needsCollapse = argOrder.length > EXAMPLE_COLLAPSED_ARG_LIMIT;
+  const visibleArgs = needsCollapse && !showAllArgs
+    ? argOrder.slice(0, EXAMPLE_COLLAPSED_ARG_LIMIT)
+    : argOrder;
 
   return (
     <div className="p-3 bg-terminal rounded-md border border-border">
@@ -103,10 +114,20 @@ function ExampleCard({
             Input
           </span>
           <div className="mt-0.5 text-secondary whitespace-pre-wrap break-words leading-snug">
-            {argOrder
-              .map((arg) => `${arg.name} = ${testCase.inputs[arg.name] ?? ""}`)
+            {visibleArgs
+              .map((arg) => `${arg.name} = ${cleanDisplayValue(testCase.inputs[arg.name] ?? "")}`)
               .join("\n")}
           </div>
+          {needsCollapse && (
+            <button
+              onClick={() => setShowAllArgs(!showAllArgs)}
+              className="mt-1 text-xs text-muted hover:text-secondary transition-colors"
+            >
+              {showAllArgs
+                ? "Show less"
+                : `+ ${argOrder.length - EXAMPLE_COLLAPSED_ARG_LIMIT} more arguments`}
+            </button>
+          )}
         </div>
         <div>
           <span className="text-muted text-xs uppercase tracking-wide">
@@ -648,6 +669,22 @@ function ChallengeEditorContent({
       const useServer = executionMode === "server" || mode === "submit";
 
       const casesToRun = workingCases;
+
+      // Validate inputs before run (submit uses canonical server-side cases)
+      if (mode === "run") {
+        const emptyArgs = casesToRun.flatMap((tc, caseIdx) =>
+          activeChallenge.arguments
+            .filter((arg) => !tc.inputs[arg.name]?.trim())
+            .map((arg) => ({ caseIdx, argName: arg.name }))
+        );
+        if (emptyArgs.length > 0) {
+          const first = emptyArgs[0];
+          setActiveTab("testcases");
+          setActiveTestCaseId(casesToRun[first.caseIdx]?.id ?? "");
+          bottomPanelRef.current?.expand();
+          return;
+        }
+      }
 
       // Track which challenge we're running for race condition detection
       const runChallengeId = activeChallenge.id;
@@ -1358,29 +1395,29 @@ function ChallengeEditorContent({
                             </div>
                           );
                         })}
-
-                        {/* Reset Testcases */}
-                        {hasModifiedCases && (
-                          <div className="mt-4 pt-3 border-t border-border">
-                            <button
-                              onClick={() => {
-                                setWorkingCases(
-                                  originalCasesRef.current.map((c) => ({
-                                    ...c,
-                                    inputs: { ...c.inputs },
-                                  }))
-                                );
-                                setActiveTestCaseId(
-                                  originalCasesRef.current[0]?.id ?? ""
-                                );
-                              }}
-                              className="text-xs text-muted hover:text-secondary transition-colors"
-                            >
-                              Reset Testcases
-                            </button>
-                          </div>
-                        )}
                       </div>
+
+                      {/* Reset Testcases — tab-level footer, outside scroll area */}
+                      {hasModifiedCases && (
+                        <div className="px-4 py-2 border-t border-border flex-shrink-0">
+                          <button
+                            onClick={() => {
+                              setWorkingCases(
+                                originalCasesRef.current.map((c) => ({
+                                  ...c,
+                                  inputs: { ...c.inputs },
+                                }))
+                              );
+                              setActiveTestCaseId(
+                                originalCasesRef.current[0]?.id ?? ""
+                              );
+                            }}
+                            className="text-xs text-muted hover:text-secondary transition-colors"
+                          >
+                            Reset Testcases
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
