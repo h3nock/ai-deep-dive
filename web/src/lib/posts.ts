@@ -3,10 +3,44 @@ import path from "path";
 import matter from "gray-matter";
 import { cache } from "react";
 import { isSafePathSegment, sanitizePathSegment } from "./path-safety";
-import type { Challenge } from "./challenge-types";
+import type { Challenge, TestCase } from "./challenge-types";
 export type { Challenge } from "./challenge-types";
 
 const contentDirectory = path.join(process.cwd(), "content");
+const judgeProblemsRoot = path.join(process.cwd(), "..", "judge", "problems");
+
+type ProblemSpec = {
+  arguments: { name: string; type?: string }[];
+  runner: string;
+  execution_profile: "light" | "torch";
+  comparison:
+    | { type: "exact" }
+    | { type: "allclose"; rtol: number; atol: number };
+  time_limit_s: number;
+  memory_mb: number;
+};
+
+type PublicCasesFile = {
+  cases: TestCase[];
+};
+
+function loadProblemSpec(problemId: string): ProblemSpec {
+  const specPath = path.join(judgeProblemsRoot, problemId, "problem.json");
+  const raw = fs.readFileSync(specPath, "utf8");
+  return JSON.parse(raw) as ProblemSpec;
+}
+
+function loadPublicCases(problemId: string): TestCase[] {
+  const casesPath = path.join(judgeProblemsRoot, problemId, "public_cases.json");
+  const raw = fs.readFileSync(casesPath, "utf8");
+  const file = JSON.parse(raw) as PublicCasesFile;
+  return file.cases;
+}
+
+function loadStarterCode(problemId: string): string {
+  const starterPath = path.join(judgeProblemsRoot, problemId, "starter.py");
+  return fs.readFileSync(starterPath, "utf8");
+}
 
 type StepMeta = {
   slug: string;
@@ -324,19 +358,30 @@ export const getPostBySlug = cache(
             const { data: challengeData, content: challengeBody } =
               matter(descriptionContent);
 
-            if (!challengeData.problemId) {
-              throw new Error(
-                `Missing problemId in ${path.relative(contentDirectory, descriptionPath)}`
-              );
-            }
+            const { title, difficulty, hint } = challengeData;
+            const problemId = `${safeCollection}/${safeSlug}/${bundleName}`;
+            const spec = loadProblemSpec(problemId);
+            const publicCases = loadPublicCases(problemId);
+            const initialCode = loadStarterCode(problemId);
 
             return {
-              ...challengeData,
               id: autoId,
+              title,
+              difficulty,
+              hint,
+              initialCode,
               description: challengeBody,
               chapterNumber,
               problemNumber,
-            } as Challenge;
+              problemId,
+              arguments: spec.arguments,
+              runner: spec.runner,
+              executionProfile: spec.execution_profile,
+              comparison: spec.comparison,
+              timeLimitS: spec.time_limit_s,
+              memoryMb: spec.memory_mb,
+              publicCases,
+            } satisfies Challenge;
           })
           .filter(Boolean) as Challenge[];
       }
