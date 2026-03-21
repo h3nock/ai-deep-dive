@@ -193,6 +193,7 @@ function AutoResizeTextarea({
       onChange={(e) => onChange(e.target.value)}
       className={className}
       rows={1}
+      style={{ overflow: "hidden" }}
     />
   );
 }
@@ -1357,10 +1358,10 @@ function ChallengeEditorContent({
                         {workingCases.map((tc) => {
                           if (tc.id !== activeTestCaseId) return null;
                           return (
-                            <div key={tc.id} className="flex flex-col gap-3">
+                            <div key={tc.id} className="flex flex-col gap-2">
                               {activeChallenge.arguments.map((arg) => (
                                 <div key={arg.name}>
-                                  <label className="block text-[11px] font-medium text-muted mb-1">
+                                  <label className="block text-[11px] text-muted mb-0.5 font-mono">
                                     {arg.name} =
                                   </label>
                                   <AutoResizeTextarea
@@ -1380,7 +1381,7 @@ function ChallengeEditorContent({
                                         )
                                       );
                                     }}
-                                    className="w-full bg-surface rounded-md px-3 py-2 font-mono text-[13px] text-secondary border border-border/50 focus:border-border focus:outline-none resize-none leading-snug"
+                                    className="w-full bg-surface/60 px-2 py-1 font-mono text-[13px] text-secondary rounded border-none focus:bg-surface focus:outline-none resize-none leading-snug"
                                   />
                                 </div>
                               ))}
