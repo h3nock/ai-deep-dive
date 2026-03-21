@@ -1353,17 +1353,16 @@ function ChallengeEditorContent({
                       </div>
 
                       {/* Per-parameter input fields */}
-                      <div className="flex-1 overflow-y-auto p-3">
+                      <div className="flex-1 overflow-y-auto px-4 py-3">
                         {workingCases.map((tc) => {
                           if (tc.id !== activeTestCaseId) return null;
                           return (
-                            <div key={tc.id} className="flex flex-col gap-2.5">
+                            <div key={tc.id} className="flex flex-col gap-3">
                               {activeChallenge.arguments.map((arg) => (
-                                <div key={arg.name} className="flex items-start gap-0 font-mono text-[13px]">
-                                  <div className="flex-shrink-0 py-2 pr-1.5 text-muted select-none">
-                                    {arg.name}
-                                    <span className="text-muted/50"> = </span>
-                                  </div>
+                                <div key={arg.name}>
+                                  <label className="block text-[11px] font-medium text-muted mb-1">
+                                    {arg.name} =
+                                  </label>
                                   <AutoResizeTextarea
                                     value={tc.inputs[arg.name] ?? ""}
                                     onChange={(val) => {
@@ -1381,7 +1380,7 @@ function ChallengeEditorContent({
                                         )
                                       );
                                     }}
-                                    className="flex-1 min-w-0 bg-surface rounded px-2 py-1.5 text-secondary border border-transparent focus:border-border focus:outline-none resize-none"
+                                    className="w-full bg-surface rounded-md px-3 py-2 font-mono text-[13px] text-secondary border border-border/50 focus:border-border focus:outline-none resize-none leading-snug"
                                   />
                                 </div>
                               ))}
@@ -1402,7 +1401,7 @@ function ChallengeEditorContent({
                                       )
                                     );
                                   }}
-                                  className="self-start text-xs text-muted hover:text-secondary transition-colors mt-1"
+                                  className="self-start text-xs text-muted hover:text-secondary transition-colors"
                                 >
                                   Reset to default
                                 </button>
