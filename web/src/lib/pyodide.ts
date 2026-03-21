@@ -91,20 +91,18 @@ export function preloadPyodide(): void {
 }
 
 
-export interface TestCase {
+export interface CompiledTestCase {
   id: string;
-  input: string; // Python code to set up input variables
-  expected: string;
+  input: string; // Python code to set up input variables (compiled from inputs)
+  expected: string; // expected_literal string for ast.literal_eval
 }
 
 export interface TestConfig {
-  cases: TestCase[];
+  cases: CompiledTestCase[];
   runner: string; // Expression to evaluate
-  comparison?: {
-    type?: "exact" | "allclose";
-    rtol?: number;
-    atol?: number;
-  };
+  comparison:
+    | { type: "exact" }
+    | { type: "allclose"; rtol: number; atol: number };
 }
 
 // Run tests using Pyodide (browser-based Python execution)
@@ -244,9 +242,11 @@ except Exception:
     };
   }
 
-  const comparisonType = config.comparison?.type ?? "exact";
-  const comparisonRtol = config.comparison?.rtol ?? 1e-6;
-  const comparisonAtol = config.comparison?.atol ?? 1e-6;
+  const comparisonType = config.comparison.type;
+  const comparisonRtol =
+    config.comparison.type === "allclose" ? config.comparison.rtol : 0;
+  const comparisonAtol =
+    config.comparison.type === "allclose" ? config.comparison.atol : 0;
 
   // Run each test case
   for (const testCase of config.cases) {
@@ -404,37 +404,3 @@ except Exception:
   };
 }
 
-// List of packages available in Pyodide that we support
-export const PYODIDE_SUPPORTED_PACKAGES = new Set([
-  // Standard library (always available)
-  "json",
-  "math",
-  "re",
-  "collections",
-  "itertools",
-  "functools",
-  "string",
-  "random",
-  "datetime",
-  "typing",
-  "abc",
-  "dataclasses",
-  // Pyodide built-in packages
-  "numpy",
-  "micropip",
-]);
-
-// Check if a challenge can run in the browser based on dependencies
-export function canRunInBrowser(dependencies?: string[]): boolean {
-  if (!dependencies || dependencies.length === 0) {
-    return true; // No deps = can run in browser
-  }
-
-  // Check if all dependencies are supported
-  return dependencies.every(
-    (dep) =>
-      PYODIDE_SUPPORTED_PACKAGES.has(dep) ||
-      dep.startsWith("collections.") ||
-      dep.startsWith("typing.")
-  );
-}
