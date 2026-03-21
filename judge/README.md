@@ -213,8 +213,12 @@ Worker liveness and recovery:
 
 ## Problem format
 
-See `judge/problems/README.md` for `problem.json`, `public_cases.json`, and
-`hidden_tests.json`.
+See `judge/problems/README.md` for `problem.json`, `public_cases.json`,
+`hidden_tests.json`, and `starter.py`.
+
+`starter.py` is canonical problem corpus data for editor seed code, but it is
+not part of judge runtime loading or execution. The runtime still executes only
+the canonical problem spec plus compiled/public hidden testcases.
 
 ## Deploy
 

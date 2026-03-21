@@ -1,10 +1,11 @@
 # Problems
 
-Each problem lives in a directory with three canonical files:
+Each problem lives in a directory with four canonical files:
 
 - `problem.json`
 - `public_cases.json`
 - `hidden_tests.json`
+- `starter.py`
 
 Example:
 
@@ -14,6 +15,7 @@ problems/
     problem.json
     public_cases.json
     hidden_tests.json
+    starter.py
 ```
 
 ## `problem.json`
@@ -81,6 +83,17 @@ Notes:
 - Hidden tests are execution-oriented and may use helper locals or multi-step setup.
 - Hidden tests are not publicly served.
 - The judge executes canonical public cases first, then hidden tests, in one ordered plan.
+
+## `starter.py`
+
+`starter.py` contains the editor starter code for the challenge.
+
+Notes:
+- `starter.py` is canonical problem corpus data.
+- `starter.py` must exist for every problem directory.
+- `starter.py` must be non-empty and syntactically valid Python.
+- The judge runtime does not load `starter.py` into `ProblemSpec` or `ExecutionPlan`.
+- `starter.py` is consumed by downstream challenge/content assembly, not by worker execution.
 
 ## Hidden test generation
 
