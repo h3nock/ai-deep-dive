@@ -1,10 +1,6 @@
 ---
 title: "The Encoder (Inference)"
 difficulty: "Medium"
-initialCode: |
-  def encode(text: str, merges: dict[tuple[int, int], int]) -> list[int]:
-      # TODO: Tokenize text using learned merge rules
-      pass
 arguments:
   - name: text
     type: str

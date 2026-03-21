@@ -1,10 +1,6 @@
 ---
 title: "The Pair Counter"
 difficulty: "Easy"
-initialCode: |
-  def get_stats(ids: list[int]) -> dict[tuple[int, int], int]:
-      # TODO: Count how often each consecutive pair appears
-      pass
 arguments:
   - name: ids
     type: list[int]
