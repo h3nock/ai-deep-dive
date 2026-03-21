@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -34,11 +35,30 @@ def validate_problem_contracts(problems_root: Path) -> list[ContractIssue]:
         problem_path = problem_dir / "problem.json"
         public_path = problem_dir / "public_cases.json"
         hidden_path = problem_dir / "hidden_tests.json"
+        starter_path = problem_dir / "starter.py"
 
-        missing = [path for path in (problem_path, public_path, hidden_path) if not path.exists()]
+        missing = [
+            path
+            for path in (problem_path, public_path, hidden_path, starter_path)
+            if not path.exists()
+        ]
         for path in missing:
             issues.append(ContractIssue(path, f"missing {path.name}"))
         if missing:
+            continue
+
+        try:
+            starter_source = starter_path.read_text()
+        except OSError as exc:
+            issues.append(ContractIssue(starter_path, f"failed to read starter.py: {exc}"))
+            continue
+        if not starter_source.strip():
+            issues.append(ContractIssue(starter_path, "starter.py must be non-empty"))
+            continue
+        try:
+            ast.parse(starter_source, filename=str(starter_path))
+        except SyntaxError as exc:
+            issues.append(ContractIssue(starter_path, f"starter.py is not valid Python: {exc.msg}"))
             continue
 
         try:
