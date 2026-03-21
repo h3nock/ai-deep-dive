@@ -36,10 +36,9 @@ import type { RunResult, TestStatus, TestSummary } from "@/lib/test-results";
 import { bundleToTestConfig, fetchPublicBundle, pythonLiteral } from "@/lib/judge-public-tests";
 import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
 import type { JudgeJobResult } from "@/lib/judge-client";
-import type { Challenge } from "@/lib/challenge-types";
+import type { Challenge, TestCase } from "@/lib/challenge-types";
 import { createMonacoTheme, getMonacoThemeName } from "@/lib/monaco-theme";
 import type {
-  TestCase,
   MonacoEditorInstance,
   MonacoInstance,
   MonacoVimSession,
