@@ -928,15 +928,14 @@ function ChallengeEditorContent({
   const runShortcut = isMac ? "Cmd + ," : "Ctrl + ,";
   const submitShortcut = isMac ? "Cmd + Enter" : "Ctrl + Enter";
 
-  const hasModifiedCases = React.useMemo(() => {
-    const orig = originalCasesRef.current;
-    if (workingCases.length !== orig.length) return true;
-    return workingCases.some((wc, i) => {
-      const oc = orig[i];
-      if (!oc) return true;
-      return JSON.stringify(wc.inputs) !== JSON.stringify(oc.inputs);
-    });
-  }, [workingCases]);
+  // Check if the active case is a modified default (has an original to reset to)
+  const activeCaseIsModified = React.useMemo(() => {
+    const active = workingCases.find((c) => c.id === activeTestCaseId);
+    if (!active) return false;
+    const original = originalCasesRef.current.find((c) => c.id === active.id);
+    if (!original) return false; // cloned case — no original to reset
+    return JSON.stringify(active.inputs) !== JSON.stringify(original.inputs);
+  }, [workingCases, activeTestCaseId]);
 
   return (
     <Group orientation="horizontal" className="flex-1 min-h-0 min-w-0 bg-background">
@@ -1354,22 +1353,16 @@ function ChallengeEditorContent({
                       </div>
 
                       {/* Per-parameter input fields */}
-                      <div className="flex-1 flex flex-col p-4 overflow-y-auto">
+                      <div className="flex-1 overflow-y-auto p-3">
                         {workingCases.map((tc) => {
                           if (tc.id !== activeTestCaseId) return null;
                           return (
-                            <div key={tc.id} className="flex flex-col gap-4">
+                            <div key={tc.id} className="flex flex-col gap-2.5">
                               {activeChallenge.arguments.map((arg) => (
-                                <div key={arg.name} className="flex flex-col gap-1.5">
-                                  <div className="flex items-baseline gap-2">
-                                    <label className="text-xs font-mono text-secondary">
-                                      {arg.name} =
-                                    </label>
-                                    {arg.type && (
-                                      <span className="text-xs text-muted">
-                                        ({arg.type})
-                                      </span>
-                                    )}
+                                <div key={arg.name} className="flex items-start gap-0 font-mono text-[13px]">
+                                  <div className="flex-shrink-0 py-2 pr-1.5 text-muted select-none">
+                                    {arg.name}
+                                    <span className="text-muted/50"> = </span>
                                   </div>
                                   <AutoResizeTextarea
                                     value={tc.inputs[arg.name] ?? ""}
@@ -1388,36 +1381,36 @@ function ChallengeEditorContent({
                                         )
                                       );
                                     }}
-                                    className="bg-surface rounded-lg p-3 font-mono text-[13px] text-secondary border border-transparent focus:border-border focus:outline-none resize-none"
+                                    className="flex-1 min-w-0 bg-surface rounded px-2 py-1.5 text-secondary border border-transparent focus:border-border focus:outline-none resize-none"
                                   />
                                 </div>
                               ))}
+
+                              {/* Per-case reset — only for modified default cases */}
+                              {activeCaseIsModified && (
+                                <button
+                                  onClick={() => {
+                                    const original = originalCasesRef.current.find(
+                                      (c) => c.id === tc.id
+                                    );
+                                    if (!original) return;
+                                    setWorkingCases((prev) =>
+                                      prev.map((c) =>
+                                        c.id === tc.id
+                                          ? { ...c, inputs: { ...original.inputs } }
+                                          : c
+                                      )
+                                    );
+                                  }}
+                                  className="self-start text-xs text-muted hover:text-secondary transition-colors mt-1"
+                                >
+                                  Reset to default
+                                </button>
+                              )}
                             </div>
                           );
                         })}
                       </div>
-
-                      {/* Reset Testcases — tab-level footer, outside scroll area */}
-                      {hasModifiedCases && (
-                        <div className="px-4 py-2 border-t border-border flex-shrink-0">
-                          <button
-                            onClick={() => {
-                              setWorkingCases(
-                                originalCasesRef.current.map((c) => ({
-                                  ...c,
-                                  inputs: { ...c.inputs },
-                                }))
-                              );
-                              setActiveTestCaseId(
-                                originalCasesRef.current[0]?.id ?? ""
-                              );
-                            }}
-                            className="text-xs text-muted hover:text-secondary transition-colors"
-                          >
-                            Reset Testcases
-                          </button>
-                        </div>
-                      )}
                     </div>
                   )}
 
