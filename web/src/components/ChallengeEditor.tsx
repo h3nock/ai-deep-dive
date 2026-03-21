@@ -20,7 +20,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Editor, { useMonaco } from "@monaco-editor/react";
-import { AutoResizingEditor } from "./AutoResizingEditor";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -29,12 +28,10 @@ import {
   loadPyodide,
   isPyodideLoaded,
   runTestsWithPyodide,
-  canRunInBrowser,
   type TestConfig,
 } from "@/lib/pyodide";
 import type { RunResult, TestStatus, TestSummary } from "@/lib/test-results";
-import { bundleToTestConfig, fetchPublicBundle, pythonLiteral } from "@/lib/judge-public-tests";
-import { submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
+import { runOnJudge, submitToJudge, waitForJudgeResult } from "@/lib/judge-client";
 import type { JudgeJobResult } from "@/lib/judge-client";
 import type { Challenge, TestCase } from "@/lib/challenge-types";
 import { createMonacoTheme, getMonacoThemeName } from "@/lib/monaco-theme";
@@ -71,13 +68,15 @@ function withJitter(baseMs: number, ratio = 0.1): number {
   return Math.max(100, baseMs + offset);
 }
 
-function defaultInputCode(
-  args: Challenge["arguments"] | undefined
+function compileInputCode(
+  inputs: Record<string, string>,
+  argOrder: Challenge["arguments"]
 ): string {
-  if (!args || args.length === 0) {
-    return "";
-  }
-  return `${args.map((arg) => `${arg.name} =`).join("\n")}\n`;
+  return argOrder.map((arg) => `${arg.name} = ${inputs[arg.name]}`).join("\n") + "\n";
+}
+
+function requiresServer(challenge: Challenge): boolean {
+  return challenge.executionProfile === "torch";
 }
 
 export interface ChallengeEditorProps {
@@ -87,14 +86,14 @@ export interface ChallengeEditorProps {
   setActiveChallengeIndex: (index: number | null) => void;
 }
 
-function cleanInputDisplay(input: string): string {
-  return input.replace(/, dtype=torch\.float32/g, "");
-}
-
-// ExampleCard component for displaying test cases with optional explanations
-function ExampleCard({ testCase }: { testCase: TestCase }) {
+function ExampleCard({
+  testCase,
+  argOrder,
+}: {
+  testCase: TestCase;
+  argOrder: Challenge["arguments"];
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const inputLines = cleanInputDisplay(testCase.input_code).trim();
 
   return (
     <div className="p-3 bg-terminal rounded-md border border-border">
@@ -104,7 +103,9 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
             Input
           </span>
           <div className="mt-0.5 text-secondary whitespace-pre-wrap break-words leading-snug">
-            {inputLines}
+            {argOrder
+              .map((arg) => `${arg.name} = ${testCase.inputs[arg.name] ?? ""}`)
+              .join("\n")}
           </div>
         </div>
         <div>
@@ -112,12 +113,11 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
             Output
           </span>
           <div className="mt-0.5 text-secondary whitespace-pre-wrap break-words leading-snug">
-            {testCase.expected}
+            {testCase.expected_literal}
           </div>
         </div>
       </div>
 
-      {/* Explanation toggle */}
       {testCase.explanation && (
         <div className="mt-3 pt-3 border-t border-border">
           <button
@@ -145,6 +145,34 @@ function ExampleCard({ testCase }: { testCase: TestCase }) {
         </div>
       )}
     </div>
+  );
+}
+
+function AutoResizeTextarea({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={className}
+      rows={1}
+    />
   );
 }
 
@@ -181,11 +209,11 @@ function ChallengeEditorContent({
   // Active Pane Tracking - for focus ring styling
   const [activePane, setActivePane] = useState<"prose" | "editor">("editor");
 
-  // Test Case State
-  const [testCases, setTestCases] = useState<TestCase[]>([]);
+  // Test Case State — working copies of publicCases, mutable by user
+  const [workingCases, setWorkingCases] = useState<TestCase[]>([]);
+  const originalCasesRef = useRef<TestCase[]>([]);
   const [activeTestCaseId, setActiveTestCaseId] = useState<string>("");
   const [runResult, setRunResult] = useState<RunResult | null>(null);
-  const [bundleExamples, setBundleExamples] = useState<TestCase[] | null>(null);
 
   const [output, setOutput] = useState<string | null>(null); // Raw console output (fallback)
   const [isVimMode, setIsVimMode] = useState(() => {
@@ -388,17 +416,10 @@ function ChallengeEditorContent({
     }
   }, []);
 
-  // Determine execution mode based on challenge dependencies
+  // Determine execution mode based on execution profile
   useEffect(() => {
     if (!activeChallenge) return;
-
-    const browserSupported = canRunInBrowser(activeChallenge.dependencies);
-
-    if (browserSupported) {
-      setExecutionMode("browser");
-    } else {
-      setExecutionMode("server");
-    }
+    setExecutionMode(requiresServer(activeChallenge) ? "server" : "browser");
   }, [activeChallenge]);
 
   // React to theme changes
@@ -410,88 +431,29 @@ function ChallengeEditorContent({
 
   // Load code from localStorage or use initial code when challenge changes
   useEffect(() => {
-    if (activeChallenge) {
-      let cancelled = false;
-      let hasAsync = false;
+    if (!activeChallenge) return;
 
-      // Update ref for race condition detection
-      currentChallengeIdRef.current = activeChallenge.id;
+    currentChallengeIdRef.current = activeChallenge.id;
 
-      setBundleExamples(null);
+    const storedCode = getChallengeCode(courseId, activeChallenge.id);
+    setCode(storedCode ?? activeChallenge.initialCode);
+    setIsSolved(isChallengeSolved(courseId, activeChallenge.id));
 
-      const storedCode = getChallengeCode(courseId, activeChallenge.id);
-      if (storedCode !== null) {
-        setCode(storedCode);
-      } else {
-        setCode(activeChallenge.initialCode);
-      }
+    // Initialize working cases from publicCases (synchronous — no bundle fetch)
+    const cases = activeChallenge.publicCases;
+    const cloned = cases.map((c) => ({
+      ...c,
+      inputs: { ...c.inputs },
+    }));
+    originalCasesRef.current = cloned;
+    setWorkingCases(
+      cases.map((c) => ({ ...c, inputs: { ...c.inputs } }))
+    );
+    setActiveTestCaseId(cases[0]?.id ?? "");
 
-      // Load solved status
-      setIsSolved(isChallengeSolved(courseId, activeChallenge.id));
-      setTestCases([]);
-      setActiveTestCaseId("");
-
-      const buildEmptyCase = () => {
-        return {
-          id: "case1",
-          input_code: defaultInputCode(activeChallenge.arguments),
-          expected: "",
-        } as TestCase;
-      };
-
-      if (activeChallenge.problemId) {
-        hasAsync = true;
-        (async () => {
-          try {
-            const bundle = await fetchPublicBundle(activeChallenge.problemId!);
-            const cases = (Array.isArray(bundle.tests)
-              ? bundle.tests
-              : bundle.tests.cases || []
-            ).map((tc) => {
-              const expected = tc.expected_is_code
-                  ? String(tc.expected)
-                  : pythonLiteral(tc.expected);
-              return {
-                id: tc.id,
-                input_code: tc.input_code || "",
-                expected,
-              } as TestCase;
-            });
-
-            if (cancelled) return;
-            setBundleExamples(cases);
-            if (cases.length > 0) {
-              setTestCases(cases);
-              setActiveTestCaseId(cases[0].id);
-            } else {
-              const emptyCase = buildEmptyCase();
-              setTestCases([emptyCase]);
-              setActiveTestCaseId(emptyCase.id);
-            }
-          } catch (err) {
-            console.warn("Failed to load public bundle", err);
-            if (cancelled) return;
-            const emptyCase = buildEmptyCase();
-            setTestCases([emptyCase]);
-            setActiveTestCaseId(emptyCase.id);
-          }
-        })();
-      } else {
-        // Default empty case if no public bundle exists for this challenge
-        const emptyCase = buildEmptyCase();
-        setTestCases([emptyCase]);
-        setActiveTestCaseId(emptyCase.id);
-      }
-      setRunResult(null);
-      setOutput("");
-      setLastRunMode(null);
-
-      return () => {
-        if (hasAsync) {
-          cancelled = true;
-        }
-      };
-    }
+    setRunResult(null);
+    setOutput("");
+    setLastRunMode(null);
   }, [activeChallenge, courseId]);
 
   // Save code to localStorage with debounce
@@ -585,7 +547,6 @@ function ChallengeEditorContent({
   const ensurePyodideLoaded = useCallback(async () => {
     if (!activeChallenge) return;
     if (executionMode !== "browser") return;
-    if (!canRunInBrowser(activeChallenge.dependencies)) return;
     if (pyodideStatusRef.current === "ready") return;
 
     if (!pyodideLoadPromiseRef.current) {
@@ -608,7 +569,6 @@ function ChallengeEditorContent({
     if (hasTriggeredPyodidePreloadRef.current) return;
     if (!activeChallenge) return;
     if (executionMode !== "browser") return;
-    if (!canRunInBrowser(activeChallenge.dependencies)) return;
     if (pyodideStatusRef.current === "ready") {
       hasTriggeredPyodidePreloadRef.current = true;
       return;
@@ -687,8 +647,7 @@ function ChallengeEditorContent({
       const useBrowser = executionMode === "browser" && mode === "run";
       const useServer = executionMode === "server" || mode === "submit";
 
-      // Filter test cases based on mode
-      const casesToRun = testCases;
+      const casesToRun = workingCases;
 
       // Track which challenge we're running for race condition detection
       const runChallengeId = activeChallenge.id;
@@ -712,44 +671,15 @@ function ChallengeEditorContent({
           }
           await ensurePyodideLoaded();
 
-          let config: TestConfig;
-
-          const fallbackConfig = () => {
-            const formattedCases = casesToRun.map((tc) => {
-              return {
-                id: tc.id,
-                input: tc.input_code,
-                expected: tc.expected,
-              };
-            });
-
-            let runnerCode =
-              activeChallenge?.executionSnippet ||
-              "print('No execution snippet defined')";
-            if (
-              runnerCode.trim().startsWith("print(") &&
-              runnerCode.trim().endsWith(")")
-            ) {
-              runnerCode = runnerCode.trim().slice(6, -1);
-            }
-
-            return {
-              cases: formattedCases,
-              runner: runnerCode,
-            };
+          const config: TestConfig = {
+            runner: activeChallenge.runner,
+            cases: casesToRun.map((tc) => ({
+              id: tc.id,
+              input: compileInputCode(tc.inputs, activeChallenge.arguments),
+              expected: tc.expected_literal,
+            })),
+            comparison: activeChallenge.comparison,
           };
-
-          if (activeChallenge?.problemId && mode === "run") {
-            try {
-              const bundle = await fetchPublicBundle(activeChallenge.problemId);
-              config = bundleToTestConfig(bundle);
-            } catch (err) {
-              console.warn("Failed to load public bundle, falling back", err);
-              config = fallbackConfig();
-            }
-          } else {
-            config = fallbackConfig();
-          }
 
           // Run tests with Pyodide
           const results = await runTestsWithPyodide(
@@ -828,11 +758,21 @@ function ChallengeEditorContent({
           pollAbortController = new AbortController();
           judgePollAbortRef.current = pollAbortController;
 
-          const submit = await submitToJudge({
-            problemId: activeChallenge.problemId,
-            code,
-            kind: mode,
-          });
+          const submit =
+            mode === "run"
+              ? await runOnJudge({
+                  problem_id: activeChallenge.problemId,
+                  code,
+                  cases: casesToRun.map((tc) => ({
+                    id: tc.id,
+                    inputs: tc.inputs,
+                    expected_literal: tc.expected_literal,
+                  })),
+                })
+              : await submitToJudge({
+                  problem_id: activeChallenge.problemId,
+                  code,
+                });
 
           const result = await waitForJudgeResult(submit.job_id, {
             timeoutMs: 120000,
@@ -925,7 +865,7 @@ function ChallengeEditorContent({
       abortJudgePolling,
       code,
       courseId,
-      testCases,
+      workingCases,
       activeChallenge,
       executionMode,
       ensurePyodideLoaded,
@@ -951,7 +891,15 @@ function ChallengeEditorContent({
   const runShortcut = isMac ? "Cmd + ," : "Ctrl + ,";
   const submitShortcut = isMac ? "Cmd + Enter" : "Ctrl + Enter";
 
-  const editableTestCases = testCases;
+  const hasModifiedCases = React.useMemo(() => {
+    const orig = originalCasesRef.current;
+    if (workingCases.length !== orig.length) return true;
+    return workingCases.some((wc, i) => {
+      const oc = orig[i];
+      if (!oc) return true;
+      return JSON.stringify(wc.inputs) !== JSON.stringify(oc.inputs);
+    });
+  }, [workingCases]);
 
   return (
     <Group orientation="horizontal" className="flex-1 min-h-0 min-w-0 bg-background">
@@ -1014,28 +962,23 @@ function ChallengeEditorContent({
               </div>
             )}
 
-            {/* Automated Example Test Cases */}
-            {(() => {
-              const allExamples = bundleExamples || [];
-              const exampleCases = activeChallenge.visibleTestCases
-                ? allExamples.slice(0, activeChallenge.visibleTestCases)
-                : allExamples;
-              if (exampleCases.length === 0) {
-                return null;
-              }
-              return (
-                <div className="mt-8 not-prose">
-                  <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">
-                    Examples
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    {exampleCases.map((tc) => (
-                      <ExampleCard key={tc.id} testCase={tc} />
-                    ))}
-                  </div>
+            {/* Example Test Cases */}
+            {activeChallenge.publicCases.length > 0 && (
+              <div className="mt-8 not-prose">
+                <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">
+                  Examples
                 </div>
-              );
-            })()}
+                <div className="flex flex-col gap-3">
+                  {activeChallenge.publicCases.map((tc) => (
+                    <ExampleCard
+                      key={tc.id}
+                      testCase={tc}
+                      argOrder={activeChallenge.arguments}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1244,8 +1187,8 @@ function ChallengeEditorContent({
                     if (isBottomPanelCollapsed)
                       bottomPanelRef.current?.expand();
                     // Ensure a valid test case is selected
-                    if (editableTestCases.length > 0 && !editableTestCases.some((tc) => tc.id === activeTestCaseId)) {
-                      setActiveTestCaseId(editableTestCases[0].id);
+                    if (workingCases.length > 0 && !workingCases.some((tc) => tc.id === activeTestCaseId)) {
+                      setActiveTestCaseId(workingCases[0].id);
                     }
                   }}
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
@@ -1320,49 +1263,49 @@ function ChallengeEditorContent({
                     <div id="testcases-panel" role="tabpanel" aria-label="Test cases editor" className="flex flex-col h-full">
                       {/* Case Tabs */}
                       <div className="flex items-center gap-2 p-2 border-b border-border">
-                        {editableTestCases.map((tc, idx) => (
-                            <button
-                              key={tc.id}
-                              onClick={() => setActiveTestCaseId(tc.id)}
-                              className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 ${
-                                activeTestCaseId === tc.id
-                                  ? "bg-surface text-primary"
-                                  : "text-muted hover:bg-surface"
-                              }`}
-                            >
-                              Case {idx + 1}
-                              {editableTestCases.length > 1 && (
-                                <X
-                                  className="w-3 h-3 hover:text-error"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setTestCases((prev) =>
-                                      prev.filter((c) => c.id !== tc.id)
+                        {workingCases.map((tc, idx) => (
+                          <button
+                            key={tc.id}
+                            onClick={() => setActiveTestCaseId(tc.id)}
+                            className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 ${
+                              activeTestCaseId === tc.id
+                                ? "bg-surface text-primary"
+                                : "text-muted hover:bg-surface"
+                            }`}
+                          >
+                            Case {idx + 1}
+                            {workingCases.length > 1 && (
+                              <X
+                                className="w-3 h-3 hover:text-error"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setWorkingCases((prev) =>
+                                    prev.filter((c) => c.id !== tc.id)
+                                  );
+                                  if (activeTestCaseId === tc.id) {
+                                    const remaining = workingCases.filter(
+                                      (c) => c.id !== tc.id
                                     );
-                                    if (activeTestCaseId === tc.id) {
-                                      const remaining = editableTestCases.filter(
-                                        (c) => c.id !== tc.id
-                                      );
-                                      if (remaining.length > 0) {
-                                        setActiveTestCaseId(remaining[0].id);
-                                      }
+                                    if (remaining.length > 0) {
+                                      setActiveTestCaseId(remaining[0].id);
                                     }
-                                  }}
-                                />
-                              )}
-                            </button>
-                          ))}
+                                  }
+                                }}
+                              />
+                            )}
+                          </button>
+                        ))}
                         <button
                           onClick={() => {
-                            const newId = Math.random()
-                              .toString(36)
-                              .substr(2, 9);
-                            setTestCases([
-                              ...testCases,
+                            const source = workingCases[workingCases.length - 1];
+                            if (!source) return;
+                            const newId = `clone-${Date.now()}`;
+                            setWorkingCases((prev) => [
+                              ...prev,
                               {
                                 id: newId,
-                                input_code: defaultInputCode(activeChallenge?.arguments),
-                                expected: "",
+                                inputs: { ...source.inputs },
+                                expected_literal: source.expected_literal,
                               },
                             ]);
                             setActiveTestCaseId(newId);
@@ -1373,49 +1316,70 @@ function ChallengeEditorContent({
                         </button>
                       </div>
 
-                      {/* Case Editors */}
-                      <div className="flex-1 flex flex-col gap-6 p-4 overflow-y-auto">
-                        {testCases.map((tc) => {
+                      {/* Per-parameter input fields */}
+                      <div className="flex-1 flex flex-col p-4 overflow-y-auto">
+                        {workingCases.map((tc) => {
                           if (tc.id !== activeTestCaseId) return null;
                           return (
-                            <div key={tc.id} className="flex flex-col gap-6">
-                              <div className="flex flex-col gap-2">
-                                <label className="text-xs font-medium text-muted">
-                                  Input Setup <span className="text-muted/60">(Python)</span>
-                                </label>
-                                <AutoResizingEditor
-                                  value={tc.input_code}
-                                  onChange={(val) => {
-                                    setTestCases((prev) =>
-                                      prev.map((c) =>
-                                        c.id === tc.id
-                                          ? { ...c, input_code: val || "" }
-                                          : c
-                                      )
-                                    );
-                                  }}
-                                />
-                              </div>
-                              <div className="flex flex-col gap-2">
-                                <label className="text-xs font-medium text-muted">
-                                  Expected Output
-                                </label>
-                                <AutoResizingEditor
-                                  value={tc.expected}
-                                  onChange={(val) => {
-                                    setTestCases((prev) =>
-                                      prev.map((c) =>
-                                        c.id === tc.id
-                                          ? { ...c, expected: val || "" }
-                                          : c
-                                      )
-                                    );
-                                  }}
-                                />
-                              </div>
+                            <div key={tc.id} className="flex flex-col gap-4">
+                              {activeChallenge.arguments.map((arg) => (
+                                <div key={arg.name} className="flex flex-col gap-1.5">
+                                  <div className="flex items-baseline gap-2">
+                                    <label className="text-xs font-mono text-secondary">
+                                      {arg.name} =
+                                    </label>
+                                    {arg.type && (
+                                      <span className="text-xs text-muted">
+                                        ({arg.type})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <AutoResizeTextarea
+                                    value={tc.inputs[arg.name] ?? ""}
+                                    onChange={(val) => {
+                                      setWorkingCases((prev) =>
+                                        prev.map((c) =>
+                                          c.id === tc.id
+                                            ? {
+                                                ...c,
+                                                inputs: {
+                                                  ...c.inputs,
+                                                  [arg.name]: val,
+                                                },
+                                              }
+                                            : c
+                                        )
+                                      );
+                                    }}
+                                    className="bg-surface rounded-lg p-3 font-mono text-[13px] text-secondary border border-transparent focus:border-border focus:outline-none resize-none"
+                                  />
+                                </div>
+                              ))}
                             </div>
                           );
                         })}
+
+                        {/* Reset Testcases */}
+                        {hasModifiedCases && (
+                          <div className="mt-4 pt-3 border-t border-border">
+                            <button
+                              onClick={() => {
+                                setWorkingCases(
+                                  originalCasesRef.current.map((c) => ({
+                                    ...c,
+                                    inputs: { ...c.inputs },
+                                  }))
+                                );
+                                setActiveTestCaseId(
+                                  originalCasesRef.current[0]?.id ?? ""
+                                );
+                              }}
+                              className="text-xs text-muted hover:text-secondary transition-colors"
+                            >
+                              Reset Testcases
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1424,7 +1388,7 @@ function ChallengeEditorContent({
                     <div id="result-panel" role="tabpanel" aria-label="Test results" className="flex flex-col h-full">
                       {!runResult ? (
                         <div className="flex-1 flex items-center justify-center text-muted/60 text-sm italic">
-                          {runMessage || (isRunning ? "Running..." : "Run or submit to see results...")}
+                          {runMessage || (isRunning ? "Running..." : "You must run your code first")}
                         </div>
                       ) : (
                         <>
@@ -1521,7 +1485,7 @@ function ChallengeEditorContent({
                                         : "bg-error"
                                     }`}
                                   />
-                                  {r.hidden ? "Hidden Test" : `Case ${idx + 1}`}
+                                  {`Case ${idx + 1}`}
                                 </button>
                               ))}
                             </div>
