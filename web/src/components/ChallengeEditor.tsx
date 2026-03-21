@@ -1299,21 +1299,21 @@ function ChallengeEditorContent({
                   {activeTab === "testcases" && (
                     <div id="testcases-panel" role="tabpanel" aria-label="Test cases editor" className="flex flex-col h-full">
                       {/* Case Tabs */}
-                      <div className="flex items-center gap-2 p-2 border-b border-border">
+                      <div className="flex items-center gap-0.5 px-3 pt-1 border-b border-border">
                         {workingCases.map((tc, idx) => (
                           <button
                             key={tc.id}
                             onClick={() => setActiveTestCaseId(tc.id)}
-                            className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 ${
+                            className={`group/tab px-3 py-1.5 text-xs transition-colors flex items-center gap-1.5 border-b-2 -mb-px ${
                               activeTestCaseId === tc.id
-                                ? "bg-surface text-primary"
-                                : "text-muted hover:bg-surface"
+                                ? "border-primary text-primary"
+                                : "border-transparent text-muted hover:text-secondary"
                             }`}
                           >
                             Case {idx + 1}
                             {workingCases.length > 1 && (
                               <X
-                                className="w-3 h-3 hover:text-error"
+                                className="w-3 h-3 opacity-0 group-hover/tab:opacity-100 hover:text-error transition-opacity"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setWorkingCases((prev) =>
@@ -1347,9 +1347,9 @@ function ChallengeEditorContent({
                             ]);
                             setActiveTestCaseId(newId);
                           }}
-                          className="p-1 text-muted hover:text-primary"
+                          className="px-2 py-1.5 text-muted hover:text-secondary transition-colors -mb-px border-b-2 border-transparent"
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
@@ -1358,7 +1358,7 @@ function ChallengeEditorContent({
                         {workingCases.map((tc) => {
                           if (tc.id !== activeTestCaseId) return null;
                           return (
-                            <div key={tc.id} className="flex flex-col gap-2">
+                            <div key={tc.id} className="flex flex-col gap-3">
                               {activeChallenge.arguments.map((arg) => (
                                 <div key={arg.name}>
                                   <label className="block text-[11px] text-muted mb-0.5 font-mono">
@@ -1381,7 +1381,7 @@ function ChallengeEditorContent({
                                         )
                                       );
                                     }}
-                                    className="w-full bg-surface/60 px-2 py-1 font-mono text-[13px] text-secondary rounded border-none focus:bg-surface focus:outline-none resize-none leading-snug"
+                                    className="w-full bg-surface/60 px-3 py-2 font-mono text-[13px] text-secondary rounded border-none focus:bg-surface focus:outline-none resize-none leading-relaxed"
                                   />
                                 </div>
                               ))}
