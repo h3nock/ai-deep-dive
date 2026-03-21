@@ -1,15 +1,6 @@
 ---
-title: "The Frequency Schedule"
-difficulty: "Easy"
-arguments:
-  - name: d_model
-    type: int
-executionSnippet: |
-  get_frequencies(d_model)
-visibleTestCases: 2
-dependencies:
-  - torch
-problemId: "build-gpt/04-positional-encoding/01-frequency-schedule"
+title: The Frequency Schedule
+difficulty: Easy
 ---
 
 Sinusoidal PE uses `d_model // 2` frequencies that decrease geometrically from 1 down to 1/10000.

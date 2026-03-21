@@ -1,19 +1,6 @@
 ---
-title: "Most Similar Tokens"
-difficulty: "Medium"
-arguments:
-  - name: query_id
-    type: int
-  - name: embedding_matrix
-    type: torch.Tensor
-  - name: k
-    type: int
-executionSnippet: |
-  most_similar(query_id, embedding_matrix, k)
-visibleTestCases: 2
-dependencies:
-  - torch
-problemId: "build-gpt/03-embeddings/01-most-similar"
+title: Most Similar Tokens
+difficulty: Medium
 ---
 
 You are given an `embedding_matrix` where row `i` is the embedding vector for token ID `i`, a `query_id`, and an integer `k`. Return the IDs of the `k` tokens most similar to the query token, using cosine similarity.

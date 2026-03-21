@@ -1,23 +1,6 @@
 ---
-title: "FFN Forward Pass"
-difficulty: "Medium"
-arguments:
-  - name: x
-    type: torch.Tensor
-  - name: W1
-    type: torch.Tensor
-  - name: b1
-    type: torch.Tensor
-  - name: W2
-    type: torch.Tensor
-  - name: b2
-    type: torch.Tensor
-executionSnippet: |
-  ffn(x, W1, b1, W2, b2)
-visibleTestCases: 2
-dependencies:
-  - torch
-problemId: "build-gpt/07-feed-forward-networks/02-ffn-forward-pass"
+title: FFN Forward Pass
+difficulty: Medium
 ---
 
 Implement the feed-forward network (FFN) that processes each token independently through three stages: expand, activate, contract.

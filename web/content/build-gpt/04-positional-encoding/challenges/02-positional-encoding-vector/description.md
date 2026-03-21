@@ -1,17 +1,6 @@
 ---
-title: "The Position Vector"
-difficulty: "Medium"
-arguments:
-  - name: pos
-    type: int
-  - name: d_model
-    type: int
-executionSnippet: |
-  positional_encoding(pos, d_model)
-visibleTestCases: 2
-dependencies:
-  - torch
-problemId: "build-gpt/04-positional-encoding/02-positional-encoding-vector"
+title: The Position Vector
+difficulty: Medium
 ---
 
 Build the positional encoding vector of length `d_model` for a single position.

@@ -1,21 +1,6 @@
 ---
-title: "Vector Analogy (A − B + C)"
-difficulty: "Medium"
-arguments:
-  - name: a_id
-    type: int
-  - name: b_id
-    type: int
-  - name: c_id
-    type: int
-  - name: embedding_matrix
-    type: torch.Tensor
-executionSnippet: |
-  solve_analogy(a_id, b_id, c_id, embedding_matrix)
-visibleTestCases: 2
-dependencies:
-  - torch
-problemId: "build-gpt/03-embeddings/02-vector-analogy"
+title: Vector Analogy (A − B + C)
+difficulty: Medium
 ---
 
 You are given three token IDs (`a_id`, `b_id`, `c_id`) and an `embedding_matrix` where row `i` is the embedding vector for token ID `i`. Solve the analogy **"A is to B as C is to ?"** using vector arithmetic.
