@@ -119,11 +119,13 @@ function ExampleCard({
       </button>
 
       {isOpen && (
-        <div className="bg-terminal px-3 py-2 font-mono text-[12px] leading-relaxed">
+        <div className="bg-terminal px-3 py-2">
           {/* Input */}
-          <div className="mb-1">
-            <div className="font-bold text-secondary">Input:</div>
-            <div className="text-muted whitespace-pre-wrap break-all">
+          <div className="mb-2">
+            <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+              Input
+            </label>
+            <div className="mt-1 font-mono text-[13px] text-secondary whitespace-pre-wrap break-all leading-relaxed">
               {argOrder
                 .map((arg) => `${arg.name} = ${cleanDisplayValue(testCase.inputs[arg.name] ?? "")}`)
                 .join("\n")}
@@ -132,17 +134,21 @@ function ExampleCard({
 
           {/* Output */}
           <div>
-            <div className="font-bold text-secondary">Output:</div>
-            <div className="text-muted whitespace-pre-wrap break-all">
+            <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+              Output
+            </label>
+            <div className="mt-1 font-mono text-[13px] text-secondary whitespace-pre-wrap break-all leading-relaxed">
               {testCase.expected_literal}
             </div>
           </div>
 
           {/* Explanation */}
           {testCase.explanation && (
-            <div className="mt-1">
-              <div className="font-bold text-secondary">Explanation:</div>
-              <div className="text-muted/80 font-sans text-[12px]">
+            <div className="mt-2">
+              <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                Explanation
+              </label>
+              <div className="mt-1 text-[13px] text-secondary/80 font-sans leading-relaxed">
                 {testCase.explanation}
               </div>
             </div>
@@ -1294,8 +1300,8 @@ function ChallengeEditorContent({
                             <div key={tc.id} className="flex flex-col gap-3">
                               {activeChallenge.arguments.map((arg) => (
                                 <div key={arg.name}>
-                                  <label className="block text-[11px] text-muted mb-0.5 font-mono">
-                                    {arg.name} =
+                                  <label className="block text-[11px] font-medium text-muted uppercase tracking-wide mb-1">
+                                    {arg.name}
                                   </label>
                                   <AutoResizeTextarea
                                     value={tc.inputs[arg.name] ?? ""}
