@@ -694,7 +694,7 @@ function ChallengeEditorContent({
             code,
             config,
             () => {},
-            () => {}
+            (text) => setRunMessage(text.trim())
           );
 
           if (currentChallengeIdRef.current !== runChallengeId) {
@@ -1458,58 +1458,67 @@ function ChallengeEditorContent({
                               if (r.id !== activeTestCaseId) return null;
                               return (
                                 <div key={r.id} className="flex flex-col gap-3">
-                                  {isErrorStatus(r.status) && r.stderr && (
-                                    <div className="p-3 bg-error/5 border border-error/20 rounded-lg text-error text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
-                                      {r.stderr}
+                                  {/* Input */}
+                                  {r.input && (
+                                    <div className="space-y-1.5">
+                                      <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                        Input
+                                      </label>
+                                      <div className="p-3 bg-surface rounded-lg text-secondary text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                        {r.input}
+                                      </div>
                                     </div>
                                   )}
 
-                                  {!isErrorStatus(r.status) && (
-                                    <>
+                                  {/* Stderr */}
+                                  {r.stderr && (
+                                    <div className="space-y-1.5">
+                                      <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                        {isErrorStatus(r.status) ? r.status : "Stderr"}
+                                      </label>
+                                      <div className="p-3 bg-error/5 border border-error/20 rounded-lg text-error text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                        {r.stderr}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Stdout */}
+                                  {r.stdout && (
+                                    <div className="space-y-1.5">
+                                      <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                        Stdout
+                                      </label>
+                                      <div className="p-3 bg-surface rounded-lg text-secondary text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                        {r.stdout}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Output + Expected */}
+                                  {(r.output || r.expected) && (
+                                    <div className="grid grid-cols-2 gap-3">
                                       <div className="space-y-1.5">
                                         <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
-                                          Input
+                                          Output
                                         </label>
-                                        <div className="p-3 bg-surface rounded-lg text-secondary text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
-                                          {r.input || <span className="text-muted/60 italic">None</span>}
+                                        <div className={`p-3 rounded-lg text-[13px] font-mono whitespace-pre-wrap leading-relaxed ${
+                                          r.status === "Accepted"
+                                            ? "bg-surface text-secondary"
+                                            : "bg-error/5 text-error border border-error/20"
+                                        }`}>
+                                          {r.output || <span className="text-muted/60 italic">None</span>}
                                         </div>
                                       </div>
 
-                                      {r.stdout && (
-                                        <div className="space-y-1.5">
-                                          <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
-                                            Stdout
-                                          </label>
-                                          <div className="p-3 bg-surface rounded-lg text-secondary text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
-                                            {r.stdout}
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      <div className="grid grid-cols-2 gap-3">
-                                        <div className="space-y-1.5">
-                                          <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
-                                            Output
-                                          </label>
-                                          <div className={`p-3 rounded-lg text-[13px] font-mono whitespace-pre-wrap leading-relaxed ${
-                                            r.status === "Accepted"
-                                              ? "bg-surface text-secondary"
-                                              : "bg-error/5 text-error border border-error/20"
-                                          }`}>
-                                            {r.output || <span className="text-muted/60 italic">None</span>}
-                                          </div>
-                                        </div>
-
-                                        <div className="space-y-1.5">
-                                          <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
-                                            Expected
-                                          </label>
-                                          <div className="p-3 bg-success/5 border border-success/20 rounded-lg text-success text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
-                                            {r.expected}
-                                          </div>
+                                      <div className="space-y-1.5">
+                                        <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                          Expected
+                                        </label>
+                                        <div className="p-3 bg-success/5 border border-success/20 rounded-lg text-success text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
+                                          {r.expected}
                                         </div>
                                       </div>
-                                    </>
+                                    </div>
                                   )}
                                 </div>
                               );
