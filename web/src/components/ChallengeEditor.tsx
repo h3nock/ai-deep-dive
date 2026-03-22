@@ -174,27 +174,12 @@ function AutoResizeTextarea({
   onChange: (value: string) => void;
   className?: string;
 }) {
-  const [supportsFieldSizing, setSupportsFieldSizing] = useState(false);
-
-  useEffect(() => {
-    setSupportsFieldSizing(
-      typeof CSS !== "undefined" && CSS.supports("field-sizing", "content")
-    );
-  }, []);
-
   return (
     <textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`${className ?? ""} ${
-        supportsFieldSizing ? "resize-none min-h-0" : "min-h-[2.75rem] resize-y"
-      }`}
-      rows={supportsFieldSizing ? 1 : 2}
-      style={
-        supportsFieldSizing
-          ? ({ fieldSizing: "content" } as React.CSSProperties)
-          : undefined
-      }
+      className={`testcase-textarea ${className ?? ""}`}
+      rows={1}
     />
   );
 }
@@ -1358,7 +1343,7 @@ function ChallengeEditorContent({
                                           )
                                         );
                                       }}
-                                      className={`w-full px-3 py-2 font-mono text-[13px] text-secondary rounded border focus:outline-none resize-none leading-relaxed ${
+                                      className={`w-full px-3 py-2 font-mono text-[13px] text-secondary rounded border focus:outline-none leading-relaxed ${
                                         error
                                           ? "bg-error/5 border-error/30 focus:border-error/50"
                                           : "bg-surface/60 border-transparent focus:bg-surface focus:border-border"

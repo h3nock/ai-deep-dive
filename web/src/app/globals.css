@@ -251,6 +251,22 @@ body {
   scrollbar-width: thin;
 }
 
+/* Test case textarea sizing
+   Baseline: stable multiline textarea for browsers without field-sizing.
+   Enhancement: native content-based autosize where supported. */
+.testcase-textarea {
+  min-height: 2.75rem;
+  resize: vertical;
+}
+
+@supports (field-sizing: content) {
+  .testcase-textarea {
+    field-sizing: content;
+    min-height: 0;
+    resize: none;
+  }
+}
+
 /* ==========================================================================
    Shiki Multi-Theme Toggle
    rehype-pretty-code generates --shiki-dark and --shiki-light on each span.
