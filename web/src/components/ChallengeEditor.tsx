@@ -109,21 +109,16 @@ function ExampleCard({
       ? argOrder.slice(0, EXAMPLE_COLLAPSED_ARG_LIMIT)
       : argOrder;
 
-  const inputText = visibleArgs
-    .map(
-      (arg) =>
-        `${arg.name} = ${cleanDisplayValue(testCase.inputs[arg.name] ?? "")}`
-    )
-    .join(", ");
-
   return (
-    <div>
-      {/* Heading — bold, clickable to toggle */}
+    <div className="rounded-md border border-border overflow-hidden">
+      {/* Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 text-sm font-semibold text-primary mb-1.5 hover:text-primary/80 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 bg-surface/50 hover:bg-surface transition-colors text-left"
       >
-        Example {index + 1}:
+        <span className="text-xs font-medium text-muted">
+          Example {index + 1}
+        </span>
         {isOpen ? (
           <ChevronUp className="w-3 h-3 text-muted" />
         ) : (
@@ -132,19 +127,14 @@ function ExampleCard({
       </button>
 
       {isOpen && (
-        <div className="pl-3 border-l-2 border-border-hover font-mono text-[12.5px] leading-relaxed flex flex-col gap-0.5">
+        <div className="bg-terminal px-3 py-2 font-mono text-[12px] leading-relaxed">
           {/* Input */}
-          <div>
-            <span className="font-semibold text-secondary">Input: </span>
-            <span className="text-muted break-all">
-              {argOrder.length <= 3
-                ? inputText
-                : visibleArgs.map((arg, i) => (
-                    <span key={arg.name}>
-                      {i > 0 && "\n"}
-                      {arg.name} = {cleanDisplayValue(testCase.inputs[arg.name] ?? "")}
-                    </span>
-                  ))}
+          <div className="mb-1">
+            <span className="font-bold text-secondary">Input: </span>
+            <span className="text-muted whitespace-pre-wrap break-all">
+              {visibleArgs
+                .map((arg) => `${arg.name} = ${cleanDisplayValue(testCase.inputs[arg.name] ?? "")}`)
+                .join("\n")}
             </span>
             {needsCollapse && (
               <button
@@ -163,16 +153,16 @@ function ExampleCard({
 
           {/* Output */}
           <div>
-            <span className="font-semibold text-secondary">Output: </span>
-            <span className="text-muted break-all">
+            <span className="font-bold text-secondary">Output: </span>
+            <span className="text-muted whitespace-pre-wrap break-all">
               {testCase.expected_literal}
             </span>
           </div>
 
           {/* Explanation */}
           {testCase.explanation && (
-            <div>
-              <span className="font-semibold text-secondary">Explanation: </span>
+            <div className="mt-1">
+              <span className="font-bold text-secondary">Explanation: </span>
               <span className="text-muted/80 font-sans text-[12px]">
                 {testCase.explanation}
               </span>
@@ -1020,7 +1010,7 @@ function ChallengeEditorContent({
                 <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">
                   Examples
                 </div>
-                <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-3">
                   {activeChallenge.publicCases.map((tc, idx) => (
                     <ExampleCard
                       key={tc.id}
