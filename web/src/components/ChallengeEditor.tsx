@@ -165,6 +165,9 @@ function ExampleCard({
   );
 }
 
+const supportsFieldSizing =
+  typeof CSS !== "undefined" && CSS.supports("field-sizing", "content");
+
 function AutoResizeTextarea({
   value,
   onChange,
@@ -175,7 +178,10 @@ function AutoResizeTextarea({
   className?: string;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
+
+  // JS fallback for browsers without field-sizing: content
   useLayoutEffect(() => {
+    if (supportsFieldSizing) return;
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
@@ -189,7 +195,11 @@ function AutoResizeTextarea({
       onChange={(e) => onChange(e.target.value)}
       className={className}
       rows={1}
-      style={{ overflow: "hidden" }}
+      style={{
+        ...(supportsFieldSizing
+          ? { fieldSizing: "content" }
+          : { overflow: "hidden" }),
+      } as React.CSSProperties}
     />
   );
 }
@@ -264,6 +274,7 @@ function ChallengeEditorContent({
     return "Something went wrong on our side. Please retry.";
   }, []);
   const toErrorStatus = useCallback((status?: string): TestStatus => {
+    if (status === "Syntax Error") return "Syntax Error";
     if (status === "Time Limit Exceeded") return "Time Limit Exceeded";
     if (status === "Memory Limit Exceeded") return "Memory Limit Exceeded";
     return "Runtime Error";
@@ -320,6 +331,7 @@ function ChallengeEditorContent({
   );
   const isErrorStatus = useCallback(
     (status: TestStatus) =>
+      status === "Syntax Error" ||
       status === "Runtime Error" ||
       status === "Time Limit Exceeded" ||
       status === "Memory Limit Exceeded",
