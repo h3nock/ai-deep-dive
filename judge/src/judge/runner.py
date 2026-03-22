@@ -149,7 +149,7 @@ def run_cases():
 
         status = "Accepted"
         output_str = ""
-        expected = None
+        expected = ast.literal_eval(expected_literal)
         stdout_val = ""
         stderr_val = ""
 
@@ -174,8 +174,6 @@ def run_cases():
             stderr_val = stderr_capture.getvalue()
 
             actual_value = normalize(actual_value)
-            expected = ast.literal_eval(expected_literal)
-
             if not compare(actual_value, expected, comparison):
                 status = "Wrong Answer"
             output_str = repr(actual_value)

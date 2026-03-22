@@ -13,7 +13,7 @@ from judge.runner import HARNESS_CODE
 
 
 class RunnerHarnessTests(TestCase):
-    def test_harness_reports_runtime_error_when_testcase_exec_fails_before_expected_parse(self) -> None:
+    def test_harness_preserves_expected_when_testcase_exec_fails_before_solution_runs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             temp_root = Path(tmp_dir)
             harness_path = temp_root / "harness.py"
@@ -52,6 +52,6 @@ class RunnerHarnessTests(TestCase):
         self.assertEqual(len(payload), 1)
         case = payload[0]
         self.assertEqual(case.get("status"), "Runtime Error")
-        self.assertEqual(case.get("expected"), "None")
+        self.assertEqual(case.get("expected"), "3")
         self.assertIn("NameError", case.get("stderr", ""))
         self.assertIn("missing_name", case.get("stderr", ""))
