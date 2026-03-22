@@ -46,7 +46,18 @@ function requireBaseUrl(): string {
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
-    throw new Error(`Request failed: ${res.status}`);
+    let detail = `Request failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) {
+        detail = typeof body.detail === "string"
+          ? body.detail
+          : JSON.stringify(body.detail);
+      }
+    } catch {
+      // ignore parse failure
+    }
+    throw new Error(detail);
   }
   return res.json() as Promise<T>;
 }

@@ -1263,25 +1263,27 @@ function ChallengeEditorContent({
                             )}
                           </button>
                         ))}
-                        <button
-                          onClick={() => {
-                            const source = workingCases[workingCases.length - 1];
-                            if (!source) return;
-                            const newId = `clone-${Date.now()}`;
-                            setWorkingCases((prev) => [
-                              ...prev,
-                              {
-                                id: newId,
-                                inputs: { ...source.inputs },
-                                expected_literal: source.expected_literal,
-                              },
-                            ]);
-                            setActiveTestCaseId(newId);
-                          }}
-                          className="px-2 py-1.5 text-muted hover:text-secondary transition-colors -mb-px border-b-2 border-transparent"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
+                        {workingCases.length < 10 && (
+                          <button
+                            onClick={() => {
+                              const source = workingCases[workingCases.length - 1];
+                              if (!source) return;
+                              const newId = `clone-${Date.now()}`;
+                              setWorkingCases((prev) => [
+                                ...prev,
+                                {
+                                  id: newId,
+                                  inputs: { ...source.inputs },
+                                  expected_literal: source.expected_literal,
+                                },
+                              ]);
+                              setActiveTestCaseId(newId);
+                            }}
+                            className="px-2 py-1.5 text-muted hover:text-secondary transition-colors -mb-px border-b-2 border-transparent"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
 
                       {/* Per-parameter input fields */}
