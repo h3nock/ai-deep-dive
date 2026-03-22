@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { Group, Panel, Separator, usePanelRef } from "react-resizable-panels";
 import { useTheme } from "next-themes";
 import {
@@ -163,7 +163,7 @@ function AutoResizeTextarea({
   className?: string;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
