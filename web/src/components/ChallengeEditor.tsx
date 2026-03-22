@@ -109,16 +109,21 @@ function ExampleCard({
       ? argOrder.slice(0, EXAMPLE_COLLAPSED_ARG_LIMIT)
       : argOrder;
 
+  const inputText = visibleArgs
+    .map(
+      (arg) =>
+        `${arg.name} = ${cleanDisplayValue(testCase.inputs[arg.name] ?? "")}`
+    )
+    .join(", ");
+
   return (
-    <div className="rounded-md border border-border overflow-hidden">
-      {/* Header — always visible, clickable to toggle */}
+    <div>
+      {/* Heading — bold, clickable to toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-3 py-2 bg-surface/50 hover:bg-surface transition-colors text-left"
+        className="flex items-center gap-1.5 text-sm font-semibold text-primary mb-1.5 hover:text-primary/80 transition-colors"
       >
-        <span className="text-xs font-medium text-muted">
-          Example {index + 1}
-        </span>
+        Example {index + 1}:
         {isOpen ? (
           <ChevronUp className="w-3 h-3 text-muted" />
         ) : (
@@ -127,30 +132,27 @@ function ExampleCard({
       </button>
 
       {isOpen && (
-        <div className="bg-terminal">
-          {/* Input params */}
-          <div className="px-3 py-2 font-mono text-[12px] leading-relaxed">
-            {visibleArgs.map((arg) => {
-              const val = cleanDisplayValue(
-                testCase.inputs[arg.name] ?? ""
-              );
-              return (
-                <div key={arg.name} className="flex gap-0 py-px">
-                  <span className="text-muted shrink-0">
-                    {arg.name}
-                  </span>
-                  <span className="text-muted/40 shrink-0 mx-1">=</span>
-                  <span className="text-secondary break-all">{val}</span>
-                </div>
-              );
-            })}
+        <div className="pl-3 border-l-2 border-border-hover font-mono text-[12.5px] leading-relaxed flex flex-col gap-0.5">
+          {/* Input */}
+          <div>
+            <span className="font-semibold text-secondary">Input: </span>
+            <span className="text-muted break-all">
+              {argOrder.length <= 3
+                ? inputText
+                : visibleArgs.map((arg, i) => (
+                    <span key={arg.name}>
+                      {i > 0 && "\n"}
+                      {arg.name} = {cleanDisplayValue(testCase.inputs[arg.name] ?? "")}
+                    </span>
+                  ))}
+            </span>
             {needsCollapse && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowAllArgs(!showAllArgs);
                 }}
-                className="text-[11px] text-muted/60 hover:text-muted transition-colors mt-0.5"
+                className="block text-[11px] text-muted/50 hover:text-muted transition-colors"
               >
                 {showAllArgs
                   ? "show less"
@@ -159,27 +161,21 @@ function ExampleCard({
             )}
           </div>
 
-          {/* Output — visually distinct with accent border */}
-          <div className="border-t border-border/50 px-3 py-2 flex gap-2 items-start">
-            <span className="text-[10px] font-medium text-success/70 uppercase tracking-wider shrink-0 mt-px">
-              out
-            </span>
-            <span className="font-mono text-[12px] text-secondary break-all leading-relaxed">
+          {/* Output */}
+          <div>
+            <span className="font-semibold text-secondary">Output: </span>
+            <span className="text-muted break-all">
               {testCase.expected_literal}
             </span>
           </div>
 
           {/* Explanation */}
           {testCase.explanation && (
-            <div className="border-t border-border/50 px-3 py-2">
-              <div className="text-[12px] text-secondary/80 font-sans leading-relaxed prose prose-invert prose-sm max-w-none [&>p]:my-1 [&_code]:text-[11px] [&_code]:bg-surface [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
-                <ReactMarkdown
-                  remarkPlugins={[remarkMath]}
-                  rehypePlugins={[rehypeKatex]}
-                >
-                  {testCase.explanation}
-                </ReactMarkdown>
-              </div>
+            <div>
+              <span className="font-semibold text-secondary">Explanation: </span>
+              <span className="text-muted/80 font-sans text-[12px]">
+                {testCase.explanation}
+              </span>
             </div>
           )}
         </div>
@@ -1024,7 +1020,7 @@ function ChallengeEditorContent({
                 <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">
                   Examples
                 </div>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-5">
                   {activeChallenge.publicCases.map((tc, idx) => (
                     <ExampleCard
                       key={tc.id}
