@@ -1177,7 +1177,7 @@ function ChallengeEditorContent({
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
                     activeTab === "testcases" && !isBottomPanelCollapsed
                       ? "text-primary bg-background"
-                      : "text-muted hover:text-secondary"
+                      : "text-secondary hover:text-primary"
                   }`}
                   role="tab"
                   aria-selected={activeTab === "testcases" && !isBottomPanelCollapsed}
@@ -1194,7 +1194,7 @@ function ChallengeEditorContent({
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
                     activeTab === "result" && !isBottomPanelCollapsed
                       ? "text-primary bg-background"
-                      : "text-muted hover:text-secondary"
+                      : "text-secondary hover:text-primary"
                   }`}
                   role="tab"
                   aria-selected={activeTab === "result" && !isBottomPanelCollapsed}
@@ -1463,7 +1463,7 @@ function ChallengeEditorContent({
                                   {/* Input */}
                                   {r.input && (
                                     <div className="space-y-1.5">
-                                      <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                      <label className="text-[11px] font-medium text-secondary uppercase tracking-wide">
                                         Input
                                       </label>
                                       <div className="p-3 bg-surface rounded-lg text-secondary text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
@@ -1475,7 +1475,7 @@ function ChallengeEditorContent({
                                   {/* Stderr */}
                                   {r.stderr && (
                                     <div className="space-y-1.5">
-                                      <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                      <label className="text-[11px] font-medium text-secondary uppercase tracking-wide">
                                         {isErrorStatus(r.status) ? r.status : "Stderr"}
                                       </label>
                                       <div className="p-3 bg-error/5 border border-error/20 rounded-lg text-error text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
@@ -1487,7 +1487,7 @@ function ChallengeEditorContent({
                                   {/* Stdout */}
                                   {r.stdout && (
                                     <div className="space-y-1.5">
-                                      <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                      <label className="text-[11px] font-medium text-secondary uppercase tracking-wide">
                                         Stdout
                                       </label>
                                       <div className="p-3 bg-surface rounded-lg text-secondary text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
@@ -1500,7 +1500,7 @@ function ChallengeEditorContent({
                                   {(r.output || r.expected) && (
                                     <div className="grid grid-cols-2 gap-3">
                                       <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                        <label className="text-[11px] font-medium text-secondary uppercase tracking-wide">
                                           Output
                                         </label>
                                         <div className={`p-3 rounded-lg text-[13px] font-mono whitespace-pre-wrap leading-relaxed ${
@@ -1513,7 +1513,7 @@ function ChallengeEditorContent({
                                       </div>
 
                                       <div className="space-y-1.5">
-                                        <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
+                                        <label className="text-[11px] font-medium text-secondary uppercase tracking-wide">
                                           Expected
                                         </label>
                                         <div className="p-3 bg-success/5 border border-success/20 rounded-lg text-success text-[13px] font-mono whitespace-pre-wrap leading-relaxed">
