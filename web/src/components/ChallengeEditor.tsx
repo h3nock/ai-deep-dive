@@ -101,13 +101,8 @@ function ExampleCard({
   argOrder: Challenge["arguments"];
   index: number;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
-  const [showAllArgs, setShowAllArgs] = useState(false);
-  const needsCollapse = argOrder.length > EXAMPLE_COLLAPSED_ARG_LIMIT;
-  const visibleArgs =
-    needsCollapse && !showAllArgs
-      ? argOrder.slice(0, EXAMPLE_COLLAPSED_ARG_LIMIT)
-      : argOrder;
+  const defaultOpen = argOrder.length <= EXAMPLE_COLLAPSED_ARG_LIMIT;
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <div className="rounded-md border border-border overflow-hidden">
@@ -130,42 +125,29 @@ function ExampleCard({
         <div className="bg-terminal px-3 py-2 font-mono text-[12px] leading-relaxed">
           {/* Input */}
           <div className="mb-1">
-            <span className="font-bold text-secondary">Input: </span>
-            <span className="text-muted whitespace-pre-wrap break-all">
-              {visibleArgs
+            <div className="font-bold text-secondary">Input:</div>
+            <div className="text-muted whitespace-pre-wrap break-all">
+              {argOrder
                 .map((arg) => `${arg.name} = ${cleanDisplayValue(testCase.inputs[arg.name] ?? "")}`)
                 .join("\n")}
-            </span>
-            {needsCollapse && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowAllArgs(!showAllArgs);
-                }}
-                className="block text-[11px] text-muted/50 hover:text-muted transition-colors"
-              >
-                {showAllArgs
-                  ? "show less"
-                  : `+${argOrder.length - EXAMPLE_COLLAPSED_ARG_LIMIT} more`}
-              </button>
-            )}
+            </div>
           </div>
 
           {/* Output */}
           <div>
-            <span className="font-bold text-secondary">Output: </span>
-            <span className="text-muted whitespace-pre-wrap break-all">
+            <div className="font-bold text-secondary">Output:</div>
+            <div className="text-muted whitespace-pre-wrap break-all">
               {testCase.expected_literal}
-            </span>
+            </div>
           </div>
 
           {/* Explanation */}
           {testCase.explanation && (
             <div className="mt-1">
-              <span className="font-bold text-secondary">Explanation: </span>
-              <span className="text-muted/80 font-sans text-[12px]">
+              <div className="font-bold text-secondary">Explanation:</div>
+              <div className="text-muted/80 font-sans text-[12px]">
                 {testCase.explanation}
-              </span>
+              </div>
             </div>
           )}
         </div>
