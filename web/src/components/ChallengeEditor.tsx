@@ -123,10 +123,22 @@ function ExampleCard({
           {/* Input */}
           <div className="mb-1">
             <div className="font-bold text-secondary">Input:</div>
-            <div className="text-muted whitespace-pre-wrap break-words">
-              {argOrder
-                .map((arg) => `${arg.name} = ${cleanDisplayValue(testCase.inputs[arg.name] ?? "")}`)
-                .join("\n")}
+            <div className="text-muted">
+              {argOrder.map((arg) => {
+                const indent = arg.name.length + 3;
+                return (
+                  <div
+                    key={arg.name}
+                    className="whitespace-pre-wrap break-words"
+                    style={{
+                      paddingLeft: `${indent}ch`,
+                      textIndent: `-${indent}ch`,
+                    }}
+                  >
+                    {arg.name} = {cleanDisplayValue(testCase.inputs[arg.name] ?? "")}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
