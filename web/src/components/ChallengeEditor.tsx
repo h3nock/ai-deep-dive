@@ -90,8 +90,6 @@ function cleanDisplayValue(value: string): string {
   return value.replace(/, dtype=torch\.float32/g, "");
 }
 
-const EXAMPLE_COLLAPSED_ARG_LIMIT = 4;
-
 function ExampleCard({
   testCase,
   argOrder,
@@ -101,8 +99,7 @@ function ExampleCard({
   argOrder: Challenge["arguments"];
   index: number;
 }) {
-  const defaultOpen = argOrder.length <= EXAMPLE_COLLAPSED_ARG_LIMIT;
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
     <div className="rounded-md border border-border overflow-hidden">
