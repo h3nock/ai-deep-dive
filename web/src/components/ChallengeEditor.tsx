@@ -1300,8 +1300,8 @@ function ChallengeEditorContent({
                             <div key={tc.id} className="flex flex-col gap-3">
                               {activeChallenge.arguments.map((arg) => (
                                 <div key={arg.name}>
-                                  <label className="block text-[11px] font-medium text-muted uppercase tracking-wide mb-1">
-                                    {arg.name}
+                                  <label className="block text-[11px] text-muted mb-0.5 font-mono">
+                                    {arg.name} =
                                   </label>
                                   <AutoResizeTextarea
                                     value={tc.inputs[arg.name] ?? ""}
