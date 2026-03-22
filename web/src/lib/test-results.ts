@@ -1,6 +1,7 @@
 export type TestStatus =
   | "Accepted"
   | "Wrong Answer"
+  | "Syntax Error"
   | "Runtime Error"
   | "Time Limit Exceeded"
   | "Memory Limit Exceeded";
