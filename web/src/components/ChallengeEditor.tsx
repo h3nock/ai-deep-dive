@@ -221,7 +221,6 @@ function ChallengeEditorContent({
   const [activeTestCaseId, setActiveTestCaseId] = useState<string>("");
   const [runResult, setRunResult] = useState<RunResult | null>(null);
 
-  const [output, setOutput] = useState<string | null>(null); // Raw console output (fallback)
   const [isVimMode, setIsVimMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("editor_vim_mode") === "true";
@@ -231,9 +230,9 @@ function ChallengeEditorContent({
   // Bottom Panel State
   const bottomPanelRef = usePanelRef();
   const [isBottomPanelCollapsed, setIsBottomPanelCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "console" | "testcases" | "result"
-  >("console");
+  const [activeTab, setActiveTab] = useState<"testcases" | "result">(
+    "testcases"
+  );
 
   // Execution State
   const [isRunning, setIsRunning] = useState(false);
@@ -316,7 +315,6 @@ function ChallengeEditorContent({
   const monaco = useMonaco();
   const editorRef = useRef<MonacoEditorInstance | null>(null);
   const vimModeRef = useRef<MonacoVimSession | null>(null);
-  const consoleRef = useRef<HTMLDivElement>(null);
   const isVimModeInitializedRef = useRef(false); // Track if vim was loaded from localStorage
   const isRunningRef = useRef(false); // Guard against concurrent executions
   const currentChallengeIdRef = useRef<string | null>(null); // Track challenge for race condition
@@ -398,13 +396,6 @@ function ChallengeEditorContent({
     }
   }, [pyodideStatus]);
 
-  // Auto-scroll console
-  useEffect(() => {
-    if (consoleRef.current) {
-      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
-    }
-  }, [output, activeTab]);
-
   const setActiveChallengeIndexWithWarmup = useCallback(
     (index: number | null) => {
       if (index !== null) {
@@ -458,7 +449,6 @@ function ChallengeEditorContent({
     setActiveTestCaseId(cases[0]?.id ?? "");
 
     setRunResult(null);
-    setOutput("");
     setLastRunMode(null);
   }, [activeChallenge, courseId]);
 
@@ -678,7 +668,6 @@ function ChallengeEditorContent({
         // === BROWSER EXECUTION (Pyodide) ===
         isRunningRef.current = true;
         setIsRunning(true);
-        setOutput("");
         setRunResult(null);
         setLastRunMode(mode);
         setRunMessage("Running...");
@@ -686,9 +675,7 @@ function ChallengeEditorContent({
         bottomPanelRef.current?.expand();
 
         try {
-          // Show loading message if user runs tests before Pyodide is ready
           if (pyodideStatusRef.current !== "ready") {
-            setOutput("Preparing runtime...\n");
             setRunMessage("Preparing runtime...");
           }
           await ensurePyodideLoaded();
@@ -703,25 +690,22 @@ function ChallengeEditorContent({
             comparison: activeChallenge.comparison,
           };
 
-          // Run tests with Pyodide
           const results = await runTestsWithPyodide(
             code,
             config,
-            (text) => setOutput((prev) => (prev || "") + text),
-            (text) => setOutput((prev) => (prev || "") + text)
+            () => {},
+            () => {}
           );
 
-          // Discard results if challenge changed during execution
           if (currentChallengeIdRef.current !== runChallengeId) {
             return;
           }
 
           const normalized = normalizeBrowserResults(results);
           if (normalized.systemError) {
-            setOutput((prev) => (prev || "") + normalized.systemError);
-            setActiveTab("console");
+            setRunMessage(normalized.systemError);
+            setActiveTab("result");
             bottomPanelRef.current?.expand();
-            setRunMessage("");
             return;
           }
 
@@ -735,7 +719,6 @@ function ChallengeEditorContent({
           setRunMessage("");
           bottomPanelRef.current?.expand();
 
-          // Auto-select appropriate test case tab
           const tests = finalResult.tests;
           if (tests.length > 0) {
             if (finalResult.summary.failed === 0) {
@@ -749,15 +732,13 @@ function ChallengeEditorContent({
           }
 
         } catch (err: unknown) {
-          // Only show error if still on the same challenge
           if (currentChallengeIdRef.current === runChallengeId) {
             const errorMessage =
               err instanceof Error ? err.message : String(err);
             setPyodideStatus("error");
-            setOutput((prev) => (prev || "") + `\nError: ${errorMessage}`);
-            setActiveTab("console");
+            setRunMessage(`Error: ${errorMessage}`);
+            setActiveTab("result");
             bottomPanelRef.current?.expand();
-            setRunMessage("");
           }
         } finally {
           isRunningRef.current = false;
@@ -767,7 +748,6 @@ function ChallengeEditorContent({
         // === SERVER EXECUTION (Judge VM) ===
         isRunningRef.current = true;
         setIsRunning(true);
-        setOutput("Pending...\n");
         setRunResult(null);
         setLastRunMode(mode);
         setRunMessage("Pending...");
@@ -807,10 +787,8 @@ function ChallengeEditorContent({
             signal: pollAbortController.signal,
             onUpdate: (update) => {
               if (update.status === "queued") {
-                setOutput("Pending...\n");
                 setRunMessage("Pending...");
               } else if (update.status === "running") {
-                setOutput("Running...\n");
                 setRunMessage("Running...");
               }
             },
@@ -1188,23 +1166,6 @@ function ChallengeEditorContent({
               >
                 <button
                   onClick={() => {
-                    setActiveTab("console");
-                    if (isBottomPanelCollapsed)
-                      bottomPanelRef.current?.expand();
-                  }}
-                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-r border-border transition-colors ${
-                    activeTab === "console" && !isBottomPanelCollapsed
-                      ? "text-primary bg-background"
-                      : "text-muted hover:text-secondary"
-                  }`}
-                  role="tab"
-                  aria-selected={activeTab === "console" && !isBottomPanelCollapsed}
-                  aria-controls="console-panel"
-                >
-                  Console
-                </button>
-                <button
-                  onClick={() => {
                     setActiveTab("testcases");
                     if (isBottomPanelCollapsed)
                       bottomPanelRef.current?.expand();
@@ -1266,21 +1227,6 @@ function ChallengeEditorContent({
               {/* Content - only show when not collapsed */}
               {!isBottomPanelCollapsed && (
                 <div className="flex-1 overflow-hidden relative">
-                  {activeTab === "console" && (
-                    <div
-                      ref={consoleRef}
-                      id="console-panel"
-                      role="tabpanel"
-                      aria-label="Console output"
-                      className="h-full p-4 font-mono text-[13px] text-secondary overflow-y-auto whitespace-pre-wrap leading-relaxed"
-                    >
-                      {output || (
-                        <span className="text-muted/60 italic font-sans text-sm">
-                          Run code to see output...
-                        </span>
-                      )}
-                    </div>
-                  )}
                   {activeTab === "testcases" && (
                     <div id="testcases-panel" role="tabpanel" aria-label="Test cases editor" className="flex flex-col h-full">
                       {/* Case Tabs */}
