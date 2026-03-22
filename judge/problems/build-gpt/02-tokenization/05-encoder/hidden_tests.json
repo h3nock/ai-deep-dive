@@ -48,7 +48,7 @@
     },
     {
       "id": "s03",
-      "input_code": "text = '\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d\ud83d\ude42\u4e2d'\nmerges = {(130, 228): 256, (153, 256): 257, (159, 257): 258, (184, 173): 259, (240, 258): 260, (260, 259): 261, (261, 261): 262, (262, 262): 263, (263, 263): 264, (264, 264): 265, (265, 265): 266, (266, 266): 267, (265, 264): 268, (266, 268): 269}\n",
+      "input_code": "text = '🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中🙂中'\nmerges = {(130, 228): 256, (153, 256): 257, (159, 257): 258, (184, 173): 259, (240, 258): 260, (260, 259): 261, (261, 261): 262, (262, 262): 263, (263, 263): 264, (264, 264): 265, (265, 265): 266, (266, 266): 267, (265, 264): 268, (266, 268): 269}\n",
       "expected_literal": "[266, 265, 262]"
     },
     {
