@@ -119,13 +119,11 @@ function ExampleCard({
       </button>
 
       {isOpen && (
-        <div className="bg-terminal px-3 py-2">
+        <div className="bg-terminal px-3 py-2 font-mono text-[12px] leading-relaxed">
           {/* Input */}
-          <div className="mb-2">
-            <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
-              Input
-            </label>
-            <div className="mt-1 font-mono text-[13px] text-secondary whitespace-pre-wrap break-all leading-relaxed">
+          <div className="mb-1">
+            <div className="font-bold text-secondary">Input:</div>
+            <div className="text-muted whitespace-pre-wrap break-all">
               {argOrder
                 .map((arg) => `${arg.name} = ${cleanDisplayValue(testCase.inputs[arg.name] ?? "")}`)
                 .join("\n")}
@@ -134,21 +132,17 @@ function ExampleCard({
 
           {/* Output */}
           <div>
-            <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
-              Output
-            </label>
-            <div className="mt-1 font-mono text-[13px] text-secondary whitespace-pre-wrap break-all leading-relaxed">
+            <div className="font-bold text-secondary">Output:</div>
+            <div className="text-muted whitespace-pre-wrap break-all">
               {testCase.expected_literal}
             </div>
           </div>
 
           {/* Explanation */}
           {testCase.explanation && (
-            <div className="mt-2">
-              <label className="text-[11px] font-medium text-muted uppercase tracking-wide">
-                Explanation
-              </label>
-              <div className="mt-1 text-[13px] text-secondary/80 font-sans leading-relaxed">
+            <div className="mt-1">
+              <div className="font-bold text-secondary">Explanation:</div>
+              <div className="text-muted/80 font-sans text-[12px]">
                 {testCase.explanation}
               </div>
             </div>
