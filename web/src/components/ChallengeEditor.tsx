@@ -220,6 +220,9 @@ function ChallengeEditorContent({
   const originalCasesRef = useRef<TestCase[]>([]);
   const [activeTestCaseId, setActiveTestCaseId] = useState<string>("");
   const [runResult, setRunResult] = useState<RunResult | null>(null);
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
 
   const [isVimMode, setIsVimMode] = useState(() => {
     if (typeof window !== "undefined") {
@@ -647,18 +650,24 @@ function ChallengeEditorContent({
 
       // Validate inputs before run (submit uses canonical server-side cases)
       if (mode === "run") {
-        const emptyArgs = casesToRun.flatMap((tc, caseIdx) =>
-          activeChallenge.arguments
-            .filter((arg) => !tc.inputs[arg.name]?.trim())
-            .map((arg) => ({ caseIdx, argName: arg.name }))
-        );
-        if (emptyArgs.length > 0) {
-          const first = emptyArgs[0];
+        const errors: Record<string, string> = {};
+        casesToRun.forEach((tc) => {
+          activeChallenge.arguments.forEach((arg) => {
+            if (!tc.inputs[arg.name]?.trim()) {
+              errors[`${tc.id}:${arg.name}`] = `${arg.name} is required`;
+            }
+          });
+        });
+        if (Object.keys(errors).length > 0) {
+          setValidationErrors(errors);
+          const firstKey = Object.keys(errors)[0];
+          const firstCaseId = firstKey.split(":")[0];
           setActiveTab("testcases");
-          setActiveTestCaseId(casesToRun[first.caseIdx]?.id ?? "");
+          setActiveTestCaseId(firstCaseId);
           bottomPanelRef.current?.expand();
           return;
         }
+        setValidationErrors({});
       }
 
       // Track which challenge we're running for race condition detection
@@ -843,8 +852,14 @@ function ChallengeEditorContent({
               err instanceof Error ? err.message : String(err ?? "");
             if (errorMessage.includes("Timed out waiting")) {
               setRunMessage("Request took too long. Please try again.");
-            } else {
+            } else if (
+              errorMessage.startsWith("Request failed:") ||
+              errorMessage === "Failed to fetch" ||
+              errorMessage === "Load failed"
+            ) {
               setRunMessage(formatServerError());
+            } else {
+              setRunMessage(errorMessage);
             }
             setActiveTab("result");
             bottomPanelRef.current?.expand();
@@ -1292,32 +1307,52 @@ function ChallengeEditorContent({
                           if (tc.id !== activeTestCaseId) return null;
                           return (
                             <div key={tc.id} className="flex flex-col gap-3">
-                              {activeChallenge.arguments.map((arg) => (
-                                <div key={arg.name}>
-                                  <label className="block text-[11px] text-muted mb-0.5 font-mono">
-                                    {arg.name} =
-                                  </label>
-                                  <AutoResizeTextarea
-                                    value={tc.inputs[arg.name] ?? ""}
-                                    onChange={(val) => {
-                                      setWorkingCases((prev) =>
-                                        prev.map((c) =>
-                                          c.id === tc.id
-                                            ? {
-                                                ...c,
-                                                inputs: {
-                                                  ...c.inputs,
-                                                  [arg.name]: val,
-                                                },
-                                              }
-                                            : c
-                                        )
-                                      );
-                                    }}
-                                    className="w-full bg-surface/60 px-3 py-2 font-mono text-[13px] text-secondary rounded border-none focus:bg-surface focus:outline-none resize-none leading-relaxed"
-                                  />
-                                </div>
-                              ))}
+                              {activeChallenge.arguments.map((arg) => {
+                                const errorKey = `${tc.id}:${arg.name}`;
+                                const error = validationErrors[errorKey];
+                                return (
+                                  <div key={arg.name}>
+                                    <label className="block text-[11px] text-muted mb-0.5 font-mono">
+                                      {arg.name} =
+                                    </label>
+                                    <AutoResizeTextarea
+                                      value={tc.inputs[arg.name] ?? ""}
+                                      onChange={(val) => {
+                                        if (error) {
+                                          setValidationErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next[errorKey];
+                                            return next;
+                                          });
+                                        }
+                                        setWorkingCases((prev) =>
+                                          prev.map((c) =>
+                                            c.id === tc.id
+                                              ? {
+                                                  ...c,
+                                                  inputs: {
+                                                    ...c.inputs,
+                                                    [arg.name]: val,
+                                                  },
+                                                }
+                                              : c
+                                          )
+                                        );
+                                      }}
+                                      className={`w-full px-3 py-2 font-mono text-[13px] text-secondary rounded border focus:outline-none resize-none leading-relaxed ${
+                                        error
+                                          ? "bg-error/5 border-error/30 focus:border-error/50"
+                                          : "bg-surface/60 border-transparent focus:bg-surface focus:border-border"
+                                      }`}
+                                    />
+                                    {error && (
+                                      <p className="text-[11px] text-error mt-0.5">
+                                        {error}
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })}
 
                               {/* Per-case reset — only for modified default cases */}
                               {activeCaseIsModified && (
