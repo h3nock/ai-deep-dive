@@ -1,17 +1,15 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
+import { useHydrated } from "@/lib/use-hydrated";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const hydrated = useHydrated();
 
   // Avoid hydration mismatch - render nothing until mounted
-  if (!mounted) {
+  if (!hydrated) {
     return <div className="w-8 h-8" />;
   }
 

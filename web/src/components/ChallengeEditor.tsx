@@ -891,6 +891,7 @@ function ChallengeEditorContent({
       formatServerError,
       normalizeBrowserResults,
       normalizeServerResult,
+      bottomPanelRef,
     ]
   );
 
@@ -902,7 +903,7 @@ function ChallengeEditorContent({
     } else {
       panel.collapse();
     }
-  }, [isBottomPanelCollapsed]);
+  }, [isBottomPanelCollapsed, bottomPanelRef]);
 
   const isMac =
     typeof navigator !== "undefined" &&

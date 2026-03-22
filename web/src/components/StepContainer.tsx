@@ -14,6 +14,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { CodeBlockCopyButtons } from "./CodeBlockCopyButton";
 import { useProgress } from "@/lib/progress-context";
 import { useChallengeProgress } from "@/lib/use-challenge-progress";
+import { useHydrated } from "@/lib/use-hydrated";
 import { isChallengeSolved } from "@/lib/challenge-storage";
 import type { ChallengeWorkspaceProps } from "./ChallengeWorkspace";
 import {
@@ -50,11 +51,7 @@ interface StepContainerProps {
 
 function ArticleWithCopyButtons({ children }: { children: React.ReactNode }) {
   const articleRef = useRef<HTMLElement>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const hydrated = useHydrated();
 
   return (
     <article
@@ -62,7 +59,7 @@ function ArticleWithCopyButtons({ children }: { children: React.ReactNode }) {
       className="prose prose-lg prose-invert max-w-none [&_table]:w-full"
     >
       {children}
-      {mounted && <CodeBlockCopyButtons containerRef={articleRef} />}
+      {hydrated && <CodeBlockCopyButtons containerRef={articleRef} />}
     </article>
   );
 }
