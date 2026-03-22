@@ -88,9 +88,11 @@
   --color-on-accent: #09090B;        /* Dark text for solid accent fills */
   --color-foreground: var(--color-secondary);
 
-  /* Typography */
-  --font-sans: var(--font-geist-sans), "Geist Sans", "Inter", sans-serif;
-  --font-mono: var(--font-geist-mono), "Geist Mono", "JetBrains Mono", monospace;
+  /* Typography — hardcoded font names instead of var(--font-geist-*) because
+     next-themes replaces <html> className, so the font variables from Next.js
+     are only available on <body>, not at :root where @theme resolves. */
+  --font-sans: "Geist Sans", "Geist Sans Fallback", "Inter", sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", "JetBrains Mono", monospace;
 }
 
 /* -------------------------------------------------------------------------

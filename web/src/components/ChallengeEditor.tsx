@@ -119,11 +119,11 @@ function ExampleCard({
       </button>
 
       {isOpen && (
-        <div className="bg-terminal px-3 py-2 font-mono text-[12px] leading-relaxed">
+        <div className="bg-terminal px-3 py-2 font-mono text-[13px] leading-relaxed">
           {/* Input */}
           <div className="mb-1">
             <div className="font-bold text-secondary">Input:</div>
-            <div className="text-muted whitespace-pre-wrap break-all">
+            <div className="text-muted whitespace-pre-wrap break-words">
               {argOrder
                 .map((arg) => `${arg.name} = ${cleanDisplayValue(testCase.inputs[arg.name] ?? "")}`)
                 .join("\n")}
@@ -133,7 +133,7 @@ function ExampleCard({
           {/* Output */}
           <div>
             <div className="font-bold text-secondary">Output:</div>
-            <div className="text-muted whitespace-pre-wrap break-all">
+            <div className="text-muted whitespace-pre-wrap break-words">
               {testCase.expected_literal}
             </div>
           </div>
