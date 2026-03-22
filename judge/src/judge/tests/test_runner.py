@@ -13,7 +13,13 @@ from judge.runner import HARNESS_CODE
 
 
 class RunnerHarnessTests(TestCase):
-    def test_harness_preserves_expected_when_testcase_exec_fails_before_solution_runs(self) -> None:
+    def _run_harness_case(
+        self,
+        *,
+        main_code: str,
+        input_code: str,
+        expected_literal: str = "3",
+    ) -> dict[str, object]:
         with tempfile.TemporaryDirectory() as tmp_dir:
             temp_root = Path(tmp_dir)
             harness_path = temp_root / "harness.py"
@@ -30,14 +36,14 @@ class RunnerHarnessTests(TestCase):
                         "cases": [
                             {
                                 "id": "case1",
-                                "input_code": "a = 1\nb = missing_name\n",
-                                "expected_literal": "3",
+                                "input_code": input_code,
+                                "expected_literal": expected_literal,
                             }
                         ],
                     }
                 )
             )
-            main_path.write_text("def add(a, b):\n    return a + b\n")
+            main_path.write_text(main_code)
 
             result = subprocess.run(
                 [sys.executable, str(harness_path)],
@@ -47,10 +53,38 @@ class RunnerHarnessTests(TestCase):
                 check=False,
             )
 
-        self.assertEqual(result.returncode, 0)
-        payload = json.loads(result.stdout)
-        self.assertEqual(len(payload), 1)
-        case = payload[0]
+            self.assertEqual(result.returncode, 0)
+            payload = json.loads(result.stdout)
+            self.assertEqual(len(payload), 1)
+            case = payload[0]
+            assert isinstance(case, dict)
+            return case
+
+    def test_harness_reports_syntax_error_for_invalid_user_code(self) -> None:
+        case = self._run_harness_case(
+            main_code="def add(a, b)\n    return a + b\n",
+            input_code="a = 1\nb = 2\n",
+        )
+
+        self.assertEqual(case.get("status"), "Syntax Error")
+        self.assertIn("SyntaxError", case.get("stderr", ""))
+
+    def test_harness_reports_syntax_error_for_invalid_testcase_input(self) -> None:
+        case = self._run_harness_case(
+            main_code="def add(a, b):\n    return a + b\n",
+            input_code="a = 1\nb =\n",
+        )
+
+        self.assertEqual(case.get("status"), "Syntax Error")
+        self.assertEqual(case.get("expected"), "3")
+        self.assertIn("SyntaxError", case.get("stderr", ""))
+
+    def test_harness_preserves_expected_when_testcase_exec_fails_before_solution_runs(self) -> None:
+        case = self._run_harness_case(
+            main_code="def add(a, b):\n    return a + b\n",
+            input_code="a = 1\nb = missing_name\n",
+        )
+
         self.assertEqual(case.get("status"), "Runtime Error")
         self.assertEqual(case.get("expected"), "3")
         self.assertIn("NameError", case.get("stderr", ""))

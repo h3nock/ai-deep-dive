@@ -135,7 +135,7 @@ def run_cases():
         compiled_solution = compile(user_code, "solution.py", "exec")
     except Exception:
         error_msg = format_user_error()
-        print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": error_msg}]))
+        print(json.dumps([{"id": "error", "status": "Syntax Error", "stderr": error_msg}]))
         return
 
     results = []
@@ -152,6 +152,7 @@ def run_cases():
         expected = ast.literal_eval(expected_literal)
         stdout_val = ""
         stderr_val = ""
+        case_phase = "solution_exec"
 
         try:
             with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
@@ -165,9 +166,13 @@ def run_cases():
                 }
                 if _torch_module is not None:
                     case_globals["torch"] = _torch_module
+                case_phase = "solution_exec"
                 exec(compiled_solution, case_globals)
+                case_phase = "testcase_compile"
                 compiled_input = compile(input_code, "testcase.py", "exec")
+                case_phase = "testcase_exec"
                 exec(compiled_input, case_globals)
+                case_phase = "runner_eval"
                 actual_value = eval(compiled_runner, case_globals)
 
             stdout_val = stdout_capture.getvalue()
@@ -178,7 +183,7 @@ def run_cases():
                 status = "Wrong Answer"
             output_str = repr(actual_value)
         except Exception:
-            status = "Runtime Error"
+            status = "Syntax Error" if case_phase == "testcase_compile" else "Runtime Error"
             stdout_val = stdout_capture.getvalue()
             stderr_val = stderr_capture.getvalue()
             error_msg = format_user_error()

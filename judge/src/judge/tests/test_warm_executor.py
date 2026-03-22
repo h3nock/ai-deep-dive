@@ -115,6 +115,21 @@ class WarmForkExecutorTests(TestCase):
         self.assertEqual(result.get("error_kind"), "user")
         self.assertIn("Time Limit Exceeded", result.get("error", ""))
 
+    def test_run_execution_plan_reports_syntax_error_for_invalid_user_code(self) -> None:
+        executor = _executor()
+
+        result = executor.run_execution_plan(
+            _plan(),
+            "def add(a, b)\n    return a + b\n",
+            max_output_chars=2000,
+            isolate=_isolate_config(),
+        )
+
+        self.assertEqual(result.get("status"), "Syntax Error")
+        self.assertEqual(result.get("error"), None)
+        self.assertEqual(result.get("summary", {}).get("failed"), 1)
+        self.assertEqual(result.get("tests", [{}])[0].get("status"), "Syntax Error")
+
     def test_abrupt_child_exit_is_reported_as_user_runtime_error(self) -> None:
         executor = _executor()
 
