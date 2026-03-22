@@ -1374,6 +1374,13 @@ function ChallengeEditorContent({
                                       (c) => c.id === tc.id
                                     );
                                     if (!original) return;
+                                    setValidationErrors((prev) => {
+                                      const next = { ...prev };
+                                      for (const key of Object.keys(next)) {
+                                        if (key.startsWith(`${tc.id}:`)) delete next[key];
+                                      }
+                                      return next;
+                                    });
                                     setWorkingCases((prev) =>
                                       prev.map((c) =>
                                         c.id === tc.id
