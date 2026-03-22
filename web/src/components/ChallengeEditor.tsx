@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Group, Panel, Separator, usePanelRef } from "react-resizable-panels";
 import { useTheme } from "next-themes";
 import {
@@ -165,9 +165,6 @@ function ExampleCard({
   );
 }
 
-const supportsFieldSizing =
-  typeof CSS !== "undefined" && CSS.supports("field-sizing", "content");
-
 function AutoResizeTextarea({
   value,
   onChange,
@@ -177,29 +174,27 @@ function AutoResizeTextarea({
   onChange: (value: string) => void;
   className?: string;
 }) {
-  const ref = useRef<HTMLTextAreaElement>(null);
+  const [supportsFieldSizing, setSupportsFieldSizing] = useState(false);
 
-  // JS fallback for browsers without field-sizing: content
-  useLayoutEffect(() => {
-    if (supportsFieldSizing) return;
-    const el = ref.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = el.scrollHeight + "px";
-  }, [value]);
+  useEffect(() => {
+    setSupportsFieldSizing(
+      typeof CSS !== "undefined" && CSS.supports("field-sizing", "content")
+    );
+  }, []);
 
   return (
     <textarea
-      ref={ref}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={className}
-      rows={1}
-      style={{
-        ...(supportsFieldSizing
-          ? { fieldSizing: "content" }
-          : { overflow: "hidden" }),
-      } as React.CSSProperties}
+      className={`${className ?? ""} ${
+        supportsFieldSizing ? "resize-none min-h-0" : "min-h-[2.75rem] resize-y"
+      }`}
+      rows={supportsFieldSizing ? 1 : 2}
+      style={
+        supportsFieldSizing
+          ? ({ fieldSizing: "content" } as React.CSSProperties)
+          : undefined
+      }
     />
   );
 }
