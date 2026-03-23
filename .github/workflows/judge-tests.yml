@@ -50,15 +50,15 @@ jobs:
           cd judge
           python -m ruff check src
 
-      - name: check generated tests
+      - name: validate source problem contracts
         run: |
           cd judge
-          PYTHONPATH=src python scripts/generate_hidden_tests.py --check
+          PYTHONPATH=src python scripts/validate_problem_contracts.py --kind source
 
-      - name: validate problem contracts
+      - name: build runtime problem corpus
         run: |
           cd judge
-          PYTHONPATH=src python scripts/validate_problem_contracts.py
+          PYTHONPATH=src python scripts/build_runtime_problem_corpus.py --source-root problems --output-root /tmp/judge-runtime-problems
 
       - name: run judge tests
         env:

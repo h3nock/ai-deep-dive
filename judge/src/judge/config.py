@@ -44,7 +44,12 @@ def load_settings() -> Settings:
 
     redis_url = os.getenv("JUDGE_REDIS_URL", "redis://localhost:6379/0")
     results_db = Path(os.getenv("JUDGE_RESULTS_DB", str(base_dir / "data" / "judge.db")))
-    problems_root = Path(os.getenv("JUDGE_PROBLEMS_ROOT", str(base_dir / "problems")))
+    problems_root = Path(
+        os.getenv(
+            "JUDGE_PROBLEMS_ROOT",
+            str(base_dir / "data" / "runtime-problems" / "current"),
+        )
+    )
     max_output_chars = int(os.getenv("JUDGE_MAX_OUTPUT_CHARS", "2000"))
     queue_maxlen = int(os.getenv("JUDGE_QUEUE_MAXLEN", "10000"))
     job_claim_idle_ms = int(os.getenv("JUDGE_JOB_CLAIM_IDLE_MS", "30000"))

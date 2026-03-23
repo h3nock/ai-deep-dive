@@ -44,6 +44,7 @@ sudo ./deploy/verify.sh
 ```
 
 `apply.sh` also enforces CPU-only PyTorch wheels for the judge runtime.
+It builds the runtime problem corpus before restarting judge services.
 
 ### Health-only check
 
@@ -55,9 +56,9 @@ sudo ./deploy/verify.sh
 Optional verify overrides:
 
 - `JUDGE_VERIFY_API_URL` (default `http://127.0.0.1:8000`)
-- `JUDGE_VERIFY_SMOKE_PROBLEM_ID` (default `sample/01-basics/01-add`)
-- `JUDGE_VERIFY_SMOKE_CODE` (default code for the sample add problem)
-- `JUDGE_VERIFY_SMOKE_RUN_CASES` (default one public-style add testcase JSON payload)
+- `JUDGE_VERIFY_SMOKE_PROBLEM_ID` (default `build-gpt/01-from-text-to-bytes/01-encoder`)
+- `JUDGE_VERIFY_SMOKE_CODE` (default code for `build-gpt/01-from-text-to-bytes/01-encoder`)
+- `JUDGE_VERIFY_SMOKE_RUN_CASES` (default one public-style encoder testcase JSON payload)
 - `JUDGE_VERIFY_SMOKE_EXPECTED_STATUS` (default `Accepted`)
 - `JUDGE_VERIFY_SMOKE_TIMEOUT_S` (default `30`)
 

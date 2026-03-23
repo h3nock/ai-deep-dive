@@ -1,10 +1,9 @@
 # Problems
 
-Each problem lives in a directory with four canonical files:
+Each authored problem lives in a directory with three source files:
 
 - `problem.json`
 - `public_cases.json`
-- `hidden_tests.json`
 - `starter.py`
 
 Example:
@@ -14,7 +13,6 @@ problems/
   build-gpt/01-from-text-to-bytes/01-encoder/
     problem.json
     public_cases.json
-    hidden_tests.json
     starter.py
 ```
 
@@ -64,7 +62,7 @@ Notes:
 - The judge validates public-case expressions against the canonical whitelist before compiling them.
 - `expected_literal` must parse with `ast.literal_eval`.
 
-## `hidden_tests.json`
+## Runtime `hidden_tests.json`
 
 ```json
 {
@@ -83,6 +81,7 @@ Notes:
 - Hidden tests are execution-oriented and may use helper locals or multi-step setup.
 - Hidden tests are not publicly served.
 - The judge executes canonical public cases first, then hidden tests, in one ordered plan.
+- `hidden_tests.json` is generated into the runtime corpus only. It is not an authored source file.
 
 ## `starter.py`
 
@@ -97,30 +96,32 @@ Notes:
 
 ## Hidden test generation
 
-`judge/scripts/generate_hidden_tests.py` generates deterministic `hidden_tests.json`
+`judge/scripts/build_runtime_problem_corpus.py` copies authored problems into a
+runtime output directory and generates deterministic `hidden_tests.json` there
 for the supported build-gpt problems.
 
 Default behavior:
-- writes `hidden_tests.json` only
+- copies authored source problems into a runtime output directory
+- generates `hidden_tests.json` there only
 - reads canonical `public_cases.json` so hidden output does not duplicate public cases
 - generates hidden coverage inside the 15-25 target range
 - uses scenario buckets: boundary, adversarial, random, regression, stress
 - emits IDs with bucket prefixes (`b`, `a`, `r`, `g`, `s`)
 
-Generate files:
+Build the default local runtime corpus:
 
 ```bash
-PYTHONPATH=src python judge/scripts/generate_hidden_tests.py
+PYTHONPATH=src python scripts/build_runtime_problem_corpus.py
 ```
 
-Check reproducibility in CI/local validation:
+Validate authored source contracts:
 
 ```bash
-PYTHONPATH=src python judge/scripts/generate_hidden_tests.py --check
+PYTHONPATH=src python scripts/validate_problem_contracts.py --kind source
 ```
 
-Generate one problem only:
+Validate a generated runtime corpus:
 
 ```bash
-PYTHONPATH=src python judge/scripts/generate_hidden_tests.py --only build-gpt/03-embeddings/01-most-similar
+PYTHONPATH=src python scripts/validate_problem_contracts.py --kind runtime --problems-root /tmp/judge-runtime-problems
 ```

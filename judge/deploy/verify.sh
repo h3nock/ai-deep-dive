@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
+
 fail() {
   echo "[fail] $1" >&2
   exit 1
@@ -79,6 +81,14 @@ judge_python_bin=${JUDGE_PYTHON_BIN:-/opt/ai-deep-dive/judge/.venv/bin/python}
 if [[ ! -x "$judge_python_bin" ]]; then
   fail "Judge python interpreter not found: $judge_python_bin"
 fi
+
+if [[ ! -d "$JUDGE_PROBLEMS_ROOT" ]]; then
+  fail "JUDGE_PROBLEMS_ROOT does not exist: $JUDGE_PROBLEMS_ROOT"
+fi
+PYTHONPATH="$ROOT_DIR/src" "$judge_python_bin" "$ROOT_DIR/scripts/validate_problem_contracts.py" \
+  --kind runtime \
+  --problems-root "$JUDGE_PROBLEMS_ROOT" >/dev/null
+pass "runtime problem corpus is valid"
 
 torch_variant=$("$judge_python_bin" - <<'PY'
 import importlib.util
@@ -184,11 +194,11 @@ if systemctl list-unit-files --type=service --no-legend | awk '$1 == "prometheus
 fi
 
 api_url=${JUDGE_VERIFY_API_URL:-http://127.0.0.1:8000}
-smoke_problem_id=${JUDGE_VERIFY_SMOKE_PROBLEM_ID:-sample/01-basics/01-add}
-default_smoke_code=$'def add(a, b):\n    return a + b\n'
+smoke_problem_id=${JUDGE_VERIFY_SMOKE_PROBLEM_ID:-build-gpt/01-from-text-to-bytes/01-encoder}
+default_smoke_code=$'def encode_string(text):\n    return list(text.encode("utf-8"))\n'
 smoke_code=${JUDGE_VERIFY_SMOKE_CODE:-$default_smoke_code}
 smoke_expected_status=${JUDGE_VERIFY_SMOKE_EXPECTED_STATUS:-Accepted}
-default_smoke_run_cases='[{"id":"case1","inputs":{"a":"1","b":"2"},"expected_literal":"3"}]'
+default_smoke_run_cases='[{"id":"case1","inputs":{"text":"\"A\""},"expected_literal":"[65]"}]'
 smoke_run_cases=${JUDGE_VERIFY_SMOKE_RUN_CASES:-$default_smoke_run_cases}
 
 smoke_problem_path="${JUDGE_PROBLEMS_ROOT%/}/${smoke_problem_id}/problem.json"

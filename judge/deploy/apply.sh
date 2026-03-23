@@ -154,6 +154,29 @@ if [[ -n "$PROMETHEUS_MULTIPROC_DIR" ]]; then
   chown judge:judge "$PROMETHEUS_MULTIPROC_DIR"
 fi
 
+if [[ -z "${JUDGE_PROBLEMS_ROOT:-}" ]]; then
+  echo "JUDGE_PROBLEMS_ROOT must be set in /etc/judge/judge.env." >&2
+  exit 1
+fi
+runtime_problems_parent=$(dirname "$JUDGE_PROBLEMS_ROOT")
+runtime_problems_stage="${JUDGE_PROBLEMS_ROOT}.staging"
+runtime_problems_previous="${JUDGE_PROBLEMS_ROOT}.previous"
+mkdir -p "$runtime_problems_parent"
+chown -R "$JUDGE_USER:$JUDGE_USER" "$runtime_problems_parent"
+rm -rf "$runtime_problems_stage"
+sudo -u "$JUDGE_USER" env \
+  PYTHONPATH="$ROOT_DIR/src" \
+  "$JUDGE_PYTHON_BIN" \
+  "$ROOT_DIR/scripts/build_runtime_problem_corpus.py" \
+  --source-root "$ROOT_DIR/problems" \
+  --output-root "$runtime_problems_stage"
+rm -rf "$runtime_problems_previous"
+if [[ -e "$JUDGE_PROBLEMS_ROOT" || -L "$JUDGE_PROBLEMS_ROOT" ]]; then
+  mv "$JUDGE_PROBLEMS_ROOT" "$runtime_problems_previous"
+fi
+mv "$runtime_problems_stage" "$JUDGE_PROBLEMS_ROOT"
+rm -rf "$runtime_problems_previous"
+
 mkdir -p /var/local/lib/isolate
 chown root:root /var/local/lib/isolate
 chmod 0755 /var/local/lib/isolate

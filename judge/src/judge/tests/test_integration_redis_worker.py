@@ -11,12 +11,31 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import Mock
 
+from judge.runtime_problem_corpus import build_runtime_problem_corpus
+
 HAS_FASTAPI = importlib.util.find_spec("fastapi") is not None
 HAS_HTTPX = importlib.util.find_spec("httpx") is not None
 HAS_REDIS = importlib.util.find_spec("redis") is not None
 
 
 class RedisWorkerIntegrationTests(TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls._runtime_problems_tmp = tempfile.TemporaryDirectory()
+        judge_root = Path(__file__).resolve().parents[3]
+        cls._runtime_problems_root = Path(cls._runtime_problems_tmp.name) / "problems"
+        build_runtime_problem_corpus(
+            source_root=judge_root / "problems",
+            output_root=cls._runtime_problems_root,
+            generator_script=judge_root / "scripts" / "generate_hidden_tests.py",
+        )
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._runtime_problems_tmp.cleanup()
+        super().tearDownClass()
+
     def setUp(self) -> None:
         if not HAS_FASTAPI or not HAS_HTTPX or not HAS_REDIS:
             self.skipTest("fastapi/httpx/redis dependencies not installed")
@@ -88,8 +107,7 @@ class RedisWorkerIntegrationTests(TestCase):
             },
         )
 
-        problems_root = Path(__file__).resolve().parents[3] / "problems"
-        problems = self.ProblemRepository(problems_root)
+        problems = self.ProblemRepository(self._runtime_problems_root)
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             store = self.ResultsStore(Path(tmp_dir) / "judge.db")
@@ -116,8 +134,8 @@ class RedisWorkerIntegrationTests(TestCase):
             submit_response = client.post(
                 "/submit",
                 json={
-                    "problem_id": "sample/01-basics/01-add",
-                    "code": "def add(a, b):\n    return a + b\n",
+                    "problem_id": "build-gpt/01-from-text-to-bytes/01-encoder",
+                    "code": "def encode_string(text):\n    return list(text.encode('utf-8'))\n",
                 },
             )
             self.assertEqual(submit_response.status_code, 200)
@@ -214,8 +232,7 @@ class RedisWorkerIntegrationTests(TestCase):
             },
         )
 
-        problems_root = Path(__file__).resolve().parents[3] / "problems"
-        problems = self.ProblemRepository(problems_root)
+        problems = self.ProblemRepository(self._runtime_problems_root)
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             store = self.ResultsStore(Path(tmp_dir) / "judge.db")
@@ -242,8 +259,8 @@ class RedisWorkerIntegrationTests(TestCase):
             submit_response = client.post(
                 "/submit",
                 json={
-                    "problem_id": "sample/01-basics/01-add",
-                    "code": "def add(a, b):\n    return a + b\n",
+                    "problem_id": "build-gpt/01-from-text-to-bytes/01-encoder",
+                    "code": "def encode_string(text):\n    return list(text.encode('utf-8'))\n",
                 },
             )
             self.assertEqual(submit_response.status_code, 200)

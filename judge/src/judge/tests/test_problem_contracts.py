@@ -6,13 +6,14 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from judge.problem_contracts import validate_problem_contracts
+from judge.problem_contracts import ProblemCorpusKind, validate_problem_contracts
 
 
 def _write_problem_fixture(
     problem_dir: Path,
     *,
     starter_source: str = "def add(a, b):\n    pass\n",
+    include_hidden_tests: bool = False,
 ) -> None:
     problem_dir.mkdir(parents=True)
     (problem_dir / "problem.json").write_text(
@@ -34,14 +35,15 @@ def _write_problem_fixture(
   ]
 }"""
     )
-    (problem_dir / "hidden_tests.json").write_text(
-        """{
+    if include_hidden_tests:
+        (problem_dir / "hidden_tests.json").write_text(
+            """{
   "schema_version": 1,
   "cases": [
     {"id": "h1", "input_code": "a = 1\\nb = 2\\n", "expected_literal": "3"}
   ]
 }"""
-    )
+        )
     (problem_dir / "starter.py").write_text(starter_source)
 
 
@@ -53,7 +55,7 @@ class ProblemContractsTests(TestCase):
             _write_problem_fixture(problem_dir)
             (problem_dir / "starter.py").unlink()
 
-            issues = validate_problem_contracts(problems_root)
+            issues = validate_problem_contracts(problems_root, kind=ProblemCorpusKind.SOURCE)
 
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0].file.name, "starter.py")
@@ -65,7 +67,7 @@ class ProblemContractsTests(TestCase):
             problem_dir = problems_root / "sample/01-basics/01-add"
             _write_problem_fixture(problem_dir, starter_source="   \n")
 
-            issues = validate_problem_contracts(problems_root)
+            issues = validate_problem_contracts(problems_root, kind=ProblemCorpusKind.SOURCE)
 
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0].file.name, "starter.py")
@@ -77,8 +79,32 @@ class ProblemContractsTests(TestCase):
             problem_dir = problems_root / "sample/01-basics/01-add"
             _write_problem_fixture(problem_dir, starter_source="def add(\n")
 
-            issues = validate_problem_contracts(problems_root)
+            issues = validate_problem_contracts(problems_root, kind=ProblemCorpusKind.SOURCE)
 
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0].file.name, "starter.py")
         self.assertIn("starter.py is not valid Python", issues[0].message)
+
+    def test_validate_source_problem_contracts_rejects_hidden_tests_in_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            problems_root = Path(tmp_dir)
+            problem_dir = problems_root / "sample/01-basics/01-add"
+            _write_problem_fixture(problem_dir, include_hidden_tests=True)
+
+            issues = validate_problem_contracts(problems_root, kind=ProblemCorpusKind.SOURCE)
+
+        self.assertEqual(len(issues), 1)
+        self.assertEqual(issues[0].file.name, "hidden_tests.json")
+        self.assertIn("source corpus must not include hidden_tests.json", issues[0].message)
+
+    def test_validate_runtime_problem_contracts_requires_hidden_tests(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            problems_root = Path(tmp_dir)
+            problem_dir = problems_root / "sample/01-basics/01-add"
+            _write_problem_fixture(problem_dir)
+
+            issues = validate_problem_contracts(problems_root, kind=ProblemCorpusKind.RUNTIME)
+
+        self.assertEqual(len(issues), 1)
+        self.assertEqual(issues[0].file.name, "hidden_tests.json")
+        self.assertEqual(issues[0].message, "missing hidden_tests.json")
