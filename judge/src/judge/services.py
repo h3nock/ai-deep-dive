@@ -1,7 +1,8 @@
-"""Application services for submission and worker execution flows."""
+"""Application services for run/submit orchestration and worker execution."""
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 import uuid
@@ -9,12 +10,14 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from judge.runner import IsolateConfig, run_problem
+from judge.models import JobOperation
+from judge.problems import ExecutionPlanFactory, TestCase, load_compiled_test_cases
+from judge.runner import IsolateConfig, run_execution_plan
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from judge.problems import ProblemRepository, ProblemRouteInfo
+    from judge.problems import CompiledTestCase, ProblemRepository, ProblemSpec
     from judge.queue import RedisQueue
     from judge.results import ResultsStore
 
@@ -61,6 +64,10 @@ class InvalidProblemError(SubmissionError):
     """Raised when a problem id is malformed."""
 
 
+class InvalidRunRequestError(SubmissionError):
+    """Raised when a /run request contains invalid test cases."""
+
+
 class QueueUnavailableError(SubmissionError):
     """Raised when queue operations fail."""
 
@@ -76,7 +83,7 @@ class SubmissionAccepted:
 
 
 class SubmissionService:
-    """Handles submission orchestration from validation to queue enqueue."""
+    """Handles API-side validation and queue enqueue for run/submit jobs."""
 
     def __init__(
         self,
@@ -99,9 +106,43 @@ class SubmissionService:
         self.now_factory = now_factory or (lambda: int(time.time()))
         self.log = log or logger
 
-    def submit(self, *, problem_key: str, kind: str, code: str) -> SubmissionAccepted:
-        problem = self._resolve_problem(problem_key)
-        profile = "torch" if problem.requires_torch else "light"
+    def enqueue_submit(self, *, problem_id: str, code: str) -> SubmissionAccepted:
+        spec = self._resolve_problem_spec(problem_id)
+        return self._enqueue_job(
+            spec=spec,
+            operation="submit",
+            code=code,
+            cases_json=None,
+        )
+
+    def enqueue_run(
+        self,
+        *,
+        problem_id: str,
+        code: str,
+        cases: list[TestCase],
+    ) -> SubmissionAccepted:
+        spec = self._resolve_problem_spec(problem_id)
+        try:
+            compiled_cases = self.problems.compiler.compile_cases(spec, cases)
+        except ValueError as exc:
+            raise InvalidRunRequestError(str(exc)) from exc
+        return self._enqueue_job(
+            spec=spec,
+            operation="run",
+            code=code,
+            cases_json=_serialize_compiled_cases(compiled_cases),
+        )
+
+    def _enqueue_job(
+        self,
+        *,
+        spec: ProblemSpec,
+        operation: JobOperation,
+        code: str,
+        cases_json: str | None,
+    ) -> SubmissionAccepted:
+        profile = spec.execution_profile
         stream = self.stream_routing.stream_for_profile(profile)
         group = self.stream_routing.group_for_stream(stream)
 
@@ -115,17 +156,19 @@ class SubmissionService:
 
         job_id = self.job_id_factory()
         created_at = self.now_factory()
-        self.results.create_job(job_id, problem.id, profile, kind, created_at=created_at)
+        self.results.create_job(job_id, spec.problem_id, profile, operation, created_at=created_at)
 
         payload = {
             "job_id": job_id,
-            "problem_id": problem.id,
-            "problem_key": problem_key,
+            "problem_id": spec.problem_id,
             "profile": profile,
-            "kind": kind,
+            "operation": operation,
             "code": code,
             "created_at": created_at,
         }
+        if cases_json is not None:
+            payload["cases_json"] = cases_json
+
         try:
             self.queue.enqueue(stream, payload)
         except Exception as exc:
@@ -134,9 +177,9 @@ class SubmissionService:
 
         return SubmissionAccepted(job_id=job_id, status="queued")
 
-    def _resolve_problem(self, problem_key: str) -> ProblemRouteInfo:
+    def _resolve_problem_spec(self, problem_id: str) -> ProblemSpec:
         try:
-            return self.problems.get_route_info(problem_key)
+            return self.problems.get_problem_spec(problem_id)
         except FileNotFoundError as exc:
             raise ProblemNotFoundError("Problem not found") from exc
         except ValueError as exc:
@@ -166,9 +209,10 @@ class SubmissionService:
 @dataclass(frozen=True)
 class WorkerJob:
     job_id: str
-    problem_key: str
-    kind: str
+    problem_id: str
+    operation: JobOperation
     code: str
+    cases_payload: list[dict[str, Any]] | None = None
 
 
 @dataclass(frozen=True)
@@ -189,14 +233,16 @@ class WorkerExecutionService:
         problems: ProblemRepository,
         isolate: IsolateConfig,
         max_output_chars: int,
-        run_problem_fn: Callable[..., dict[str, Any]] = run_problem,
+        run_execution_plan_fn: Callable[..., dict[str, Any]] = run_execution_plan,
+        plan_factory: ExecutionPlanFactory | None = None,
         log: logging.Logger | None = None,
     ) -> None:
         self.results = results
         self.problems = problems
         self.isolate = isolate
         self.max_output_chars = max_output_chars
-        self.run_problem_fn = run_problem_fn
+        self.run_execution_plan_fn = run_execution_plan_fn
+        self.plan_factory = plan_factory or ExecutionPlanFactory(problems)
         self.log = log or logger
 
     def execute(
@@ -217,13 +263,11 @@ class WorkerExecutionService:
             on_started()
 
         try:
-            include_hidden, detail_mode, problem = self._resolve_problem(job)
-            result = self.run_problem_fn(
-                problem,
+            plan = self._build_execution_plan(job)
+            result = self.run_execution_plan_fn(
+                plan,
                 job.code,
                 self.max_output_chars,
-                include_hidden=include_hidden,
-                detail_mode=detail_mode,
                 isolate=self.isolate,
             )
 
@@ -293,9 +337,29 @@ class WorkerExecutionService:
                     should_ack=False,
                 )
 
-    def _resolve_problem(self, job: WorkerJob) -> tuple[bool, str, Any]:
-        if job.kind == "run":
-            return False, "all", self.problems.get_for_run(job.problem_key)
-        if job.kind == "submit":
-            return True, "first_failure", self.problems.get_for_submit(job.problem_key)
-        raise ValueError(f"Invalid job kind: {job.kind}")
+    def _build_execution_plan(self, job: WorkerJob):
+        if job.operation == "submit":
+            return self.plan_factory.build_submit_plan(job.problem_id)
+        if job.operation == "run":
+            if job.cases_payload is None:
+                raise ValueError("Run job is missing compiled cases payload")
+            spec = self.problems.get_problem_spec(job.problem_id)
+            compiled_cases = load_compiled_test_cases(
+                job.cases_payload,
+                spec,
+                context="queued_run_payload",
+            )
+            return self.plan_factory.build_run_plan(job.problem_id, list(compiled_cases))
+        raise ValueError(f"Invalid job operation: {job.operation}")
+
+
+def _serialize_compiled_cases(cases: list[CompiledTestCase]) -> str:
+    payload = [
+        {
+            "id": case.id,
+            "input_code": case.input_code,
+            "expected_literal": case.expected_literal,
+        }
+        for case in cases
+    ]
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))

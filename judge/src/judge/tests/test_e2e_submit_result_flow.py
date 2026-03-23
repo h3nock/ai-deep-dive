@@ -8,8 +8,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import TestCase
 
-from judge.problems import Comparison, Problem, ProblemRouteInfo
-from judge.problems import TestCase as ProblemTestCase
+from judge.problems import (
+    ArgumentSpec,
+    Comparison,
+    CompiledTestCase,
+    ProblemSpec,
+    TestCaseCompiler,
+)
 from judge.results import ResultsStore
 from judge.runner import IsolateConfig
 from judge.services import (
@@ -39,52 +44,42 @@ class _InMemoryQueue:
 class _ProblemRepositoryStub:
     def __init__(self, problem_id: str) -> None:
         self.problem_id = problem_id
+        self.compiler = TestCaseCompiler()
 
-    def get_route_info(self, problem_id: str) -> ProblemRouteInfo:
+    def get_problem_spec(self, problem_id: str) -> ProblemSpec:
         if problem_id != self.problem_id:
             raise FileNotFoundError(problem_id)
-        return ProblemRouteInfo(
-            id=self.problem_id,
-            version="v1",
-            requires_torch=False,
-            time_limit_s=5,
-            memory_mb=1024,
-        )
-
-    def get_for_run(self, problem_id: str) -> Problem:
-        if problem_id != self.problem_id:
-            raise FileNotFoundError(problem_id)
-        return self._problem()
-
-    def get_for_submit(self, problem_id: str) -> Problem:
-        if problem_id != self.problem_id:
-            raise FileNotFoundError(problem_id)
-        return self._problem()
-
-    def _problem(self) -> Problem:
-        public_case = ProblemTestCase(
-            id="case-public",
-            input_code="a = 1\nb = 2\n",
-            expected=3,
-            hidden=False,
-        )
-        hidden_case = ProblemTestCase(
-            id="case-hidden",
-            input_code="a = 5\nb = 6\n",
-            expected=11,
-            hidden=True,
-        )
-        return Problem(
-            id=self.problem_id,
-            version="v1",
+        return ProblemSpec(
+            problem_id=self.problem_id,
+            arguments=(ArgumentSpec("a"), ArgumentSpec("b")),
             runner="add(a, b)",
-            requires_torch=False,
+            execution_profile="light",
+            comparison=Comparison(type="exact"),
             time_limit_s=5,
             memory_mb=1024,
-            comparison=Comparison(type="exact", rtol=1e-5, atol=1e-8),
-            public_tests=[public_case],
-            hidden_tests=[hidden_case],
         )
+
+    def get_compiled_public_cases(self, problem_id: str) -> list[CompiledTestCase]:
+        if problem_id != self.problem_id:
+            raise FileNotFoundError(problem_id)
+        return [
+            CompiledTestCase(
+                id="case-public",
+                input_code="a = 1\nb = 2\n",
+                expected_literal="3",
+            )
+        ]
+
+    def get_hidden_cases(self, problem_id: str) -> list[CompiledTestCase]:
+        if problem_id != self.problem_id:
+            raise FileNotFoundError(problem_id)
+        return [
+            CompiledTestCase(
+                id="case-hidden",
+                input_code="a = 5\nb = 6\n",
+                expected_literal="11",
+            )
+        ]
 
 
 class EndToEndSubmitResultFlowTests(TestCase):
@@ -130,7 +125,6 @@ class EndToEndSubmitResultFlowTests(TestCase):
                 "/submit",
                 json={
                     "problem_id": "sample/01-basics/01-add",
-                    "kind": "submit",
                     "code": "def add(a, b):\n    return a + b\n",
                 },
             )
@@ -142,17 +136,13 @@ class EndToEndSubmitResultFlowTests(TestCase):
 
             _, payload = queue.enqueued[0]
 
-            def _run_problem_ok(*_args, **_kwargs):
+            def _run_execution_plan_ok(*_args, **_kwargs):
                 return {
                     "status": "Accepted",
                     "summary": {
                         "total": 2,
                         "passed": 2,
                         "failed": 0,
-                        "public_total": 1,
-                        "public_passed": 1,
-                        "hidden_total": 1,
-                        "hidden_passed": 1,
                     },
                     "tests": [],
                     "error": None,
@@ -163,13 +153,13 @@ class EndToEndSubmitResultFlowTests(TestCase):
                 problems=problems,
                 isolate=IsolateConfig(executable="/usr/bin/isolate", box_id=1),
                 max_output_chars=2000,
-                run_problem_fn=_run_problem_ok,
+                run_execution_plan_fn=_run_execution_plan_ok,
             )
             outcome = execution.execute(
                 WorkerJob(
                     job_id=str(payload["job_id"]),
-                    problem_key=str(payload["problem_key"]),
-                    kind=str(payload["kind"]),
+                    problem_id=str(payload["problem_id"]),
+                    operation=str(payload["operation"]),
                     code=str(payload["code"]),
                 )
             )
@@ -193,7 +183,6 @@ class EndToEndSubmitResultFlowTests(TestCase):
                 "/submit",
                 json={
                     "problem_id": "sample/01-basics/01-add",
-                    "kind": "submit",
                     "code": "def add(a, b):\n    raise RuntimeError('bad')\n",
                 },
             )
@@ -205,17 +194,13 @@ class EndToEndSubmitResultFlowTests(TestCase):
 
             _, payload = queue.enqueued[0]
 
-            def _run_problem_error(*_args, **_kwargs):
+            def _run_execution_plan_error(*_args, **_kwargs):
                 return {
                     "status": "Runtime Error",
                     "summary": {
                         "total": 2,
                         "passed": 0,
                         "failed": 2,
-                        "public_total": 1,
-                        "public_passed": 0,
-                        "hidden_total": 1,
-                        "hidden_passed": 0,
                     },
                     "tests": [],
                     "error": "Line 2: RuntimeError: bad",
@@ -227,13 +212,13 @@ class EndToEndSubmitResultFlowTests(TestCase):
                 problems=problems,
                 isolate=IsolateConfig(executable="/usr/bin/isolate", box_id=1),
                 max_output_chars=2000,
-                run_problem_fn=_run_problem_error,
+                run_execution_plan_fn=_run_execution_plan_error,
             )
             outcome = execution.execute(
                 WorkerJob(
                     job_id=str(payload["job_id"]),
-                    problem_key=str(payload["problem_key"]),
-                    kind=str(payload["kind"]),
+                    problem_id=str(payload["problem_id"]),
+                    operation=str(payload["operation"]),
                     code=str(payload["code"]),
                 )
             )

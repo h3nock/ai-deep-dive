@@ -9,8 +9,7 @@ from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
-from judge.problems import Comparison, Problem
-from judge.problems import TestCase as ProblemTestCase
+from judge.problems import Comparison, CompiledTestCase, ExecutionPlan
 from judge.runner import IsolateConfig
 from judge.warm_executor import (
     _SECCOMP_DENY_FILE_METADATA_SYSCALLS,
@@ -21,23 +20,41 @@ from judge.warm_executor import (
 )
 
 
-def _problem(*, time_limit_s: int = 1) -> Problem:
-    public_case = ProblemTestCase(
-        id="case-public",
-        input_code="a = 1\nb = 2\n",
-        expected=3,
-        hidden=False,
-    )
-    return Problem(
-        id="sample/01-basics/01-add",
-        version="v1",
+def _plan(*, time_limit_s: int = 1) -> ExecutionPlan:
+    return ExecutionPlan(
+        problem_id="sample/01-basics/01-add",
         runner="add(a, b)",
-        requires_torch=False,
+        execution_profile="light",
+        comparison=Comparison(type="exact"),
         time_limit_s=time_limit_s,
         memory_mb=256,
-        comparison=Comparison(type="exact", rtol=1e-5, atol=1e-8),
-        public_tests=[public_case],
-        hidden_tests=[],
+        cases=(
+            CompiledTestCase(
+                id="case-public",
+                input_code="a = 1\nb = 2\n",
+                expected_literal="3",
+            ),
+        ),
+        detail_mode="all",
+    )
+
+
+def _env_plan() -> ExecutionPlan:
+    return ExecutionPlan(
+        problem_id="sample/01-basics/01-env",
+        runner="read_env()",
+        execution_profile="light",
+        comparison=Comparison(type="exact"),
+        time_limit_s=1,
+        memory_mb=256,
+        cases=(
+            CompiledTestCase(
+                id="case-env",
+                input_code="",
+                expected_literal="None",
+            ),
+        ),
+        detail_mode="all",
     )
 
 
@@ -53,33 +70,7 @@ def _isolate_config() -> IsolateConfig:
     )
 
 
-def _env_problem() -> Problem:
-    public_case = ProblemTestCase(
-        id="case-env",
-        input_code="",
-        expected=None,
-        hidden=False,
-    )
-    return Problem(
-        id="sample/01-basics/01-env",
-        version="v1",
-        runner="read_env()",
-        requires_torch=False,
-        time_limit_s=1,
-        memory_mb=256,
-        comparison=Comparison(type="exact", rtol=1e-5, atol=1e-8),
-        public_tests=[public_case],
-        hidden_tests=[],
-    )
-
-
 def _executor(**overrides: object) -> WarmForkExecutor:
-    """Create an executor with test defaults.
-
-    Tests run as root on the production VM, so allow_root is on by
-    default.  Torch preloading and no-new-privs are disabled to keep
-    the test harness lightweight and portable.
-    """
     defaults: dict[str, object] = {
         "enable_no_new_privs": False,
         "enable_seccomp": False,
@@ -92,15 +83,13 @@ def _executor(**overrides: object) -> WarmForkExecutor:
 
 
 class WarmForkExecutorTests(TestCase):
-    def test_run_problem_returns_accepted_for_valid_solution(self) -> None:
+    def test_run_execution_plan_returns_accepted_for_valid_solution(self) -> None:
         executor = _executor()
 
-        result = executor.run_problem(
-            _problem(),
+        result = executor.run_execution_plan(
+            _plan(),
             "def add(a, b):\n    return a + b\n",
             max_output_chars=2000,
-            include_hidden=False,
-            detail_mode="all",
             isolate=_isolate_config(),
         )
 
@@ -109,18 +98,16 @@ class WarmForkExecutorTests(TestCase):
         self.assertEqual(result.get("summary", {}).get("passed"), 1)
         self.assertEqual(result.get("summary", {}).get("failed"), 0)
 
-    def test_run_problem_times_out_for_slow_solution(self) -> None:
+    def test_run_execution_plan_times_out_for_slow_solution(self) -> None:
         executor = _executor()
 
-        result = executor.run_problem(
-            _problem(time_limit_s=1),
+        result = executor.run_execution_plan(
+            _plan(time_limit_s=1),
             "import time\n"
             "def add(a, b):\n"
             "    time.sleep(5)\n"
             "    return a + b\n",
             max_output_chars=2000,
-            include_hidden=False,
-            detail_mode="all",
             isolate=_isolate_config(),
         )
 
@@ -128,34 +115,45 @@ class WarmForkExecutorTests(TestCase):
         self.assertEqual(result.get("error_kind"), "user")
         self.assertIn("Time Limit Exceeded", result.get("error", ""))
 
+    def test_run_execution_plan_reports_syntax_error_for_invalid_user_code(self) -> None:
+        executor = _executor()
+
+        result = executor.run_execution_plan(
+            _plan(),
+            "def add(a, b)\n    return a + b\n",
+            max_output_chars=2000,
+            isolate=_isolate_config(),
+        )
+
+        self.assertEqual(result.get("status"), "Syntax Error")
+        self.assertEqual(result.get("error"), None)
+        self.assertEqual(result.get("summary", {}).get("failed"), 1)
+        self.assertEqual(result.get("tests", [{}])[0].get("status"), "Syntax Error")
+
     def test_abrupt_child_exit_is_reported_as_user_runtime_error(self) -> None:
         executor = _executor()
 
-        result = executor.run_problem(
-            _problem(time_limit_s=1),
+        result = executor.run_execution_plan(
+            _plan(time_limit_s=1),
             "import os\n"
             "def add(a, b):\n"
             "    os._exit(7)\n",
             max_output_chars=2000,
-            include_hidden=False,
-            detail_mode="all",
             isolate=_isolate_config(),
         )
 
         self.assertEqual(result.get("status"), "Runtime Error")
         self.assertEqual(result.get("error_kind"), "user")
 
-    def test_run_problem_does_not_expose_parent_env(self) -> None:
+    def test_run_execution_plan_does_not_expose_parent_env(self) -> None:
         executor = _executor(enable_seccomp=False, clear_env=True)
         with patch.dict(os.environ, {"JUDGE_SECRET_TOKEN": "should-not-leak"}, clear=False):
-            result = executor.run_problem(
-                _env_problem(),
+            result = executor.run_execution_plan(
+                _env_plan(),
                 "import os\n"
                 "def read_env():\n"
                 "    return os.getenv('JUDGE_SECRET_TOKEN')\n",
                 max_output_chars=2000,
-                include_hidden=False,
-                detail_mode="all",
                 isolate=_isolate_config(),
             )
 
@@ -193,8 +191,8 @@ class WarmForkExecutorTests(TestCase):
             deny_filesystem=True,
         )
 
-        result = executor.run_problem(
-            _env_problem(),
+        result = executor.run_execution_plan(
+            _env_plan(),
             "def read_env():\n"
             "    try:\n"
             "        with open('/etc/passwd', 'r'):\n"
@@ -202,8 +200,6 @@ class WarmForkExecutorTests(TestCase):
             "    except Exception:\n"
             "        return None\n",
             max_output_chars=2000,
-            include_hidden=False,
-            detail_mode="all",
             isolate=_isolate_config(),
         )
         self.assertEqual(result.get("status"), "Accepted")
@@ -246,7 +242,7 @@ class WarmForkExecutorTests(TestCase):
             ),
         ):
             executor._prepare_child_sandbox(  # noqa: SLF001
-                problem=_problem(),
+                plan=_plan(),
                 isolate=_isolate_config(),
             )
 
@@ -256,12 +252,10 @@ class WarmForkExecutorTests(TestCase):
         executor = _executor()
         self.assertEqual(executor.job_count, 0)
 
-        executor.run_problem(
-            _problem(),
+        executor.run_execution_plan(
+            _plan(),
             "def add(a, b):\n    return a + b\n",
             max_output_chars=2000,
-            include_hidden=False,
-            detail_mode="all",
             isolate=_isolate_config(),
         )
         self.assertEqual(executor.job_count, 1)
@@ -270,12 +264,10 @@ class WarmForkExecutorTests(TestCase):
         executor = _executor(max_jobs=0)
         self.assertFalse(executor.needs_recycle)
 
-        executor.run_problem(
-            _problem(),
+        executor.run_execution_plan(
+            _plan(),
             "def add(a, b):\n    return a + b\n",
             max_output_chars=2000,
-            include_hidden=False,
-            detail_mode="all",
             isolate=_isolate_config(),
         )
         self.assertFalse(executor.needs_recycle)
@@ -285,12 +277,10 @@ class WarmForkExecutorTests(TestCase):
         self.assertFalse(executor.needs_recycle)
 
         for _ in range(2):
-            executor.run_problem(
-                _problem(),
+            executor.run_execution_plan(
+                _plan(),
                 "def add(a, b):\n    return a + b\n",
                 max_output_chars=2000,
-                include_hidden=False,
-                detail_mode="all",
                 isolate=_isolate_config(),
             )
         self.assertTrue(executor.needs_recycle)
@@ -300,12 +290,10 @@ class WarmForkExecutorTests(TestCase):
         executor = _executor()
 
         for i in range(3):
-            result = executor.run_problem(
-                _problem(),
+            result = executor.run_execution_plan(
+                _plan(),
                 "def add(a, b):\n    return a + b\n",
                 max_output_chars=2000,
-                include_hidden=False,
-                detail_mode="all",
                 isolate=_isolate_config(),
             )
             self.assertEqual(result.get("status"), "Accepted", f"job {i + 1} failed")

@@ -19,8 +19,8 @@ class WorkerMessageParsingTests(TestCase):
         parsed, error = self._parse(
             {
                 "job_id": "job-1",
-                "problem_key": "sample/01-basics/01-add",
-                "kind": "submit",
+                "problem_id": "sample/01-basics/01-add",
+                "operation": "submit",
                 "code": "print('hello')",
                 "created_at": "1700000000",
             }
@@ -28,12 +28,12 @@ class WorkerMessageParsingTests(TestCase):
 
         self.assertIsNone(error)
         self.assertEqual(parsed["job_id"], "job-1")
-        self.assertEqual(parsed["problem_key"], "sample/01-basics/01-add")
-        self.assertEqual(parsed["kind"], "submit")
+        self.assertEqual(parsed["problem_id"], "sample/01-basics/01-add")
+        self.assertEqual(parsed["operation"], "submit")
         self.assertEqual(parsed["created_at"], 1700000000)
 
     def test_parse_queue_message_rejects_missing_job_id(self) -> None:
-        parsed, error = self._parse({"problem_key": "sample/01-basics/01-add"})
+        parsed, error = self._parse({"problem_id": "sample/01-basics/01-add"})
 
         self.assertEqual(parsed, {})
         self.assertEqual(error, "missing job_id")
@@ -42,8 +42,8 @@ class WorkerMessageParsingTests(TestCase):
         parsed, error = self._parse(
             {
                 "job_id": "job-1",
-                "problem_key": "sample/01-basics/01-add",
-                "kind": "submit",
+                "problem_id": "sample/01-basics/01-add",
+                "operation": "submit",
                 "code": "",
                 "created_at": "invalid",
             }
@@ -51,6 +51,22 @@ class WorkerMessageParsingTests(TestCase):
 
         self.assertEqual(parsed, {})
         self.assertIn("invalid created_at", error or "")
+
+    def test_parse_queue_message_decodes_run_cases_payload(self) -> None:
+        parsed, error = self._parse(
+            {
+                "job_id": "job-1",
+                "problem_id": "sample/01-basics/01-add",
+                "operation": "run",
+                "code": "print('hello')",
+                "cases_json": '[{"id":"case1","input_code":"a = 1\\nb = 2\\n","expected_literal":"3"}]',
+                "created_at": "1700000000",
+            }
+        )
+
+        self.assertIsNone(error)
+        self.assertEqual(parsed["operation"], "run")
+        self.assertEqual(len(parsed["cases_payload"]), 1)
 
 
 class WorkerSystemdNotifyTests(TestCase):

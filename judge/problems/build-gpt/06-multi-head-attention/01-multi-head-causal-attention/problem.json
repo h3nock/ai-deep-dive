@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "arguments": [
+    {
+      "name": "X"
+    },
+    {
+      "name": "W_Q"
+    },
+    {
+      "name": "W_K"
+    },
+    {
+      "name": "W_V"
+    },
+    {
+      "name": "W_O"
+    },
+    {
+      "name": "num_heads"
+    }
+  ],
+  "runner": "multi_head_causal_attention(X, W_Q, W_K, W_V, W_O, num_heads)",
+  "execution_profile": "torch",
+  "comparison": {
+    "type": "allclose",
+    "rtol": 1e-05,
+    "atol": 1e-06
+  },
+  "time_limit_s": 5,
+  "memory_mb": 1024
+}

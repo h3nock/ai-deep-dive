@@ -1,88 +1,108 @@
 # Problems
 
-Each problem lives in a directory with:
+Each problem lives in a directory with four canonical files:
 
-- `manifest.json`
-- `public_tests.json`
+- `problem.json`
+- `public_cases.json`
 - `hidden_tests.json`
+- `starter.py`
 
 Example:
 
-```
+```text
 problems/
   build-gpt/01-from-text-to-bytes/01-encoder/
-    manifest.json
-    public_tests.json
+    problem.json
+    public_cases.json
     hidden_tests.json
+    starter.py
 ```
 
-## manifest.json
+## `problem.json`
 
 ```json
 {
-  "id": "build-gpt/01-from-text-to-bytes/01-encoder",
-  "version": "v1",
+  "schema_version": 1,
+  "arguments": [
+    { "name": "text" }
+  ],
   "runner": "encode(text)",
-  "requires_torch": false,
+  "execution_profile": "light",
+  "comparison": { "type": "exact" },
   "time_limit_s": 10,
-  "memory_mb": 1024,
-  "comparison": { "type": "exact" }
+  "memory_mb": 1024
 }
 ```
 
 Fields:
-- `runner`: expression evaluated after input setup.
-- `requires_torch`: routes job to the torch worker.
-- `time_limit_s` and `memory_mb`: per-job limits.
-- `comparison`: `exact` or `allclose` with `rtol` and `atol`.
+- `arguments`: runner argument names in execution order.
+- `runner`: expression evaluated after testcase setup.
+- `execution_profile`: `light` or `torch`; this is the queue/worker routing key.
+- `comparison`: either `{"type":"exact"}` or `{"type":"allclose","rtol":...,"atol":...}`.
+- `time_limit_s` and `memory_mb`: per-job execution limits.
 
-## public_tests.json / hidden_tests.json
+## `public_cases.json`
 
 ```json
 {
-  "version": 1,
+  "schema_version": 1,
   "cases": [
     {
       "id": "case1",
-      "input_code": "text = \"Hello\"\n",
-      "expected": [72, 101, 108]
+      "inputs": {
+        "text": "\"Hello\""
+      },
+      "expected_literal": "[72, 101, 108, 108, 111]"
     }
   ]
 }
 ```
 
 Notes:
-- `expected` should be valid JSON whenever possible.
-- For Python literals (e.g., tuple keys), store as a string and set
-  `expected_is_code: true`.
-- Use `input_code` for all test setup.
-- Hidden tests are not publicly served from `/judge-tests/`; nginx should return
-  `404` for direct `hidden_tests.json` requests.
-- The judge returns the first failing hidden test on submit for debugging.
-- Public bundles can be cached by the frontend or CDN.
+- Public cases are learner-facing and must be authored in terms of real function arguments only.
+- `inputs` values are Python expression strings, not arbitrary setup code.
+- The judge validates public-case expressions against the canonical whitelist before compiling them.
+- `expected_literal` must parse with `ast.literal_eval`.
 
-## Judge tests endpoint export
+## `hidden_tests.json`
 
-`judge/scripts/export_tests_endpoint.py` exports artifacts to one or both roots:
+```json
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "h1",
+      "input_code": "text = \"Hello\"\n",
+      "expected_literal": "[72, 101, 108, 108, 111]"
+    }
+  ]
+}
+```
 
-- Judge endpoint root (`--out-root`, defaults to `judge/tests`):
-  - `public_manifest.json`
-  - `public_bundle.<version>.json`
-  - `hidden_tests.json` (for server-side execution; not publicly served)
-- Web public root (`--web-out-root`):
-  - `public_manifest.json`
-  - `public_bundle.<version>.json`
+Notes:
+- Hidden tests are execution-oriented and may use helper locals or multi-step setup.
+- Hidden tests are not publicly served.
+- The judge executes canonical public cases first, then hidden tests, in one ordered plan.
+
+## `starter.py`
+
+`starter.py` contains the editor starter code for the challenge.
+
+Notes:
+- `starter.py` is canonical problem corpus data.
+- `starter.py` must exist for every problem directory.
+- `starter.py` must be non-empty and syntactically valid Python.
+- The judge runtime does not load `starter.py` into `ProblemSpec` or `ExecutionPlan`.
+- `starter.py` is consumed by downstream challenge/content assembly, not by worker execution.
 
 ## Hidden test generation
 
-`judge/scripts/generate_hidden_tests.py` generates deterministic `public_tests.json`
-and `hidden_tests.json` for the current build-gpt challenges.
+`judge/scripts/generate_hidden_tests.py` generates deterministic `hidden_tests.json`
+for the supported build-gpt problems.
 
 Default behavior:
-- writes both `public_tests.json` and `hidden_tests.json` for each supported build-gpt problem
-- keeps curated public examples deterministic per problem (first generated cases are the public cases)
-- computes public and hidden expected values from the same reference implementations
-- excludes public cases from hidden output to avoid duplicate submit execution
+- writes `hidden_tests.json` only
+- reads canonical `public_cases.json` so hidden output does not duplicate public cases
 - generates hidden coverage inside the 15-25 target range
 - uses scenario buckets: boundary, adversarial, random, regression, stress
 - emits IDs with bucket prefixes (`b`, `a`, `r`, `g`, `s`)
@@ -90,17 +110,17 @@ Default behavior:
 Generate files:
 
 ```bash
-python judge/scripts/generate_hidden_tests.py
+PYTHONPATH=src python judge/scripts/generate_hidden_tests.py
 ```
 
 Check reproducibility in CI/local validation:
 
 ```bash
-python judge/scripts/generate_hidden_tests.py --check
+PYTHONPATH=src python judge/scripts/generate_hidden_tests.py --check
 ```
 
 Generate one problem only:
 
 ```bash
-python judge/scripts/generate_hidden_tests.py --only build-gpt/03-embeddings/01-most-similar
+PYTHONPATH=src python judge/scripts/generate_hidden_tests.py --only build-gpt/03-embeddings/01-most-similar
 ```

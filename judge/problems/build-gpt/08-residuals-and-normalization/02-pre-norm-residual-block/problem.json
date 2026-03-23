@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "arguments": [
+    {
+      "name": "x"
+    },
+    {
+      "name": "gamma"
+    },
+    {
+      "name": "beta"
+    },
+    {
+      "name": "W"
+    },
+    {
+      "name": "b"
+    },
+    {
+      "name": "eps"
+    }
+  ],
+  "runner": "pre_norm_block(x, gamma, beta, W, b, eps)",
+  "execution_profile": "torch",
+  "comparison": {
+    "type": "allclose",
+    "rtol": 1e-05,
+    "atol": 1e-06
+  },
+  "time_limit_s": 5,
+  "memory_mb": 1024
+}

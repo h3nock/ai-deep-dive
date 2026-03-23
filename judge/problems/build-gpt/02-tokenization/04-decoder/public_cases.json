@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "case1",
+      "inputs": {
+        "ids": "[256]",
+        "merges": "{(104, 105): 256}"
+      },
+      "expected_literal": "'hi'"
+    }
+  ]
+}

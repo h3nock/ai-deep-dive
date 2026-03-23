@@ -1,8 +1,7 @@
-"""Local runner for executing tests against user code."""
+"""Local runner for executing compiled execution plans against user code."""
 
 import hashlib
 import json
-import math
 import os
 import py_compile
 import subprocess
@@ -12,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from judge.problems import Problem
+from judge.problems import ExecutionPlan
 
 HARNESS_CODE = '''
 import json
@@ -48,8 +47,8 @@ def allclose(a, b, rtol, atol):
 
 def compare(actual, expected, comparison):
     cmp_type = comparison.get("type", "exact")
-    rtol = float(comparison.get("rtol", 1e-5))
-    atol = float(comparison.get("atol", 1e-8))
+    rtol = float(comparison.get("rtol", 0.0))
+    atol = float(comparison.get("atol", 0.0))
     if cmp_type == "allclose":
         return allclose(actual, expected, rtol, atol)
     return actual == expected
@@ -119,7 +118,7 @@ def run_cases():
     comparison_default = config.get("comparison", {"type": "exact"})
 
     _torch_module = None
-    if config.get("requires_torch", False):
+    if config.get("execution_profile") == "torch":
         import torch as _torch_module
 
     try:
@@ -136,7 +135,7 @@ def run_cases():
         compiled_solution = compile(user_code, "solution.py", "exec")
     except Exception:
         error_msg = format_user_error()
-        print(json.dumps([{"id": "error", "status": "Runtime Error", "stderr": error_msg}]))
+        print(json.dumps([{"id": "error", "status": "Syntax Error", "stderr": error_msg}]))
         return
 
     results = []
@@ -145,15 +144,15 @@ def run_cases():
         stderr_capture = io.StringIO()
 
         input_code = case.get("input_code", "")
-        expected = case.get("expected")
-        expected_is_code = case.get("expected_is_code", False)
-        is_hidden = case.get("hidden", False)
-        comparison = case.get("comparison") or comparison_default
+        expected_literal = case.get("expected_literal", "")
+        comparison = comparison_default
 
         status = "Accepted"
         output_str = ""
+        expected = ast.literal_eval(expected_literal)
         stdout_val = ""
         stderr_val = ""
+        case_phase = "solution_exec"
 
         try:
             with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
@@ -167,27 +166,24 @@ def run_cases():
                 }
                 if _torch_module is not None:
                     case_globals["torch"] = _torch_module
+                case_phase = "solution_exec"
                 exec(compiled_solution, case_globals)
+                case_phase = "testcase_compile"
                 compiled_input = compile(input_code, "testcase.py", "exec")
+                case_phase = "testcase_exec"
                 exec(compiled_input, case_globals)
+                case_phase = "runner_eval"
                 actual_value = eval(compiled_runner, case_globals)
 
             stdout_val = stdout_capture.getvalue()
             stderr_val = stderr_capture.getvalue()
 
             actual_value = normalize(actual_value)
-
-            if expected_is_code and isinstance(expected, str):
-                try:
-                    expected = ast.literal_eval(expected)
-                except Exception:
-                    pass
-
             if not compare(actual_value, expected, comparison):
                 status = "Wrong Answer"
             output_str = repr(actual_value)
         except Exception:
-            status = "Runtime Error"
+            status = "Syntax Error" if case_phase == "testcase_compile" else "Runtime Error"
             stdout_val = stdout_capture.getvalue()
             stderr_val = stderr_capture.getvalue()
             error_msg = format_user_error()
@@ -204,7 +200,6 @@ def run_cases():
             "output": output_str,
             "expected": repr(expected),
             "stderr": stderr_val,
-            "hidden": is_hidden,
         })
 
     print(json.dumps(results))
@@ -242,77 +237,19 @@ class IsolateConfig:
     python_bin: str = sys.executable
 
 
-def _serialize_expected(value: Any) -> tuple[Any, bool]:
-    # Keep JSON values as-is only when a JSON roundtrip preserves Python types.
-    # Otherwise send a Python literal and parse it in the harness.
-    if _json_roundtrip_preserves_types(value):
-        return value, False
-    return repr(value), True
-
-
-def _json_roundtrip_preserves_types(value: Any) -> bool:
-    try:
-        decoded = json.loads(json.dumps(value))
-    except (TypeError, ValueError):
-        return False
-    return _structural_equal(value, decoded)
-
-
-def _structural_equal(left: Any, right: Any) -> bool:
-    if isinstance(left, float) and isinstance(right, float):
-        if math.isnan(left) and math.isnan(right):
-            return True
-        return left == right
-
-    if type(left) is not type(right):
-        return False
-
-    if isinstance(left, list):
-        if len(left) != len(right):
-            return False
-        return all(_structural_equal(a, b) for a, b in zip(left, right))
-
-    if isinstance(left, dict):
-        if len(left) != len(right):
-            return False
-        for key, left_value in left.items():
-            if key not in right:
-                return False
-            if not _structural_equal(left_value, right[key]):
-                return False
-        return True
-
-    return left == right
-
-
-def _build_test_config(problem: Problem, include_hidden: bool) -> dict[str, Any]:
-    cases: list[dict[str, Any]] = []
-    tests = problem.public_tests + (problem.hidden_tests if include_hidden else [])
-    for case in tests:
-        comparison = case.comparison or problem.comparison
-        expected, expected_is_code = _serialize_expected(case.expected)
-        cases.append(
-            {
-                "id": case.id,
-                "input_code": case.input_code,
-                "expected": expected,
-                "expected_is_code": expected_is_code,
-                "hidden": case.hidden,
-                "comparison": {
-                    "type": comparison.type,
-                    "rtol": comparison.rtol,
-                    "atol": comparison.atol,
-                },
-            }
-        )
+def _build_test_config(plan: ExecutionPlan) -> dict[str, Any]:
+    cases = [
+        {
+            "id": case.id,
+            "input_code": case.input_code,
+            "expected_literal": case.expected_literal,
+        }
+        for case in plan.cases
+    ]
     return {
-        "runner": problem.runner,
-        "comparison": {
-            "type": problem.comparison.type,
-            "rtol": problem.comparison.rtol,
-            "atol": problem.comparison.atol,
-        },
-        "requires_torch": problem.requires_torch,
+        "runner": plan.runner,
+        "comparison": plan.comparison.as_payload(),
+        "execution_profile": plan.execution_profile,
         "cases": cases,
     }
 
@@ -327,7 +264,6 @@ def _sanitize_item(item: dict[str, Any], max_output_chars: int) -> dict[str, Any
     return {
         "id": item.get("id", ""),
         "status": item.get("status", ""),
-        "hidden": bool(item.get("hidden", False)),
         "input": item.get("input", ""),
         "stdout": _truncate(item.get("stdout", ""), max_output_chars),
         "output": _truncate(item.get("output", ""), max_output_chars),
@@ -341,51 +277,33 @@ def _summarize_results(
 ) -> tuple[dict[str, int], dict[str, Any] | None]:
     total = 0
     passed = 0
-    hidden_total = 0
-    hidden_passed = 0
     first_failed: dict[str, Any] | None = None
 
     for item in results:
         total += 1
         status = item.get("status", "")
-        hidden = bool(item.get("hidden", False))
-
-        if hidden:
-            hidden_total += 1
 
         if status == "Accepted":
             passed += 1
-            if hidden:
-                hidden_passed += 1
         elif first_failed is None:
             first_failed = item
 
     failed = total - passed
-    public_total = total - hidden_total
-    public_passed = passed - hidden_passed
 
     summary = {
         "total": total,
         "passed": passed,
         "failed": failed,
-        "public_total": public_total,
-        "public_passed": public_passed,
-        "hidden_total": hidden_total,
-        "hidden_passed": hidden_passed,
     }
 
     return summary, first_failed
 
 
-def _build_error_summary(problem: Problem, include_hidden: bool, total_cases: int) -> dict[str, int]:
+def _build_error_summary(total_cases: int) -> dict[str, int]:
     return {
         "total": total_cases,
         "passed": 0,
         "failed": total_cases,
-        "public_total": total_cases if not include_hidden else len(problem.public_tests),
-        "public_passed": 0,
-        "hidden_total": 0 if not include_hidden else len(problem.hidden_tests),
-        "hidden_passed": 0,
     }
 
 
@@ -486,7 +404,7 @@ def _isolate_env_flags() -> list[str]:
 
 
 def _run_in_isolate(
-    problem: Problem,
+    plan: ExecutionPlan,
     user_code: str,
     config: dict[str, Any],
     isolate: IsolateConfig,
@@ -501,12 +419,12 @@ def _run_in_isolate(
         (box_path / "main.py").write_text(user_code)
         (box_path / "test_config.json").write_text(json.dumps(config))
 
-        wall_time = max(problem.time_limit_s + isolate.wall_time_extra_s, problem.time_limit_s + 1)
+        wall_time = max(plan.time_limit_s + isolate.wall_time_extra_s, plan.time_limit_s + 1)
         python_bin, dir_mounts = _resolve_python_for_isolate(isolate)
         run_cmd = _isolate_base_cmd(isolate) + [
-            f"--time={problem.time_limit_s}",
+            f"--time={plan.time_limit_s}",
             f"--wall-time={wall_time}",
-            f"--mem={max(problem.memory_mb, 1) * 1024}",
+            f"--mem={max(plan.memory_mb, 1) * 1024}",
             f"--fsize={max(isolate.fsize_kb, 1)}",
             f"--processes={max(isolate.process_limit, 1)}",
             f"--meta={meta_path}",
@@ -515,7 +433,7 @@ def _run_in_isolate(
             f"--dir=/runtime={_RUNTIME_DIR}",
         ]
         if isolate.use_cgroups:
-            run_cmd.append(f"--cg-mem={max(problem.memory_mb, 1) * 1024}")
+            run_cmd.append(f"--cg-mem={max(plan.memory_mb, 1) * 1024}")
         run_cmd.extend(dir_mounts)
         run_cmd.extend(_isolate_env_flags())
         run_cmd.extend(
@@ -560,34 +478,32 @@ def _isolate_failed_with_internal_error(meta: dict[str, str]) -> bool:
     return status == "XX" or status is None
 
 
-def run_problem(
-    problem: Problem,
+def run_execution_plan(
+    plan: ExecutionPlan,
     user_code: str,
     max_output_chars: int,
-    include_hidden: bool = True,
-    detail_mode: str = "all",
     isolate: IsolateConfig | None = None,
 ) -> dict[str, Any]:
     if isolate is None:
         raise ValueError("isolate configuration is required")
 
-    config = _build_test_config(problem, include_hidden)
+    config = _build_test_config(plan)
     total_cases = len(config["cases"])
 
     try:
-        returncode, stdout, stderr, isolate_meta = _run_in_isolate(problem, user_code, config, isolate)
+        returncode, stdout, stderr, isolate_meta = _run_in_isolate(plan, user_code, config, isolate)
     except subprocess.TimeoutExpired:
         return {
             "status": "Time Limit Exceeded",
-            "summary": _build_error_summary(problem, include_hidden, total_cases),
+            "summary": _build_error_summary(total_cases),
             "tests": [],
-            "error": f"Time Limit Exceeded ({problem.time_limit_s}s)",
+            "error": f"Time Limit Exceeded ({plan.time_limit_s}s)",
             "error_kind": "user",
         }
     except Exception as exc:
         return {
             "status": "Runtime Error",
-            "summary": _build_error_summary(problem, include_hidden, total_cases),
+            "summary": _build_error_summary(total_cases),
             "tests": [],
             "error": f"Runner failed: {exc}",
             "error_kind": "internal",
@@ -597,22 +513,22 @@ def run_problem(
         if _isolate_failed_with_tle(isolate_meta):
             return {
                 "status": "Time Limit Exceeded",
-                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "summary": _build_error_summary(total_cases),
                 "tests": [],
-                "error": f"Time Limit Exceeded ({problem.time_limit_s}s)",
+                "error": f"Time Limit Exceeded ({plan.time_limit_s}s)",
                 "error_kind": "user",
             }
         if _isolate_failed_with_mle(isolate_meta):
             return {
                 "status": "Memory Limit Exceeded",
-                "summary": _build_error_summary(problem, include_hidden, total_cases),
+                "summary": _build_error_summary(total_cases),
                 "tests": [],
-                "error": f"Memory Limit Exceeded ({problem.memory_mb}MB)",
+                "error": f"Memory Limit Exceeded ({plan.memory_mb}MB)",
                 "error_kind": "user",
             }
         return {
             "status": "Runtime Error",
-            "summary": _build_error_summary(problem, include_hidden, total_cases),
+            "summary": _build_error_summary(total_cases),
             "tests": [],
             "error": stderr.strip() or "Runner failed",
             "error_kind": "internal" if _isolate_failed_with_internal_error(isolate_meta) else "user",
@@ -623,7 +539,7 @@ def run_problem(
     except json.JSONDecodeError:
         return {
             "status": "Runtime Error",
-            "summary": _build_error_summary(problem, include_hidden, total_cases),
+            "summary": _build_error_summary(total_cases),
             "tests": [],
             "error": f"Invalid runner output. Stdout: {stdout}\nStderr: {stderr}",
             "error_kind": "internal",
@@ -634,7 +550,7 @@ def run_problem(
     if summary["failed"] > 0 and first_failed is not None:
         status = first_failed.get("status", "Wrong Answer")
 
-    if detail_mode == "first_failure":
+    if plan.detail_mode == "first_failure":
         tests = (
             [_sanitize_item(first_failed, max_output_chars)]
             if first_failed is not None

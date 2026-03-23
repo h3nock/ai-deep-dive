@@ -42,7 +42,7 @@ HTTP_REQUEST_LATENCY_SECONDS = Histogram(
 JOB_STARTED_TOTAL = Counter(
     "judge_job_started_total",
     "Jobs started by workers",
-    ["profile", "kind"],
+    ["profile", "operation"],
 )
 JOB_FINISHED_TOTAL = Counter(
     "judge_job_finished_total",
@@ -122,8 +122,8 @@ def record_http_request(method: str, path: str, status: int, duration_s: float) 
     HTTP_REQUEST_LATENCY_SECONDS.labels(method=method, path=path).observe(duration_s)
 
 
-def job_started(profile: str, kind: str) -> None:
-    JOB_STARTED_TOTAL.labels(profile=profile, kind=kind).inc()
+def job_started(profile: str, operation: str) -> None:
+    JOB_STARTED_TOTAL.labels(profile=profile, operation=operation).inc()
     JOBS_IN_PROGRESS.labels(profile=profile).set(1)
 
 

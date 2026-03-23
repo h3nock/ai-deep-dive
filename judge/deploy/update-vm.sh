@@ -78,8 +78,6 @@ if [[ -f /etc/judge/judge.env ]]; then
   set +a
 fi
 
-JUDGE_TESTS_ROOT=${JUDGE_TESTS_ROOT:-$JUDGE_REPO_DIR/judge/tests}
-
 cd "$JUDGE_REPO_DIR"
 sudo -u judge git fetch --prune origin
 resolved_ref=$(sudo -u judge git rev-parse "${JUDGE_REF}^{commit}")
@@ -88,7 +86,6 @@ sudo -u judge git reset --hard "$resolved_ref"
 sudo -u judge git clean -fd
 
 cd "$JUDGE_REPO_DIR/judge"
-sudo -u judge env PYTHONPATH=src .venv/bin/python scripts/export_tests_endpoint.py --out-root "$JUDGE_TESTS_ROOT"
 sudo JUDGE_DOMAIN="$JUDGE_DOMAIN" ./deploy/apply.sh
 sudo ./deploy/verify.sh
 

@@ -5,7 +5,7 @@ from typing import Any
 import redis
 from redis.exceptions import ResponseError
 
-_ALLOWED_KINDS = {"run", "submit"}
+_ALLOWED_OPERATIONS = {"run", "submit"}
 
 
 def _require_non_empty_str(payload: dict[str, Any], key: str) -> str:
@@ -29,19 +29,24 @@ class RedisQueue:
     def enqueue(self, stream: str, payload: dict[str, Any]) -> str:
         job_id = _require_non_empty_str(payload, "job_id")
         problem_id = _require_non_empty_str(payload, "problem_id")
-        problem_key_raw = payload.get("problem_key", problem_id)
-        if not isinstance(problem_key_raw, str) or not problem_key_raw.strip():
-            raise ValueError("Queue payload field 'problem_key' must be a non-empty string")
-        problem_key = problem_key_raw.strip()
         profile = _require_non_empty_str(payload, "profile")
-        kind = payload.get("kind", "submit")
-        if not isinstance(kind, str) or kind not in _ALLOWED_KINDS:
+        operation = payload.get("operation")
+        if not isinstance(operation, str) or operation not in _ALLOWED_OPERATIONS:
             raise ValueError(
-                "Queue payload field 'kind' must be one of: run, submit"
+                "Queue payload field 'operation' must be one of: run, submit"
             )
         code = payload.get("code", "")
         if not isinstance(code, str):
             raise ValueError("Queue payload field 'code' must be a string")
+        cases_json = payload.get("cases_json")
+        if operation == "run":
+            if not isinstance(cases_json, str) or not cases_json.strip():
+                raise ValueError("Queue payload field 'cases_json' must be a non-empty string for run jobs")
+            serialized_cases = cases_json
+        else:
+            if cases_json is not None and not isinstance(cases_json, str):
+                raise ValueError("Queue payload field 'cases_json' must be a string when provided")
+            serialized_cases = cases_json or ""
 
         created_at = payload.get("created_at")
         if created_at is None:
@@ -58,10 +63,10 @@ class RedisQueue:
         fields = {
             "job_id": job_id,
             "problem_id": problem_id,
-            "problem_key": problem_key,
             "profile": profile,
-            "kind": kind,
+            "operation": operation,
             "code": code,
+            "cases_json": serialized_cases,
             "created_at": created_at_field,
         }
         return self.client.xadd(stream, fields)

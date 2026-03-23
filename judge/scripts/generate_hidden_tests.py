@@ -13,6 +13,7 @@ Default output is 20 hidden cases per supported problem (within the 15-25 target
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import math
 import random
@@ -24,6 +25,15 @@ from typing import Any
 
 import numpy as np
 
+from judge.problems import (
+    Comparison,
+    CompiledTestCase,
+    ProblemSpec,
+    TestCaseCompiler,
+    load_problem_spec_file,
+    load_public_cases_file,
+)
+
 ProblemGenerator = Callable[[random.Random], list["Case"]]
 
 
@@ -33,7 +43,6 @@ class Case:
     inputs: dict[str, Any] | None = None
     input_code: str | None = None
     expected: Any = None
-    expected_is_code: bool = False
 
 
 def _inputs_to_code(inputs: dict[str, Any]) -> str:
@@ -71,12 +80,7 @@ def _serialize_case(case_id: str, case: Case) -> dict[str, Any]:
         code += "\n"
 
     out["input_code"] = code
-
-    if case.expected_is_code:
-        out["expected"] = repr(case.expected)
-        out["expected_is_code"] = True
-    else:
-        out["expected"] = case.expected
+    out["expected_literal"] = repr(case.expected)
 
     return out
 
@@ -102,22 +106,6 @@ def _assign_hidden_ids(cases: list[Case]) -> list[dict[str, Any]]:
     return out
 
 
-def _assign_public_ids(cases: list[Case]) -> list[dict[str, Any]]:
-    return [
-        _serialize_case(f"case{index + 1}", case)
-        for index, case in enumerate(cases)
-    ]
-
-
-def _case_signature(case: Case) -> tuple[str, str, bool]:
-    serialized = _serialize_case("__sig__", case)
-    return (
-        serialized["input_code"],
-        json.dumps(serialized.get("expected"), sort_keys=True),
-        bool(serialized.get("expected_is_code", False)),
-    )
-
-
 def _assert_case_count(problem_id: str, cases: list[Case], minimum: int = 15, maximum: int = 25) -> None:
     if not (minimum <= len(cases) <= maximum):
         raise ValueError(
@@ -129,8 +117,6 @@ RANKING_MARGIN_MIN = 1e-4
 FLOAT_EXPECTED_DIGITS = 8
 GENERATION_CHECK_ATOL = 5e-6
 GENERATION_CHECK_RTOL = 1e-9
-
-
 def _cosine_similarity(a: list[float], b: list[float], *, dtype: Any = np.float64) -> float:
     a_arr = np.asarray(a, dtype=dtype)
     b_arr = np.asarray(b, dtype=dtype)
@@ -849,7 +835,7 @@ def _gen_pair_counter(rng: random.Random) -> list[Case]:
 
     for bucket, ids in fixed:
         expected = _pair_stats(ids)
-        cases.append(Case(bucket, inputs={"ids": ids}, expected=expected, expected_is_code=True))
+        cases.append(Case(bucket, inputs={"ids": ids}, expected=expected))
 
     stress_lists = [
         [1, 2] * 600,
@@ -859,13 +845,13 @@ def _gen_pair_counter(rng: random.Random) -> list[Case]:
     ]
     for ids in stress_lists:
         expected = _pair_stats(ids)
-        cases.append(Case("stress", inputs={"ids": ids}, expected=expected, expected_is_code=True))
+        cases.append(Case("stress", inputs={"ids": ids}, expected=expected))
 
     for _ in range(8):
         length = rng.randint(80, 1400)
         ids = [rng.randint(-5, 25) for _ in range(length)]
         expected = _pair_stats(ids)
-        cases.append(Case("random", inputs={"ids": ids}, expected=expected, expected_is_code=True))
+        cases.append(Case("random", inputs={"ids": ids}, expected=expected))
 
     return cases
 
@@ -938,7 +924,7 @@ def _gen_bpe_trainer(rng: random.Random) -> list[Case]:
         ids, merges = _train_bpe(text, num_merges)
         expected = (ids, dict(merges))
         cases.append(
-            Case(bucket, inputs={"text": text, "num_merges": num_merges}, expected=expected, expected_is_code=True)
+            Case(bucket, inputs={"text": text, "num_merges": num_merges}, expected=expected)
         )
 
     stress = [
@@ -951,7 +937,7 @@ def _gen_bpe_trainer(rng: random.Random) -> list[Case]:
         ids, merges = _train_bpe(text, num_merges)
         expected = (ids, dict(merges))
         cases.append(
-            Case("stress", inputs={"text": text, "num_merges": num_merges}, expected=expected, expected_is_code=True)
+            Case("stress", inputs={"text": text, "num_merges": num_merges}, expected=expected)
         )
 
     alphabet = ["a", "b", "c", "d", " ", "e", "f", "g"]
@@ -966,7 +952,6 @@ def _gen_bpe_trainer(rng: random.Random) -> list[Case]:
                 "random",
                 inputs={"text": text, "num_merges": num_merges},
                 expected=expected,
-                expected_is_code=True,
             )
         )
 
@@ -2374,13 +2359,6 @@ PROBLEM_SEEDS: dict[str, int] = {
     "build-gpt/09-the-transformer-block/01-transformer-block": 901,
 }
 
-PUBLIC_CASE_COUNT_OVERRIDES: dict[str, int] = {
-    "build-gpt/02-tokenization/03-bpe-trainer": 1,
-    "build-gpt/02-tokenization/04-decoder": 1,
-    "build-gpt/02-tokenization/05-encoder": 1,
-}
-
-
 def _render_json(data: dict[str, Any]) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
@@ -2389,63 +2367,158 @@ def _is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
-def _json_equivalent(left: Any, right: Any) -> bool:
+def _json_equivalent(
+    left: Any,
+    right: Any,
+    *,
+    rel_tol: float = 0.0,
+    abs_tol: float = 0.0,
+) -> bool:
     if _is_number(left) and _is_number(right):
         return math.isclose(
             float(left),
             float(right),
-            rel_tol=GENERATION_CHECK_RTOL,
-            abs_tol=GENERATION_CHECK_ATOL,
+            rel_tol=rel_tol,
+            abs_tol=abs_tol,
         )
     if type(left) is not type(right):
         return False
     if isinstance(left, dict):
         if set(left.keys()) != set(right.keys()):
             return False
-        return all(_json_equivalent(left[key], right[key]) for key in left)
+        return all(
+            _json_equivalent(left[key], right[key], rel_tol=rel_tol, abs_tol=abs_tol)
+            for key in left
+        )
     if isinstance(left, list):
         if len(left) != len(right):
             return False
-        return all(_json_equivalent(a, b) for a, b in zip(left, right))
+        return all(
+            _json_equivalent(a, b, rel_tol=rel_tol, abs_tol=abs_tol)
+            for a, b in zip(left, right)
+        )
     return left == right
 
 
+def _expected_literal_equivalent(
+    left: str,
+    right: str,
+    *,
+    comparison: Comparison,
+) -> bool:
+    try:
+        left_value = ast.literal_eval(left)
+        right_value = ast.literal_eval(right)
+    except (SyntaxError, ValueError):
+        return left == right
 
-def _public_case_count(problem_id: str) -> int:
-    return PUBLIC_CASE_COUNT_OVERRIDES.get(problem_id, 2)
+    if comparison.type == "allclose":
+        return _json_equivalent(
+            left_value,
+            right_value,
+            rel_tol=max(comparison.rtol or 0.0, GENERATION_CHECK_RTOL),
+            abs_tol=max(comparison.atol or 0.0, GENERATION_CHECK_ATOL),
+        )
+    return left_value == right_value
 
 
-def generate_problem_tests(problem_id: str, problems_root: Path, seed_offset: int = 0) -> tuple[dict[str, Any], dict[str, Any]]:
+def _hidden_tests_equivalent(
+    left: Any,
+    right: Any,
+    *,
+    comparison: Comparison,
+) -> bool:
+    if not isinstance(left, dict) or not isinstance(right, dict):
+        return False
+    if left.get("schema_version") != right.get("schema_version"):
+        return False
+
+    left_cases = left.get("cases")
+    right_cases = right.get("cases")
+    if not isinstance(left_cases, list) or not isinstance(right_cases, list):
+        return False
+    if len(left_cases) != len(right_cases):
+        return False
+
+    for left_case, right_case in zip(left_cases, right_cases):
+        if not isinstance(left_case, dict) or not isinstance(right_case, dict):
+            return False
+        if set(left_case.keys()) != set(right_case.keys()):
+            return False
+        if left_case.get("id") != right_case.get("id"):
+            return False
+        if left_case.get("input_code") != right_case.get("input_code"):
+            return False
+
+        left_expected = left_case.get("expected_literal")
+        right_expected = right_case.get("expected_literal")
+        if not isinstance(left_expected, str) or not isinstance(right_expected, str):
+            return False
+        if not _expected_literal_equivalent(
+            left_expected,
+            right_expected,
+            comparison=comparison,
+        ):
+            return False
+
+    return True
+
+
+def _compiled_public_cases(
+    problem_id: str,
+    problems_root: Path,
+) -> tuple[ProblemSpec, tuple[CompiledTestCase, ...]]:
+    problem_dir = problems_root / problem_id
+    spec = load_problem_spec_file(problem_id, problem_dir / "problem.json")
+    public_cases = load_public_cases_file(problem_dir / "public_cases.json", spec)
+    compiler = TestCaseCompiler()
+    compiled_public = compiler.compile_cases(spec, list(public_cases))
+    return spec, tuple(compiled_public)
+
+
+def _generated_case_matches_compiled_public(
+    case: Case,
+    public_case: CompiledTestCase,
+    *,
+    comparison: Comparison,
+) -> bool:
+    serialized = _serialize_case("__cmp__", case)
+    if serialized["input_code"] != public_case.input_code:
+        return False
+    return _expected_literal_equivalent(
+        serialized["expected_literal"],
+        public_case.expected_literal,
+        comparison=comparison,
+    )
+
+
+def generate_problem_tests(problem_id: str, problems_root: Path, seed_offset: int = 0) -> dict[str, Any]:
     generator = PROBLEM_GENERATORS[problem_id]
     base_seed = PROBLEM_SEEDS.get(problem_id, 0)
     rng = random.Random(base_seed + seed_offset)
     cases = generator(rng)
     _assert_case_count(problem_id, cases)
 
-    public_count = _public_case_count(problem_id)
-    if public_count < 1:
-        raise ValueError(f"{problem_id}: public case count must be >= 1")
-    if public_count > len(cases):
-        raise ValueError(
-            f"{problem_id}: requested {public_count} public cases but only {len(cases)} generated"
-        )
-
-    public_seed_cases = cases[:public_count]
-    hidden_seed_cases = cases[public_count:]
-    public_signatures = {_case_signature(case) for case in public_seed_cases}
+    spec, compiled_public_cases = _compiled_public_cases(problem_id, problems_root)
     hidden_seed_cases = [
         case
-        for case in hidden_seed_cases
-        if _case_signature(case) not in public_signatures
+        for case in cases
+        if not any(
+            _generated_case_matches_compiled_public(
+                case,
+                public_case,
+                comparison=spec.comparison,
+            )
+            for public_case in compiled_public_cases
+        )
     ]
-    public_cases = _assign_public_ids(public_seed_cases)
     hidden_cases = _assign_hidden_ids(hidden_seed_cases)
 
-    return {"version": 1, "cases": public_cases}, {"version": 1, "cases": hidden_cases}
+    return {"schema_version": 1, "cases": hidden_cases}
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate deterministic public + hidden tests")
+    parser = argparse.ArgumentParser(description="Generate deterministic hidden tests")
     parser.add_argument(
         "--problems-root",
         default="problems",
@@ -2487,38 +2560,33 @@ def main() -> None:
         if not problem_dir.exists():
             raise SystemExit(f"Problem directory not found: {problem_dir}")
 
-        public_path = problem_dir / "public_tests.json"
         hidden_path = problem_dir / "hidden_tests.json"
+        comparison = load_problem_spec_file(problem_id, problem_dir / "problem.json").comparison
 
-        generated_public, generated_hidden = generate_problem_tests(
+        generated_hidden = generate_problem_tests(
             problem_id,
             problems_root=problems_root,
             seed_offset=args.seed_offset,
         )
-        rendered_public = _render_json(generated_public)
         rendered_hidden = _render_json(generated_hidden)
 
-        existing_public = public_path.read_text() if public_path.exists() else None
         existing_hidden = hidden_path.read_text() if hidden_path.exists() else None
-        existing_public_obj = json.loads(existing_public) if existing_public is not None else None
         existing_hidden_obj = json.loads(existing_hidden) if existing_hidden is not None else None
 
         if args.check:
             checked += 1
             mismatched = False
-            if existing_public_obj is None or not _json_equivalent(existing_public_obj, generated_public):
-                mismatched = True
-                print(f"MISMATCH: {problem_id} (public_tests.json)")
-            if existing_hidden_obj is None or not _json_equivalent(existing_hidden_obj, generated_hidden):
+            if existing_hidden_obj is None or not _hidden_tests_equivalent(
+                existing_hidden_obj,
+                generated_hidden,
+                comparison=comparison,
+            ):
                 mismatched = True
                 print(f"MISMATCH: {problem_id} (hidden_tests.json)")
             if mismatched:
                 changed += 1
         else:
             updated_files = 0
-            if existing_public != rendered_public:
-                public_path.write_text(rendered_public)
-                updated_files += 1
             if existing_hidden != rendered_hidden:
                 hidden_path.write_text(rendered_hidden)
                 updated_files += 1
@@ -2531,9 +2599,9 @@ def main() -> None:
     if args.check:
         if changed:
             raise SystemExit(f"{changed}/{checked} problem(s) have out-of-date generated tests")
-        print(f"OK: {checked} problem(s) match generated public + hidden tests")
+        print(f"OK: {checked} problem(s) match generated hidden tests")
     else:
-        print(f"Done. Updated {changed} test file(s)")
+        print(f"Done. Updated {changed} hidden test file(s)")
 
 
 if __name__ == "__main__":

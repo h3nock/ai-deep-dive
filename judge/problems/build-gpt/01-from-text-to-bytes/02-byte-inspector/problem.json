@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "arguments": [
+    {
+      "name": "byte_list"
+    }
+  ],
+  "runner": "count_characters(byte_list)",
+  "execution_profile": "light",
+  "comparison": {
+    "type": "exact"
+  },
+  "time_limit_s": 5,
+  "memory_mb": 1024
+}

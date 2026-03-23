@@ -39,10 +39,10 @@ class ReadinessEndpointTests(TestCase):
         results.ping.return_value = None
         return results
 
-    def _problems_with_manifest(self, root: Path) -> SimpleNamespace:
+    def _problems_with_canonical_files(self, root: Path) -> SimpleNamespace:
         problem_dir = root / "sample" / "01-basics" / "01-add"
         problem_dir.mkdir(parents=True, exist_ok=True)
-        (problem_dir / "manifest.json").write_text("{}")
+        (problem_dir / "problem.json").write_text("{}")
         return SimpleNamespace(root=root)
 
     def _build_client(self, *, queue: Mock, results: Mock, problems: object):
@@ -62,7 +62,7 @@ class ReadinessEndpointTests(TestCase):
             client = self._build_client(
                 queue=self._healthy_queue(),
                 results=self._healthy_results(),
-                problems=self._problems_with_manifest(Path(tmp_dir)),
+                problems=self._problems_with_canonical_files(Path(tmp_dir)),
             )
 
             response = client.get("/health")
@@ -75,7 +75,7 @@ class ReadinessEndpointTests(TestCase):
             client = self._build_client(
                 queue=self._healthy_queue(),
                 results=self._healthy_results(),
-                problems=self._problems_with_manifest(Path(tmp_dir)),
+                problems=self._problems_with_canonical_files(Path(tmp_dir)),
             )
 
             response = client.get("/ready")
@@ -94,7 +94,7 @@ class ReadinessEndpointTests(TestCase):
             client = self._build_client(
                 queue=queue,
                 results=self._healthy_results(),
-                problems=self._problems_with_manifest(Path(tmp_dir)),
+                problems=self._problems_with_canonical_files(Path(tmp_dir)),
             )
 
             response = client.get("/ready")
@@ -111,7 +111,7 @@ class ReadinessEndpointTests(TestCase):
             client = self._build_client(
                 queue=self._healthy_queue(),
                 results=results,
-                problems=self._problems_with_manifest(Path(tmp_dir)),
+                problems=self._problems_with_canonical_files(Path(tmp_dir)),
             )
 
             response = client.get("/ready")
@@ -136,7 +136,7 @@ class ReadinessEndpointTests(TestCase):
         self.assertEqual(body.get("status"), "not_ready")
         self.assertEqual(body["checks"]["problems"], {"ok": False, "detail": "missing"})
 
-    def test_ready_returns_503_when_problem_root_has_no_manifests(self) -> None:
+    def test_ready_returns_503_when_problem_root_has_no_canonical_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             root.mkdir(parents=True, exist_ok=True)

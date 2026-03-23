@@ -15,11 +15,11 @@ judge/
     api.py         FastAPI endpoints
     queue.py       Redis Streams wrapper
     worker.py      Worker loop
-    runner.py      Test harness runner
+    runner.py      Execution-plan runner
     results.py     SQLite results store
-    problems.py    Problem + tests loader
+    problems.py    Canonical problem loader + compiler
     models.py      Pydantic models
-  problems/        Problem manifests + tests (server only)
+  problems/        Canonical problem data (server only)
   deploy/          VM deploy templates + scripts
 ```
 
@@ -71,33 +71,15 @@ Run the warm-fork security probe:
 python judge/scripts/warm_fork_security_probe.py --skip-bench
 ```
 
-## Export public tests for the frontend
-
-```bash
-python judge/scripts/export_tests_endpoint.py --web-out-root web/public/judge-tests
-```
-
-Bundles are written to `web/public/judge-tests/` and treated as build artifacts.
-`web/scripts/export-judge-tests.mjs` runs automatically on `npm run build`.
-
-To publish judge test assets from the judge VM:
-
-```bash
-python judge/scripts/export_tests_endpoint.py --out-root /opt/ai-deep-dive/judge/tests
-```
-
-This export includes public manifests/bundles and hidden test files. Hidden
-tests are for judge execution only and are not publicly served over nginx.
-
 ## Generate problem tests
 
 ```bash
-python judge/scripts/generate_hidden_tests.py
+PYTHONPATH=src python judge/scripts/generate_hidden_tests.py
 ```
 
-This regenerates both `public_tests.json` and `hidden_tests.json` from the
-reference generators. Curated public examples are emitted first, and hidden
-output excludes those public cases to avoid duplicate submit execution.
+This regenerates canonical `hidden_tests.json` from the reference generators.
+Canonical public cases stay authored in `public_cases.json`; the generator reads
+them only to avoid duplicate hidden coverage.
 
 For torch-backed challenges, use the same Python environment used by judge
 workers when regenerating artifacts. This keeps numeric expected values aligned
@@ -114,8 +96,25 @@ curl -X POST http://localhost:8000/submit \
   -H "Content-Type: application/json" \
   -d '{
     "problem_id": "sample/01-basics/01-add",
-    "kind": "submit",
     "code": "def add(a, b):\n    return a + b\n"
+  }'
+```
+
+Run custom public-style cases:
+
+```bash
+curl -X POST http://localhost:8000/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "problem_id": "sample/01-basics/01-add",
+    "code": "def add(a, b):\n    return a + b\n",
+    "cases": [
+      {
+        "id": "case1",
+        "inputs": { "a": "1", "b": "2" },
+        "expected_literal": "3"
+      }
+    ]
   }'
 ```
 
@@ -163,12 +162,11 @@ Environment variables:
 - Worker consumer names must follow the template services (`light-%i`, `torch-%i`).
 - `/health` is a liveness endpoint only and returns `{"status":"ok"}` when the
   API process is up.
-- `/ready` is a readiness endpoint and checks Redis, SQLite, and problem
-  manifests. It returns HTTP 200 with `status=ready` when all checks pass, and
+- `/ready` is a readiness endpoint and checks Redis, SQLite, and canonical
+  problem files. It returns HTTP 200 with `status=ready` when all checks pass, and
   HTTP 503 with `status=not_ready` plus per-dependency check details otherwise.
-- Hidden tests are not bundled for the browser and are not publicly served from
-  `/judge-tests/`. On submit, the first failing hidden test is returned for
-  debugging.
+- Hidden tests are not publicly served. On submit, the first failing executed
+  testcase is returned for debugging.
 - `/result/{job_id}` includes `error_kind` (`user` or `internal`) so clients
   can render user-facing failures without string parsing.
 - Production setup lives in `judge/deploy/`. See the deploy README for steps.
@@ -215,7 +213,12 @@ Worker liveness and recovery:
 
 ## Problem format
 
-See `judge/problems/README.md` for manifest and test formats.
+See `judge/problems/README.md` for `problem.json`, `public_cases.json`,
+`hidden_tests.json`, and `starter.py`.
+
+`starter.py` is canonical problem corpus data for editor seed code, but it is
+not part of judge runtime loading or execution. The runtime still executes only
+the canonical problem spec plus compiled/public hidden testcases.
 
 ## Deploy
 
