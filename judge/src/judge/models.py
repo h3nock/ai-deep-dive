@@ -39,7 +39,7 @@ class ApiTestCase(BaseModel):
     explanation: str | None = None
 
     @model_validator(mode="after")
-    def validate_strings(self) -> "ApiTestCase":
+    def validate_strings(self) -> ApiTestCase:
         if not self.inputs:
             raise ValueError("inputs must contain at least one argument")
         for name, value in self.inputs.items():
@@ -68,7 +68,7 @@ class RunRequest(BaseModel):
     cases: list[ApiTestCase]
 
     @model_validator(mode="after")
-    def validate_cases_payload(self) -> "RunRequest":
+    def validate_cases_payload(self) -> RunRequest:
         case_count = len(self.cases)
         if case_count < 1 or case_count > MAX_RUN_CASES:
             raise ValueError(f"cases must contain between 1 and {MAX_RUN_CASES} items")

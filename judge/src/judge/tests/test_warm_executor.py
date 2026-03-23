@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
-from judge.problems import CompiledTestCase, Comparison, ExecutionPlan
+from judge.problems import Comparison, CompiledTestCase, ExecutionPlan
 from judge.runner import IsolateConfig
 from judge.warm_executor import (
     _SECCOMP_DENY_FILE_METADATA_SYSCALLS,

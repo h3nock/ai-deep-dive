@@ -7,17 +7,19 @@ from pathlib import Path
 from unittest import TestCase
 
 from judge.problems import (
+    ArgumentSpec,
     Comparison,
     ExecutionPlanFactory,
     ProblemRepository,
     ProblemSpec,
-    TestCase as JudgeTestCase,
     TestCaseCompiler,
-    ArgumentSpec,
     inline_assignment_aliases,
     load_hidden_cases_file,
     load_problem_spec_file,
     load_public_cases_file,
+)
+from judge.problems import (
+    TestCase as JudgeTestCase,
 )
 
 

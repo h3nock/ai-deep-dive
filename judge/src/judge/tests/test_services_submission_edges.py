@@ -5,7 +5,8 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import Mock
 
-from judge.problems import ArgumentSpec, Comparison, ProblemSpec, TestCase as ProblemTestCase, TestCaseCompiler
+from judge.problems import ArgumentSpec, Comparison, ProblemSpec, TestCaseCompiler
+from judge.problems import TestCase as ProblemTestCase
 from judge.services import (
     DEFAULT_STREAM_ROUTING,
     InvalidProblemError,

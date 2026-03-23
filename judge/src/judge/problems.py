@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-
 ExecutionProfile = Literal["light", "torch"]
 ComparisonType = Literal["exact", "allclose"]
 DetailMode = Literal["all", "first_failure"]
@@ -331,6 +330,16 @@ def load_problem_spec_file(problem_id: str, path: Path) -> ProblemSpec:
 
 
 class _ExpressionWhitelistValidator:
+    _NODE_HANDLERS = {
+        ast.UnaryOp: "_visit_unary_op",
+        ast.BinOp: "_visit_bin_op",
+        ast.Name: "_visit_name",
+        ast.Call: "_visit_call",
+        ast.Attribute: "_visit_attribute",
+        ast.Subscript: "_visit_subscript",
+        ast.Slice: "_visit_slice",
+    }
+
     def __init__(self, *, allowed_roots: set[str]) -> None:
         self.allowed_roots = allowed_roots
 
@@ -345,30 +354,31 @@ class _ExpressionWhitelistValidator:
         if not isinstance(node, _ALLOWED_AST_NODES):
             raise ValueError(f"{context} contains disallowed syntax: {type(node).__name__}")
 
-        method = getattr(self, f"visit_{type(node).__name__}", None)
-        if method is not None:
+        handler_name = self._NODE_HANDLERS.get(type(node))
+        if handler_name is not None:
+            method = getattr(self, handler_name)
             method(node, context=context)
             return
 
         for child in ast.iter_child_nodes(node):
             self.visit(child, context=context)
 
-    def visit_UnaryOp(self, node: ast.UnaryOp, *, context: str) -> None:
+    def _visit_unary_op(self, node: ast.UnaryOp, *, context: str) -> None:
         if not isinstance(node.op, _ALLOWED_UNARY_OPS):
             raise ValueError(f"{context} contains disallowed unary operator")
         self.visit(node.operand, context=context)
 
-    def visit_BinOp(self, node: ast.BinOp, *, context: str) -> None:
+    def _visit_bin_op(self, node: ast.BinOp, *, context: str) -> None:
         if not isinstance(node.op, _ALLOWED_BINARY_OPS):
             raise ValueError(f"{context} contains disallowed binary operator")
         self.visit(node.left, context=context)
         self.visit(node.right, context=context)
 
-    def visit_Name(self, node: ast.Name, *, context: str) -> None:
+    def _visit_name(self, node: ast.Name, *, context: str) -> None:
         if node.id not in self.allowed_roots:
             raise ValueError(f"{context} references unknown name '{node.id}'")
 
-    def visit_Call(self, node: ast.Call, *, context: str) -> None:
+    def _visit_call(self, node: ast.Call, *, context: str) -> None:
         if any(keyword.arg is None for keyword in node.keywords):
             raise ValueError(f"{context} may not use *args or **kwargs expansion")
         if not isinstance(node.func, (ast.Name, ast.Attribute)):
@@ -380,15 +390,15 @@ class _ExpressionWhitelistValidator:
         for keyword in node.keywords:
             self.visit(keyword, context=context)
 
-    def visit_Attribute(self, node: ast.Attribute, *, context: str) -> None:
+    def _visit_attribute(self, node: ast.Attribute, *, context: str) -> None:
         self._validate_attribute_chain(node, context=context)
         self.visit(node.value, context=context)
 
-    def visit_Subscript(self, node: ast.Subscript, *, context: str) -> None:
+    def _visit_subscript(self, node: ast.Subscript, *, context: str) -> None:
         self.visit(node.value, context=context)
         self.visit(node.slice, context=context)
 
-    def visit_Slice(self, node: ast.Slice, *, context: str) -> None:
+    def _visit_slice(self, node: ast.Slice, *, context: str) -> None:
         if node.lower is not None:
             self.visit(node.lower, context=context)
         if node.upper is not None:

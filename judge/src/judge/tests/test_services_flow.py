@@ -8,8 +8,8 @@ from unittest import TestCase
 
 from judge.problems import (
     ArgumentSpec,
-    CompiledTestCase,
     Comparison,
+    CompiledTestCase,
     ProblemSpec,
     TestCaseCompiler,
 )
