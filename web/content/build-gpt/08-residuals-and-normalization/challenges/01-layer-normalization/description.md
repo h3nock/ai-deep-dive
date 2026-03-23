@@ -1,21 +1,6 @@
 ---
-title: "Layer Normalization"
-difficulty: "Medium"
-arguments:
-  - name: x
-    type: torch.Tensor
-  - name: gamma
-    type: torch.Tensor
-  - name: beta
-    type: torch.Tensor
-  - name: eps
-    type: float
-executionSnippet: |
-  layer_norm(x, gamma, beta, eps)
-visibleTestCases: 2
-dependencies:
-  - torch
-problemId: "build-gpt/08-residuals-and-normalization/01-layer-normalization"
+title: Layer Normalization
+difficulty: Medium
 ---
 
 Implement layer normalization. Given a matrix of shape `(seq_len, d_model)`, normalize each token's vector independently:

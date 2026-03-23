@@ -1,25 +1,6 @@
 ---
-title: "Multi-Head Causal Attention"
-difficulty: "Medium"
-arguments:
-  - name: X
-    type: torch.Tensor
-  - name: W_Q
-    type: torch.Tensor
-  - name: W_K
-    type: torch.Tensor
-  - name: W_V
-    type: torch.Tensor
-  - name: W_O
-    type: torch.Tensor
-  - name: num_heads
-    type: int
-executionSnippet: |
-  multi_head_causal_attention(X, W_Q, W_K, W_V, W_O, num_heads)
-visibleTestCases: 2
-dependencies:
-  - torch
-problemId: "build-gpt/06-multi-head-attention/01-multi-head-causal-attention"
+title: Multi-Head Causal Attention
+difficulty: Medium
 ---
 
 Given an input matrix `X` of shape `(seq_len, d_model)`, weight matrices `W_Q`, `W_K`, `W_V`, `W_O` (each of shape `(d_model, d_model)`), and a number of heads, compute the full multi-head causal self-attention output.

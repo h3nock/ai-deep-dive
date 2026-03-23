@@ -1,25 +1,6 @@
 ---
-title: "Pre-Norm Residual Block"
-difficulty: "Medium"
-arguments:
-  - name: x
-    type: torch.Tensor
-  - name: gamma
-    type: torch.Tensor
-  - name: beta
-    type: torch.Tensor
-  - name: W
-    type: torch.Tensor
-  - name: b
-    type: torch.Tensor
-  - name: eps
-    type: float
-executionSnippet: |
-  pre_norm_block(x, gamma, beta, W, b, eps)
-visibleTestCases: 2
-dependencies:
-  - torch
-problemId: "build-gpt/08-residuals-and-normalization/02-pre-norm-residual-block"
+title: Pre-Norm Residual Block
+difficulty: Medium
 ---
 
 Implement a Pre-Norm residual block, where normalization is applied before the sublayer:

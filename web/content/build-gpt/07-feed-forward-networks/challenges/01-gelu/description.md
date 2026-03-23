@@ -1,15 +1,6 @@
 ---
-title: "GELU Activation"
-difficulty: "Easy"
-arguments:
-  - name: x
-    type: torch.Tensor
-executionSnippet: |
-  gelu(x)
-visibleTestCases: 2
-dependencies:
-  - torch
-problemId: "build-gpt/07-feed-forward-networks/01-gelu"
+title: GELU Activation
+difficulty: Easy
 ---
 
 Implement the GELU activation function using GPT-2's tanh approximation:

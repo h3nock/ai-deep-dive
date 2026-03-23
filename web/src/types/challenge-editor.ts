@@ -1,13 +1,5 @@
 import type Editor from "@monaco-editor/react";
 
-/** UI-level test case used in the challenge editor panels. */
-export interface TestCase {
-  id: string;
-  input_code: string;
-  expected: string;
-  explanation?: string;
-}
-
 // Monaco editor instance types derived from the Editor component's onMount callback
 export type EditorOnMount = NonNullable<
   React.ComponentProps<typeof Editor>["onMount"]

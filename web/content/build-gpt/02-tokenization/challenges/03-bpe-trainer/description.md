@@ -1,15 +1,6 @@
 ---
-title: "The BPE Trainer"
-difficulty: "Medium"
-arguments:
-  - name: text
-    type: str
-  - name: num_merges
-    type: int
-executionSnippet: |
-  train_bpe(text, num_merges)
-visibleTestCases: 1
-problemId: "build-gpt/02-tokenization/03-bpe-trainer"
+title: The BPE Trainer
+difficulty: Medium
 ---
 
 You are given a string `text` and an integer `num_merges`. Train a BPE tokenizer by repeatedly merging the most frequent adjacent pair of tokens `num_merges` times.

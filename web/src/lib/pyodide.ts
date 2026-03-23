@@ -91,20 +91,18 @@ export function preloadPyodide(): void {
 }
 
 
-export interface TestCase {
+export interface CompiledTestCase {
   id: string;
-  input: string; // Python code to set up input variables
-  expected: string;
+  input: string; // Python code to set up input variables (compiled from inputs)
+  expected: string; // expected_literal string for ast.literal_eval
 }
 
 export interface TestConfig {
-  cases: TestCase[];
+  cases: CompiledTestCase[];
   runner: string; // Expression to evaluate
-  comparison?: {
-    type?: "exact" | "allclose";
-    rtol?: number;
-    atol?: number;
-  };
+  comparison:
+    | { type: "exact" }
+    | { type: "allclose"; rtol: number; atol: number };
 }
 
 // Run tests using Pyodide (browser-based Python execution)
@@ -199,7 +197,9 @@ def __format_user_error__(user_filename='solution.py'):
     return '\\n'.join(lines)
 
 __user_error__ = None
+__user_error_phase__ = None
 try:
+    __user_error_phase__ = 'compile'
     __user_code__ = compile(${JSON.stringify(userCode)}, 'solution.py', 'exec')
     __bootstrap_globals__ = {
         "__builtins__": __builtins__,
@@ -210,6 +210,7 @@ try:
     __reset_op_count__()
     __sys__.settrace(__trace_calls__)
     try:
+        __user_error_phase__ = 'exec'
         exec(__user_code__, __bootstrap_globals__)
     finally:
         __sys__.settrace(None)
@@ -225,7 +226,14 @@ except Exception:
   if (userError) {
     const userErrorText = String(userError);
     const isLimit = userErrorText.includes("ExecutionLimitExceeded");
-    const status: TestStatus = isLimit ? "Time Limit Exceeded" : "Runtime Error";
+    const userErrorPhase = String(
+      (await pyodide.runPythonAsync("__user_error_phase__")) ?? ""
+    );
+    const status: TestStatus = isLimit
+      ? "Time Limit Exceeded"
+      : userErrorPhase === "compile"
+        ? "Syntax Error"
+        : "Runtime Error";
     const message = isLimit ? "Time Limit Exceeded" : userErrorText;
     return {
       status,
@@ -244,9 +252,11 @@ except Exception:
     };
   }
 
-  const comparisonType = config.comparison?.type ?? "exact";
-  const comparisonRtol = config.comparison?.rtol ?? 1e-6;
-  const comparisonAtol = config.comparison?.atol ?? 1e-6;
+  const comparisonType = config.comparison.type;
+  const comparisonRtol =
+    config.comparison.type === "allclose" ? config.comparison.rtol : 0;
+  const comparisonAtol =
+    config.comparison.type === "allclose" ? config.comparison.atol : 0;
 
   // Run each test case
   for (const testCase of config.cases) {
@@ -269,6 +279,7 @@ __case_globals__ = {
     "__package__": None,
 }
 __test_error__ = None
+__test_error_phase__ = None
 __result_repr__ = None
 __expected_repr__ = None
 __matched__ = False
@@ -278,12 +289,16 @@ __atol__ = ${comparisonAtol}
 
 try:
     # Compile test setup with different filename so it's filtered out of tracebacks
+    __test_error_phase__ = 'compile'
     __test_setup__ = compile(${JSON.stringify(testCase.input)}, '<test>', 'exec')
     __reset_op_count__()
     __sys__.settrace(__trace_calls__)
     try:
+        __test_error_phase__ = 'user_exec'
         exec(__user_code__, __case_globals__)
+        __test_error_phase__ = 'test_exec'
         exec(__test_setup__, __case_globals__)
+        __test_error_phase__ = 'runner_eval'
         __result__ = eval(${JSON.stringify(config.runner)}, __case_globals__)
     finally:
         __sys__.settrace(None)
@@ -360,7 +375,8 @@ try:
     __expected_repr__ = repr(__expected__)
 except Exception:
     __sys__.settrace(None)
-    __test_error__ = __format_user_error__()
+    __test_error_filename__ = '<test>' if __test_error_phase__ in ('compile', 'test_exec') else 'solution.py'
+    __test_error__ = __format_user_error__(__test_error_filename__)
 `;
 
     await pyodide.runPythonAsync(testCode);
@@ -368,7 +384,10 @@ except Exception:
     // Check for test error
     const testError = await pyodide.runPythonAsync("__test_error__");
     if (testError) {
-      status = "Runtime Error";
+      const testErrorPhase = String(
+        (await pyodide.runPythonAsync("__test_error_phase__")) ?? ""
+      );
+      status = testErrorPhase === "compile" ? "Syntax Error" : "Runtime Error";
       stderr = String(testError);
     } else {
       // Get comparison result from Python (comparison done in Python for exact semantics)
@@ -402,39 +421,4 @@ except Exception:
     summary: { total, passed, failed },
     tests: results,
   };
-}
-
-// List of packages available in Pyodide that we support
-export const PYODIDE_SUPPORTED_PACKAGES = new Set([
-  // Standard library (always available)
-  "json",
-  "math",
-  "re",
-  "collections",
-  "itertools",
-  "functools",
-  "string",
-  "random",
-  "datetime",
-  "typing",
-  "abc",
-  "dataclasses",
-  // Pyodide built-in packages
-  "numpy",
-  "micropip",
-]);
-
-// Check if a challenge can run in the browser based on dependencies
-export function canRunInBrowser(dependencies?: string[]): boolean {
-  if (!dependencies || dependencies.length === 0) {
-    return true; // No deps = can run in browser
-  }
-
-  // Check if all dependencies are supported
-  return dependencies.every(
-    (dep) =>
-      PYODIDE_SUPPORTED_PACKAGES.has(dep) ||
-      dep.startsWith("collections.") ||
-      dep.startsWith("typing.")
-  );
 }

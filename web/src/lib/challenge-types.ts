@@ -1,15 +1,29 @@
+export interface TestCase {
+  id: string;
+  inputs: Record<string, string>;
+  expected_literal: string;
+  explanation?: string;
+}
+
 export interface Challenge {
   id: string;
   title: string;
-  description: string; // Markdown string
+  description: string;
   initialCode: string;
   hint?: string;
   difficulty?: "Easy" | "Medium" | "Hard";
-  arguments?: { name: string; type: string }[];
-  executionSnippet?: string; // Code to run the function, e.g. "print(solution(numRows))"
-  dependencies?: string[]; // Required packages (determines browser vs CLI execution)
-  problemId: string; // Problem id for server-side judge
-  chapterNumber?: string; // e.g., "02" from "02-tokenization"
-  problemNumber?: string; // e.g., "01" from "01-pair-counter"
-  visibleTestCases?: number; // Limit examples shown in left panel
+  chapterNumber?: string;
+  problemNumber?: string;
+
+  problemId: string;
+  arguments: { name: string; type?: string }[];
+  runner: string;
+  executionProfile: "light" | "torch";
+  comparison:
+    | { type: "exact" }
+    | { type: "allclose"; rtol: number; atol: number };
+  timeLimitS: number;
+  memoryMb: number;
+
+  publicCases: TestCase[];
 }

@@ -1,12 +1,21 @@
 import type { RunResult } from "@/lib/test-results";
 
-export type JudgeSubmitRequest = {
-  problemId: string;
+export type JudgeRunRequest = {
+  problem_id: string;
   code: string;
-  kind: "run" | "submit";
+  cases: Array<{
+    id: string;
+    inputs: Record<string, string>;
+    expected_literal: string;
+  }>;
 };
 
-export type JudgeSubmitResponse = {
+export type JudgeSubmitRequest = {
+  problem_id: string;
+  code: string;
+};
+
+export type JudgeJobResponse = {
   job_id: string;
   status: string;
 };
@@ -37,7 +46,18 @@ function requireBaseUrl(): string {
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
-    throw new Error(`Request failed: ${res.status}`);
+    let detail = `Request failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.detail) {
+        detail = typeof body.detail === "string"
+          ? body.detail
+          : JSON.stringify(body.detail);
+      }
+    } catch {
+      // ignore parse failure
+    }
+    throw new Error(detail);
   }
   return res.json() as Promise<T>;
 }
@@ -79,19 +99,25 @@ function sleepWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-export async function submitToJudge(
-  request: JudgeSubmitRequest
-): Promise<JudgeSubmitResponse> {
+export async function runOnJudge(
+  request: JudgeRunRequest
+): Promise<JudgeJobResponse> {
   const base = requireBaseUrl();
-  const payload = {
-    problem_id: request.problemId,
-    code: request.code,
-    kind: request.kind,
-  };
-  return fetchJson<JudgeSubmitResponse>(`${base}/submit`, {
+  return fetchJson<JudgeJobResponse>(`${base}/run`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(request),
+  });
+}
+
+export async function submitToJudge(
+  request: JudgeSubmitRequest
+): Promise<JudgeJobResponse> {
+  const base = requireBaseUrl();
+  return fetchJson<JudgeJobResponse>(`${base}/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
   });
 }
 

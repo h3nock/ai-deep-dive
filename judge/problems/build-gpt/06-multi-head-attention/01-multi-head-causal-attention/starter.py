@@ -1,6 +1,13 @@
 import torch
 
-def multi_head_causal_attention(X: torch.Tensor, W_Q: torch.Tensor, W_K: torch.Tensor, W_V: torch.Tensor, W_O: torch.Tensor, num_heads: int) -> torch.Tensor:
+def multi_head_causal_attention(
+    X: torch.Tensor,
+    W_Q: torch.Tensor,
+    W_K: torch.Tensor,
+    W_V: torch.Tensor,
+    W_O: torch.Tensor,
+    num_heads: int,
+) -> torch.Tensor:
     """
     Compute multi-head causal self-attention.
 

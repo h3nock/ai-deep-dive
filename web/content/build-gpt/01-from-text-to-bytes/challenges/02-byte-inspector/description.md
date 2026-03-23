@@ -1,13 +1,6 @@
 ---
-title: "The Byte Inspector"
-difficulty: "Medium"
-arguments:
-  - name: byte_list
-    type: list[int]
-executionSnippet: |
-  count_characters(byte_list)
-visibleTestCases: 2
-problemId: "build-gpt/01-from-text-to-bytes/02-byte-inspector"
+title: The Byte Inspector
+difficulty: Medium
 ---
 
 Count the number of characters in a UTF-8 `byte_list` without decoding it.

@@ -30,24 +30,21 @@ export function CourseCard({
   totalChallenges = 0,
 }: CourseCardProps) {
   const isAvailable = status === "available";
-  const Component = isAvailable && href ? Link : "div";
   const { getCompletedCount } = useProgress();
 
   const completedCount = courseId ? getCompletedCount(courseId) : 0;
   const hasProgress = completedCount > 0;
 
-  return (
-    <Component
-      href={href || "#"}
-      prefetch={true}
-      className={cn(
-        "group relative flex flex-col h-full bg-background rounded-xl border p-5 md:p-6",
-        "card-glow",
-        isAvailable 
-          ? "card-glow-interactive border-border" 
-          : "card-glow-disabled border-border/50 grayscale-[30%]"
-      )}
-    >
+  const sharedClassName = cn(
+    "group relative flex flex-col h-full bg-background rounded-xl border p-5 md:p-6",
+    "card-glow",
+    isAvailable
+      ? "card-glow-interactive border-border"
+      : "card-glow-disabled border-border/50 grayscale-[30%]"
+  );
+
+  const inner = (
+    <>
       <div className="flex items-start justify-between mb-4">
         <div
           className={cn(
@@ -113,6 +110,16 @@ export function CourseCard({
           </span>
         )}
       </div>
-    </Component>
+    </>
   );
+
+  if (isAvailable && href) {
+    return (
+      <Link href={href} prefetch={true} className={sharedClassName}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return <div className={sharedClassName}>{inner}</div>;
 }
