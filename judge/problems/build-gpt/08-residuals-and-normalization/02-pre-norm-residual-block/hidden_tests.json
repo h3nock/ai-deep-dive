@@ -3,11 +3,6 @@
   "cases": [
     {
       "id": "b01",
-      "input_code": "x = torch.tensor([[1.0, -1.0, 0.0], [2.0, 0.0, -2.0]], dtype=torch.float32)\ngamma = torch.tensor([1.0, 2.0, 1.0], dtype=torch.float32)\nbeta = torch.tensor([0.1, 0.0, -0.1], dtype=torch.float32)\nW = torch.tensor([[0.3, 0.0, -0.1], [0.0, 0.5, 0.2], [-0.2, 0.1, 0.4]], dtype=torch.float32)\nb = torch.tensor([0.1, 0.0, -0.1], dtype=torch.float32)\neps = 1e-05\n",
-      "expected_literal": "[[1.51742077, -2.23473549, -0.76236784], [2.76237154, -0.13247427, -2.76237154]]"
-    },
-    {
-      "id": "b02",
       "input_code": "x = torch.tensor([[0.5, -0.5, 1.0], [2.0, 1.0, 0.0]], dtype=torch.float32)\ngamma = torch.tensor([1.0, 1.0, 1.0], dtype=torch.float32)\nbeta = torch.tensor([0.0, 0.0, 0.0], dtype=torch.float32)\nW = torch.tensor([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], dtype=torch.float32)\nb = torch.tensor([0.0, 0.0, 0.0], dtype=torch.float32)\neps = 1e-05\n",
       "expected_literal": "[[0.5, -0.5, 1.0], [2.0, 1.0, 0.0]]"
     },

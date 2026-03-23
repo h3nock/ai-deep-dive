@@ -13,6 +13,7 @@ Default output is 20 hidden cases per supported problem (within the 15-25 target
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import math
 import random
@@ -23,7 +24,15 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from judge.problems import TestCaseCompiler, load_problem_spec_file, load_public_cases_file
+
+from judge.problems import (
+    Comparison,
+    CompiledTestCase,
+    ProblemSpec,
+    TestCaseCompiler,
+    load_problem_spec_file,
+    load_public_cases_file,
+)
 
 ProblemGenerator = Callable[[random.Random], list["Case"]]
 
@@ -97,14 +106,6 @@ def _assign_hidden_ids(cases: list[Case]) -> list[dict[str, Any]]:
     return out
 
 
-def _case_signature(case: Case) -> tuple[str, str]:
-    serialized = _serialize_case("__sig__", case)
-    return (
-        serialized["input_code"],
-        serialized["expected_literal"],
-    )
-
-
 def _assert_case_count(problem_id: str, cases: list[Case], minimum: int = 15, maximum: int = 25) -> None:
     if not (minimum <= len(cases) <= maximum):
         raise ValueError(
@@ -116,8 +117,6 @@ RANKING_MARGIN_MIN = 1e-4
 FLOAT_EXPECTED_DIGITS = 8
 GENERATION_CHECK_ATOL = 5e-6
 GENERATION_CHECK_RTOL = 1e-9
-
-
 def _cosine_similarity(a: list[float], b: list[float], *, dtype: Any = np.float64) -> float:
     a_arr = np.asarray(a, dtype=dtype)
     b_arr = np.asarray(b, dtype=dtype)
@@ -2368,34 +2367,129 @@ def _is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
-def _json_equivalent(left: Any, right: Any) -> bool:
+def _json_equivalent(
+    left: Any,
+    right: Any,
+    *,
+    rel_tol: float = 0.0,
+    abs_tol: float = 0.0,
+) -> bool:
     if _is_number(left) and _is_number(right):
         return math.isclose(
             float(left),
             float(right),
-            rel_tol=GENERATION_CHECK_RTOL,
-            abs_tol=GENERATION_CHECK_ATOL,
+            rel_tol=rel_tol,
+            abs_tol=abs_tol,
         )
     if type(left) is not type(right):
         return False
     if isinstance(left, dict):
         if set(left.keys()) != set(right.keys()):
             return False
-        return all(_json_equivalent(left[key], right[key]) for key in left)
+        return all(
+            _json_equivalent(left[key], right[key], rel_tol=rel_tol, abs_tol=abs_tol)
+            for key in left
+        )
     if isinstance(left, list):
         if len(left) != len(right):
             return False
-        return all(_json_equivalent(a, b) for a, b in zip(left, right))
+        return all(
+            _json_equivalent(a, b, rel_tol=rel_tol, abs_tol=abs_tol)
+            for a, b in zip(left, right)
+        )
     return left == right
 
 
-def _canonical_public_signatures(problem_id: str, problems_root: Path) -> set[tuple[str, str]]:
+def _expected_literal_equivalent(
+    left: str,
+    right: str,
+    *,
+    comparison: Comparison,
+) -> bool:
+    try:
+        left_value = ast.literal_eval(left)
+        right_value = ast.literal_eval(right)
+    except (SyntaxError, ValueError):
+        return left == right
+
+    if comparison.type == "allclose":
+        return _json_equivalent(
+            left_value,
+            right_value,
+            rel_tol=max(comparison.rtol or 0.0, GENERATION_CHECK_RTOL),
+            abs_tol=max(comparison.atol or 0.0, GENERATION_CHECK_ATOL),
+        )
+    return left_value == right_value
+
+
+def _hidden_tests_equivalent(
+    left: Any,
+    right: Any,
+    *,
+    comparison: Comparison,
+) -> bool:
+    if not isinstance(left, dict) or not isinstance(right, dict):
+        return False
+    if left.get("schema_version") != right.get("schema_version"):
+        return False
+
+    left_cases = left.get("cases")
+    right_cases = right.get("cases")
+    if not isinstance(left_cases, list) or not isinstance(right_cases, list):
+        return False
+    if len(left_cases) != len(right_cases):
+        return False
+
+    for left_case, right_case in zip(left_cases, right_cases):
+        if not isinstance(left_case, dict) or not isinstance(right_case, dict):
+            return False
+        if set(left_case.keys()) != set(right_case.keys()):
+            return False
+        if left_case.get("id") != right_case.get("id"):
+            return False
+        if left_case.get("input_code") != right_case.get("input_code"):
+            return False
+
+        left_expected = left_case.get("expected_literal")
+        right_expected = right_case.get("expected_literal")
+        if not isinstance(left_expected, str) or not isinstance(right_expected, str):
+            return False
+        if not _expected_literal_equivalent(
+            left_expected,
+            right_expected,
+            comparison=comparison,
+        ):
+            return False
+
+    return True
+
+
+def _compiled_public_cases(
+    problem_id: str,
+    problems_root: Path,
+) -> tuple[ProblemSpec, tuple[CompiledTestCase, ...]]:
     problem_dir = problems_root / problem_id
     spec = load_problem_spec_file(problem_id, problem_dir / "problem.json")
     public_cases = load_public_cases_file(problem_dir / "public_cases.json", spec)
     compiler = TestCaseCompiler()
     compiled_public = compiler.compile_cases(spec, list(public_cases))
-    return {(case.input_code, case.expected_literal) for case in compiled_public}
+    return spec, tuple(compiled_public)
+
+
+def _generated_case_matches_compiled_public(
+    case: Case,
+    public_case: CompiledTestCase,
+    *,
+    comparison: Comparison,
+) -> bool:
+    serialized = _serialize_case("__cmp__", case)
+    if serialized["input_code"] != public_case.input_code:
+        return False
+    return _expected_literal_equivalent(
+        serialized["expected_literal"],
+        public_case.expected_literal,
+        comparison=comparison,
+    )
 
 
 def generate_problem_tests(problem_id: str, problems_root: Path, seed_offset: int = 0) -> dict[str, Any]:
@@ -2405,11 +2499,18 @@ def generate_problem_tests(problem_id: str, problems_root: Path, seed_offset: in
     cases = generator(rng)
     _assert_case_count(problem_id, cases)
 
-    public_signatures = _canonical_public_signatures(problem_id, problems_root)
+    spec, compiled_public_cases = _compiled_public_cases(problem_id, problems_root)
     hidden_seed_cases = [
         case
         for case in cases
-        if _case_signature(case) not in public_signatures
+        if not any(
+            _generated_case_matches_compiled_public(
+                case,
+                public_case,
+                comparison=spec.comparison,
+            )
+            for public_case in compiled_public_cases
+        )
     ]
     hidden_cases = _assign_hidden_ids(hidden_seed_cases)
 
@@ -2460,6 +2561,7 @@ def main() -> None:
             raise SystemExit(f"Problem directory not found: {problem_dir}")
 
         hidden_path = problem_dir / "hidden_tests.json"
+        comparison = load_problem_spec_file(problem_id, problem_dir / "problem.json").comparison
 
         generated_hidden = generate_problem_tests(
             problem_id,
@@ -2474,7 +2576,11 @@ def main() -> None:
         if args.check:
             checked += 1
             mismatched = False
-            if existing_hidden_obj is None or not _json_equivalent(existing_hidden_obj, generated_hidden):
+            if existing_hidden_obj is None or not _hidden_tests_equivalent(
+                existing_hidden_obj,
+                generated_hidden,
+                comparison=comparison,
+            ):
                 mismatched = True
                 print(f"MISMATCH: {problem_id} (hidden_tests.json)")
             if mismatched:
