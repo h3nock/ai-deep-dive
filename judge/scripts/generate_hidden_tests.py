@@ -2521,8 +2521,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate deterministic hidden tests")
     parser.add_argument(
         "--problems-root",
-        default="problems",
-        help="Path to judge problems root (default: problems)",
+        required=True,
+        help="Path to runtime problem root that should receive generated hidden tests",
     )
     parser.add_argument(
         "--only",
