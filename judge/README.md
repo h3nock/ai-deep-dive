@@ -40,6 +40,12 @@ Start Redis locally:
 redis-server
 ```
 
+Build the local runtime corpus:
+
+```bash
+PYTHONPATH=src python scripts/build_runtime_problem_corpus.py
+```
+
 Start the API:
 
 ```bash
@@ -71,22 +77,22 @@ Run the warm-fork security probe:
 python judge/scripts/warm_fork_security_probe.py --skip-bench
 ```
 
-## Generate problem tests
+## Build runtime problem corpus
 
 ```bash
-PYTHONPATH=src python judge/scripts/generate_hidden_tests.py
+PYTHONPATH=src python scripts/build_runtime_problem_corpus.py
 ```
 
-This regenerates canonical `hidden_tests.json` from the reference generators.
-Canonical public cases stay authored in `public_cases.json`; the generator reads
-them only to avoid duplicate hidden coverage.
+This builds a runtime-ready corpus under `judge/data/runtime-problems/current`.
+Authored source problems stay in `judge/problems`; generated hidden tests live
+only in the runtime corpus.
 
 For torch-backed challenges, use the same Python environment used by judge
-workers when regenerating artifacts. This keeps numeric expected values aligned
+workers when building the runtime corpus. This keeps numeric expected values aligned
 with runtime behavior:
 
 ```bash
-/opt/ai-deep-dive/judge/.venv/bin/python judge/scripts/generate_hidden_tests.py
+/opt/ai-deep-dive/judge/.venv/bin/python scripts/build_runtime_problem_corpus.py
 ```
 
 ## Submit a sample job
@@ -95,8 +101,8 @@ with runtime behavior:
 curl -X POST http://localhost:8000/submit \
   -H "Content-Type: application/json" \
   -d '{
-    "problem_id": "sample/01-basics/01-add",
-    "code": "def add(a, b):\n    return a + b\n"
+    "problem_id": "build-gpt/01-from-text-to-bytes/01-encoder",
+    "code": "def encode_string(text):\n    return list(text.encode(\"utf-8\"))\n"
   }'
 ```
 
@@ -106,13 +112,13 @@ Run custom public-style cases:
 curl -X POST http://localhost:8000/run \
   -H "Content-Type: application/json" \
   -d '{
-    "problem_id": "sample/01-basics/01-add",
-    "code": "def add(a, b):\n    return a + b\n",
+    "problem_id": "build-gpt/01-from-text-to-bytes/01-encoder",
+    "code": "def encode_string(text):\n    return list(text.encode(\"utf-8\"))\n",
     "cases": [
       {
         "id": "case1",
-        "inputs": { "a": "1", "b": "2" },
-        "expected_literal": "3"
+        "inputs": { "text": "\"A\"" },
+        "expected_literal": "[65]"
       }
     ]
   }'
@@ -124,7 +130,7 @@ Environment variables:
 
 - `JUDGE_REDIS_URL` (default: `redis://localhost:6379/0`)
 - `JUDGE_RESULTS_DB` (default: `judge/data/judge.db`)
-- `JUDGE_PROBLEMS_ROOT` (default: `judge/problems`)
+- `JUDGE_PROBLEMS_ROOT` (default: `judge/data/runtime-problems/current`)
 - `JUDGE_MAX_OUTPUT_CHARS` (default: `2000`)
 - `JUDGE_JOB_CLAIM_IDLE_MS` (default: `30000`)
 - `JUDGE_JOB_CLAIM_COUNT` (default: `10`)
@@ -213,8 +219,7 @@ Worker liveness and recovery:
 
 ## Problem format
 
-See `judge/problems/README.md` for `problem.json`, `public_cases.json`,
-`hidden_tests.json`, and `starter.py`.
+See `judge/problems/README.md` for source problem files and runtime hidden-test generation.
 
 `starter.py` is canonical problem corpus data for editor seed code, but it is
 not part of judge runtime loading or execution. The runtime still executes only
