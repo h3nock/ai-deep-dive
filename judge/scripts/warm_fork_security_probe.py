@@ -4,11 +4,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import statistics
 import time
 from pathlib import Path
 
-from judge.problems import CompiledTestCase, Comparison, ExecutionPlan, ExecutionPlanFactory, ProblemRepository
+from judge.problems import (
+    Comparison,
+    CompiledTestCase,
+    ExecutionPlan,
+    ExecutionPlanFactory,
+    ProblemRepository,
+)
 from judge.runner import IsolateConfig, run_execution_plan
 from judge.warm_executor import WarmForkExecutor
 
@@ -89,7 +96,10 @@ def multi_head_causal_attention(X, W_Q, W_K, W_V, W_O, num_heads):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Warm fork security probe")
-    parser.add_argument("--problems-root", default="problems")
+    parser.add_argument(
+        "--problems-root",
+        default=os.getenv("JUDGE_PROBLEMS_ROOT", "/var/lib/judge/problems/current"),
+    )
     parser.add_argument(
         "--problem-id",
         default="build-gpt/06-multi-head-attention/01-multi-head-causal-attention",
@@ -121,6 +131,9 @@ def main() -> None:
         allow_root=True,
         preload_torch=True,
     )
+    hidden_tests_path = (
+        Path(args.problems_root) / args.problem_id / "hidden_tests.json"
+    ).as_posix().replace("'", "\\'")
 
     probes = [
         (
@@ -147,8 +160,7 @@ def main() -> None:
             "probe()",
             "def probe():\n"
             "    try:\n"
-            "        open('/opt/ai-deep-dive/judge/problems/"
-            "build-gpt/06-multi-head-attention/01-multi-head-causal-attention/hidden_tests.json','r').read()\n"
+            f"        open('{hidden_tests_path}','r').read()\n"
             "        return 'leaked'\n"
             "    except Exception:\n"
             "        return 'blocked'\n",
@@ -158,8 +170,7 @@ def main() -> None:
             "probe()",
             "import os\n"
             "def probe():\n"
-            "    p='/opt/ai-deep-dive/judge/problems/"
-            "build-gpt/06-multi-head-attention/01-multi-head-causal-attention/hidden_tests.json'\n"
+            f"    p='{hidden_tests_path}'\n"
             "    try:\n"
             "        return 'leaked' if os.path.exists(p) else 'blocked'\n"
             "    except Exception:\n"

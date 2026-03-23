@@ -15,6 +15,7 @@ class WarmForkSettingsTests(TestCase):
             settings = load_settings()
 
         self.assertEqual(settings.torch_execution_mode, "warm_fork")
+        self.assertEqual(settings.problems_root.name, "current")
         self.assertTrue(settings.warm_fork_enable_no_new_privs)
         self.assertTrue(settings.warm_fork_enable_seccomp)
         self.assertTrue(settings.warm_fork_seccomp_fail_closed)
