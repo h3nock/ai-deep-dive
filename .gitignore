@@ -67,3 +67,4 @@ web/public/judge-tests/
 .agent/
 .claude/
 screenshots/
+.entire/
