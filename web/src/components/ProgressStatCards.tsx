@@ -51,7 +51,7 @@ export function ProgressStatCards({
         />
       )}
       <div className="bg-surface rounded-xl px-4 py-3">
-        <span className="text-xl font-bold text-primary">~120</span>
+        <span className="text-xl font-bold text-primary">~20</span>
         <span className="block text-xs text-muted mt-0.5">hours</span>
       </div>
     </div>
