@@ -90,7 +90,7 @@
 
   /* Visualization chrome tokens — SSR-safe theme variables for lesson visuals */
   --viz-grid-line: #3f3f46;
-  --viz-grid-subtle: #1c1c1e;
+  --viz-grid-subtle: #27272a;
   --viz-grid-axis: #333333;
   --viz-grid-axis-bold: #444444;
   --viz-grid-dot: #666666;
@@ -134,7 +134,7 @@
   --color-foreground: var(--color-secondary);
 
   --viz-grid-line: #d4d4d8;
-  --viz-grid-subtle: #f4f4f5;
+  --viz-grid-subtle: #e4e4e7;
   --viz-grid-axis: #a1a1aa;
   --viz-grid-axis-bold: #71717a;
   --viz-grid-dot: #a1a1aa;
