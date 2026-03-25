@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { useTheme } from "next-themes";
-import { viz, getGrid, withAlpha } from "@/lib/viz-colors";
+import { viz, vizGrid, withAlpha } from "@/lib/viz-colors";
 
 interface EmbeddingSpaceProps {
   showArrows?: boolean;
@@ -17,9 +16,6 @@ interface EmbeddingSpaceProps {
  * - Internal elements use Tier 1 (Atomic) for tight label-to-visual relationships
  */
 export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
-  const { resolvedTheme } = useTheme();
-  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
-
   // Grid configuration
   const width = 440;
   const height = 400;
@@ -124,7 +120,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 y1={paddingTop}
                 x2={toSvgX(v)}
                 y2={height - paddingBottom}
-                stroke={v === 0 ? grid.axis : grid.line}
+                stroke={v === 0 ? vizGrid.axis : vizGrid.line}
                 strokeWidth={v === 0 ? 2 : 1}
                 strokeDasharray={v === 0 ? "" : "4 4"}
               />
@@ -134,7 +130,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 y1={toSvgY(v)}
                 x2={width - paddingRight}
                 y2={toSvgY(v)}
-                stroke={v === 0 ? grid.axis : grid.line}
+                stroke={v === 0 ? vizGrid.axis : vizGrid.line}
                 strokeWidth={v === 0 ? 2 : 1}
                 strokeDasharray={v === 0 ? "" : "4 4"}
               />
@@ -145,7 +141,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={width - paddingRight + 8}
             y={toSvgY(0) + 4}
-            fill={grid.label}
+            fill={vizGrid.label}
             className="text-[10px]"
           >
             Gender (+)
@@ -153,7 +149,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={paddingLeft - 8}
             y={toSvgY(0) + 4}
-            fill={grid.label}
+            fill={vizGrid.label}
             className="text-[10px]"
             textAnchor="end"
           >
@@ -162,7 +158,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={toSvgX(0)}
             y={paddingTop - 10}
-            fill={grid.label}
+            fill={vizGrid.label}
             className="text-[10px]"
             textAnchor="middle"
           >
@@ -171,7 +167,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
           <text
             x={toSvgX(0)}
             y={height - paddingBottom + 20}
-            fill={grid.label}
+            fill={vizGrid.label}
             className="text-[10px]"
             textAnchor="middle"
           >
@@ -219,7 +215,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                       x={mx}
                       y={my - 12}
                       textAnchor="middle"
-                      fill={grid.labelLight}
+                      fill={vizGrid.labelLight}
                       className="text-[10px]"
                     >
                       {arrow.label}
@@ -254,7 +250,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 x={toSvgX(point.x)}
                 y={toSvgY(point.y) + 42}
                 textAnchor="middle"
-                fill={grid.text}
+                fill={vizGrid.text}
                 className="text-[11px] font-medium"
               >
                 {point.name}
@@ -264,7 +260,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 x={toSvgX(point.x)}
                 y={toSvgY(point.y) + 54}
                 textAnchor="middle"
-                fill={grid.label}
+                fill={vizGrid.label}
                 className="text-[10px] font-mono"
               >
                 [{point.y}, {point.x}]

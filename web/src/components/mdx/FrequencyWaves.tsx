@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useTheme } from "next-themes";
-import { viz, getGrid, withAlpha } from "@/lib/viz-colors";
+import { viz, vizGrid, withAlpha, withAlphaVar } from "@/lib/viz-colors";
 
 /**
  * FrequencyWaves — "The Clock Orchestra"
@@ -71,9 +70,6 @@ function generateFillPath(dim: number, width: number, height: number, positionFr
 }
 
 export function FrequencyWaves() {
-  const { resolvedTheme } = useTheme();
-  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
-
   const [position, setPosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const animationRef = useRef<number | null>(null);
@@ -158,8 +154,8 @@ export function FrequencyWaves() {
             onClick={() => setIsPlaying(!isPlaying)}
             className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full cursor-pointer"
             style={{
-              backgroundColor: withAlpha(grid.line, 0.12),
-              border: `1.5px solid ${withAlpha(grid.line, 0.3)}`,
+              backgroundColor: withAlphaVar(vizGrid.line, 0.12),
+              border: `1.5px solid ${withAlphaVar(vizGrid.line, 0.3)}`,
             }}
             aria-label={isPlaying ? "Pause" : "Play"}
           >
@@ -187,7 +183,7 @@ export function FrequencyWaves() {
             }}
             className="viz-slider flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
             style={{
-              background: `linear-gradient(to right, ${viz.tertiary} 0%, ${viz.tertiary} ${positionFrac * 100}%, ${grid.line} ${positionFrac * 100}%, ${grid.line} 100%)`,
+              background: `linear-gradient(to right, ${viz.tertiary} 0%, ${viz.tertiary} ${positionFrac * 100}%, ${vizGrid.line} ${positionFrac * 100}%, ${vizGrid.line} 100%)`,
             }}
           />
 
@@ -228,7 +224,7 @@ export function FrequencyWaves() {
                       cy={CLOCK_CENTER}
                       r={CLOCK_RADIUS}
                       fill="none"
-                      stroke={grid.axis}
+                      stroke={vizGrid.axis}
                       strokeWidth="1.5"
                     />
                     {/* 12 tick marks */}
@@ -243,14 +239,14 @@ export function FrequencyWaves() {
                           y1={CLOCK_CENTER - innerR * Math.sin(tickAngle)}
                           x2={CLOCK_CENTER + outerR * Math.cos(tickAngle)}
                           y2={CLOCK_CENTER - outerR * Math.sin(tickAngle)}
-                          stroke={grid.line}
+                          stroke={vizGrid.line}
                           strokeWidth="1"
                           opacity={0.3}
                         />
                       );
                     })}
                     {/* Center dot */}
-                    <circle cx={CLOCK_CENTER} cy={CLOCK_CENTER} r="2" fill={grid.dot} />
+                    <circle cx={CLOCK_CENTER} cy={CLOCK_CENTER} r="2" fill={vizGrid.dot} />
                     {/* Hand */}
                     <line
                       x1={CLOCK_CENTER}
@@ -288,7 +284,7 @@ export function FrequencyWaves() {
                       y1={waveCenterY}
                       x2={WAVE_WIDTH}
                       y2={waveCenterY}
-                      stroke={grid.line}
+                      stroke={vizGrid.line}
                       strokeWidth="0.5"
                       opacity={0.3}
                     />
@@ -311,7 +307,7 @@ export function FrequencyWaves() {
                       y1={4}
                       x2={markerX}
                       y2={WAVE_HEIGHT - 4}
-                      stroke={grid.line}
+                      stroke={vizGrid.line}
                       strokeWidth="1"
                       strokeDasharray="3 3"
                       opacity={0.4}
@@ -353,7 +349,7 @@ export function FrequencyWaves() {
             preserveAspectRatio="xMidYMid meet"
           >
             {/* Zero baseline */}
-            <line x1="10" y1="25" x2="190" y2="25" stroke={grid.line} strokeWidth="0.5" opacity={0.4} />
+            <line x1="10" y1="25" x2="190" y2="25" stroke={vizGrid.line} strokeWidth="0.5" opacity={0.4} />
 
             {waves.map((wave, i) => {
               const color = DIM_COLORS[i];
@@ -378,7 +374,7 @@ export function FrequencyWaves() {
                   <text
                     x={x + barWidth / 2}
                     y={48}
-                    fill={grid.label}
+                    fill={vizGrid.label}
                     fontSize="7"
                     textAnchor="middle"
                   >

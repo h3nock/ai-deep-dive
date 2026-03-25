@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useTheme } from "next-themes";
-import { viz, getGrid, withAlpha } from "@/lib/viz-colors";
+import { viz, vizGrid, withAlpha, withAlphaVar } from "@/lib/viz-colors";
 
 /**
  * BinaryVsSmooth — Slider-driven comparison of binary vs sinusoidal encoding.
@@ -81,9 +80,6 @@ function generateBinaryPath(cycles: number): string {
 }
 
 export function BinaryVsSmooth() {
-  const { resolvedTheme } = useTheme();
-  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
-
   const [position, setPosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const animationRef = useRef<number | null>(null);
@@ -162,8 +158,8 @@ export function BinaryVsSmooth() {
             onClick={() => setIsPlaying(!isPlaying)}
             className="w-7 h-7 shrink-0 flex items-center justify-center rounded-full cursor-pointer"
             style={{
-              backgroundColor: withAlpha(grid.line, 0.12),
-              border: `1.5px solid ${withAlpha(grid.line, 0.3)}`,
+              backgroundColor: withAlphaVar(vizGrid.line, 0.12),
+              border: `1.5px solid ${withAlphaVar(vizGrid.line, 0.3)}`,
             }}
             aria-label={isPlaying ? "Pause" : "Play"}
           >
@@ -191,7 +187,7 @@ export function BinaryVsSmooth() {
             }}
             className="viz-slider flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
             style={{
-              background: `linear-gradient(to right, ${viz.tertiary} 0%, ${viz.tertiary} ${(position / MAX_POSITION) * 100}%, ${grid.line} ${(position / MAX_POSITION) * 100}%, ${grid.line} 100%)`,
+              background: `linear-gradient(to right, ${viz.tertiary} 0%, ${viz.tertiary} ${(position / MAX_POSITION) * 100}%, ${vizGrid.line} ${(position / MAX_POSITION) * 100}%, ${vizGrid.line} 100%)`,
             }}
           />
 
@@ -209,7 +205,7 @@ export function BinaryVsSmooth() {
           <div className="text-center">
             <span
               className="text-[10px] font-semibold uppercase tracking-wider"
-              style={{ color: grid.text }}
+              style={{ color: vizGrid.text }}
             >
               Binary
             </span>
@@ -217,7 +213,7 @@ export function BinaryVsSmooth() {
           <div className="text-center">
             <span
               className="text-[10px] font-semibold uppercase tracking-wider"
-              style={{ color: grid.text }}
+              style={{ color: vizGrid.text }}
             >
               Smooth (Sine)
             </span>
@@ -258,7 +254,7 @@ export function BinaryVsSmooth() {
                       y1={GRAPH_HEIGHT / 2}
                       x2={GRAPH_WIDTH}
                       y2={GRAPH_HEIGHT / 2}
-                      stroke={grid.line}
+                      stroke={vizGrid.line}
                       strokeWidth="0.5"
                       opacity={0.3}
                     />
@@ -303,7 +299,7 @@ export function BinaryVsSmooth() {
                       y1={GRAPH_HEIGHT / 2}
                       x2={GRAPH_WIDTH}
                       y2={GRAPH_HEIGHT / 2}
-                      stroke={grid.line}
+                      stroke={vizGrid.line}
                       strokeWidth="0.5"
                       opacity={0.3}
                     />
@@ -348,7 +344,7 @@ export function BinaryVsSmooth() {
                 [
                 {dimValues.map((dv, i) => (
                   <React.Fragment key={i}>
-                    {i > 0 && <span style={{ color: grid.label }}>, </span>}
+                    {i > 0 && <span style={{ color: vizGrid.label }}>, </span>}
                     <span style={{ color: DIMENSIONS[i].color }}>{dv.binary.toFixed(0)}</span>
                   </React.Fragment>
                 ))}
@@ -360,7 +356,7 @@ export function BinaryVsSmooth() {
                 [
                 {dimValues.map((dv, i) => (
                   <React.Fragment key={i}>
-                    {i > 0 && <span style={{ color: grid.label }}>, </span>}
+                    {i > 0 && <span style={{ color: vizGrid.label }}>, </span>}
                     <span style={{ color: DIMENSIONS[i].color }}>{dv.smooth.toFixed(2)}</span>
                   </React.Fragment>
                 ))}
