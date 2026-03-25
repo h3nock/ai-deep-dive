@@ -27,11 +27,26 @@ const ChallengeWorkspace = dynamic<ChallengeWorkspaceProps>(
   () => import("./ChallengeWorkspace").then((mod) => mod.ChallengeWorkspace),
   {
     loading: () => (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="space-y-3 w-64">
-          <div className="h-3 bg-surface rounded animate-pulse" />
-          <div className="h-3 bg-surface rounded animate-pulse w-3/4" />
-          <div className="h-3 bg-surface rounded animate-pulse w-1/2" />
+      <div className="flex flex-col h-full overflow-hidden py-12">
+        <div className="mx-auto w-full max-w-[75ch] px-6 lg:px-8">
+          {/* Header skeleton — matches ChallengeList header */}
+          <div className="mb-8">
+            <div className="flex items-baseline gap-2 mb-2">
+              <div className="h-7 w-6 skeleton-bar rounded" />
+              <div className="h-5 w-10 skeleton-bar rounded" style={{ animationDelay: "0.1s" }} />
+            </div>
+            <div className="h-3.5 w-32 skeleton-bar rounded" style={{ animationDelay: "0.2s" }} />
+          </div>
+          {/* Card skeletons — matches ChallengeList card layout */}
+          <div className="grid grid-cols-1 gap-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="rounded-xl border border-border bg-surface/30 p-4 flex items-center gap-4">
+                <div className="w-8 h-8 skeleton-bar rounded-lg shrink-0" style={{ animationDelay: `${0.3 + i * 0.15}s` }} />
+                <div className="h-4 skeleton-bar rounded w-40" style={{ animationDelay: `${0.35 + i * 0.15}s` }} />
+                <div className="ml-auto w-12 h-4 skeleton-bar rounded-full shrink-0" style={{ animationDelay: `${0.4 + i * 0.15}s` }} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     ),

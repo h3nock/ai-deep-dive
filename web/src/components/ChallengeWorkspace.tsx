@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
 import { ChallengeList } from "./ChallengeList";
 import type { Challenge } from "@/lib/challenge-types";
 
@@ -18,8 +19,8 @@ const ChallengeEditor = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex flex-1 items-center justify-center text-muted">
-        Loading editor...
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="w-5 h-5 text-muted animate-spin" />
       </div>
     ),
   }

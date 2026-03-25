@@ -850,6 +850,33 @@ section[style*="display: flex"][style*="justify-content: center"] {
 }
 
 /* ==========================================================================
+   Skeleton Shimmer — loading placeholder sweep
+   ========================================================================== */
+
+@keyframes skeleton-shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+.skeleton-bar {
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 0%,
+    var(--color-border-hover) 50%,
+    var(--color-border) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-bar {
+    animation: none;
+    background: var(--color-border);
+  }
+}
+
+/* ==========================================================================
    Pipeline Visualization — homepage transformer preview
    ========================================================================== */
 

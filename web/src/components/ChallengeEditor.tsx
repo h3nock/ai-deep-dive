@@ -1037,8 +1037,8 @@ function ChallengeEditorContent({
                   onClick={() => setIsVimMode(!isVimMode)}
                   className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
                     isVimMode
-                      ? "text-secondary bg-surface"
-                      : "text-muted hover:text-secondary hover:bg-surface"
+                      ? "text-primary bg-border"
+                      : "text-muted hover:text-secondary hover:bg-border/50"
                   }`}
                   title="Toggle Vim keybindings"
                   aria-label={isVimMode ? "Disable Vim mode" : "Enable Vim mode"}
@@ -1055,7 +1055,7 @@ function ChallengeEditorContent({
                   disabled={isRunning}
                   title="Reset to initial code"
                   aria-label="Reset code to initial template"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-secondary hover:text-primary hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-secondary hover:text-primary hover:bg-border/50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                   Reset
@@ -1069,7 +1069,7 @@ function ChallengeEditorContent({
                   disabled={isRunning}
                   title={`Run public tests (${runShortcut})`}
                   aria-label={`Run public tests, keyboard shortcut ${runShortcut}`}
-                  className="flex items-center gap-2 px-4 py-1.5 hover:bg-surface disabled:text-muted disabled:cursor-not-allowed text-secondary hover:text-primary text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-1.5 enabled:hover:bg-border/50 disabled:text-muted disabled:cursor-not-allowed text-secondary enabled:hover:text-primary text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning && lastRunMode === "run" ? (
                     <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
@@ -1114,29 +1114,18 @@ function ChallengeEditorContent({
                   monaco.editor.defineTheme(getMonacoThemeName("light"), createMonacoTheme("light"));
                 }}
                 loading={
-                  <div className="w-full h-full bg-background pt-2 pl-4 font-mono text-sm leading-5">
-                    <div className="space-y-0 animate-pulse">
-                      <div className="flex items-center h-5">
-                        <span className="text-border-hover w-8 text-right select-none pr-4">1</span>
-                        <div className="h-3.5 bg-surface/60 rounded w-56" />
-                      </div>
-                      <div className="flex items-center h-5">
-                        <span className="text-border-hover w-8 text-right select-none pr-4">2</span>
-                        <div className="ml-6 h-3.5 bg-surface/40 rounded w-72" />
-                      </div>
-                      <div className="flex items-center h-5">
-                        <span className="text-border-hover w-8 text-right select-none pr-4">3</span>
-                        <div className="ml-6 h-3.5 bg-surface/60 rounded w-48" />
-                      </div>
-                      <div className="flex items-center h-5">
-                        <span className="text-border-hover w-8 text-right select-none pr-4">4</span>
-                        <div className="ml-6 h-3.5 bg-surface/40 rounded w-80" />
-                      </div>
-                      <div className="flex items-center h-5">
-                        <span className="text-border-hover w-8 text-right select-none pr-4">5</span>
-                        <div className="ml-6 h-3.5 bg-surface/60 rounded w-64" />
-                      </div>
-                    </div>
+                  <div className="w-full h-full bg-background p-5 space-y-2.5">
+                    {["w-48", "w-56", "w-36", "w-0", "w-64", "w-72", "w-44", "w-52"].map((w, i) => (
+                      w === "w-0" ? (
+                        <div key={i} className="h-3.5" />
+                      ) : (
+                        <div
+                          key={i}
+                          className={`h-3.5 skeleton-bar rounded ${w}`}
+                          style={{ animationDelay: `${i * 0.12}s` }}
+                        />
+                      )
+                    ))}
                   </div>
                 }
                 options={{
