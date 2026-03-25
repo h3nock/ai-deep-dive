@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useTheme } from "next-themes";
-import { viz, getGrid, withAlpha } from "@/lib/viz-colors";
+import { viz, vizGrid, withAlpha } from "@/lib/viz-colors";
 
 /**
  * RotationVisualization — "The Rotation Playground"
@@ -23,9 +22,6 @@ const SVG_WIDTH = 296;
 const SVG_HEIGHT = 280;
 
 export function RotationVisualization() {
-  const { resolvedTheme } = useTheme();
-  const grid = getGrid(resolvedTheme === "light" ? "light" : "dark");
-
   const [inputAngleDegrees, setInputAngleDegrees] = useState(0);
   const [rotationDegrees, setRotationDegrees] = useState(90);
   const [highlightRow, setHighlightRow] = useState<0 | 1 | null>(null);
@@ -224,8 +220,8 @@ export function RotationVisualization() {
               </defs>
 
               {/* Axes */}
-              <line x1="20" y1={CENTER} x2={SVG_WIDTH - 20} y2={CENTER} stroke={grid.axis} strokeWidth="1" />
-              <line x1={CENTER} y1="20" x2={CENTER} y2={SVG_HEIGHT - 20} stroke={grid.axis} strokeWidth="1" />
+              <line x1="20" y1={CENTER} x2={SVG_WIDTH - 20} y2={CENTER} stroke={vizGrid.axis} strokeWidth="1" />
+              <line x1={CENTER} y1="20" x2={CENTER} y2={SVG_HEIGHT - 20} stroke={vizGrid.axis} strokeWidth="1" />
 
               {/* Unit circle */}
               <circle
@@ -233,7 +229,7 @@ export function RotationVisualization() {
                 cy={CENTER}
                 r={CIRCLE_RADIUS}
                 fill="none"
-                stroke={grid.axisBold}
+                stroke={vizGrid.axisBold}
                 strokeWidth="1.5"
               />
 
@@ -293,7 +289,7 @@ export function RotationVisualization() {
               <text
                 x={CENTER + CIRCLE_RADIUS + 8}
                 y={CENTER + 14}
-                fill={grid.labelLight}
+                fill={vizGrid.labelLight}
                 fontSize="10"
                 textAnchor="start"
               >
@@ -302,7 +298,7 @@ export function RotationVisualization() {
               <text
                 x={CENTER + 8}
                 y={14}
-                fill={grid.labelLight}
+                fill={vizGrid.labelLight}
                 fontSize="10"
               >
                 y (sin)
@@ -431,11 +427,11 @@ export function RotationVisualization() {
                 onMouseLeave={() => setHighlightRow(null)}
               >
                 <span style={{ color: viz.primary }}>{fmt(targetCosTheta)}</span>
-                <span style={{ color: grid.label }}>×</span>
+                <span style={{ color: vizGrid.label }}>×</span>
                 <span style={{ color: viz.tertiary }}>{fmt(targetCosInput)}</span>
-                <span style={{ color: grid.label }}> + </span>
+                <span style={{ color: vizGrid.label }}> + </span>
                 <span style={{ color: viz.primary }}>{fmt(-targetSinTheta)}</span>
-                <span style={{ color: grid.label }}>×</span>
+                <span style={{ color: vizGrid.label }}>×</span>
                 <span style={{ color: viz.tertiary }}>{fmt(targetSinInput)}</span>
               </div>
               <div
@@ -445,11 +441,11 @@ export function RotationVisualization() {
                 onMouseLeave={() => setHighlightRow(null)}
               >
                 <span style={{ color: viz.primary }}>{fmt(targetSinTheta)}</span>
-                <span style={{ color: grid.label }}>×</span>
+                <span style={{ color: vizGrid.label }}>×</span>
                 <span style={{ color: viz.tertiary }}>{fmt(targetCosInput)}</span>
-                <span style={{ color: grid.label }}> + </span>
+                <span style={{ color: vizGrid.label }}> + </span>
                 <span style={{ color: viz.primary }}>{fmt(targetCosTheta)}</span>
-                <span style={{ color: grid.label }}>×</span>
+                <span style={{ color: vizGrid.label }}>×</span>
                 <span style={{ color: viz.tertiary }}>{fmt(targetSinInput)}</span>
               </div>
             </div>
