@@ -88,6 +88,16 @@
   --color-on-accent: #09090B;        /* Dark text for solid accent fills */
   --color-foreground: var(--color-secondary);
 
+  /* Visualization chrome tokens — SSR-safe theme variables for lesson visuals */
+  --viz-grid-line: #3f3f46;
+  --viz-grid-subtle: #1c1c1e;
+  --viz-grid-axis: #333333;
+  --viz-grid-axis-bold: #444444;
+  --viz-grid-dot: #666666;
+  --viz-grid-label: #52525b;
+  --viz-grid-label-light: #555555;
+  --viz-grid-text: #d4d4d8;
+
   /* Typography — hardcoded font names instead of var(--font-geist-*) because
      next-themes replaces <html> className, so the font variables from Next.js
      are only available on <body>, not at :root where @theme resolves. */
@@ -122,6 +132,15 @@
   --color-accent-6: #0e7490;         /* Cyan-700 */
   --color-on-accent: #ffffff;        /* White text for solid accent fills */
   --color-foreground: var(--color-secondary);
+
+  --viz-grid-line: #d4d4d8;
+  --viz-grid-subtle: #f4f4f5;
+  --viz-grid-axis: #a1a1aa;
+  --viz-grid-axis-bold: #71717a;
+  --viz-grid-dot: #a1a1aa;
+  --viz-grid-label: #71717a;
+  --viz-grid-label-light: #a1a1aa;
+  --viz-grid-text: #3f3f46;
 }
 
 body {

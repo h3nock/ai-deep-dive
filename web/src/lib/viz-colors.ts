@@ -1,8 +1,8 @@
 /**
  * Centralized color palette for SVG visualizations.
  *
- * SVG fill/stroke attributes cannot use CSS var(), so all visualization
- * hex values live here instead of in globals.css.
+ * Semantic accent colors live here as fixed values. Theme-reactive visualization
+ * chrome uses CSS variables so SSR and hydration render the same markup.
  *
  * Names are semantic (role-based), not literal colors. Each visualization
  * component assigns its own meaning to these roles — e.g. "primary" might
@@ -34,48 +34,18 @@ export const viz = {
 
 // ---------------------------------------------------------------------------
 // Grid & axis colors — structural elements behind the data
-// Dark and light variants for theme switching
+// Theme-owned CSS variables keep render output stable across SSR/hydration.
 // ---------------------------------------------------------------------------
-type GridPalette = {
-  line: string;
-  subtle: string;
-  axis: string;
-  axisBold: string;
-  dot: string;
-  label: string;
-  labelLight: string;
-  text: string;
-};
-
-const darkGrid: GridPalette = {
-  line: "#3f3f46",
-  subtle: "#1c1c1e",
-  axis: "#333333",
-  axisBold: "#444444",
-  dot: "#666666",
-  label: "#52525b",
-  labelLight: "#555555",
-  text: "#d4d4d8",
-};
-
-const lightGrid: GridPalette = {
-  line: "#d4d4d8",
-  subtle: "#f4f4f5",
-  axis: "#a1a1aa",
-  axisBold: "#71717a",
-  dot: "#a1a1aa",
-  label: "#71717a",
-  labelLight: "#a1a1aa",
-  text: "#3f3f46",
-};
-
-/** Default dark grid export (for non-reactive contexts like preload) */
-export const grid = darkGrid;
-
-/** Get theme-appropriate grid palette */
-export function getGrid(mode: "dark" | "light"): GridPalette {
-  return mode === "light" ? lightGrid : darkGrid;
-}
+export const vizGrid = {
+  line: "var(--viz-grid-line)",
+  subtle: "var(--viz-grid-subtle)",
+  axis: "var(--viz-grid-axis)",
+  axisBold: "var(--viz-grid-axis-bold)",
+  dot: "var(--viz-grid-dot)",
+  label: "var(--viz-grid-label)",
+  labelLight: "var(--viz-grid-label-light)",
+  text: "var(--viz-grid-text)",
+} as const;
 
 // ---------------------------------------------------------------------------
 // Utility — apply alpha transparency to any palette hex
@@ -85,4 +55,9 @@ export function withAlpha(hex: string, alpha: number): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+export function withAlphaVar(value: string, alpha: number): string {
+  const percent = Math.round(Math.max(0, Math.min(1, alpha)) * 1000) / 10;
+  return `color-mix(in srgb, ${value} ${percent}%, transparent)`;
 }
