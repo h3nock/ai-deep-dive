@@ -93,7 +93,7 @@ export function ChallengeList({
                 onPointerLeave={cancelHoverPrefetch}
                 onFocus={() => prefetchChallengeRoute(idx)}
                 onClick={() => onSelectIndex(idx)}
-                className="w-full text-left bg-surface/30 hover:bg-surface/50 rounded-xl border border-border hover:border-border-hover p-4 flex items-center gap-4 transition-all group"
+                className="w-full cursor-pointer text-left bg-surface/30 hover:bg-surface/50 rounded-xl border border-border hover:border-border-hover p-4 flex items-center gap-4 transition-all group"
               >
                 <span className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center text-muted font-mono text-sm shrink-0">
                   {String(idx + 1).padStart(2, "0")}
