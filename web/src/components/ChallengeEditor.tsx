@@ -1114,29 +1114,18 @@ function ChallengeEditorContent({
                   monaco.editor.defineTheme(getMonacoThemeName("light"), createMonacoTheme("light"));
                 }}
                 loading={
-                  <div className="w-full h-full bg-background pt-2 pl-4 font-mono text-sm leading-5">
-                    <div className="space-y-0 animate-pulse">
-                      <div className="flex items-center h-5">
-                        <span className="text-border-hover w-8 text-right select-none pr-4">1</span>
-                        <div className="h-3.5 bg-surface/60 rounded w-56" />
-                      </div>
-                      <div className="flex items-center h-5">
-                        <span className="text-border-hover w-8 text-right select-none pr-4">2</span>
-                        <div className="ml-6 h-3.5 bg-surface/40 rounded w-72" />
-                      </div>
-                      <div className="flex items-center h-5">
-                        <span className="text-border-hover w-8 text-right select-none pr-4">3</span>
-                        <div className="ml-6 h-3.5 bg-surface/60 rounded w-48" />
-                      </div>
-                      <div className="flex items-center h-5">
-                        <span className="text-border-hover w-8 text-right select-none pr-4">4</span>
-                        <div className="ml-6 h-3.5 bg-surface/40 rounded w-80" />
-                      </div>
-                      <div className="flex items-center h-5">
-                        <span className="text-border-hover w-8 text-right select-none pr-4">5</span>
-                        <div className="ml-6 h-3.5 bg-surface/60 rounded w-64" />
-                      </div>
-                    </div>
+                  <div className="w-full h-full bg-background p-5 space-y-2.5">
+                    {["w-48", "w-56", "w-36", "w-0", "w-64", "w-72", "w-44", "w-52"].map((w, i) => (
+                      w === "w-0" ? (
+                        <div key={i} className="h-3.5" />
+                      ) : (
+                        <div
+                          key={i}
+                          className={`h-3.5 skeleton-bar rounded ${w}`}
+                          style={{ animationDelay: `${i * 0.12}s` }}
+                        />
+                      )
+                    ))}
                   </div>
                 }
                 options={{
