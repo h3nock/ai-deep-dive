@@ -192,134 +192,13 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Features — what's built into every chapter */}
-        <section className="py-20 bg-surface/50">
-          <div className="max-w-4xl mx-auto px-6">
-            <div className="mb-10">
-              <h2 className="text-2xl font-bold text-primary">Learn by Doing</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Feature: Coding Challenges */}
-              <div className="flex flex-col">
-                <h3 className="text-sm font-medium text-primary mb-3">Coding Challenges</h3>
-                <div className="font-mono text-xs border border-border rounded-xl bg-terminal overflow-hidden flex-1">
-                  <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border">
-                    <div className="w-2 h-2 rounded-full bg-border" />
-                    <div className="w-2 h-2 rounded-full bg-border" />
-                    <div className="w-2 h-2 rounded-full bg-border" />
-                    <span className="ml-auto text-[10px] text-primary/60 font-medium">Run</span>
-                    <span className="text-[10px] text-primary font-medium">Submit</span>
-                  </div>
-                  <div className="p-3.5 space-y-0.5 text-[10px] leading-relaxed">
-                    <p><span className="text-accent-2">def</span> <span className="text-primary">gelu</span>(x):</p>
-                    <p className="text-secondary/60 pl-4">&quot;&quot;&quot;GELU activation.&quot;&quot;&quot;</p>
-                    <p className="pl-4"><span className="text-accent-2">return</span> <span className="text-secondary">0.5 * x * (1 + tanh(</span></p>
-                    <p className="pl-8 text-secondary">sqrt(2/pi) * (x + 0.044715</p>
-                    <p className="pl-8 text-secondary">* x**3)))</p>
-                  </div>
-                  <div className="px-3 py-2 border-t border-border text-[10px] text-success">
-                    ✓ All tests passed
-                  </div>
-                </div>
-              </div>
-
-              {/* Feature: Interactive Visuals */}
-              <div className="flex flex-col">
-                <h3 className="text-sm font-medium text-primary mb-3">Interactive Visuals</h3>
-                <div className="font-mono text-xs border border-border rounded-xl bg-terminal overflow-hidden flex-1">
-                  <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border">
-                    <div className="w-2 h-2 rounded-full bg-border" />
-                    <div className="w-2 h-2 rounded-full bg-border" />
-                    <div className="w-2 h-2 rounded-full bg-border" />
-                  </div>
-                  <div className="p-3.5 space-y-2.5">
-                    {/* Frequency waves — 4 sine waves at different frequencies */}
-                    {(() => {
-                      const dotX = 48;
-                      const waves = [
-                        { label: "d₀", freq: 1, color: "var(--color-accent-2)" },
-                        { label: "d₂", freq: 0.5, color: "var(--color-accent-5)" },
-                        { label: "d₄", freq: 0.25, color: "var(--color-accent-1)" },
-                        { label: "d₆", freq: 0.125, color: "var(--color-accent-3)" },
-                      ];
-                      return waves.map((wave) => {
-                        const dotY = 10 - 8 * Math.sin(dotX * wave.freq * 0.15);
-                        return (
-                          <div key={wave.label} className="flex items-center gap-2">
-                            <span className="text-[9px] text-muted w-3">{wave.label}</span>
-                            <svg viewBox="0 0 120 20" className="flex-1 h-4">
-                              <path
-                                d={`M0,10 ${Array.from({ length: 121 }, (_, x) => {
-                                  const y = 10 - 8 * Math.sin(x * wave.freq * 0.15);
-                                  return `L${x},${y.toFixed(1)}`;
-                                }).join(" ")}`}
-                                fill="none"
-                                stroke={wave.color}
-                                strokeWidth="1.5"
-                                opacity="0.8"
-                              />
-                              <circle cx={dotX} cy={dotY.toFixed(1)} r="2.5" fill={wave.color} />
-                            </svg>
-                          </div>
-                        );
-                      });
-                    })()}
-                    <p className="text-[10px] text-muted leading-relaxed pt-1">
-                      Each dimension oscillates at a different frequency.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Feature: Progress Tracking */}
-              <div className="flex flex-col">
-                <h3 className="text-sm font-medium text-primary mb-3">Progress Tracking</h3>
-                <div className="font-mono text-xs border border-border rounded-xl bg-terminal overflow-hidden flex-1">
-                  <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border">
-                    <div className="w-2 h-2 rounded-full bg-border" />
-                    <div className="w-2 h-2 rounded-full bg-border" />
-                    <div className="w-2 h-2 rounded-full bg-border" />
-                  </div>
-                  <div className="p-3.5 space-y-3">
-                    {[
-                      { ch: "04", name: "Positional Enc.", done: true, problems: "3/3" },
-                      { ch: "05", name: "Attention", done: true, problems: "2/2" },
-                      { ch: "06", name: "Multi-Head", done: true, problems: "1/1" },
-                      { ch: "07", name: "Feed-Forward", done: false, problems: "1/2" },
-                      { ch: "08", name: "Residuals", done: false, problems: "0/2" },
-                    ].map((row) => (
-                      <div key={row.ch} className="flex items-center gap-2.5">
-                        <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[8px] ${
-                          row.done
-                            ? "bg-primary/20 border-primary/40 text-primary"
-                            : "border-border text-border"
-                        }`}>
-                          {row.done ? "✓" : ""}
-                        </span>
-                        <span className="text-[11px] text-secondary flex-1">{row.ch} {row.name}</span>
-                        <span className={`text-[10px] ${row.done ? "text-primary/60" : "text-muted"}`}>{row.problems}</span>
-                      </div>
-                    ))}
-                    <div className="pt-2 border-t border-border">
-                      <div className="h-1 bg-surface rounded-full overflow-hidden">
-                        <div className="h-full bg-primary/60 rounded-full" style={{ width: "60%" }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Course Catalog */}
-        <section id="courses" className="py-24">
+        <section id="courses" className="py-24 bg-terminal">
           <div className="max-w-4xl mx-auto px-6">
             <div className="mb-10">
               <h2 className="text-2xl font-bold text-primary mb-2">Courses</h2>
               <p className="text-secondary">
-                Choose a path and start building.
+                Pick a path and start building.
               </p>
             </div>
 
@@ -340,6 +219,39 @@ export default async function Home() {
                   totalChallenges={course.totalChallenges}
                 />
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section className="py-24">
+          <div className="max-w-4xl mx-auto px-6">
+            <h2 className="text-2xl font-bold text-primary mb-10">How It Works</h2>
+
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-16">
+              <div>
+                <div className="text-5xl font-bold text-border-hover/40 tabular-nums leading-none">01</div>
+                <h3 className="mt-4 text-base font-semibold text-primary">Read the Lesson</h3>
+                <p className="mt-2 text-sm text-secondary leading-relaxed">
+                  Start with a clear explanation of the concept.
+                </p>
+              </div>
+
+              <div>
+                <div className="text-5xl font-bold text-border-hover/40 tabular-nums leading-none">02</div>
+                <h3 className="mt-4 text-base font-semibold text-primary">Explore the Visual</h3>
+                <p className="mt-2 text-sm text-secondary leading-relaxed">
+                  Use interactive visuals to understand how it works.
+                </p>
+              </div>
+
+              <div>
+                <div className="text-5xl font-bold text-border-hover/40 tabular-nums leading-none">03</div>
+                <h3 className="mt-4 text-base font-semibold text-primary">Solve the Challenge</h3>
+                <p className="mt-2 text-sm text-secondary leading-relaxed">
+                  Practice by writing code and applying the idea yourself.
+                </p>
+              </div>
             </div>
           </div>
         </section>
