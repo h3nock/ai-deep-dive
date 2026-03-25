@@ -14,44 +14,40 @@ description: "How all components combine into the repeatable transformer block."
 
 {/* High-level architecture overview */}
 <div className="my-8 flex justify-center">
-  <svg viewBox="0 0 260 280" className="w-full" style={{ maxWidth: "320px", display: "block" }}>
-    {/* Token IDs */}
-    <rect x="80" y="6" width="100" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
-    <text x="130" y="23" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Token IDs</text>
+  <svg viewBox="0 0 260 280" className="w-full" style={{ maxWidth: "320px" }}>
+    {/* Token IDs — state, minimal */}
+    <rect x="74" y="8" width="112" height="28" rx="6" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1.5" />
+    <text x="130" y="26" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Token IDs</text>
 
-    {/* Arrow */}
-    <line x1="130" y1="32" x2="130" y2="50" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
-    <polygon points="126,44 130,52 134,44" fill="var(--color-accent-2)" fillOpacity="0.5" />
+    <line x1="130" y1="36" x2="130" y2="44" stroke="var(--color-border-hover)" strokeWidth="1" />
+    <polygon points="127,44 130,50 133,44" fill="var(--color-border-hover)" />
 
-    {/* Input Processing */}
-    <rect x="56" y="52" width="148" height="36" rx="6" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 25%, transparent)" strokeWidth="1" />
-    <text x="130" y="74" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontWeight="600">Input Processing</text>
+    {/* Input Processing — stage */}
+    <rect x="40" y="50" width="180" height="34" rx="6" fill="color-mix(in srgb, var(--color-primary) 6%, transparent)" stroke="var(--color-border-hover)" strokeWidth="1" />
+    <text x="130" y="72" textAnchor="middle" fill="var(--color-primary)" fontSize="12" fontWeight="600">Input Processing</text>
 
-    {/* Arrow */}
-    <line x1="130" y1="88" x2="130" y2="106" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
-    <polygon points="126,100 130,108 134,100" fill="var(--color-accent-2)" fillOpacity="0.5" />
+    <line x1="130" y1="84" x2="130" y2="94" stroke="var(--color-border-hover)" strokeWidth="1" />
+    <polygon points="127,94 130,100 133,94" fill="var(--color-border-hover)" />
 
-    {/* Transformer Block x N */}
-    <rect x="40" y="108" width="180" height="68" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 10%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 35%, transparent)" strokeWidth="1" strokeDasharray="4 3" />
-    <text x="130" y="138" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Transformer Block</text>
-    <text x="130" y="155" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN</text>
-    <text x="226" y="148" textAnchor="start" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">×N</text>
+    {/* Transformer Block ×N — the hero, solid border, stronger presence */}
+    <rect x="40" y="100" width="180" height="62" rx="8" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" strokeDasharray="4 3" />
+    <text x="130" y="126" textAnchor="middle" fill="var(--color-accent-4)" fontSize="13" fontWeight="600">Transformer Block</text>
+    <text x="130" y="144" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN</text>
+    <text x="226" y="135" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">×N</text>
 
-    {/* Arrow */}
-    <line x1="130" y1="176" x2="130" y2="194" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
-    <polygon points="126,188 130,196 134,188" fill="var(--color-accent-2)" fillOpacity="0.5" />
+    <line x1="130" y1="162" x2="130" y2="172" stroke="var(--color-border-hover)" strokeWidth="1" />
+    <polygon points="127,172 130,178 133,172" fill="var(--color-border-hover)" />
 
-    {/* Output Processing */}
-    <rect x="48" y="196" width="164" height="36" rx="6" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 25%, transparent)" strokeWidth="1" />
-    <text x="130" y="218" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontWeight="600">Output Processing</text>
+    {/* Output Processing — stage */}
+    <rect x="40" y="178" width="180" height="34" rx="6" fill="color-mix(in srgb, var(--color-primary) 6%, transparent)" stroke="var(--color-border-hover)" strokeWidth="1" />
+    <text x="130" y="200" textAnchor="middle" fill="var(--color-primary)" fontSize="12" fontWeight="600">Output Processing</text>
 
-    {/* Arrow */}
-    <line x1="130" y1="232" x2="130" y2="250" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
-    <polygon points="126,244 130,252 134,244" fill="var(--color-accent-2)" fillOpacity="0.5" />
+    <line x1="130" y1="212" x2="130" y2="222" stroke="var(--color-border-hover)" strokeWidth="1" />
+    <polygon points="127,222 130,228 133,222" fill="var(--color-border-hover)" />
 
-    {/* Probabilities */}
-    <rect x="72" y="252" width="116" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
-    <text x="130" y="269" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Probabilities</text>
+    {/* Probabilities — state, minimal */}
+    <rect x="74" y="228" width="112" height="28" rx="6" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1.5" />
+    <text x="130" y="246" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Probabilities</text>
   </svg>
 </div>
 
@@ -63,90 +59,46 @@ description: "How all components combine into the repeatable transformer block."
 
   {/* Single Transformer Block — Pre-Norm internal structure */}
   <div className="my-8 flex justify-center">
-    <svg viewBox="0 0 220 406" className="w-full" style={{ maxWidth: "220px", display: "block" }}>
-      {/* Input */}
-      <rect x="37" y="6" width="56" height="22" rx="4" fill="var(--color-surface)" stroke="var(--color-border)" strokeWidth="1" />
-      <text x="65" y="21" textAnchor="middle" fill="var(--color-primary)" fontSize="10" fontFamily="var(--font-mono)">input</text>
+    <svg viewBox="0 0 252 406" className="w-full" style={{ maxWidth: "315px" }}>
+      <rect x="28" y="6" width="56" height="28" rx="6" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1.5" />
+      <text x="56" y="25" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">input</text>
 
-      {/* === Attention Sub-Block === */}
+      <line x1="56" y1="34" x2="56" y2="57" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
 
-      {/* Input to fork */}
-      <line x1="65" y1="28" x2="65" y2="46" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
+      <circle cx="56" cy="60" r="3" fill="var(--color-accent-2)" />
+      <line x1="56" y1="63" x2="56" y2="211" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
+      <line x1="59" y1="60" x2="176" y2="60" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="176" y1="60" x2="176" y2="78" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <rect x="120" y="78" width="112" height="32" rx="6" fill="color-mix(in srgb, var(--color-accent-1) 18%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
+      <text x="176" y="99" textAnchor="middle" fill="var(--color-accent-1)" fontSize="11" fontFamily="var(--font-mono)">LayerNorm</text>
+      <line x1="176" y1="110" x2="176" y2="126" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <rect x="120" y="126" width="112" height="32" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" />
+      <text x="176" y="147" textAnchor="middle" fill="var(--color-accent-4)" fontSize="11" fontFamily="var(--font-mono)">Attention</text>
+      <line x1="176" y1="158" x2="176" y2="172" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="176" y1="172" x2="64" y2="172" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <circle cx="56" cy="172" r="8" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" />
+      <line x1="52.5" y1="172" x2="59.5" y2="172" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="56" y1="168.5" x2="56" y2="175.5" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* Fork dot */}
-      <circle cx="65" cy="46" r="4" fill="var(--color-accent-2)" />
+      <circle cx="56" cy="214" r="3" fill="var(--color-accent-2)" />
+      <line x1="56" y1="217" x2="56" y2="378" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
+      <line x1="59" y1="214" x2="176" y2="214" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="176" y1="214" x2="176" y2="232" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <rect x="120" y="232" width="112" height="32" rx="6" fill="color-mix(in srgb, var(--color-accent-1) 18%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
+      <text x="176" y="253" textAnchor="middle" fill="var(--color-accent-1)" fontSize="11" fontFamily="var(--font-mono)">LayerNorm</text>
+      <line x1="176" y1="264" x2="176" y2="280" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <rect x="120" y="280" width="112" height="32" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" />
+      <text x="176" y="301" textAnchor="middle" fill="var(--color-accent-4)" fontSize="11" fontFamily="var(--font-mono)">FFN</text>
+      <line x1="176" y1="312" x2="176" y2="326" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="176" y1="326" x2="64" y2="326" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <circle cx="56" cy="326" r="8" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" />
+      <line x1="52.5" y1="326" x2="59.5" y2="326" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="56" y1="322.5" x2="56" y2="329.5" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* Identity path (straight through to addition) */}
-      <line x1="65" y1="46" x2="65" y2="164" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
-
-      {/* Branch: horizontal from fork */}
-      <line x1="65" y1="46" x2="158" y2="46" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-
-      {/* Branch: down to LayerNorm */}
-      <line x1="158" y1="46" x2="158" y2="70" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="154,64 158,72 162,64" fill="var(--color-secondary)" fillOpacity="0.5" />
-
-      {/* LayerNorm 1 */}
-      <rect x="111" y="72" width="94" height="26" rx="5" fill="color-mix(in srgb, var(--color-accent-1) 10%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
-      <text x="158" y="89" textAnchor="middle" fill="var(--color-accent-1)" fontSize="9" fontFamily="var(--font-mono)">LayerNorm</text>
-
-      {/* Down to Attention */}
-      <line x1="158" y1="98" x2="158" y2="112" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="154,106 158,114 162,106" fill="var(--color-secondary)" fillOpacity="0.5" />
-
-      {/* Multi-Head Attention */}
-      <rect x="100" y="114" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-4) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 30%, transparent)" strokeWidth="1" />
-      <text x="158" y="132" textAnchor="middle" fill="var(--color-accent-4)" fontSize="10" fontFamily="var(--font-mono)">Multi-Head Attn</text>
-
-      {/* Return: down from Attn, rounded corner, left to + */}
-      <path d="M 158 142 L 158 170 Q 158 176 152 176 L 77 176" fill="none" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-
-      {/* Addition circle 1 */}
-      <circle cx="65" cy="176" r="12" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
-      <text x="65" y="181" textAnchor="middle" fill="var(--color-accent-2)" fontSize="14" fontWeight="bold">+</text>
-
-      {/* === FFN Sub-Block === */}
-
-      {/* Addition to fork */}
-      <line x1="65" y1="188" x2="65" y2="210" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
-
-      {/* Fork dot */}
-      <circle cx="65" cy="210" r="4" fill="var(--color-accent-2)" />
-
-      {/* Identity path (straight through to addition) */}
-      <line x1="65" y1="210" x2="65" y2="328" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
-
-      {/* Branch: horizontal from fork */}
-      <line x1="65" y1="210" x2="158" y2="210" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-
-      {/* Branch: down to LayerNorm */}
-      <line x1="158" y1="210" x2="158" y2="234" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="154,228 158,236 162,228" fill="var(--color-secondary)" fillOpacity="0.5" />
-
-      {/* LayerNorm 2 */}
-      <rect x="111" y="236" width="94" height="26" rx="5" fill="color-mix(in srgb, var(--color-accent-1) 10%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
-      <text x="158" y="253" textAnchor="middle" fill="var(--color-accent-1)" fontSize="9" fontFamily="var(--font-mono)">LayerNorm</text>
-
-      {/* Down to FFN */}
-      <line x1="158" y1="262" x2="158" y2="276" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="154,270 158,278 162,270" fill="var(--color-secondary)" fillOpacity="0.5" />
-
-      {/* FFN */}
-      <rect x="120" y="278" width="76" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-4) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 30%, transparent)" strokeWidth="1" />
-      <text x="158" y="296" textAnchor="middle" fill="var(--color-accent-4)" fontSize="10" fontFamily="var(--font-mono)">FFN</text>
-
-      {/* Return: down from FFN, rounded corner, left to + */}
-      <path d="M 158 306 L 158 334 Q 158 340 152 340 L 77 340" fill="none" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-
-      {/* Addition circle 2 */}
-      <circle cx="65" cy="340" r="12" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
-      <text x="65" y="345" textAnchor="middle" fill="var(--color-accent-2)" fontSize="14" fontWeight="bold">+</text>
-
-      {/* Output */}
-      <line x1="65" y1="352" x2="65" y2="374" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.7" />
-      <polygon points="61,368 65,376 69,368" fill="var(--color-accent-2)" fillOpacity="0.7" />
-      <rect x="37" y="378" width="56" height="22" rx="4" fill="var(--color-surface)" stroke="var(--color-border)" strokeWidth="1" />
-      <text x="65" y="393" textAnchor="middle" fill="var(--color-primary)" fontSize="10" fontFamily="var(--font-mono)">output</text>
+      <line x1="56" y1="334" x2="56" y2="369" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
+      <polygon points="53,369 56,375 59,369" fill="var(--color-accent-2)" fillOpacity="0.8" />
+      <rect x="28" y="378" width="56" height="28" rx="6" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1.5" />
+      <text x="56" y="397" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">output</text>
     </svg>
   </div>
 
@@ -212,92 +164,62 @@ class Block(nn.Module):
     Every block in the stack shares the same internal structure, the same two sub-blocks in the same Pre-Norm arrangement. What differs is their learned weights, which determine what each block's attention focuses on and what its FFN computes.
   </Description>
 
-  {/* Stacked Transformer Blocks — showing residual stream as continuous path */}
+  {/* Stacked Transformer Blocks — compact modules on one residual spine */}
   <div className="my-8 flex justify-center">
-    <svg viewBox="0 0 260 380" className="w-full" style={{ maxWidth: "340px", display: "block" }}>
-      {/* Residual stream — continuous vertical line */}
-      <line x1="48" y1="24" x2="48" y2="358" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.6" />
+    <svg viewBox="0 0 248 354" className="w-full" style={{ maxWidth: "310px" }}>
+      {/* Input / output state boxes */}
+      <rect x="36" y="6" width="56" height="28" rx="6" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1.5" />
+      <text x="64" y="25" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">input</text>
 
-      {/* Residual stream label */}
-      <text x="16" y="190" textAnchor="middle" fill="var(--color-accent-2)" fontSize="9" fontFamily="var(--font-mono)" transform="rotate(-90, 16, 190)" fillOpacity="0.6">residual stream</text>
+      <rect x="36" y="320" width="56" height="28" rx="6" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1.5" />
+      <text x="64" y="339" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">output</text>
 
-      {/* Input */}
-      <text x="48" y="16" textAnchor="middle" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">input</text>
+      {/* Residual stream */}
+      <line x1="64" y1="34" x2="64" y2="53" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
+      <line x1="64" y1="59" x2="64" y2="137" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
+      <line x1="64" y1="143" x2="64" y2="237" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
+      <line x1="64" y1="243" x2="64" y2="312" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
+      <polygon points="61,312 64,318 67,312" fill="var(--color-accent-2)" fillOpacity="0.8" />
+      <text x="22" y="170" textAnchor="middle" fill="var(--color-accent-2)" fontSize="10" fontFamily="var(--font-mono)" transform="rotate(-90, 22, 170)">residual stream</text>
 
-      {/* === Block 1 === */}
-      {/* Fork dot */}
-      <circle cx="48" cy="48" r="3" fill="var(--color-accent-2)" />
+      {/* Block 1 */}
+      <circle cx="64" cy="56" r="3" fill="var(--color-accent-2)" />
+      <line x1="67" y1="56" x2="156" y2="56" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="156" y1="56" x2="156" y2="64" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <rect x="100" y="64" width="112" height="32" rx="8" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" />
+      <text x="156" y="85" textAnchor="middle" fill="var(--color-accent-4)" fontSize="11" fontFamily="var(--font-mono)">Block 1</text>
+      <line x1="156" y1="96" x2="156" y2="104" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="156" y1="104" x2="74" y2="104" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <circle cx="64" cy="104" r="8" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" />
+      <line x1="60.5" y1="104" x2="67.5" y2="104" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="64" y1="100.5" x2="64" y2="107.5" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* Branch to block center-top */}
-      <line x1="48" y1="48" x2="158" y2="48" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <line x1="158" y1="48" x2="158" y2="56" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      {/* Block 2 */}
+      <circle cx="64" cy="140" r="3" fill="var(--color-accent-2)" />
+      <line x1="67" y1="140" x2="156" y2="140" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="156" y1="140" x2="156" y2="148" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <rect x="100" y="148" width="112" height="32" rx="8" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" />
+      <text x="156" y="169" textAnchor="middle" fill="var(--color-accent-4)" fontSize="11" fontFamily="var(--font-mono)">Block 2</text>
+      <line x1="156" y1="180" x2="156" y2="188" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="156" y1="188" x2="74" y2="188" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <circle cx="64" cy="188" r="8" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" />
+      <line x1="60.5" y1="188" x2="67.5" y2="188" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="64" y1="184.5" x2="64" y2="191.5" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* Block 1 box */}
-      <rect x="80" y="56" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
-      <text x="158" y="74" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block 1</text>
-      <text x="158" y="90" textAnchor="middle" fill="var(--color-muted)" fontSize="9.5" fontFamily="var(--font-mono)">Attn + FFN · weights₁</text>
+      {/* Ellipsis */}
+      <text x="156" y="222" textAnchor="middle" fill="var(--color-muted)" fontSize="16">···</text>
 
-      {/* Return from block center-bottom */}
-      <line x1="158" y1="100" x2="158" y2="112" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <line x1="158" y1="112" x2="60" y2="112" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="60,108.5 52,112 60,115.5" fill="var(--color-secondary)" fillOpacity="0.5" />
-
-      {/* + node */}
-      <circle cx="48" cy="112" r="9" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
-      <text x="48" y="116" textAnchor="middle" fill="var(--color-accent-2)" fontSize="12" fontWeight="bold">+</text>
-
-      {/* === Block 2 === */}
-      {/* Fork dot */}
-      <circle cx="48" cy="148" r="3" fill="var(--color-accent-2)" />
-
-      {/* Branch to block center-top */}
-      <line x1="48" y1="148" x2="158" y2="148" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <line x1="158" y1="148" x2="158" y2="156" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-
-      {/* Block 2 box */}
-      <rect x="80" y="156" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
-      <text x="158" y="174" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block 2</text>
-      <text x="158" y="190" textAnchor="middle" fill="var(--color-muted)" fontSize="9.5" fontFamily="var(--font-mono)">Attn + FFN · weights₂</text>
-
-      {/* Return from block center-bottom */}
-      <line x1="158" y1="200" x2="158" y2="212" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <line x1="158" y1="212" x2="60" y2="212" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="60,208.5 52,212 60,215.5" fill="var(--color-secondary)" fillOpacity="0.5" />
-
-      {/* + node */}
-      <circle cx="48" cy="212" r="9" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
-      <text x="48" y="216" textAnchor="middle" fill="var(--color-accent-2)" fontSize="12" fontWeight="bold">+</text>
-
-      {/* Dots */}
-      <text x="158" y="248" textAnchor="middle" fill="var(--color-muted)" fontSize="16">···</text>
-
-      {/* === Block N === */}
-      {/* Fork dot */}
-      <circle cx="48" cy="268" r="3" fill="var(--color-accent-2)" />
-
-      {/* Branch to block center-top */}
-      <line x1="48" y1="268" x2="158" y2="268" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <line x1="158" y1="268" x2="158" y2="276" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-
-      {/* Block N box */}
-      <rect x="80" y="276" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
-      <text x="158" y="294" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block N</text>
-      <text x="158" y="310" textAnchor="middle" fill="var(--color-muted)" fontSize="9.5" fontFamily="var(--font-mono)">Attn + FFN · weightsₙ</text>
-
-      {/* Return from block center-bottom */}
-      <line x1="158" y1="320" x2="158" y2="332" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <line x1="158" y1="332" x2="60" y2="332" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="60,328.5 52,332 60,335.5" fill="var(--color-secondary)" fillOpacity="0.5" />
-
-      {/* + node */}
-      <circle cx="48" cy="332" r="9" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
-      <text x="48" y="336" textAnchor="middle" fill="var(--color-accent-2)" fontSize="12" fontWeight="bold">+</text>
-
-      {/* Output arrow */}
-      <polygon points="44,352 48,360 52,352" fill="var(--color-accent-2)" fillOpacity="0.7" />
-
-      {/* Output */}
-      <text x="48" y="376" textAnchor="middle" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">output</text>
+      {/* Block N */}
+      <circle cx="64" cy="240" r="3" fill="var(--color-accent-2)" />
+      <line x1="67" y1="240" x2="156" y2="240" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="156" y1="240" x2="156" y2="248" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <rect x="100" y="248" width="112" height="32" rx="8" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" />
+      <text x="156" y="269" textAnchor="middle" fill="var(--color-accent-4)" fontSize="11" fontFamily="var(--font-mono)">Block N</text>
+      <line x1="156" y1="280" x2="156" y2="288" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="156" y1="288" x2="74" y2="288" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <circle cx="64" cy="288" r="8" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" />
+      <line x1="60.5" y1="288" x2="67.5" y2="288" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="64" y1="284.5" x2="64" y2="291.5" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   </div>
 
@@ -312,117 +234,86 @@ class Block(nn.Module):
     The full architecture assembles everything covered so far into three stages: input processing converts token IDs into vectors, the block stack refines those vectors, and output processing converts the final vectors into predictions.
   </Description>
 
-  {/* Full GPT Architecture — straight residual stream, blocks branch right */}
+  {/* Full GPT Architecture — one vertical flow, repeated block modules, clean output stage */}
   <div className="my-8 flex justify-center">
-    <svg viewBox="-30 0 330 560" className="w-full" style={{ maxWidth: "400px", display: "block" }}>
+    <svg viewBox="-16 0 300 520" className="w-full" style={{ maxWidth: "375px" }}>
+      {/* Input processing */}
+      <rect x="24" y="6" width="112" height="28" rx="6" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1.5" />
+      <text x="80" y="25" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Token IDs</text>
 
-      {/* === Input section — sequential flow arrows, no stream line === */}
+      <line x1="80" y1="34" x2="80" y2="56" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
 
-      {/* Token IDs */}
-      <rect x="10" y="6" width="100" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
-      <text x="60" y="23" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Token IDs</text>
+      <rect x="24" y="56" width="112" height="32" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" />
+      <text x="80" y="77" textAnchor="middle" fill="var(--color-accent-4)" fontSize="11" fontFamily="var(--font-mono)">Token Embed</text>
 
-      {/* Arrow: Token IDs → Token Embed */}
-      <line x1="60" y1="32" x2="60" y2="46" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="56,40 60,48 64,40" fill="var(--color-accent-2)" fillOpacity="0.5" />
+      <line x1="80" y1="88" x2="80" y2="100" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
 
-      {/* Token Embeddings */}
-      <rect x="2" y="48" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 30%, transparent)" strokeWidth="1" />
-      <text x="60" y="66" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontFamily="var(--font-mono)">Token Embed</text>
+      <circle cx="80" cy="108" r="8" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" />
+      <line x1="76.5" y1="108" x2="83.5" y2="108" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="80" y1="104.5" x2="80" y2="111.5" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
+      <text x="103" y="112" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">pos emb</text>
 
-      {/* Arrow: Token Embed → + */}
-      <line x1="60" y1="76" x2="60" y2="84" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="80" y1="116" x2="80" y2="144" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
 
-      {/* + Positional Embeddings */}
-      <circle cx="60" cy="96" r="10" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
-      <text x="60" y="100" textAnchor="middle" fill="var(--color-accent-2)" fontSize="13" fontWeight="bold">+</text>
-      <text x="80" y="100" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Pos Embed</text>
+      {/* Block stack container */}
+      <rect x="48" y="144" width="200" height="190" rx="10" fill="none" stroke="var(--color-border)" strokeWidth="1" strokeDasharray="4 3" />
+      <text x="254" y="242" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">×N</text>
 
-      {/* Arrow: + → block stack */}
-      <line x1="60" y1="106" x2="60" y2="126" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
+      {/* Block stack residual stream label */}
+      <text x="32" y="240" textAnchor="middle" fill="var(--color-accent-2)" fontSize="10" fontFamily="var(--font-mono)" transform="rotate(-90, 32, 240)">residual stream</text>
 
-      {/* === Block stack section — residual stream only here === */}
+      {/* Residual stream inside stack only */}
+      <line x1="80" y1="144" x2="80" y2="161" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
+      <line x1="80" y1="167" x2="80" y2="271" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
+      <line x1="80" y1="277" x2="80" y2="334" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
 
-      {/* Residual stream line — only spans the block section */}
-      <line x1="60" y1="126" x2="60" y2="390" stroke="var(--color-accent-2)" strokeWidth="2.5" strokeOpacity="0.5" />
+      {/* Block 1 */}
+      <circle cx="80" cy="164" r="3" fill="var(--color-accent-2)" />
+      <line x1="83" y1="164" x2="176" y2="164" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="176" y1="164" x2="176" y2="172" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <rect x="120" y="172" width="112" height="32" rx="8" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" />
+      <text x="176" y="193" textAnchor="middle" fill="var(--color-accent-4)" fontSize="11" fontFamily="var(--font-mono)">Block 1</text>
+      <line x1="176" y1="204" x2="176" y2="212" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="176" y1="212" x2="90" y2="212" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <circle cx="80" cy="212" r="8" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" />
+      <line x1="76.5" y1="212" x2="83.5" y2="212" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="80" y1="208.5" x2="80" y2="215.5" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* Block group dashed outline */}
-      <rect x="36" y="118" width="230" height="280" rx="8" fill="none" stroke="var(--color-border)" strokeWidth="1" strokeDasharray="4 3" />
-      <text x="270" y="260" textAnchor="start" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">×N</text>
+      {/* Ellipsis */}
+      <text x="176" y="252" textAnchor="middle" fill="var(--color-muted)" fontSize="16">···</text>
 
-      {/* === Block 1 === */}
-      <circle cx="60" cy="144" r="3" fill="var(--color-accent-2)" />
-      <line x1="60" y1="144" x2="170" y2="144" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <line x1="170" y1="144" x2="170" y2="152" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      {/* Block N */}
+      <circle cx="80" cy="274" r="3" fill="var(--color-accent-2)" />
+      <line x1="83" y1="274" x2="176" y2="274" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="176" y1="274" x2="176" y2="282" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <rect x="120" y="282" width="112" height="32" rx="8" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" />
+      <text x="176" y="303" textAnchor="middle" fill="var(--color-accent-4)" fontSize="11" fontFamily="var(--font-mono)">Block N</text>
+      <line x1="176" y1="314" x2="176" y2="322" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <line x1="176" y1="322" x2="90" y2="322" stroke="var(--color-border-hover)" strokeWidth="1" />
+      <circle cx="80" cy="322" r="8" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" />
+      <line x1="76.5" y1="322" x2="83.5" y2="322" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="80" y1="318.5" x2="80" y2="325.5" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
 
-      <rect x="92" y="152" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
-      <text x="170" y="170" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block 1</text>
-      <text x="170" y="186" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN · weights₁</text>
+      {/* Output processing — with direction arrow */}
+      <polygon points="77,334 80,340 83,334" fill="var(--color-accent-2)" fillOpacity="0.8" />
 
-      <line x1="170" y1="196" x2="170" y2="208" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <line x1="170" y1="208" x2="72" y2="208" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="72,204.5 64,208 72,211.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+      <rect x="24" y="342" width="112" height="32" rx="6" fill="color-mix(in srgb, var(--color-accent-1) 18%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
+      <text x="80" y="363" textAnchor="middle" fill="var(--color-accent-1)" fontSize="11" fontFamily="var(--font-mono)">ln_f</text>
 
-      <circle cx="60" cy="208" r="10" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
-      <text x="60" y="212" textAnchor="middle" fill="var(--color-accent-2)" fontSize="13" fontWeight="bold">+</text>
+      <line x1="80" y1="374" x2="80" y2="390" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
 
-      {/* Dots */}
-      <text x="170" y="248" textAnchor="middle" fill="var(--color-muted)" fontSize="18">···</text>
+      <rect x="24" y="390" width="112" height="32" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" />
+      <text x="80" y="411" textAnchor="middle" fill="var(--color-accent-4)" fontSize="11" fontFamily="var(--font-mono)">Output Proj</text>
 
-      {/* === Block N === */}
-      <circle cx="60" cy="272" r="3" fill="var(--color-accent-2)" />
-      <line x1="60" y1="272" x2="170" y2="272" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <line x1="170" y1="272" x2="170" y2="280" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
+      <line x1="80" y1="422" x2="80" y2="438" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
 
-      <rect x="92" y="280" width="156" height="44" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 5%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 25%, transparent)" strokeWidth="1" />
-      <text x="170" y="298" textAnchor="middle" fill="var(--color-accent-4)" fontSize="12" fontWeight="600">Block N</text>
-      <text x="170" y="314" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN · weightsₙ</text>
+      <rect x="24" y="438" width="112" height="32" rx="6" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" />
+      <text x="80" y="459" textAnchor="middle" fill="var(--color-accent-4)" fontSize="11" fontFamily="var(--font-mono)">Softmax</text>
 
-      <line x1="170" y1="324" x2="170" y2="336" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <line x1="170" y1="336" x2="72" y2="336" stroke="var(--color-secondary)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="72,332.5 64,336 72,339.5" fill="var(--color-secondary)" fillOpacity="0.5" />
+      <line x1="80" y1="470" x2="80" y2="486" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
 
-      <circle cx="60" cy="336" r="10" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeWidth="1.5" />
-      <text x="60" y="340" textAnchor="middle" fill="var(--color-accent-2)" fontSize="13" fontWeight="bold">+</text>
-
-      {/* === Output section — sequential flow arrows, no stream line === */}
-
-      {/* Arrow: block stack → ln_f */}
-      <line x1="60" y1="390" x2="60" y2="408" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="56,402 60,410 64,402" fill="var(--color-accent-2)" fillOpacity="0.5" />
-
-      {/* ln_f */}
-      <rect x="2" y="410" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-1) 10%, transparent)" stroke="var(--color-accent-1)" strokeWidth="1" />
-      <text x="60" y="428" textAnchor="middle" fill="var(--color-accent-1)" fontSize="11" fontFamily="var(--font-mono)">ln_f (LayerNorm)</text>
-
-      {/* Arrow: ln_f → Output Proj */}
-      <line x1="60" y1="438" x2="60" y2="452" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="56,446 60,454 64,446" fill="var(--color-accent-2)" fillOpacity="0.5" />
-
-      {/* Output Projection */}
-      <rect x="2" y="454" width="116" height="28" rx="5" fill="color-mix(in srgb, var(--color-accent-3) 8%, transparent)" stroke="color-mix(in srgb, var(--color-accent-3) 30%, transparent)" strokeWidth="1" />
-      <text x="60" y="472" textAnchor="middle" fill="var(--color-accent-3)" fontSize="11" fontFamily="var(--font-mono)">Output Proj</text>
-      <text x="128" y="472" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">→ vocab size</text>
-
-      {/* Weight tying annotation */}
-      <path d="M 2 62 C -28 62 -28 468 2 468" fill="none" stroke="var(--color-muted)" strokeWidth="0.8" strokeDasharray="3 2" />
-      <text x="-14" y="266" textAnchor="middle" fill="var(--color-muted)" fontSize="9" fontFamily="var(--font-mono)" transform="rotate(-90, -14, 266)">weight tying</text>
-
-      {/* Arrow: Output Proj → Softmax */}
-      <line x1="60" y1="482" x2="60" y2="496" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="56,490 60,498 64,490" fill="var(--color-accent-2)" fillOpacity="0.5" />
-      <text x="76" y="493" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">logits</text>
-
-      {/* Softmax */}
-      <rect x="16" y="498" width="88" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1" />
-      <text x="60" y="515" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Softmax</text>
-
-      {/* Arrow: Softmax → probabilities */}
-      <line x1="60" y1="524" x2="60" y2="536" stroke="var(--color-accent-2)" strokeWidth="1.5" strokeOpacity="0.5" />
-      <polygon points="56,530 60,538 64,530" fill="var(--color-accent-2)" fillOpacity="0.5" />
-
-      {/* Probabilities */}
-      <text x="60" y="552" textAnchor="middle" fill="var(--color-muted)" fontSize="11" fontFamily="var(--font-mono)">next-token probs</text>
+      <rect x="24" y="486" width="112" height="28" rx="6" fill="var(--color-surface)" stroke="var(--color-border-hover)" strokeWidth="1.5" />
+      <text x="80" y="505" textAnchor="middle" fill="var(--color-primary)" fontSize="11" fontFamily="var(--font-mono)">Probabilities</text>
     </svg>
   </div>
 
