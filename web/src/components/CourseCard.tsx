@@ -71,7 +71,7 @@ export function CourseCard({
         {tags.map((tag) => (
           <span
             key={tag}
-            className="px-2 py-0.5 rounded bg-surface text-xs text-subtle"
+            className="px-2 py-0.5 rounded bg-surface text-xs text-subtle font-medium"
           >
             {tag}
           </span>
