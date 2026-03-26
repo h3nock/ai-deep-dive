@@ -129,7 +129,7 @@ export function BinaryVsSmooth() {
         marginBottom: "var(--space-flow)",
       }}
     >
-      <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">
+      <div className="text-xs font-medium text-subtle uppercase tracking-wider mb-2">
         3 Dimensions · Different Frequencies
       </div>
 
@@ -337,7 +337,7 @@ export function BinaryVsSmooth() {
         <div className="mt-5 pt-4 border-t border-border">
           <div className="grid grid-cols-[auto_1fr_1fr] gap-x-3 items-baseline">
             <div className="w-16 text-right pr-1">
-              <div className="text-[11px] text-muted">Encoding</div>
+              <div className="text-[11px] text-subtle">Encoding</div>
             </div>
             <div className="text-center">
               <span className="font-mono tabular-nums text-sm">

@@ -65,7 +65,7 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
         className="text-center"
         style={{ marginBottom: "var(--space-atomic)" }}
       >
-        <span className="text-xs text-muted">
+        <span className="text-xs text-subtle">
           {showArrows
             ? "Vector Arithmetic"
             : "2D Vector Space"}
@@ -286,14 +286,14 @@ export function EmbeddingSpace({ showArrows = false }: EmbeddingSpaceProps) {
                 style={{ borderLeftColor: withAlpha(viz.secondary, 0.7) }}
               />
             </div>
-            <span className="text-xs text-muted">Same direction = Same concept</span>
+            <span className="text-xs text-subtle">Same direction = Same concept</span>
           </div>
         </div>
       )}
 
       {/* Caption */}
       <p
-        className="text-center text-xs text-muted"
+        className="text-center text-xs text-subtle"
         style={{ marginTop: "var(--space-connected)" }}
       >
         {showArrows

@@ -96,7 +96,7 @@ export function Callout({ type = "note", title, muted = false, children }: Callo
   }
 
   // Text color: muted callouts use lighter text to de-emphasize
-  const textColorClass = muted ? "text-muted" : "text-secondary";
+  const textColorClass = muted ? "text-subtle" : "text-secondary";
 
   // Default callout: Left-border pattern
   // Connected to preceding content, provides reset after

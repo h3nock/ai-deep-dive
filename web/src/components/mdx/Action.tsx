@@ -28,7 +28,7 @@ export function Action({ children }: { children: React.ReactNode }) {
             <div className="w-3 h-3 rounded-full bg-border-hover"></div>
             <div className="w-3 h-3 rounded-full bg-border-hover"></div>
           </div>
-          <div className="text-xs font-mono text-muted uppercase tracking-wider flex items-center gap-2">
+          <div className="text-xs font-mono text-subtle uppercase tracking-wider flex items-center gap-2">
             <Terminal className="w-3 h-3" />
             zsh
           </div>

@@ -31,7 +31,7 @@ export function Description({
     >
       <div
         className="[&>p]:text-lg [&>p]:leading-relaxed [&>p]:text-secondary [&>p:not(:last-child)]:mb-4
-        [&>h3]:text-xs [&>h3]:uppercase [&>h3]:tracking-widest [&>h3]:text-muted [&>h3]:font-medium [&>h3]:mt-6 [&>h3]:mb-2
+        [&>h3]:text-xs [&>h3]:uppercase [&>h3]:tracking-widest [&>h3]:text-subtle [&>h3]:font-medium [&>h3]:mt-6 [&>h3]:mb-2
         [&_strong]:text-primary [&_strong]:font-semibold
         [&_code]:text-sm [&_code]:text-secondary [&_code]:bg-surface [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded
         [&>p_a]:text-primary [&>p_a]:underline [&>p_a]:underline-offset-4 [&>p_a]:decoration-border hover:[&>p_a]:decoration-secondary hover:[&>p_a]:text-primary [&>p_a]:transition-colors

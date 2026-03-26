@@ -21,7 +21,7 @@ export function Command({
   return (
     <div className="group relative flex items-start gap-3 py-2 px-4 -mx-4 hover:bg-surface/50 rounded-lg transition-colors">
       {/* Prompt */}
-      <div className="shrink-0 mt-1.5 text-muted select-none">
+      <div className="shrink-0 mt-1.5 text-subtle select-none">
         <span className="text-info font-bold">❯</span>
       </div>
 
@@ -29,14 +29,14 @@ export function Command({
       <div className="flex-1 min-w-0 font-mono text-sm leading-relaxed break-all">
         <span className="text-secondary">{children}</span>
         {comment && (
-          <span className="ml-4 text-muted select-none"># {comment}</span>
+          <span className="ml-4 text-subtle select-none"># {comment}</span>
         )}
       </div>
 
       {/* Copy Button */}
       <button
         onClick={handleCopy}
-        className="shrink-0 p-1.5 rounded-md text-muted hover:text-primary hover:bg-border-hover opacity-0 group-hover:opacity-100 transition-all"
+        className="shrink-0 p-1.5 rounded-md text-subtle hover:text-primary hover:bg-border-hover opacity-0 group-hover:opacity-100 transition-all"
         aria-label="Copy command"
       >
         {copied ? (
