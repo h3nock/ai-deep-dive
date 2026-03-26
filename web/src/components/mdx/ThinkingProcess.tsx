@@ -58,7 +58,7 @@ export function ThinkingProcess({
 
       {/* Subtext */}
       <p
-        className="text-sm text-muted italic"
+        className="text-sm text-subtle italic"
         style={{ marginBottom: "var(--space-flow)" }}
       >
         Take a moment to think before revealing the answer.
@@ -69,7 +69,7 @@ export function ThinkingProcess({
         <div style={{ marginBottom: "var(--space-flow)" }}>
           <button
             onClick={() => setIsHintOpen(!isHintOpen)}
-            className="group flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors"
+            className="group flex items-center gap-2 text-sm text-subtle hover:text-primary transition-colors"
           >
             <ChevronDown
               className={`w-4 h-4 transition-transform duration-200 ${

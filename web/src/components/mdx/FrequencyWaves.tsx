@@ -125,7 +125,7 @@ export function FrequencyWaves() {
         marginBottom: "var(--space-flow)",
       }}
     >
-      <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">
+      <div className="text-xs font-medium text-subtle uppercase tracking-wider mb-2">
         Multi-Frequency Encoding: Clocks + Waves
       </div>
 
@@ -264,7 +264,7 @@ export function FrequencyWaves() {
 
                 {/* Label */}
                 <div className="w-16 shrink-0">
-                  <div className="text-xs text-muted">Dim {wave.dim}</div>
+                  <div className="text-xs text-subtle">Dim {wave.dim}</div>
                   <div className="text-xs" style={{ color }}>
                     {FREQ_LABELS[index]}
                   </div>
@@ -340,7 +340,7 @@ export function FrequencyWaves() {
 
         {/* Fingerprint section */}
         <div className="mt-4 pt-3 border-t border-border">
-          <div className="text-[11px] text-muted text-center mb-2">
+          <div className="text-[11px] text-subtle text-center mb-2">
             Encoding Vector at Position {Math.round(position)}
           </div>
           <svg

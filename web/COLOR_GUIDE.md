@@ -24,16 +24,17 @@ Depth Stack (darkest to lightest):
 
 ### Text Hierarchy
 
-| Name                | Hex         | Tailwind           | Usage                                   |
-| ------------------- | ----------- | ------------------ | --------------------------------------- |
-| **Primary**   | `#D4D4D8` | `text-primary`   | Headings, bold text, important labels   |
-| **Secondary** | `#A1A1AA` | `text-secondary` | Body text, paragraphs                   |
-| **Muted**     | `#71717A` | `text-muted`     | Labels, captions, meta info, timestamps |
-| **Links**     | `#D4D4D8` | `text-primary`   | Interactive text elements (underline)   |
+| Name                | Hex         | Tailwind           | Usage                                              |
+| ------------------- | ----------- | ------------------ | -------------------------------------------------- |
+| **Primary**   | `#D4D4D8` | `text-primary`   | Headings, bold text, important labels              |
+| **Secondary** | `#A1A1AA` | `text-secondary` | Body text, paragraphs                              |
+| **Subtle**    | `#9898A0` | `text-subtle`    | Nav links, labels, metadata, badges, footer, tabs  |
+| **Muted**     | `#71717A` | `text-muted`     | Decorative watermarks, disabled states, placeholders |
+| **Links**     | `#D4D4D8` | `text-primary`   | Interactive text elements (underline)              |
 
 ```
-Reading contrast (lightest to darkest):
-#D4D4D8 (primary) → #A1A1AA (secondary) → #71717A (muted)
+Reading contrast on #09090B (lightest to darkest):
+#D4D4D8 (primary, 13.5:1) → #A1A1AA (secondary, 7.8:1) → #9898A0 (subtle, 6.9:1) → #71717A (muted, 4.1:1)
 ```
 
 ---
@@ -94,8 +95,9 @@ bg-zinc-800 text-secondary
 ### Labels & Captions
 
 ```jsx
-<span className="text-muted">   {/* #71717A */}
-<div className="text-xs font-medium text-muted uppercase tracking-wider">
+<span className="text-subtle">   {/* #9898A0 — readable labels */}
+<div className="text-xs font-medium text-subtle uppercase tracking-wider">
+<span className="text-muted">   {/* #71717A — decorative only */}
 ```
 ### Interactive Elements
 
@@ -183,7 +185,8 @@ BACKGROUNDS
 TEXT
   Headings/Bold:    text-primary     #D4D4D8
   Body:             text-secondary   #A1A1AA
-  Labels/Meta:      text-muted       #71717A
+  Labels/Nav/Meta:  text-subtle      #9898A0
+  Decorative:       text-muted       #71717A
   Links:            text-primary     #D4D4D8 (underline)
 
 BORDERS
@@ -215,6 +218,7 @@ Defined in `globals.css`:
 --color-surface: #18181b; /* Zinc-900 */
 --color-primary: #d4d4d8; /* Zinc-300 */
 --color-secondary: #a1a1aa; /* Zinc-400 */
+--color-subtle: #9898a0; /* Zinc-425 */
 --color-muted: #71717a; /* Zinc-500 */
 --color-border: #27272a; /* Zinc-800 */
 --color-success: #34d399; /* Emerald-400 */

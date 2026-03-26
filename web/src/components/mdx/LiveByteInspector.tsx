@@ -61,7 +61,7 @@ export function LiveByteInspector() {
   const getCounterColor = () => {
     if (charCount >= MAX_CHARS) return "text-error";
     if (charCount >= 12) return "text-warning";
-    return "text-muted";
+    return "text-subtle";
   };
 
   return (
@@ -72,7 +72,7 @@ export function LiveByteInspector() {
       }}
     >
       {/* Label outside container - per COMPONENT_GUIDE Pattern 2 */}
-      <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">
+      <div className="text-xs font-medium text-subtle uppercase tracking-wider mb-2">
         Type any text to see its bytes
       </div>
 
@@ -94,7 +94,7 @@ export function LiveByteInspector() {
 
         {/* Stats row */}
         <div
-          className="flex justify-center gap-6 text-sm text-muted mb-4"
+          className="flex justify-center gap-6 text-sm text-subtle mb-4"
         >
           <span>
             <span className="text-secondary">{charCount}</span> characters
@@ -114,14 +114,14 @@ export function LiveByteInspector() {
                 {/* Character */}
                 <div className="text-3xl mb-1">
                   {item.char === " " ? (
-                    <span className="text-muted text-xl">␣</span>
+                    <span className="text-subtle text-xl">␣</span>
                   ) : (
                     item.char
                   )}
                 </div>
 
                 {/* Code Point */}
-                <div className="text-xs text-muted font-mono mb-2">
+                <div className="text-xs text-subtle font-mono mb-2">
                   {item.codePoint}
                 </div>
 
@@ -136,7 +136,7 @@ export function LiveByteInspector() {
                           {b}
                         </div>
                         {/* Hex value */}
-                        <div className="text-xs text-muted font-mono mt-1">
+                        <div className="text-xs text-subtle font-mono mt-1">
                           0x{hex}
                         </div>
                       </div>
@@ -150,7 +150,7 @@ export function LiveByteInspector() {
 
         {/* Empty state */}
         {!text && (
-          <div className="text-center py-4 text-muted text-sm">
+          <div className="text-center py-4 text-subtle text-sm">
             Type something to see its bytes
           </div>
         )}

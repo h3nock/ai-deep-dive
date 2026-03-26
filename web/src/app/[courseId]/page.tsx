@@ -77,7 +77,7 @@ export default async function RoadmapPage({
           <div className="flex items-center justify-between mb-8">
             <Link
               href="/"
-              className="inline-flex items-center text-sm text-muted hover:text-primary transition-colors group"
+              className="inline-flex items-center text-sm text-subtle hover:text-primary transition-colors group"
             >
               <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
               Back to Courses
@@ -88,7 +88,7 @@ export default async function RoadmapPage({
           <h1 className="animate-fade-in-up text-3xl md:text-4xl font-bold text-primary mb-3">
             {metadata.title}
           </h1>
-          <p className="text-lg text-muted max-w-2xl leading-relaxed">
+          <p className="text-lg text-subtle max-w-2xl leading-relaxed">
             {metadata.description}
           </p>
 
@@ -110,9 +110,9 @@ export default async function RoadmapPage({
               {metadata.prerequisites.map((prereq, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-3 text-base text-muted leading-relaxed"
+                  className="flex items-start gap-3 text-base text-subtle leading-relaxed"
                 >
-                  <span className="text-muted shrink-0 mt-[6px] text-[6px]">
+                  <span className="text-subtle shrink-0 mt-[6px] text-[6px]">
                     ●
                   </span>
                   <span>{prereq}</span>
@@ -130,9 +130,9 @@ export default async function RoadmapPage({
                 {metadata.outcome.map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-3 text-base text-muted leading-relaxed"
+                    className="flex items-start gap-3 text-base text-subtle leading-relaxed"
                   >
-                    <span className="text-muted shrink-0 mt-[6px] text-[6px]">
+                    <span className="text-subtle shrink-0 mt-[6px] text-[6px]">
                       ●
                     </span>
                     <span>{item}</span>
@@ -140,7 +140,7 @@ export default async function RoadmapPage({
                 ))}
               </ul>
             ) : (
-              <p className="text-base text-muted leading-relaxed">
+              <p className="text-base text-subtle leading-relaxed">
                 {metadata.outcome}
               </p>
             )}
@@ -160,7 +160,7 @@ export default async function RoadmapPage({
               <div key={phaseIndex}>
                 {/* Phase Header */}
                 <div className="flex items-center gap-3 mt-10 mb-4">
-                  <span className="text-xs font-mono text-muted uppercase tracking-wider">
+                  <span className="text-xs font-mono text-subtle uppercase tracking-wider">
                     Phase {phaseIndex + 1}
                   </span>
                   <span className="text-sm font-semibold text-primary">
@@ -198,7 +198,7 @@ export default async function RoadmapPage({
                             <h3 className="text-sm md:text-base font-medium text-primary group-hover:text-secondary transition-colors">
                               {post.title}
                             </h3>
-                            <p className="text-xs md:text-sm text-muted line-clamp-1 mt-0.5">
+                            <p className="text-xs md:text-sm text-subtle line-clamp-1 mt-0.5">
                               {post.description}
                             </p>
                           </div>

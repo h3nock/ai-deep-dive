@@ -108,13 +108,13 @@ function ExampleCard({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between px-3 py-2 bg-surface/50 hover:bg-surface transition-colors text-left"
       >
-        <span className="text-xs font-medium text-muted">
+        <span className="text-xs font-medium text-subtle">
           Example {index + 1}
         </span>
         {isOpen ? (
-          <ChevronUp className="w-3 h-3 text-muted" />
+          <ChevronUp className="w-3 h-3 text-subtle" />
         ) : (
-          <ChevronDown className="w-3 h-3 text-muted" />
+          <ChevronDown className="w-3 h-3 text-subtle" />
         )}
       </button>
 
@@ -123,7 +123,7 @@ function ExampleCard({
           {/* Input */}
           <div className="mb-1">
             <div className="font-bold text-secondary">Input:</div>
-            <div className="text-muted">
+            <div className="text-subtle">
               {argOrder.map((arg) => {
                 const indent = arg.name.length + 3;
                 return (
@@ -145,7 +145,7 @@ function ExampleCard({
           {/* Output */}
           <div>
             <div className="font-bold text-secondary">Output:</div>
-            <div className="text-muted whitespace-pre-wrap break-words">
+            <div className="text-subtle whitespace-pre-wrap break-words">
               {testCase.expected_literal}
             </div>
           </div>
@@ -154,7 +154,7 @@ function ExampleCard({
           {testCase.explanation && (
             <div className="mt-1">
               <div className="font-bold text-secondary">Explanation:</div>
-              <div className="text-muted/80 font-sans text-[12px]">
+              <div className="text-subtle/80 font-sans text-[12px]">
                 {testCase.explanation}
               </div>
             </div>
@@ -935,7 +935,7 @@ function ChallengeEditorContent({
           <div className="h-11 flex items-center gap-3 px-4 border-b border-border">
             <button
               onClick={() => setActiveChallengeIndexWithWarmup(null)}
-              className="flex items-center gap-1 px-2 py-1 hover:bg-surface rounded-md text-muted text-sm font-medium transition-colors"
+              className="flex items-center gap-1 px-2 py-1 hover:bg-surface rounded-md text-subtle text-sm font-medium transition-colors"
               title="Back to Challenges"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -974,7 +974,7 @@ function ChallengeEditorContent({
 
             {activeChallenge.hint && (
               <div className="mt-6 pl-4 border-l-2 border-border-hover not-prose">
-                <p className="text-xs font-medium text-muted uppercase tracking-wider mb-1">
+                <p className="text-xs font-medium text-subtle uppercase tracking-wider mb-1">
                   Hint
                 </p>
                 <p className="text-sm text-secondary">{activeChallenge.hint}</p>
@@ -984,7 +984,7 @@ function ChallengeEditorContent({
             {/* Example Test Cases */}
             {activeChallenge.publicCases.length > 0 && (
               <div className="mt-8 not-prose">
-                <div className="text-xs font-medium text-muted uppercase tracking-wider mb-3">
+                <div className="text-xs font-medium text-subtle uppercase tracking-wider mb-3">
                   Examples
                 </div>
                 <div className="flex flex-col gap-3">
@@ -1023,9 +1023,9 @@ function ChallengeEditorContent({
             <Panel className="flex flex-col">
             {/* Toolbar */}
             <div className="h-11 flex-shrink-0 flex items-center justify-between px-3 border-b border-border bg-surface">
-              <div className="flex items-center gap-1 text-muted text-sm">
+              <div className="flex items-center gap-1 text-subtle text-sm">
                 {/* Language Badge */}
-                <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted">
+                <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-subtle">
                   <Code2 className="w-3.5 h-3.5" />
                   <span>Python</span>
                 </div>
@@ -1037,8 +1037,8 @@ function ChallengeEditorContent({
                   onClick={() => setIsVimMode(!isVimMode)}
                   className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors ${
                     isVimMode
-                      ? "text-primary bg-border"
-                      : "text-muted hover:text-secondary hover:bg-border/50"
+                      ? "text-secondary bg-surface"
+                      : "text-subtle hover:text-secondary hover:bg-surface"
                   }`}
                   title="Toggle Vim keybindings"
                   aria-label={isVimMode ? "Disable Vim mode" : "Enable Vim mode"}
@@ -1055,7 +1055,7 @@ function ChallengeEditorContent({
                   disabled={isRunning}
                   title="Reset to initial code"
                   aria-label="Reset code to initial template"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-secondary hover:text-primary hover:bg-border/50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-secondary hover:text-primary hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                   Reset
@@ -1069,7 +1069,7 @@ function ChallengeEditorContent({
                   disabled={isRunning}
                   title={`Run public tests (${runShortcut})`}
                   aria-label={`Run public tests, keyboard shortcut ${runShortcut}`}
-                  className="flex items-center gap-2 px-4 py-1.5 enabled:hover:bg-border/50 disabled:text-muted disabled:cursor-not-allowed text-secondary enabled:hover:text-primary text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-1.5 hover:bg-surface disabled:text-muted disabled:cursor-not-allowed text-secondary hover:text-primary text-sm font-medium rounded-lg transition-colors"
                 >
                   {isRunning && lastRunMode === "run" ? (
                     <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
@@ -1114,18 +1114,29 @@ function ChallengeEditorContent({
                   monaco.editor.defineTheme(getMonacoThemeName("light"), createMonacoTheme("light"));
                 }}
                 loading={
-                  <div className="w-full h-full bg-background p-5 space-y-2.5">
-                    {["w-48", "w-56", "w-36", "w-0", "w-64", "w-72", "w-44", "w-52"].map((w, i) => (
-                      w === "w-0" ? (
-                        <div key={i} className="h-3.5" />
-                      ) : (
-                        <div
-                          key={i}
-                          className={`h-3.5 skeleton-bar rounded ${w}`}
-                          style={{ animationDelay: `${i * 0.12}s` }}
-                        />
-                      )
-                    ))}
+                  <div className="w-full h-full bg-background pt-2 pl-4 font-mono text-sm leading-5">
+                    <div className="space-y-0 animate-pulse">
+                      <div className="flex items-center h-5">
+                        <span className="text-border-hover w-8 text-right select-none pr-4">1</span>
+                        <div className="h-3.5 bg-surface/60 rounded w-56" />
+                      </div>
+                      <div className="flex items-center h-5">
+                        <span className="text-border-hover w-8 text-right select-none pr-4">2</span>
+                        <div className="ml-6 h-3.5 bg-surface/40 rounded w-72" />
+                      </div>
+                      <div className="flex items-center h-5">
+                        <span className="text-border-hover w-8 text-right select-none pr-4">3</span>
+                        <div className="ml-6 h-3.5 bg-surface/60 rounded w-48" />
+                      </div>
+                      <div className="flex items-center h-5">
+                        <span className="text-border-hover w-8 text-right select-none pr-4">4</span>
+                        <div className="ml-6 h-3.5 bg-surface/40 rounded w-80" />
+                      </div>
+                      <div className="flex items-center h-5">
+                        <span className="text-border-hover w-8 text-right select-none pr-4">5</span>
+                        <div className="ml-6 h-3.5 bg-surface/60 rounded w-64" />
+                      </div>
+                    </div>
                   </div>
                 }
                 options={{
@@ -1218,7 +1229,7 @@ function ChallengeEditorContent({
                 {/* Collapse/Expand Toggle Button */}
                 <button
                   onClick={toggleBottomPanel}
-                  className="px-3 py-2 text-muted hover:text-secondary transition-colors flex items-center gap-1.5"
+                  className="px-3 py-2 text-subtle hover:text-secondary transition-colors flex items-center gap-1.5"
                   title={
                     isBottomPanelCollapsed ? "Expand panel" : "Collapse panel"
                   }
@@ -1247,7 +1258,7 @@ function ChallengeEditorContent({
                             className={`group/tab px-3 py-1.5 text-xs transition-colors flex items-center gap-1.5 border-b-2 -mb-px ${
                               activeTestCaseId === tc.id
                                 ? "border-primary text-primary"
-                                : "border-transparent text-muted hover:text-secondary"
+                                : "border-transparent text-subtle hover:text-secondary"
                             }`}
                           >
                             Case {idx + 1}
@@ -1288,7 +1299,7 @@ function ChallengeEditorContent({
                               ]);
                               setActiveTestCaseId(newId);
                             }}
-                            className="px-2 py-1.5 text-muted hover:text-secondary transition-colors -mb-px border-b-2 border-transparent"
+                            className="px-2 py-1.5 text-subtle hover:text-secondary transition-colors -mb-px border-b-2 border-transparent"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
@@ -1306,7 +1317,7 @@ function ChallengeEditorContent({
                                 const error = validationErrors[errorKey];
                                 return (
                                   <div key={arg.name}>
-                                    <label className="block text-[11px] text-muted mb-0.5 font-mono">
+                                    <label className="block text-[11px] text-subtle mb-0.5 font-mono">
                                       {arg.name} =
                                     </label>
                                     <AutoResizeTextarea
@@ -1371,7 +1382,7 @@ function ChallengeEditorContent({
                                       )
                                     );
                                   }}
-                                  className="self-start text-xs text-muted hover:text-secondary transition-colors"
+                                  className="self-start text-xs text-subtle hover:text-secondary transition-colors"
                                 >
                                   Reset to default
                                 </button>
@@ -1411,7 +1422,7 @@ function ChallengeEditorContent({
                                             <h3 className="text-primary font-semibold">
                                               Challenge Complete
                                             </h3>
-                                            <p className="text-sm text-muted">
+                                            <p className="text-sm text-subtle">
                                               {summary.passed} / {summary.total} tests passed
                                             </p>
                                           </div>
@@ -1442,7 +1453,7 @@ function ChallengeEditorContent({
                                       {summary.passed} / {summary.total} tests passed
                                     </h3>
                                     {lastRunMode === "run" && !isSolved && (
-                                      <span className="text-xs text-muted">
+                                      <span className="text-xs text-subtle">
                                         Submit to run all tests
                                       </span>
                                     )}
@@ -1456,7 +1467,7 @@ function ChallengeEditorContent({
                                     <AlertCircle className="w-4 h-4" />
                                     {statusLabel}
                                   </h3>
-                                  <p className="text-sm text-muted">
+                                  <p className="text-sm text-subtle">
                                     {summary.passed} / {summary.total} tests passed
                                   </p>
                                 </div>
@@ -1474,7 +1485,7 @@ function ChallengeEditorContent({
                                   className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 mb-2 whitespace-nowrap ${
                                     activeTestCaseId === r.id
                                       ? "bg-surface text-primary"
-                                      : "text-muted hover:bg-surface"
+                                      : "text-subtle hover:bg-surface"
                                   }`}
                                 >
                                   <span

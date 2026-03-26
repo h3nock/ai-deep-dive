@@ -52,7 +52,7 @@ export function CourseSidebar({
 
             return (
               <div key={phaseIndex}>
-                <p className="px-4 pt-4 pb-1 text-[11px] font-medium text-muted uppercase tracking-wider">
+                <p className="px-4 pt-4 pb-1 text-[11px] font-medium text-subtle uppercase tracking-wider">
                   {phase.title}
                 </p>
                 {chaptersInPhase.map((ch) => {
@@ -66,7 +66,7 @@ export function CourseSidebar({
                         "flex items-center gap-2.5 px-4 py-1.5 text-sm transition-colors",
                         isCurrent
                           ? "bg-surface text-primary font-medium"
-                          : "text-muted hover:text-secondary"
+                          : "text-subtle hover:text-secondary"
                       )}
                     >
                       <ChapterCheckbox
@@ -92,7 +92,7 @@ export function SidebarExpandButton({ onToggle }: { onToggle: () => void }) {
   return (
     <button
       onClick={onToggle}
-      className="p-1.5 text-muted hover:text-primary transition-colors rounded mr-2"
+      className="p-1.5 text-subtle hover:text-primary transition-colors rounded mr-2"
       aria-label="Expand sidebar"
     >
       <PanelLeft className="w-4 h-4" />

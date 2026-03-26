@@ -23,7 +23,7 @@ export function ByteStream({ bytes, label }: ByteStreamProps) {
     >
       {label && (
         <div
-          className="text-xs font-bold text-muted uppercase tracking-wider"
+          className="text-xs font-bold text-subtle uppercase tracking-wider"
           style={{ marginBottom: "var(--space-atomic)" }}
         >
           {label}
@@ -35,7 +35,7 @@ export function ByteStream({ bytes, label }: ByteStreamProps) {
             <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-surface border-2 border-border text-secondary font-mono font-bold shadow-sm group-hover:border-info group-hover:text-info transition-all">
               {byte}
             </div>
-            <span className="text-[10px] text-muted mt-1 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-[10px] text-subtle mt-1 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
               0x{byte.toString(16).toUpperCase()}
             </span>
           </div>

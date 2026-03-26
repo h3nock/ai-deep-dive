@@ -77,9 +77,9 @@ export function ChallengeList({
             <span className="text-2xl font-bold text-primary">
               {isProgressLoaded ? solvedCount : 0}
             </span>
-            <span className="text-lg text-muted">/ {totalChallenges}</span>
+            <span className="text-lg text-subtle">/ {totalChallenges}</span>
           </div>
-          <p className="text-sm text-muted">{statusMessage}</p>
+          <p className="text-sm text-subtle">{statusMessage}</p>
         </header>
 
         <div className="grid grid-cols-1 gap-3">
@@ -95,7 +95,7 @@ export function ChallengeList({
                 onClick={() => onSelectIndex(idx)}
                 className="w-full cursor-pointer text-left bg-surface/30 hover:bg-surface/50 rounded-xl border border-border hover:border-border-hover p-4 flex items-center gap-4 transition-all group"
               >
-                <span className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center text-muted font-mono text-sm shrink-0">
+                <span className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center text-subtle font-mono text-sm shrink-0">
                   {String(idx + 1).padStart(2, "0")}
                 </span>
                 <span className="flex-1 text-secondary group-hover:text-primary transition-colors flex items-center gap-2">

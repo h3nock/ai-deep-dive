@@ -29,7 +29,7 @@ export function MarkCompleteButton({
       <button
         disabled
         className={cn(
-          "flex items-center gap-2 px-3 py-2 text-sm text-muted",
+          "flex items-center gap-2 px-3 py-2 text-sm text-subtle",
           className
         )}
       >
@@ -46,7 +46,7 @@ export function MarkCompleteButton({
         "group flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200",
         completed
           ? "bg-success/10 border border-success/20 text-success"
-          : "text-muted hover:text-secondary hover:bg-surface",
+          : "text-subtle hover:text-secondary hover:bg-surface",
         className
       )}
     >

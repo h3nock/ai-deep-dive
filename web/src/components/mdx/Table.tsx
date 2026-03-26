@@ -52,7 +52,7 @@ export function TableHeader(
 ) {
   return (
     <th
-      className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted whitespace-nowrap"
+      className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-subtle whitespace-nowrap"
       {...props}
     />
   );

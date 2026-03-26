@@ -92,7 +92,7 @@ export default function SyncPage() {
         {status === "loading" && (
           <>
             <Loader2 className="w-12 h-12 text-muted animate-spin mx-auto mb-4" />
-            <p className="text-muted">Syncing...</p>
+            <p className="text-subtle">Syncing...</p>
           </>
         )}
 
@@ -104,7 +104,7 @@ export default function SyncPage() {
             <h1 className="text-xl font-semibold text-primary mb-2">
               Sync Failed
             </h1>
-            <p className="text-muted mb-6">
+            <p className="text-subtle mb-6">
               {viewModel.status === "error" ? viewModel.error : ""}
             </p>
             <Link
@@ -126,26 +126,26 @@ export default function SyncPage() {
                 ? "Sync Complete!"
                 : "Already Synced"}
             </h1>
-            <p className="text-muted mb-6">
+            <p className="text-subtle mb-6">
               {viewModel.status === "success" ? viewModel.courseName : ""}
             </p>
 
             <div className="p-4 bg-terminal rounded-lg border border-border mb-6 text-left">
               <div className="flex justify-between text-sm">
-                <span className="text-muted">Newly synced</span>
+                <span className="text-subtle">Newly synced</span>
                 <span
                   className={
                     viewModel.status === "success" && viewModel.newlySynced > 0
                       ? "text-success"
-                      : "text-muted"
+                      : "text-subtle"
                   }
                 >
                   {viewModel.status === "success" ? viewModel.newlySynced : 0}
                 </span>
               </div>
               <div className="flex justify-between text-sm mt-2">
-                <span className="text-muted">Already synced</span>
-                <span className="text-muted">
+                <span className="text-subtle">Already synced</span>
+                <span className="text-subtle">
                   {viewModel.status === "success" ? viewModel.alreadySynced : 0}
                 </span>
               </div>

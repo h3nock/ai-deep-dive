@@ -87,11 +87,11 @@ export function NormalizedStepSize() {
           
           <div className="flex items-center gap-6 text-sm shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-muted">Length:</span>
+              <span className="text-subtle">Length:</span>
               <span className="font-mono text-primary tabular-nums w-5 text-right">{length}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-muted">Step:</span>
+              <span className="text-subtle">Step:</span>
               <span className="font-mono text-accent-4 tabular-nums">{stepSize.toFixed(3)}</span>
             </div>
           </div>
@@ -128,7 +128,7 @@ export function NormalizedStepSize() {
               >
                 {/* Dot - 14px total (w-3.5 h-3.5), line at 6px from top passes through center (6 + 1 = 7px center) */}
                 <div className="w-3.5 h-3.5 rounded-full bg-surface border-2 border-muted" />
-                <span className="text-[10px] font-mono text-muted mt-1.5 tabular-nums">
+                <span className="text-[10px] font-mono text-subtle mt-1.5 tabular-nums">
                   {value.toFixed(2)}
                 </span>
               </div>

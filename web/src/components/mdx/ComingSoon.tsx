@@ -19,7 +19,7 @@ export function ComingSoon() {
         </svg>
       </div>
       <h2 className="mb-3 text-2xl font-semibold text-primary">Coming Soon</h2>
-      <p className="max-w-md text-muted">
+      <p className="max-w-md text-subtle">
         We&apos;re currently polishing this chapter to ensure it meets our high
         standards. Check back soon for the complete content!
       </p>

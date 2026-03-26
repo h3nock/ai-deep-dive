@@ -52,7 +52,7 @@ export function ProgressStatCards({
       )}
       <div className="bg-surface rounded-xl px-4 py-3">
         <span className="text-xl font-bold text-primary">~20</span>
-        <span className="block text-xs text-muted mt-0.5">hours</span>
+        <span className="block text-xs text-subtle mt-0.5">hours</span>
       </div>
     </div>
   );
@@ -80,10 +80,10 @@ function ProgressCard({
           {isLoaded ? completed : total}
         </span>
         {isLoaded && (
-          <span className="text-sm text-muted/60">/ {total}</span>
+          <span className="text-sm text-muted">/ {total}</span>
         )}
       </div>
-      <span className="block text-xs text-muted mt-0.5">{label}</span>
+      <span className="block text-xs text-subtle mt-0.5">{label}</span>
       <div className="mt-2.5 w-full bg-border/25 rounded-full overflow-hidden h-1">
         <div
           className={cn(

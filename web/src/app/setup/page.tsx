@@ -26,7 +26,7 @@ function CodeBlock({ children }: { children: string }) {
       </pre>
       <button
         onClick={handleCopy}
-        className="absolute top-3 right-3 p-1.5 rounded bg-surface text-muted hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-3 right-3 p-1.5 rounded bg-surface text-subtle hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
       >
         {copied ? (
           <CheckCircle2 className="w-4 h-4 text-success" />
@@ -57,13 +57,13 @@ function FAQItem({
           {question}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-muted shrink-0 ml-4 transition-transform duration-200 ${
+          className={`w-4 h-4 text-subtle shrink-0 ml-4 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
       </button>
       {isOpen && (
-        <div className="pb-4 text-muted leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="pb-4 text-subtle leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
           {children}
         </div>
       )}
@@ -77,7 +77,7 @@ export default function SetupPage() {
       <main className="w-full py-12">
         <div className="mx-auto max-w-[85ch] px-6 lg:px-8">
           <header className="mb-12 border-b border-border pb-8">
-            <div className="flex items-center gap-3 mb-6 text-sm text-muted">
+            <div className="flex items-center gap-3 mb-6 text-sm text-subtle">
               <Link
                 href="/build-gpt"
                 className="hover:text-primary transition-colors flex items-center gap-1"
@@ -90,7 +90,7 @@ export default function SetupPage() {
             <h1 className="text-3xl md:text-4xl font-bold text-primary mb-4 tracking-tight">
               Local Development Setup
             </h1>
-            <p className="text-lg text-muted leading-relaxed">
+            <p className="text-lg text-subtle leading-relaxed">
               Chapter challenges are solved in the browser. The CLI is
               temporarily frozen while we redesign it for project-focused local
               workflows.
@@ -127,7 +127,7 @@ ai-deep-dive --version`}</CodeBlock>
               Continue chapter challenge work directly in the browser course
               interface. Public tests run there without local CLI setup.
             </p>
-            <p className="text-muted leading-relaxed mt-4">
+            <p className="text-subtle leading-relaxed mt-4">
               Open the course: {" "}
               <Link
                 href="/build-gpt"
@@ -158,25 +158,25 @@ ai-deep-dive --version`}</CodeBlock>
                 <code className="text-secondary font-mono shrink-0 w-40">
                   init
                 </code>
-                <span className="text-muted">Not exposed right now</span>
+                <span className="text-subtle">Not exposed right now</span>
               </div>
               <div className="flex gap-4">
                 <code className="text-secondary font-mono shrink-0 w-40">
                   test / submit
                 </code>
-                <span className="text-muted">Not exposed right now</span>
+                <span className="text-subtle">Not exposed right now</span>
               </div>
               <div className="flex gap-4">
                 <code className="text-secondary font-mono shrink-0 w-40">
                   status / list / sync
                 </code>
-                <span className="text-muted">Not exposed right now</span>
+                <span className="text-subtle">Not exposed right now</span>
               </div>
               <div className="flex gap-4">
                 <code className="text-secondary font-mono shrink-0 w-40">
                   config
                 </code>
-                <span className="text-muted">Not exposed right now</span>
+                <span className="text-subtle">Not exposed right now</span>
               </div>
             </div>
           </section>
@@ -212,7 +212,7 @@ ai-deep-dive --version`}</CodeBlock>
           <section className="pt-10">
             <Link
               href="/build-gpt"
-              className="text-muted hover:text-primary transition-colors inline-flex items-center gap-1"
+              className="text-subtle hover:text-primary transition-colors inline-flex items-center gap-1"
             >
               <ChevronLeft className="w-4 h-4" />
               Back to Course

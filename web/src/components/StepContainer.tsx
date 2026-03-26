@@ -320,14 +320,14 @@ export function StepContainer({
             <Link
               href={`/${collection}`}
               prefetch={true}
-              className="text-sm text-muted hover:text-primary flex items-center gap-1 transition-colors"
+              className="text-sm text-subtle hover:text-primary flex items-center gap-1 transition-colors"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               Roadmap
             </Link>
             <button
               onClick={toggleSidebar}
-              className="p-1 text-muted hover:text-primary transition-colors rounded"
+              className="p-1 text-subtle hover:text-primary transition-colors rounded"
               aria-label="Collapse sidebar"
             >
               <PanelLeftClose className="w-4 h-4" />
@@ -349,7 +349,7 @@ export function StepContainer({
                   className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
                     activeTab === "guide"
                       ? "bg-surface font-medium text-primary"
-                      : "text-muted hover:text-secondary"
+                      : "text-subtle hover:text-secondary"
                   }`}
                 >
                   Guide
@@ -360,11 +360,11 @@ export function StepContainer({
                   className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
                     activeTab === "challenges"
                       ? "bg-surface font-medium text-primary"
-                      : "text-muted hover:text-secondary"
+                      : "text-subtle hover:text-secondary"
                   }`}
                 >
                   Challenges
-                  <span className="ml-1.5 text-muted">
+                  <span className="ml-1.5 text-subtle">
                     {isChallengesLoaded
                       ? `${solvedChallenges}/${totalChallenges}`
                       : `0/${totalChallenges}`}
@@ -402,7 +402,7 @@ export function StepContainer({
                   <Link
                     href={backLink.href}
                     prefetch={true}
-                    className="text-sm text-muted hover:text-primary flex items-center gap-1 mb-6 transition-colors"
+                    className="text-sm text-subtle hover:text-primary flex items-center gap-1 mb-6 transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     {backLink.label}
@@ -413,7 +413,7 @@ export function StepContainer({
                   <h1 className="text-3xl md:text-4xl font-bold text-primary mt-3 mb-4 tracking-tight">
                     {post.title}
                   </h1>
-                  <p className="text-lg text-muted leading-relaxed">
+                  <p className="text-lg text-subtle leading-relaxed">
                     {post.description}
                   </p>
                 </header>
@@ -454,7 +454,7 @@ export function StepContainer({
                           <span className="text-sm font-medium text-primary">
                             Practice What You Learned
                           </span>
-                          <span className="block text-xs text-muted mt-0.5">
+                          <span className="block text-xs text-subtle mt-0.5">
                             {isChallengesLoaded && solvedChallenges > 0
                               ? `${solvedChallenges}/${totalChallenges} solved`
                               : `${totalChallenges} problems`}
@@ -471,7 +471,7 @@ export function StepContainer({
                       <Link
                         href={`/${collection}/${prevPost.slug}`}
                         prefetch={true}
-                        className="group flex items-center gap-1.5 text-sm text-muted hover:text-primary transition-colors shrink-0"
+                        className="group flex items-center gap-1.5 text-sm text-subtle hover:text-primary transition-colors shrink-0"
                       >
                         <ChevronLeft className="w-3.5 h-3.5" />
                         <span>{prevPost.title}</span>
@@ -486,7 +486,7 @@ export function StepContainer({
                         prefetch={true}
                         className="group flex flex-col items-end text-right p-5 rounded-xl bg-surface/50 border border-border hover:border-border-hover transition-all ml-auto max-w-xs"
                       >
-                        <span className="text-xs font-mono text-muted mb-2 flex items-center gap-1">
+                        <span className="text-xs font-mono text-subtle mb-2 flex items-center gap-1">
                           Next Chapter <ChevronRight className="w-3 h-3" />
                         </span>
                         <span className="font-medium text-primary group-hover:text-secondary transition-colors">

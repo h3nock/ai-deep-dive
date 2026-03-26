@@ -125,7 +125,7 @@ export function RotationVisualization() {
 
   return (
     <div style={{ marginTop: "var(--space-connected)", marginBottom: "var(--space-flow)" }}>
-      <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">
+      <div className="text-xs font-medium text-subtle uppercase tracking-wider mb-2">
         Interactive: Matrix Multiplication in Action
       </div>
 
@@ -149,9 +149,9 @@ export function RotationVisualization() {
                     style={
                       isActive
                         ? {
-                            backgroundColor: withAlpha(viz.tertiary, 0.2),
-                            borderColor: withAlpha(viz.tertiary, 0.5),
-                            color: viz.tertiary,
+                            backgroundColor: viz.tertiary,
+                            borderColor: viz.tertiary,
+                            color: "var(--color-on-accent)",
                           }
                         : undefined
                     }
@@ -185,9 +185,9 @@ export function RotationVisualization() {
                     style={
                       isActive
                         ? {
-                            backgroundColor: withAlpha(viz.primary, 0.2),
-                            borderColor: withAlpha(viz.primary, 0.5),
-                            color: viz.primary,
+                            backgroundColor: viz.primary,
+                            borderColor: viz.primary,
+                            color: "var(--color-on-accent)",
                           }
                         : undefined
                     }
@@ -452,7 +452,7 @@ export function RotationVisualization() {
           </div>
 
           {/* Hover hint */}
-          <div className="text-[11px] text-muted">
+          <div className="text-[11px] text-subtle">
             Hover a row to trace the multiplication
           </div>
         </div>

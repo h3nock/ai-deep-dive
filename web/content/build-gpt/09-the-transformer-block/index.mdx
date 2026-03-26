@@ -32,7 +32,7 @@ description: "How all components combine into the repeatable transformer block."
     {/* Transformer Block ×N — the hero, solid border, stronger presence */}
     <rect x="40" y="100" width="180" height="62" rx="8" fill="color-mix(in srgb, var(--color-accent-4) 15%, transparent)" stroke="color-mix(in srgb, var(--color-accent-4) 40%, transparent)" strokeWidth="1" strokeDasharray="4 3" />
     <text x="130" y="126" textAnchor="middle" fill="var(--color-accent-4)" fontSize="13" fontWeight="600">Transformer Block</text>
-    <text x="130" y="144" textAnchor="middle" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN</text>
+    <text x="130" y="144" textAnchor="middle" fill="var(--color-subtle)" fontSize="10" fontFamily="var(--font-mono)">Attn + FFN</text>
     <text x="226" y="135" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">×N</text>
 
     <line x1="130" y1="162" x2="130" y2="172" stroke="var(--color-border-hover)" strokeWidth="1" />
@@ -112,7 +112,7 @@ description: "How all components combine into the repeatable transformer block."
       { label: 'FFN sub-block', fn: 'FFN', inVar: 'x₁', outVar: 'x₂' },
     ].map(({ label, fn, inVar, outVar }, i) => (
       <div key={i}>
-        <div className="text-xs tracking-wide text-muted mb-1.5 uppercase font-mono">{label}</div>
+        <div className="text-xs tracking-wide text-subtle mb-1.5 uppercase font-mono">{label}</div>
         <div className="text-lg" style={{ fontFamily: 'KaTeX_Main, "Times New Roman", serif' }}>
           <span className="text-primary" style={{ fontFamily: 'KaTeX_Math, "Times New Roman", serif', fontStyle: 'italic' }}>{outVar}</span>
           <span className="text-muted"> = </span>
@@ -251,7 +251,7 @@ class Block(nn.Module):
       <circle cx="80" cy="108" r="8" fill="var(--color-surface)" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" />
       <line x1="76.5" y1="108" x2="83.5" y2="108" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
       <line x1="80" y1="104.5" x2="80" y2="111.5" stroke="var(--color-accent-2)" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
-      <text x="103" y="112" textAnchor="start" fill="var(--color-muted)" fontSize="10" fontFamily="var(--font-mono)">pos emb</text>
+      <text x="103" y="112" textAnchor="start" fill="var(--color-subtle)" fontSize="10" fontFamily="var(--font-mono)">pos emb</text>
 
       <line x1="80" y1="116" x2="80" y2="144" stroke="var(--color-accent-2)" strokeWidth="2" strokeOpacity="0.8" />
 
@@ -353,7 +353,7 @@ x = token_emb + pos_emb
 
   <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm space-y-2 text-center">
     <div className="text-primary">logits = h × W_proj</div>
-    <div className="text-muted">h: (1 × d_model)&ensp;&ensp;W_proj: (d_model × vocab_size)&ensp;&ensp;logits: (1 × vocab_size)</div>
+    <div className="text-subtle">h: (1 × d_model)&ensp;&ensp;W_proj: (d_model × vocab_size)&ensp;&ensp;logits: (1 × vocab_size)</div>
   </div>
 
   <h4 className="text-base font-semibold text-primary mt-8 mb-3">Weight Tying</h4>
@@ -369,7 +369,7 @@ x = token_emb + pos_emb
   <div className="my-4 p-4 bg-terminal rounded-lg border border-border font-mono text-sm space-y-2 text-center">
     <div className="text-primary">W_proj = E^T</div>
     <div className="text-primary">logits = h × E^T</div>
-    <div className="text-muted">E: (vocab_size × d_model)&ensp;&ensp;h: (1 × d_model)&ensp;&ensp;logits: (1 × vocab_size)</div>
+    <div className="text-subtle">E: (vocab_size × d_model)&ensp;&ensp;h: (1 × d_model)&ensp;&ensp;logits: (1 × vocab_size)</div>
   </div>
 
   <Description>
@@ -409,9 +409,9 @@ class GPT(nn.Module):
     <table className="w-full text-sm border-collapse">
       <thead>
         <tr className="border-b border-border">
-          <th className="py-2.5 pr-4 font-mono text-muted text-left text-xs uppercase tracking-wide whitespace-nowrap">Parameter</th>
-          <th className="py-2.5 pr-4 font-mono text-muted text-left text-xs uppercase tracking-wide whitespace-nowrap">Value</th>
-          <th className="py-2.5 text-muted text-left text-xs uppercase tracking-wide">Note</th>
+          <th className="py-2.5 pr-4 font-mono text-subtle text-left text-xs uppercase tracking-wide whitespace-nowrap">Parameter</th>
+          <th className="py-2.5 pr-4 font-mono text-subtle text-left text-xs uppercase tracking-wide whitespace-nowrap">Value</th>
+          <th className="py-2.5 text-subtle text-left text-xs uppercase tracking-wide">Note</th>
         </tr>
       </thead>
       <tbody>
@@ -428,7 +428,7 @@ class GPT(nn.Module):
           <tr key={i} className="border-b border-border last:border-b-0">
             <td className="py-2.5 pr-4 font-mono text-accent-4 whitespace-nowrap">{param}</td>
             <td className="py-2.5 pr-4 font-mono text-primary whitespace-nowrap">{value}</td>
-            <td className="py-2.5 text-muted">{note}</td>
+            <td className="py-2.5 text-subtle">{note}</td>
           </tr>
         ))}
       </tbody>

@@ -36,7 +36,7 @@ export function ChallengeProgressPill({
       : "bg-muted/35";
 
   const textClass =
-    isLoaded && solvedCount > 0 ? "text-secondary" : "text-muted";
+    isLoaded && solvedCount > 0 ? "text-secondary" : "text-subtle";
 
   const label = isLoaded ? `${solvedCount}/${total}` : `0/${total}`;
   const ariaLabel = isLoaded

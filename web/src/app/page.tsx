@@ -68,7 +68,7 @@ export default async function Home() {
                 </h1>
                 <p className="animate-fade-in-up animate-delay-1 text-lg text-secondary leading-relaxed mb-10 max-w-lg italic">
                   &ldquo;What I cannot create, I do not understand.&rdquo;
-                  <span className="not-italic text-muted text-base ml-1">&mdash; Richard Feynman</span>
+                  <span className="not-italic text-subtle text-base ml-1">&mdash; Richard Feynman</span>
                 </p>
                 <div className="animate-fade-in-up animate-delay-2 flex flex-wrap gap-3">
                   <Link
@@ -101,7 +101,7 @@ export default async function Home() {
                         className={`px-2.5 py-1 rounded-md bg-surface border border-border text-xs font-mono ${
                           stage === "GPT"
                             ? "text-primary font-medium"
-                            : "text-muted"
+                            : "text-subtle"
                         }`}
                       >
                         {stage}
@@ -119,13 +119,13 @@ export default async function Home() {
                     <div className="w-2.5 h-2.5 rounded-full bg-border" />
                     <div className="w-2.5 h-2.5 rounded-full bg-border" />
                     <div className="w-2.5 h-2.5 rounded-full bg-border" />
-                    <span className="ml-2 text-[10px] text-muted">transformer.py</span>
+                    <span className="ml-2 text-[10px] text-subtle">transformer.py</span>
                   </div>
 
                   <div className="p-5 space-y-5">
                     {/* Input */}
                     <div className="pipeline-stage" style={{ animationDelay: "0.6s" }}>
-                      <span className="text-[10px] text-muted uppercase tracking-widest">input</span>
+                      <span className="text-[10px] text-subtle uppercase tracking-widest">input</span>
                       <p className="text-secondary mt-1.5">
                         &quot;The cat sat on the mat&quot;
                         <span className="pipeline-cursor">|</span>
@@ -138,13 +138,13 @@ export default async function Home() {
                       style={{ animationDelay: "0.9s" }}
                     >
                       <div className="flex-1 border-t border-border border-dashed" />
-                      <span className="text-[10px] text-muted">&darr;</span>
+                      <span className="text-[10px] text-subtle">&darr;</span>
                       <div className="flex-1 border-t border-border border-dashed" />
                     </div>
 
                     {/* Tokenize */}
                     <div className="pipeline-stage" style={{ animationDelay: "1.2s" }}>
-                      <span className="text-[10px] text-muted uppercase tracking-widest">tokenize</span>
+                      <span className="text-[10px] text-subtle uppercase tracking-widest">tokenize</span>
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {TOKENS.map((token) => (
                           <span
@@ -159,8 +159,8 @@ export default async function Home() {
 
                     {/* Embed */}
                     <div className="pipeline-stage" style={{ animationDelay: "1.8s" }}>
-                      <span className="text-[10px] text-muted uppercase tracking-widest">embed</span>
-                      <div className="mt-1.5 text-[11px] text-muted whitespace-pre leading-relaxed">
+                      <span className="text-[10px] text-subtle uppercase tracking-widest">embed</span>
+                      <div className="mt-1.5 text-[11px] text-subtle whitespace-pre leading-relaxed">
 {`[ 0.82, -0.31,  0.67, ...]
 [-0.45,  0.91,  0.23, ...]`}
                       </div>
@@ -168,7 +168,7 @@ export default async function Home() {
 
                     {/* Self-Attention */}
                     <div className="pipeline-stage" style={{ animationDelay: "2.4s" }}>
-                      <span className="text-[10px] text-muted uppercase tracking-widest">self-attention</span>
+                      <span className="text-[10px] text-subtle uppercase tracking-widest">self-attention</span>
                       <div className="grid grid-cols-6 gap-[3px] mt-1.5 w-fit">
                         {ATTENTION_WEIGHTS.map((weight, i) => (
                           <div
@@ -182,7 +182,7 @@ export default async function Home() {
 
                     {/* Generate */}
                     <div className="pipeline-stage" style={{ animationDelay: "3s" }}>
-                      <span className="text-[10px] text-muted uppercase tracking-widest">generate</span>
+                      <span className="text-[10px] text-subtle uppercase tracking-widest">generate</span>
                       <p className="text-primary mt-1.5">&quot;...and purred softly.&quot;</p>
                     </div>
                   </div>
@@ -258,7 +258,7 @@ export default async function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="py-12 text-center text-sm text-muted">
+      <footer className="py-12 text-center text-sm text-subtle">
         <span>&copy; {new Date().getFullYear()} AI Deep Dive</span>
         <span className="mx-3 text-border">&middot;</span>
         <span>MIT License</span>

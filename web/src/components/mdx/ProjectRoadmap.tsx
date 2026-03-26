@@ -49,14 +49,14 @@ export function ProjectRoadmap({ courseId, prefix }: ProjectRoadmapProps) {
 
               {/* Row content */}
               <div className="flex items-center gap-4 rounded-lg px-4 py-2.5 transition-colors hover:bg-surface/50">
-                <span className="shrink-0 w-7 font-mono text-sm text-muted/50 group-hover:text-primary transition-colors">
+                <span className="shrink-0 w-7 font-mono text-sm text-muted group-hover:text-primary transition-colors">
                   {stepNumber}
                 </span>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm md:text-base font-medium text-primary group-hover:text-secondary transition-colors">
                     {post.title}
                   </h3>
-                  <p className="text-xs md:text-sm text-muted line-clamp-1 mt-0.5">
+                  <p className="text-xs md:text-sm text-subtle line-clamp-1 mt-0.5">
                     {post.description}
                   </p>
                 </div>

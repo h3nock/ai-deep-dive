@@ -70,7 +70,7 @@ export function EncodingCompare() {
   const getCounterColor = () => {
     if (charCount >= MAX_CHARS) return "text-error";
     if (charCount >= 4) return "text-warning";
-    return "text-muted";
+    return "text-subtle";
   };
 
   return (
@@ -81,7 +81,7 @@ export function EncodingCompare() {
       }}
     >
       {/* Label outside container - per COMPONENT_GUIDE Pattern 2 */}
-      <div className="text-xs font-medium text-muted uppercase tracking-wider mb-2">
+      <div className="text-xs font-medium text-subtle uppercase tracking-wider mb-2">
         Compare encodings
       </div>
 
@@ -104,22 +104,22 @@ export function EncodingCompare() {
         {/* Stats row */}
         <div className="flex justify-center items-center gap-6 text-sm mb-4">
           <div className="text-center">
-            <div className="text-xl font-bold text-muted">{utf32Total}</div>
-            <div className="text-xs text-muted">UTF-32 bytes</div>
+            <div className="text-xl font-bold text-subtle">{utf32Total}</div>
+            <div className="text-xs text-subtle">UTF-32 bytes</div>
           </div>
-          <div className="text-muted">vs</div>
+          <div className="text-subtle">vs</div>
           <div className="text-center">
             <div className="text-xl font-bold text-success">{utf8Total}</div>
-            <div className="text-xs text-muted">UTF-8 bytes</div>
+            <div className="text-xs text-subtle">UTF-8 bytes</div>
           </div>
           {savings > 0 && (
             <>
-              <div className="text-muted">=</div>
+              <div className="text-subtle">=</div>
               <div className="text-center">
                 <div className="text-xl font-bold text-info">
                   {savingsPercent}%
                 </div>
-                <div className="text-xs text-muted">smaller</div>
+                <div className="text-xs text-subtle">smaller</div>
               </div>
             </>
           )}
@@ -132,14 +132,14 @@ export function EncodingCompare() {
               <tbody>
                 {/* Character row */}
                 <tr>
-                  <td className="w-20 pr-3 text-right text-xs text-muted font-medium uppercase tracking-wider align-middle whitespace-nowrap">
+                  <td className="w-20 pr-3 text-right text-xs text-subtle font-medium uppercase tracking-wider align-middle whitespace-nowrap">
                     Char
                   </td>
                   {comparison.map((item, i) => (
                     <td key={i} className="text-center px-3 pb-2">
                       <span className="text-2xl">
                         {item.char === " " ? (
-                          <span className="text-muted">␣</span>
+                          <span className="text-subtle">␣</span>
                         ) : (
                           item.char
                         )}
@@ -150,7 +150,7 @@ export function EncodingCompare() {
 
                 {/* UTF-32 row */}
                 <tr>
-                  <td className="w-20 pr-3 text-right text-xs text-muted font-medium uppercase tracking-wider align-middle whitespace-nowrap">
+                  <td className="w-20 pr-3 text-right text-xs text-subtle font-medium uppercase tracking-wider align-middle whitespace-nowrap">
                     UTF-32
                   </td>
                   {comparison.map((item, i) => (
@@ -161,7 +161,7 @@ export function EncodingCompare() {
                             key={idx}
                             className={`w-6 h-6 flex items-center justify-center rounded text-xs font-mono ${
                               b === 0
-                                ? "bg-background text-border-hover"
+                                ? "bg-background text-muted"
                                 : "bg-surface text-secondary"
                             }`}
                           >
@@ -175,7 +175,7 @@ export function EncodingCompare() {
 
                 {/* UTF-8 row */}
                 <tr>
-                  <td className="w-20 pr-3 text-right text-xs text-muted font-medium uppercase tracking-wider align-middle whitespace-nowrap">
+                  <td className="w-20 pr-3 text-right text-xs text-subtle font-medium uppercase tracking-wider align-middle whitespace-nowrap">
                     UTF-8
                   </td>
                   {comparison.map((item, i) => (
@@ -201,7 +201,7 @@ export function EncodingCompare() {
 
       {/* Empty state */}
       {!text && (
-        <div className="text-center py-4 text-muted text-sm">
+        <div className="text-center py-4 text-subtle text-sm">
           Type something to compare
         </div>
       )}
