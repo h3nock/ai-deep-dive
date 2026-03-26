@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProgressBar } from "./ProgressBar";
 import { useProgress } from "@/lib/progress-context";
@@ -54,11 +54,7 @@ export function CourseCard({
         >
           {icon}
         </div>
-        {status !== "available" && (
-          <span className="px-2 py-1 rounded-md bg-surface text-xs font-medium text-subtle">
-            {status === "coming-soon" ? "Coming Soon" : "Planned"}
-          </span>
-        )}
+        {/* Status badge removed — status shown in footer area instead */}
       </div>
 
       <h3 className="text-lg font-semibold text-primary mb-2">{title}</h3>
@@ -105,8 +101,8 @@ export function CourseCard({
             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
           </span>
         ) : (
-          <span className="flex items-center text-subtle">
-            <Lock className="w-4 h-4 mr-2" /> Locked
+          <span className="text-subtle">
+            {status === "coming-soon" ? "Coming Soon" : "Planned"}
           </span>
         )}
       </div>
