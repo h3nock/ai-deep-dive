@@ -298,6 +298,12 @@ code[data-theme*=" "] span {
   color: var(--shiki-dark);
 }
 
+/* Brighten code comments for AA contrast on terminal bg (#121212).
+   github-dark uses #6A737D (3.89:1) — bump to #8B949E (5.39:1). */
+code[data-theme*=" "] span[style*="--shiki-dark: #6A737D"] {
+  --shiki-dark: #8B949E !important;
+}
+
 .light code[data-theme*=" "],
 .light code[data-theme*=" "] span {
   color: var(--shiki-light);
