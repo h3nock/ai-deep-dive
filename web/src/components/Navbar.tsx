@@ -12,7 +12,7 @@ export function Navbar() {
           <span className="font-semibold text-primary">Deep Dive</span>
         </Link>
 
-        <div className="flex items-center gap-4 text-sm text-muted">
+        <div className="flex items-center gap-4 text-sm text-subtle">
           <a
             href="https://github.com/h3nock/ai-deep-dive"
             target="_blank"

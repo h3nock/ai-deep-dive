@@ -135,7 +135,7 @@ export function ConfirmModal({
             <button
               ref={cancelButtonRef}
               onClick={onClose}
-              className="flex-1 h-9 text-sm font-medium rounded-lg text-muted bg-transparent border border-border hover:text-secondary hover:border-border-hover hover:bg-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-border-hover focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              className="flex-1 h-9 text-sm font-medium rounded-lg text-subtle bg-transparent border border-border hover:text-secondary hover:border-border-hover hover:bg-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-border-hover focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
             >
               {cancelText}
             </button>
