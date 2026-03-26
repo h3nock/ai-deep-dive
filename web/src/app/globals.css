@@ -68,7 +68,8 @@
   --color-surface: #18181B;          /* Zinc-900 (Cards/Sidebars) */
   --color-primary: #D4D4D8;          /* Zinc-300 (Headings) */
   --color-secondary: #A1A1AA;        /* Zinc-400 (Body text) */
-  --color-muted: #71717A;            /* Zinc-500 (Meta/Captions) */
+  --color-subtle: #9898A0;           /* Zinc-425 (Nav, labels, metadata) */
+  --color-muted: #71717A;            /* Zinc-500 (Decorative/non-essential) */
   --color-border: #27272A;           /* Zinc-800 (Dividers) */
   --color-border-hover: #3f3f46;     /* Zinc-700 (Hover state borders) */
   --color-terminal: #121212;         /* Code blocks, data containers */
@@ -114,7 +115,8 @@
   --color-surface: #f4f4f5;          /* Zinc-100 */
   --color-primary: #18181B;          /* Zinc-900 (Headings) */
   --color-secondary: #3f3f46;        /* Zinc-700 (Body text) */
-  --color-muted: #71717A;            /* Zinc-500 (Meta/Captions) */
+  --color-subtle: #52525B;           /* Zinc-600 (Nav, labels, metadata) */
+  --color-muted: #71717A;            /* Zinc-500 (Decorative/non-essential) */
   --color-border: #e4e4e7;           /* Zinc-200 (Dividers) */
   --color-border-hover: #d4d4d8;     /* Zinc-300 (Hover state borders) */
   --color-terminal: #f9fafb;         /* Gray-50 (Code blocks) */
