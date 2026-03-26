@@ -31,7 +31,7 @@ export function BaseProgressBar({
     <div className={cn("w-full", className)}>
       {showLabel && (
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs text-muted">
+          <span className="text-xs text-subtle">
             {isLoaded ? `${completed} of ${total} ${label}` : ""}
           </span>
           {isLoaded && completed > 0 && (

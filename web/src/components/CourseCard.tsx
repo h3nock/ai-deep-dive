@@ -48,14 +48,14 @@ export function CourseCard({
       <div className="flex items-start justify-between mb-4">
         <div
           className={cn(
-            "w-10 h-10 rounded-lg bg-surface flex items-center justify-center text-muted transition-colors duration-300",
+            "w-10 h-10 rounded-lg bg-surface flex items-center justify-center text-subtle transition-colors duration-300",
             isAvailable && "group-hover:bg-border group-hover:text-primary"
           )}
         >
           {icon}
         </div>
         {status !== "available" && (
-          <span className="px-2 py-1 rounded-md bg-surface text-xs font-medium text-muted">
+          <span className="px-2 py-1 rounded-md bg-surface text-xs font-medium text-subtle">
             {status === "coming-soon" ? "Coming Soon" : "Planned"}
           </span>
         )}
@@ -71,7 +71,7 @@ export function CourseCard({
         {tags.map((tag) => (
           <span
             key={tag}
-            className="px-2 py-0.5 rounded bg-surface text-xs text-muted"
+            className="px-2 py-0.5 rounded bg-surface text-xs text-subtle"
           >
             {tag}
           </span>
@@ -79,7 +79,7 @@ export function CourseCard({
       </div>
 
       {isAvailable && totalSteps > 0 && (
-        <p className="text-xs text-muted mb-4">
+        <p className="text-xs text-subtle mb-4">
           {totalSteps} chapters
           {totalChallenges > 0 && <> &middot; {totalChallenges} problems</>}
         </p>
@@ -105,7 +105,7 @@ export function CourseCard({
             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
           </span>
         ) : (
-          <span className="flex items-center text-muted">
+          <span className="flex items-center text-subtle">
             <Lock className="w-4 h-4 mr-2" /> Locked
           </span>
         )}
