@@ -80,7 +80,7 @@ function ProgressCard({
           {isLoaded ? completed : total}
         </span>
         {isLoaded && (
-          <span className="text-sm text-subtle/60">/ {total}</span>
+          <span className="text-sm text-muted">/ {total}</span>
         )}
       </div>
       <span className="block text-xs text-subtle mt-0.5">{label}</span>

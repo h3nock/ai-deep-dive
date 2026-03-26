@@ -49,7 +49,7 @@ export function ProjectRoadmap({ courseId, prefix }: ProjectRoadmapProps) {
 
               {/* Row content */}
               <div className="flex items-center gap-4 rounded-lg px-4 py-2.5 transition-colors hover:bg-surface/50">
-                <span className="shrink-0 w-7 font-mono text-sm text-subtle/50 group-hover:text-primary transition-colors">
+                <span className="shrink-0 w-7 font-mono text-sm text-muted group-hover:text-primary transition-colors">
                   {stepNumber}
                 </span>
                 <div className="flex-1 min-w-0">
